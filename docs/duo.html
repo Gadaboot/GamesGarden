@@ -128,8 +128,8 @@
 
   /* ---------- modals ---------- */
   .overlay{
-    position:fixed;inset:0;background:rgba(8,4,24,.82);display:flex;align-items:center;justify-content:center;
-    z-index:50;padding:20px;
+    position:fixed;inset:0;background:rgba(8,4,24,.82);display:flex;align-items:flex-start;justify-content:center;
+    z-index:50;padding:20px;padding-top:calc(13vh + env(safe-area-inset-top));
   }
   .panel{
     background:var(--panel2);border:1px solid #b3a2ec;border-radius:20px;padding:24px;max-width:360px;width:100%;
@@ -151,7 +151,8 @@
 
   /* ---------- toast ---------- */
   #centerArea{position:relative;}
-  #toasts{position:absolute;top:calc(50% + 78px);left:0;right:0;z-index:60;pointer-events:none;
+  /* toasts sit at the very top of the centre area: below the top player, above the middle cards */
+  #toasts{position:absolute;top:2px;left:0;right:0;z-index:60;pointer-events:none;
     display:flex;flex-direction:column;align-items:center;gap:6px;}
   .toast{
     background:rgba(20,10,50,.92);border:1px solid #b3a2ec;color:#fff;padding:8px 18px;border-radius:20px;
