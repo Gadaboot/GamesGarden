@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Premier Glory</title>
+<style>
+  :root{
+    --bg:#0d1321; --panel:#171f33; --panel2:#1e2942; --line:#2b3a5c;
+    --gold:#f5c542; --green:#37c871; --red:#e6534f; --text:#e8edf7; --dim:#8fa0bf;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    user-select:none;-webkit-user-select:none;overscroll-behavior:none;
+  }
+  #wrap{width:100%;max-width:520px;min-height:100%;display:flex;flex-direction:column;padding:10px 12px 24px;}
+  /* Top bar */
+  #topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 0 10px;}
+  #topbar .title{font-weight:800;font-size:18px;letter-spacing:1px;color:var(--gold);}
+  .menu-btn{
+    background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    padding:8px 14px;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;
+  }
+  .menu-btn:active{transform:scale(.96);}
+  /* Generic */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;}
+  h2{font-size:17px;margin-bottom:10px;} h3{font-size:14px;color:var(--dim);margin-bottom:8px;font-weight:600;}
+  .btn{
+    display:block;width:100%;text-align:center;background:var(--gold);color:#1a1a1a;border:none;
+    padding:14px;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;margin-top:10px;
+  }
+  .btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line);}
+  .btn.danger{background:var(--red);color:#fff;}
+  .btn:disabled{opacity:.4;}
+  .txt{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:12px;color:var(--text);
+    padding:14px;font-size:17px;font-weight:700;text-align:center;outline:none;margin-top:8px;}
+  .txt:focus{border-color:var(--gold);}
+  .btn:active:not(:disabled){transform:scale(.98);}
+  .row{display:flex;gap:10px;} .row .btn{margin-top:10px;}
+  .small{font-size:12px;color:var(--dim);}
+  .center{text-align:center;}
+  .badge{display:inline-block;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:12px;color:var(--dim);}
+  .gold{color:var(--gold);} .green{color:var(--green);} .red{color:var(--red);}
+  /* Tournament select */
+  .tour-btn{display:flex;align-items:center;justify-content:center;text-align:center;gap:12px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:16px;margin-bottom:10px;width:100%;cursor:pointer;color:var(--text);}
+  .tour-btn:active{transform:scale(.98);}
+  .tour-btn .emoji{font-size:28px;} .tour-btn .name{font-size:16px;font-weight:800;}
+  .tour-btn .sub{font-size:12px;color:var(--dim);margin-top:2px;}
+  /* Pitch */
+  #pitch{background:linear-gradient(180deg,#14532d,#166534 45%,#14532d);border:2px solid #1e7a45;border-radius:14px;
+    padding:14px 6px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
+  .pitch-row{display:flex;justify-content:space-evenly;}
+  .slot{width:74px;min-height:64px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.28);border:1.5px dashed rgba(255,255,255,.35);padding:4px 2px;cursor:pointer;}
+  .slot .pos{font-size:11px;font-weight:800;color:rgba(255,255,255,.75);}
+  .slot.filled{border-style:solid;border-color:rgba(255,255,255,.25);background:rgba(0,0,0,.45);}
+  .slot .nm{font-size:10.5px;font-weight:700;text-align:center;line-height:1.15;margin-top:2px;}
+  .slot .rt{font-size:11px;font-weight:800;color:var(--gold);}
+  .slot.glow{border-color:var(--gold);border-style:solid;box-shadow:0 0 10px rgba(245,197,66,.65);animation:pulse 1s infinite;}
+  @keyframes pulse{50%{box-shadow:0 0 18px rgba(245,197,66,.9);}}
+  /* Scout */
+  .scout-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .scout-team{font-weight:900;font-size:24px;letter-spacing:.5px;line-height:1.15;}
+  .player-card{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;}
+  .player-card.disabled{opacity:.35;pointer-events:none;}
+  .player-card.selected{border-color:var(--gold);box-shadow:0 0 8px rgba(245,197,66,.5);}
+  .player-card:active{transform:scale(.98);}
+  .pc-pos{font-size:11px;font-weight:800;width:34px;color:var(--dim);}
+  .pc-name{flex:1;font-size:14px;font-weight:700;padding:0 6px;}
+  .pc-rat{font-size:15px;font-weight:800;color:var(--gold);}
+  /* Fixtures / tables */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--line);}
+  th{color:var(--dim);font-size:11px;font-weight:600;}
+  td.tn{text-align:left;font-weight:700;} tr.me td{color:var(--gold);}
+  .fixture{display:flex;justify-content:space-between;align-items:center;padding:9px 6px;border-bottom:1px solid var(--line);font-size:13px;}
+  .fixture .fr{color:var(--dim);font-size:11px;width:88px;}
+  .fixture .fs{font-weight:800;}
+  .fixture.next{background:rgba(245,197,66,.08);border-radius:8px;}
+  /* Match */
+  #scoreboard{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;}
+  #scoreboard .team{width:38%;text-align:center;font-weight:800;font-size:14px;line-height:1.2;}
+  #scoreboard .score{font-size:34px;font-weight:900;color:var(--gold);}
+  #matchclock{text-align:center;font-size:28px;font-weight:900;color:var(--green);margin:4px 0 10px;letter-spacing:1px;}
+  #matchclock .mc-round{display:block;font-size:12px;font-weight:600;color:var(--dim);letter-spacing:0;}
+  #matchclock.injury{color:var(--red);}
+  #ticker{background:var(--panel2);border:1px solid var(--line);border-radius:10px;min-height:150px;max-height:230px;
+    overflow-y:auto;padding:10px;font-size:13px;display:flex;flex-direction:column-reverse;}
+  #ticker div{padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.07);}
+  .ev-goal{color:var(--gold);font-weight:800;} .ev-opp{color:var(--red);font-weight:800;} .ev-info{color:var(--dim);}
+  /* Modal */
+  #modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  #modal-bg.show{display:flex;}
+  #modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;width:100%;max-width:400px;max-height:82vh;overflow-y:auto;}
+  #modal h2{color:var(--gold);}
+  /* Title celebration */
+  #celebrate{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden;opacity:1;transition:opacity 1.2s ease;}
+  .confetti{position:absolute;top:-24px;width:10px;height:16px;border-radius:2px;animation:confall linear forwards;}
+  @keyframes confall{to{transform:translateY(112vh) rotate(720deg);}}
+  .big-cup{position:absolute;top:38%;left:50%;font-size:120px;transform:translate(-50%,-50%) scale(0);
+    animation:cupin .7s cubic-bezier(.2,1.6,.4,1) forwards;filter:drop-shadow(0 0 30px rgba(245,197,66,.8));}
+  @keyframes cupin{to{transform:translate(-50%,-50%) scale(1);}}
+  /* Trophy banner */
+  .trophy-line{font-size:13px;color:var(--dim);margin-top:6px;}
+  .bigresult{font-size:26px;font-weight:900;text-align:center;margin:14px 0;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="topbar">
+    <span class="title">PREMIER GLORY</span>
+    <a class="menu-btn" href="index.html">☰ Games Garden</a>
+  </div>
+  <div id="app"></div>
+</div>
+
+<div id="modal-bg"><div id="modal"></div></div>
+
+<script>
+"use strict";
+/* ============================================================
+   PREMIER GLORY — scout classic English squads, build an XI, win the league
+   All team/player data lives in the DATA block below — edit freely.
+   Ratings are 1–99. Positions: GK, DEF, MID, ATT.
+   ============================================================ */
+
+// ---------- DATA: scoutable squads ----------
+// Positions: GK, CB, RB, LB, DM, CM, AM, LM, RM, LW, RW, ST
+// Multi-position players carry several codes, e.g. ["RB","CB"]
+
+
+// 64 classic English club squads — generated from english_top_flight_64_squads_players.xlsx
+// each: { team, year, disp (season), avg (starting XI avg), players:[{n,pos:[..],r}] }
+const CLUB_SQUADS = [{"team":"Manchester City","year":2022,"disp":"2022–23","avg":90.6,"players":[{"n":"Ederson","pos":["GK"],"r":89},{"n":"Kyle Walker","pos":["RB","CB"],"r":89},{"n":"Rúben Dias","pos":["CB"],"r":90},{"n":"John Stones","pos":["CB","DM"],"r":90},{"n":"Nathan Aké","pos":["CB","LB"],"r":89},{"n":"Rodri","pos":["DM","CM"],"r":92},{"n":"Kevin De Bruyne","pos":["CM","AM"],"r":92},{"n":"Bernardo Silva","pos":["CM","RW"],"r":90},{"n":"Jack Grealish","pos":["LW","AM"],"r":91},{"n":"İlkay Gündoğan","pos":["CM","AM"],"r":91},{"n":"Erling Haaland","pos":["ST"],"r":94},{"n":"Riyad Mahrez","pos":["RW"],"r":88},{"n":"Phil Foden","pos":["RW","LW","AM"],"r":88}]},{"team":"Liverpool","year":1983,"disp":"1983–84","avg":90.5,"players":[{"n":"Bruce Grobbelaar","pos":["GK"],"r":89},{"n":"Phil Neal","pos":["RB"],"r":89},{"n":"Alan Kennedy","pos":["LB"],"r":90},{"n":"Mark Lawrenson","pos":["CB","RB"],"r":90},{"n":"Alan Hansen","pos":["CB"],"r":89},{"n":"Graeme Souness","pos":["CM","DM"],"r":90},{"n":"Sammy Lee","pos":["CM","RM"],"r":91},{"n":"Craig Johnston","pos":["RW","CM"],"r":90},{"n":"Kenny Dalglish","pos":["ST","AM"],"r":92},{"n":"Ian Rush","pos":["ST"],"r":93},{"n":"Ronnie Whelan","pos":["CM","LW"],"r":92},{"n":"Michael Robinson","pos":["ST"],"r":88},{"n":"Steve Nicol","pos":["RB","LB","CM"],"r":88}]},{"team":"Arsenal","year":2003,"disp":"2003–04","avg":90.5,"players":[{"n":"Jens Lehmann","pos":["GK"],"r":89},{"n":"Lauren","pos":["RB"],"r":89},{"n":"Sol Campbell","pos":["CB"],"r":90},{"n":"Kolo Touré","pos":["CB","RB"],"r":90},{"n":"Ashley Cole","pos":["LB"],"r":89},{"n":"Gilberto Silva","pos":["DM","CM"],"r":90},{"n":"Patrick Vieira","pos":["CM","DM"],"r":92},{"n":"Freddie Ljungberg","pos":["RW","RM"],"r":90},{"n":"Robert Pires","pos":["LW","LM"],"r":91},{"n":"Dennis Bergkamp","pos":["ST","AM"],"r":91},{"n":"Thierry Henry","pos":["ST","LW"],"r":94},{"n":"Edu","pos":["CM","DM"],"r":88},{"n":"Sylvain Wiltord","pos":["ST","RW"],"r":88}]},{"team":"Manchester United","year":1998,"disp":"1998–99","avg":90.5,"players":[{"n":"Peter Schmeichel","pos":["GK"],"r":89},{"n":"Gary Neville","pos":["RB"],"r":89},{"n":"Jaap Stam","pos":["CB"],"r":90},{"n":"Ronny Johnsen","pos":["CB","DM"],"r":90},{"n":"Denis Irwin","pos":["LB","RB"],"r":89},{"n":"Roy Keane","pos":["DM","CM"],"r":92},{"n":"Paul Scholes","pos":["CM","AM"],"r":91},{"n":"David Beckham","pos":["RW","CM"],"r":91},{"n":"Ryan Giggs","pos":["LW"],"r":91},{"n":"Dwight Yorke","pos":["ST"],"r":91},{"n":"Andy Cole","pos":["ST"],"r":92},{"n":"Teddy Sheringham","pos":["ST","AM"],"r":88},{"n":"Ole Gunnar Solskjær","pos":["ST","RW"],"r":88}]},{"team":"Liverpool","year":1987,"disp":"1987–88","avg":90.4,"players":[{"n":"Bruce Grobbelaar","pos":["GK"],"r":89},{"n":"Steve Nicol","pos":["RB","LB","CM"],"r":89},{"n":"Gary Ablett","pos":["LB","CB"],"r":90},{"n":"Alan Hansen","pos":["CB"],"r":90},{"n":"Mark Lawrenson","pos":["CB","RB"],"r":89},{"n":"Steve McMahon","pos":["CM","DM"],"r":90},{"n":"Ronnie Whelan","pos":["CM","LW"],"r":91},{"n":"Ray Houghton","pos":["RW","CM"],"r":90},{"n":"John Barnes","pos":["LW","AM"],"r":93},{"n":"Peter Beardsley","pos":["ST","AM"],"r":91},{"n":"John Aldridge","pos":["ST"],"r":92},{"n":"Craig Johnston","pos":["RW","CM"],"r":88},{"n":"Nigel Spackman","pos":["CM","DM"],"r":88}]},{"team":"Manchester City","year":2017,"disp":"2017–18","avg":90.3,"players":[{"n":"Ederson","pos":["GK"],"r":89},{"n":"Kyle Walker","pos":["RB"],"r":89},{"n":"Nicolás Otamendi","pos":["CB"],"r":90},{"n":"Vincent Kompany","pos":["CB"],"r":90},{"n":"Fabian Delph","pos":["LB","CM"],"r":89},{"n":"Fernandinho","pos":["DM","CM"],"r":90},{"n":"Kevin De Bruyne","pos":["CM","AM"],"r":92},{"n":"David Silva","pos":["CM","AM"],"r":90},{"n":"Raheem Sterling","pos":["RW","LW"],"r":91},{"n":"Leroy Sané","pos":["LW","RW"],"r":91},{"n":"Sergio Agüero","pos":["ST"],"r":92},{"n":"Gabriel Jesus","pos":["ST"],"r":88},{"n":"Bernardo Silva","pos":["RW","CM"],"r":88}]},{"team":"Nottingham Forest","year":1977,"disp":"1977–78","avg":89.5,"players":[{"n":"Peter Shilton","pos":["GK"],"r":92},{"n":"Viv Anderson","pos":["RB"],"r":88},{"n":"Kenny Burns","pos":["CB","ST"],"r":89},{"n":"Larry Lloyd","pos":["CB"],"r":89},{"n":"Frank Clark","pos":["LB"],"r":88},{"n":"John McGovern","pos":["CM","DM"],"r":89},{"n":"Archie Gemmill","pos":["CM"],"r":90},{"n":"Martin O'Neill","pos":["RW","RM"],"r":89},{"n":"John Robertson","pos":["LW","LM"],"r":90},{"n":"Tony Woodcock","pos":["ST"],"r":90},{"n":"Peter Withe","pos":["ST"],"r":91},{"n":"Ian Bowyer","pos":["CM","RM"],"r":87},{"n":"Garry Birtles","pos":["ST"],"r":87}]},{"team":"Chelsea","year":2004,"disp":"2004–05","avg":90.1,"players":[{"n":"Petr Čech","pos":["GK"],"r":93},{"n":"Paulo Ferreira","pos":["RB"],"r":88},{"n":"John Terry","pos":["CB"],"r":92},{"n":"Ricardo Carvalho","pos":["CB"],"r":89},{"n":"William Gallas","pos":["LB","CB"],"r":88},{"n":"Claude Makélélé","pos":["DM"],"r":89},{"n":"Frank Lampard","pos":["CM","AM"],"r":92},{"n":"Tiago","pos":["CM"],"r":89},{"n":"Arjen Robben","pos":["LW","RW"],"r":90},{"n":"Damien Duff","pos":["RW","LW"],"r":90},{"n":"Didier Drogba","pos":["ST"],"r":91},{"n":"Eiður Guðjohnsen","pos":["ST","AM"],"r":87},{"n":"Joe Cole","pos":["RW","AM"],"r":87}]},{"team":"Manchester United","year":2007,"disp":"2007–08","avg":89.9,"players":[{"n":"Edwin van der Sar","pos":["GK"],"r":88},{"n":"Wes Brown","pos":["RB","CB"],"r":88},{"n":"Rio Ferdinand","pos":["CB"],"r":92},{"n":"Nemanja Vidić","pos":["CB"],"r":89},{"n":"Patrice Evra","pos":["LB"],"r":88},{"n":"Michael Carrick","pos":["CM","DM"],"r":89},{"n":"Paul Scholes","pos":["CM"],"r":90},{"n":"Cristiano Ronaldo","pos":["RW","ST"],"r":94},{"n":"Wayne Rooney","pos":["ST","LW"],"r":90},{"n":"Carlos Tevez","pos":["ST"],"r":90},{"n":"Ryan Giggs","pos":["LW","CM"],"r":91},{"n":"Owen Hargreaves","pos":["DM","CM","RB"],"r":87},{"n":"Nani","pos":["LW","RW"],"r":87}]},{"team":"Leeds United","year":1968,"disp":"1968–69","avg":89.5,"players":[{"n":"Gary Sprake","pos":["GK"],"r":88},{"n":"Paul Reaney","pos":["RB"],"r":88},{"n":"Jack Charlton","pos":["CB"],"r":89},{"n":"Norman Hunter","pos":["CB","LB"],"r":89},{"n":"Terry Cooper","pos":["LB"],"r":88},{"n":"Billy Bremner","pos":["CM","DM"],"r":92},{"n":"Johnny Giles","pos":["CM"],"r":90},{"n":"Peter Lorimer","pos":["RW","CM"],"r":89},{"n":"Eddie Gray","pos":["LW"],"r":90},{"n":"Mick Jones","pos":["ST"],"r":90},{"n":"Allan Clarke","pos":["ST"],"r":91},{"n":"Paul Madeley","pos":["CB","RB","LB","CM"],"r":87},{"n":"Rod Belfitt","pos":["ST"],"r":87}]},{"team":"Everton","year":1984,"disp":"1984–85","avg":89.6,"players":[{"n":"Neville Southall","pos":["GK"],"r":93},{"n":"Gary Stevens","pos":["RB"],"r":88},{"n":"Derek Mountfield","pos":["CB"],"r":89},{"n":"Kevin Ratcliffe","pos":["CB"],"r":89},{"n":"Pat Van Den Hauwe","pos":["LB","CB"],"r":88},{"n":"Peter Reid","pos":["CM","DM"],"r":89},{"n":"Paul Bracewell","pos":["CM"],"r":90},{"n":"Trevor Steven","pos":["RW","RM"],"r":89},{"n":"Kevin Sheedy","pos":["LW","CM"],"r":90},{"n":"Andy Gray","pos":["ST"],"r":90},{"n":"Graeme Sharp","pos":["ST"],"r":91},{"n":"Adrian Heath","pos":["ST","AM"],"r":87},{"n":"Alan Harper","pos":["CM","RB"],"r":87}]},{"team":"Aston Villa","year":1980,"disp":"1980–81","avg":89.2,"players":[{"n":"Jimmy Rimmer","pos":["GK"],"r":88},{"n":"Kenny Swain","pos":["RB"],"r":88},{"n":"Ken McNaught","pos":["CB"],"r":89},{"n":"Allan Evans","pos":["CB"],"r":89},{"n":"Gary Williams","pos":["LB"],"r":88},{"n":"Dennis Mortimer","pos":["CM","DM"],"r":89},{"n":"Gordon Cowans","pos":["CM"],"r":90},{"n":"Des Bremner","pos":["CM","RM"],"r":89},{"n":"Tony Morley","pos":["LW"],"r":90},{"n":"Peter Withe","pos":["ST"],"r":90},{"n":"Gary Shaw","pos":["ST"],"r":91},{"n":"Colin Gibson","pos":["LB","LM"],"r":87},{"n":"David Geddis","pos":["ST"],"r":87}]},{"team":"Tottenham Hotspur","year":1960,"disp":"1960–61","avg":89.1,"players":[{"n":"Bill Brown","pos":["GK"],"r":87},{"n":"Peter Baker","pos":["RB"],"r":87},{"n":"Maurice Norman","pos":["CB"],"r":88},{"n":"Ron Henry","pos":["LB"],"r":88},{"n":"Dave Mackay","pos":["DM","CB","LB"],"r":92},{"n":"Danny Blanchflower","pos":["CM","DM"],"r":93},{"n":"John White","pos":["CM","AM"],"r":89},{"n":"Cliff Jones","pos":["LW","ST"],"r":88},{"n":"Terry Medwin","pos":["RW"],"r":89},{"n":"Bobby Smith","pos":["ST"],"r":89},{"n":"Les Allen","pos":["ST"],"r":90},{"n":"Tony Marchi","pos":["CM","DM"],"r":86},{"n":"Frank Saul","pos":["ST"],"r":86}]},{"team":"Wolverhampton Wanderers","year":1958,"disp":"1958–59","avg":88.2,"players":[{"n":"Malcolm Finlayson","pos":["GK"],"r":87},{"n":"Eddie Stuart","pos":["RB","CB"],"r":87},{"n":"Bill Slater","pos":["CB","CM"],"r":88},{"n":"Ron Flowers","pos":["CM","DM"],"r":88},{"n":"Gerry Harris","pos":["LB"],"r":87},{"n":"Eddie Clamp","pos":["RM","CM"],"r":88},{"n":"Billy Wright","pos":["CB","DM"],"r":89},{"n":"Norman Deeley","pos":["RW","ST"],"r":88},{"n":"Jimmy Murray","pos":["ST"],"r":89},{"n":"Peter Broadbent","pos":["AM","ST"],"r":89},{"n":"Mickey Lill","pos":["LW","ST"],"r":90},{"n":"George Showell","pos":["CB"],"r":86},{"n":"Bobby Mason","pos":["ST"],"r":86}]},{"team":"Derby County","year":1971,"disp":"1971–72","avg":88.2,"players":[{"n":"Colin Boulton","pos":["GK"],"r":87},{"n":"Ron Webster","pos":["RB"],"r":87},{"n":"Roy McFarland","pos":["CB"],"r":88},{"n":"Colin Todd","pos":["CB"],"r":88},{"n":"David Nish","pos":["LB"],"r":87},{"n":"John McGovern","pos":["CM","DM"],"r":88},{"n":"Archie Gemmill","pos":["CM"],"r":89},{"n":"Alan Durban","pos":["CM","AM"],"r":88},{"n":"Alan Hinton","pos":["LW"],"r":89},{"n":"Kevin Hector","pos":["ST"],"r":89},{"n":"John O'Hare","pos":["ST"],"r":90},{"n":"Steve Powell","pos":["CM","RB"],"r":86},{"n":"Roger Davies","pos":["ST"],"r":86}]},{"team":"Leicester City","year":2015,"disp":"2015–16","avg":88.9,"players":[{"n":"Kasper Schmeichel","pos":["GK"],"r":87},{"n":"Danny Simpson","pos":["RB"],"r":87},{"n":"Wes Morgan","pos":["CB"],"r":88},{"n":"Robert Huth","pos":["CB"],"r":88},{"n":"Christian Fuchs","pos":["LB"],"r":87},{"n":"N'Golo Kanté","pos":["DM","CM"],"r":92},{"n":"Danny Drinkwater","pos":["CM"],"r":89},{"n":"Riyad Mahrez","pos":["RW","AM"],"r":91},{"n":"Marc Albrighton","pos":["LW","RW"],"r":89},{"n":"Shinji Okazaki","pos":["ST","AM"],"r":89},{"n":"Jamie Vardy","pos":["ST"],"r":91},{"n":"Leonardo Ulloa","pos":["ST"],"r":86},{"n":"Andy King","pos":["CM"],"r":86}]},{"team":"Blackburn Rovers","year":1994,"disp":"1994–95","avg":88.5,"players":[{"n":"Tim Flowers","pos":["GK"],"r":87},{"n":"Henning Berg","pos":["RB","CB"],"r":87},{"n":"Colin Hendry","pos":["CB"],"r":88},{"n":"Ian Pearce","pos":["CB"],"r":88},{"n":"Graeme Le Saux","pos":["LB","LW"],"r":87},{"n":"Tim Sherwood","pos":["CM","DM"],"r":88},{"n":"David Batty","pos":["DM","CM"],"r":89},{"n":"Stuart Ripley","pos":["RW"],"r":88},{"n":"Jason Wilcox","pos":["LW"],"r":89},{"n":"Chris Sutton","pos":["ST"],"r":89},{"n":"Alan Shearer","pos":["ST"],"r":93},{"n":"Mike Newell","pos":["ST"],"r":86},{"n":"Mark Atkins","pos":["CM"],"r":86}]},{"team":"Ipswich Town","year":1961,"disp":"1961–62","avg":88.2,"players":[{"n":"Roy Bailey","pos":["GK"],"r":87},{"n":"Larry Carberry","pos":["RB"],"r":87},{"n":"Andy Nelson","pos":["CB"],"r":88},{"n":"John Elsworthy","pos":["LB","CB"],"r":88},{"n":"Doug Moran","pos":["CM","AM"],"r":87},{"n":"Roy Stephenson","pos":["RW"],"r":88},{"n":"Jimmy Leadbetter","pos":["LW","AM"],"r":89},{"n":"John Compton","pos":["LW"],"r":88},{"n":"Ray Crawford","pos":["ST"],"r":89},{"n":"Ted Phillips","pos":["ST"],"r":89},{"n":"Reg Pickett","pos":["CM","DM"],"r":90},{"n":"Tommy Carroll","pos":["CM"],"r":86},{"n":"Bobby Blackwood","pos":["CB"],"r":86}]},{"team":"Burnley","year":1959,"disp":"1959–60","avg":87.5,"players":[{"n":"Adam Blacklaw","pos":["GK"],"r":86},{"n":"John Angus","pos":["RB"],"r":86},{"n":"Jimmy Adamson","pos":["CB","DM"],"r":87},{"n":"Tommy Cummings","pos":["CB"],"r":87},{"n":"Alex Elder","pos":["LB"],"r":86},{"n":"Brian Miller","pos":["CM","DM"],"r":87},{"n":"Jimmy McIlroy","pos":["AM","ST"],"r":91},{"n":"John Connelly","pos":["RW"],"r":87},{"n":"Brian Pilkington","pos":["LW"],"r":88},{"n":"Ray Pointer","pos":["ST"],"r":88},{"n":"Jimmy Robson","pos":["ST"],"r":89},{"n":"Bobby Seith","pos":["CM"],"r":85},{"n":"Trevor Meredith","pos":["RW","ST"],"r":85}]},{"team":"Arsenal","year":1990,"disp":"1990–91","avg":87.2,"players":[{"n":"David Seaman","pos":["GK"],"r":86},{"n":"Lee Dixon","pos":["RB"],"r":86},{"n":"Tony Adams","pos":["CB"],"r":87},{"n":"Steve Bould","pos":["CB"],"r":87},{"n":"Nigel Winterburn","pos":["LB"],"r":86},{"n":"Michael Thomas","pos":["CM","DM"],"r":87},{"n":"David Rocastle","pos":["CM","RW"],"r":88},{"n":"Paul Merson","pos":["RW","AM"],"r":87},{"n":"Anders Limpar","pos":["LW"],"r":88},{"n":"Alan Smith","pos":["ST"],"r":88},{"n":"Kevin Campbell","pos":["ST"],"r":89},{"n":"Paul Davis","pos":["CM"],"r":85},{"n":"Perry Groves","pos":["RW","ST"],"r":85}]},{"team":"Chelsea","year":2005,"disp":"2005–06","avg":87.5,"players":[{"n":"Petr Čech","pos":["GK"],"r":86},{"n":"Paulo Ferreira","pos":["RB"],"r":86},{"n":"John Terry","pos":["CB"],"r":87},{"n":"Ricardo Carvalho","pos":["CB"],"r":87},{"n":"William Gallas","pos":["LB","CB"],"r":86},{"n":"Claude Makélélé","pos":["DM"],"r":87},{"n":"Frank Lampard","pos":["CM","AM"],"r":92},{"n":"Michael Essien","pos":["CM","DM"],"r":87},{"n":"Joe Cole","pos":["RW","AM"],"r":88},{"n":"Arjen Robben","pos":["LW","RW"],"r":88},{"n":"Didier Drogba","pos":["ST"],"r":89},{"n":"Eiður Guðjohnsen","pos":["ST","AM"],"r":85},{"n":"Hernán Crespo","pos":["ST"],"r":85}]},{"team":"Everton","year":1986,"disp":"1986–87","avg":87.2,"players":[{"n":"Neville Southall","pos":["GK"],"r":86},{"n":"Gary Stevens","pos":["RB"],"r":86},{"n":"Dave Watson","pos":["CB"],"r":87},{"n":"Kevin Ratcliffe","pos":["CB"],"r":87},{"n":"Pat Van Den Hauwe","pos":["LB","CB"],"r":86},{"n":"Peter Reid","pos":["CM","DM"],"r":87},{"n":"Paul Power","pos":["CM","LB"],"r":88},{"n":"Trevor Steven","pos":["RW"],"r":87},{"n":"Kevin Sheedy","pos":["LW","CM"],"r":88},{"n":"Graeme Sharp","pos":["ST"],"r":88},{"n":"Adrian Heath","pos":["ST"],"r":89},{"n":"Ian Snodin","pos":["CM","RB"],"r":85},{"n":"Wayne Clarke","pos":["ST"],"r":85}]},{"team":"Leeds United","year":1973,"disp":"1973–74","avg":87.2,"players":[{"n":"David Harvey","pos":["GK"],"r":86},{"n":"Paul Reaney","pos":["RB"],"r":86},{"n":"Jack Charlton","pos":["CB"],"r":87},{"n":"Norman Hunter","pos":["CB","LB"],"r":87},{"n":"Trevor Cherry","pos":["LB","CB"],"r":86},{"n":"Billy Bremner","pos":["CM","DM"],"r":87},{"n":"Johnny Giles","pos":["CM"],"r":88},{"n":"Peter Lorimer","pos":["RW","CM"],"r":87},{"n":"Eddie Gray","pos":["LW"],"r":88},{"n":"Mick Jones","pos":["ST"],"r":88},{"n":"Allan Clarke","pos":["ST"],"r":89},{"n":"Paul Madeley","pos":["CB","RB","LB","CM"],"r":85},{"n":"Joe Jordan","pos":["ST"],"r":85}]},{"team":"Nottingham Forest","year":1978,"disp":"1978–79","avg":87.7,"players":[{"n":"Peter Shilton","pos":["GK"],"r":92},{"n":"Viv Anderson","pos":["RB"],"r":86},{"n":"Larry Lloyd","pos":["CB"],"r":87},{"n":"Kenny Burns","pos":["CB"],"r":87},{"n":"Frank Clark","pos":["LB"],"r":86},{"n":"John McGovern","pos":["CM","DM"],"r":87},{"n":"Ian Bowyer","pos":["CM"],"r":88},{"n":"Martin O'Neill","pos":["RW"],"r":87},{"n":"John Robertson","pos":["LW"],"r":88},{"n":"Garry Birtles","pos":["ST"],"r":88},{"n":"Tony Woodcock","pos":["ST"],"r":89},{"n":"Archie Gemmill","pos":["CM"],"r":85},{"n":"Trevor Francis","pos":["ST","RW"],"r":85}]},{"team":"Aston Villa","year":1981,"disp":"1981–82","avg":86.2,"players":[{"n":"Jimmy Rimmer","pos":["GK"],"r":85},{"n":"Kenny Swain","pos":["RB"],"r":85},{"n":"Ken McNaught","pos":["CB"],"r":86},{"n":"Allan Evans","pos":["CB"],"r":86},{"n":"Gary Williams","pos":["LB"],"r":85},{"n":"Dennis Mortimer","pos":["CM","DM"],"r":86},{"n":"Gordon Cowans","pos":["CM"],"r":87},{"n":"Des Bremner","pos":["CM","RM"],"r":86},{"n":"Tony Morley","pos":["LW"],"r":87},{"n":"Peter Withe","pos":["ST"],"r":87},{"n":"Gary Shaw","pos":["ST"],"r":88},{"n":"Nigel Spink","pos":["GK"],"r":84},{"n":"Colin Gibson","pos":["LB","LM"],"r":84}]},{"team":"Tottenham Hotspur","year":1962,"disp":"1962–63","avg":86.7,"players":[{"n":"Bill Brown","pos":["GK"],"r":85},{"n":"Peter Baker","pos":["RB"],"r":85},{"n":"Maurice Norman","pos":["CB"],"r":86},{"n":"Ron Henry","pos":["LB"],"r":86},{"n":"Dave Mackay","pos":["DM","CB"],"r":85},{"n":"Danny Blanchflower","pos":["CM","DM"],"r":86},{"n":"John White","pos":["CM","AM"],"r":87},{"n":"Cliff Jones","pos":["LW","ST"],"r":86},{"n":"Terry Dyson","pos":["RW","LW"],"r":87},{"n":"Bobby Smith","pos":["ST"],"r":87},{"n":"Jimmy Greaves","pos":["ST"],"r":94},{"n":"Tony Marchi","pos":["CM"],"r":84},{"n":"Frank Saul","pos":["ST"],"r":84}]},{"team":"Wolverhampton Wanderers","year":1957,"disp":"1957–58","avg":86.2,"players":[{"n":"Malcolm Finlayson","pos":["GK"],"r":85},{"n":"Eddie Stuart","pos":["RB","CB"],"r":85},{"n":"Billy Wright","pos":["CB","DM"],"r":86},{"n":"Bill Slater","pos":["CB","CM"],"r":86},{"n":"Gerry Harris","pos":["LB"],"r":85},{"n":"Ron Flowers","pos":["CM","DM"],"r":86},{"n":"Eddie Clamp","pos":["RM","CM"],"r":87},{"n":"Norman Deeley","pos":["RW","ST"],"r":86},{"n":"Jimmy Murray","pos":["ST"],"r":87},{"n":"Peter Broadbent","pos":["AM","ST"],"r":87},{"n":"Mickey Lill","pos":["LW","ST"],"r":88},{"n":"George Showell","pos":["CB"],"r":84},{"n":"Bobby Mason","pos":["ST"],"r":84}]},{"team":"Derby County","year":1974,"disp":"1974–75","avg":86.2,"players":[{"n":"Colin Boulton","pos":["GK"],"r":85},{"n":"Ron Webster","pos":["RB"],"r":85},{"n":"Roy McFarland","pos":["CB"],"r":86},{"n":"Colin Todd","pos":["CB"],"r":86},{"n":"David Nish","pos":["LB"],"r":85},{"n":"Bruce Rioch","pos":["CM","DM"],"r":86},{"n":"Henry Newton","pos":["CM"],"r":87},{"n":"Archie Gemmill","pos":["CM"],"r":86},{"n":"Francis Lee","pos":["ST","RW"],"r":87},{"n":"Kevin Hector","pos":["ST"],"r":87},{"n":"Roger Davies","pos":["ST"],"r":88},{"n":"Steve Powell","pos":["CM","RB"],"r":84},{"n":"Charlie George","pos":["ST","AM"],"r":84}]},{"team":"Leicester City","year":2020,"disp":"2020–21","avg":86.2,"players":[{"n":"Kasper Schmeichel","pos":["GK"],"r":85},{"n":"Timothy Castagne","pos":["RB","LB"],"r":85},{"n":"Wesley Fofana","pos":["CB"],"r":86},{"n":"Jonny Evans","pos":["CB"],"r":86},{"n":"Çağlar Söyüncü","pos":["CB"],"r":85},{"n":"Wilfred Ndidi","pos":["DM","CM"],"r":86},{"n":"Youri Tielemans","pos":["CM"],"r":87},{"n":"Marc Albrighton","pos":["RW","RB"],"r":86},{"n":"James Maddison","pos":["AM","CM"],"r":87},{"n":"Harvey Barnes","pos":["LW"],"r":87},{"n":"Jamie Vardy","pos":["ST"],"r":88},{"n":"Kelechi Iheanacho","pos":["ST"],"r":84},{"n":"Ricardo Pereira","pos":["RB"],"r":84}]},{"team":"Newcastle United","year":1995,"disp":"1995–96","avg":86.4,"players":[{"n":"Pavel Srníček","pos":["GK"],"r":85},{"n":"Warren Barton","pos":["RB"],"r":85},{"n":"Philippe Albert","pos":["CB"],"r":86},{"n":"Darren Peacock","pos":["CB"],"r":86},{"n":"John Beresford","pos":["LB"],"r":85},{"n":"David Batty","pos":["DM","CM"],"r":86},{"n":"Rob Lee","pos":["CM"],"r":87},{"n":"Keith Gillespie","pos":["RW"],"r":86},{"n":"David Ginola","pos":["LW"],"r":87},{"n":"Peter Beardsley","pos":["ST","AM"],"r":87},{"n":"Les Ferdinand","pos":["ST"],"r":90},{"n":"Faustino Asprilla","pos":["ST","RW"],"r":84},{"n":"Lee Clark","pos":["CM"],"r":84}]},{"team":"Ipswich Town","year":1980,"disp":"1980–81","avg":85.8,"players":[{"n":"Paul Cooper","pos":["GK"],"r":84},{"n":"George Burley","pos":["RB"],"r":84},{"n":"Terry Butcher","pos":["CB"],"r":85},{"n":"Russell Osman","pos":["CB"],"r":85},{"n":"Mick Mills","pos":["LB","RB"],"r":84},{"n":"Frans Thijssen","pos":["CM"],"r":85},{"n":"Arnold Mühren","pos":["CM","LM"],"r":86},{"n":"John Wark","pos":["CM","AM"],"r":92},{"n":"Eric Gates","pos":["ST","AM"],"r":86},{"n":"Paul Mariner","pos":["ST"],"r":86},{"n":"Alan Brazil","pos":["ST"],"r":87},{"n":"Kevin Beattie","pos":["CB"],"r":83},{"n":"Roger Osborne","pos":["CM"],"r":83}]},{"team":"Southampton","year":1983,"disp":"1983–84","avg":85.8,"players":[{"n":"Peter Shilton","pos":["GK"],"r":91},{"n":"Ivan Golac","pos":["RB"],"r":84},{"n":"Mark Wright","pos":["CB"],"r":85},{"n":"Reuben Agboola","pos":["CB"],"r":85},{"n":"Nick Holmes","pos":["LB","CM"],"r":84},{"n":"Steve Williams","pos":["CM","DM"],"r":85},{"n":"David Armstrong","pos":["CM","LM"],"r":86},{"n":"Danny Wallace","pos":["RW","ST"],"r":85},{"n":"Steve Moran","pos":["ST"],"r":86},{"n":"Mick Channon","pos":["ST","RW"],"r":86},{"n":"Frank Worthington","pos":["ST","AM"],"r":87},{"n":"Mark Dennis","pos":["LB"],"r":83},{"n":"Kevin Keegan","pos":["ST","AM"],"r":83}]},{"team":"Newcastle United","year":2022,"disp":"2022–23","avg":85.5,"players":[{"n":"Nick Pope","pos":["GK"],"r":84},{"n":"Kieran Trippier","pos":["RB"],"r":88},{"n":"Fabian Schär","pos":["CB"],"r":85},{"n":"Sven Botman","pos":["CB"],"r":85},{"n":"Dan Burn","pos":["LB","CB"],"r":84},{"n":"Bruno Guimarães","pos":["CM","DM"],"r":85},{"n":"Sean Longstaff","pos":["CM"],"r":86},{"n":"Joelinton","pos":["CM","LW"],"r":85},{"n":"Miguel Almirón","pos":["RW"],"r":86},{"n":"Allan Saint-Maximin","pos":["LW"],"r":86},{"n":"Callum Wilson","pos":["ST"],"r":87},{"n":"Alexander Isak","pos":["ST","LW"],"r":83},{"n":"Joe Willock","pos":["CM","LW"],"r":83}]},{"team":"Sheffield Wednesday","year":1992,"disp":"1992–93","avg":85.6,"players":[{"n":"Chris Woods","pos":["GK"],"r":84},{"n":"Roland Nilsson","pos":["RB"],"r":84},{"n":"Des Walker","pos":["CB"],"r":85},{"n":"Nigel Pearson","pos":["CB"],"r":85},{"n":"Phil King","pos":["LB"],"r":84},{"n":"John Sheridan","pos":["CM"],"r":85},{"n":"Carlton Palmer","pos":["CM","DM"],"r":86},{"n":"Chris Waddle","pos":["RW","AM"],"r":90},{"n":"Graham Hyde","pos":["CM"],"r":86},{"n":"David Hirst","pos":["ST"],"r":86},{"n":"Mark Bright","pos":["ST"],"r":87},{"n":"Paul Warhurst","pos":["CB","ST"],"r":83},{"n":"Chris Bart-Williams","pos":["CM","AM"],"r":83}]},{"team":"Sunderland","year":1972,"disp":"1972–73","avg":85.2,"players":[{"n":"Jimmy Montgomery","pos":["GK"],"r":84},{"n":"Dick Malone","pos":["RB"],"r":84},{"n":"Dave Watson","pos":["CB"],"r":85},{"n":"Richie Pitt","pos":["CB"],"r":85},{"n":"Ron Guthrie","pos":["LB"],"r":84},{"n":"Bobby Kerr","pos":["CM","DM"],"r":85},{"n":"Ian Porterfield","pos":["CM"],"r":86},{"n":"Billy Hughes","pos":["RW","AM"],"r":85},{"n":"Dennis Tueart","pos":["LW","ST"],"r":86},{"n":"Vic Halom","pos":["ST"],"r":86},{"n":"Dave Young","pos":["ST","RW"],"r":87},{"n":"Micky Horswill","pos":["CM"],"r":83},{"n":"David Johnston","pos":["ST"],"r":83}]},{"team":"West Bromwich Albion","year":1953,"disp":"1953–54","avg":85.2,"players":[{"n":"Jim Sanders","pos":["GK"],"r":84},{"n":"Stan Rickaby","pos":["RB"],"r":84},{"n":"Joe Kennedy","pos":["CB"],"r":85},{"n":"Len Millard","pos":["CB"],"r":85},{"n":"Jimmy Dudley","pos":["LB"],"r":84},{"n":"Ronnie Allen","pos":["ST","AM"],"r":85},{"n":"Johnny Nicholls","pos":["ST"],"r":86},{"n":"Frank Griffin","pos":["RW"],"r":85},{"n":"George Lee","pos":["LW"],"r":86},{"n":"Bobby Robson","pos":["CM","AM"],"r":86},{"n":"Reg Ryan","pos":["CM"],"r":87},{"n":"Ray Barlow","pos":["CM","DM"],"r":83},{"n":"Jim Dugdale","pos":["CB"],"r":83}]},{"team":"Huddersfield Town","year":1952,"disp":"1952–53","avg":84.2,"players":[{"n":"Jack Wheeler","pos":["GK"],"r":83},{"n":"Ron Staniforth","pos":["RB"],"r":83},{"n":"Bill McGarry","pos":["DM","RB"],"r":84},{"n":"Don McEvoy","pos":["CB"],"r":84},{"n":"Laurie Kelly","pos":["LB"],"r":83},{"n":"Jimmy Glazzard","pos":["ST"],"r":84},{"n":"Vic Metcalfe","pos":["LW"],"r":85},{"n":"Johnny McKenna","pos":["RW"],"r":84},{"n":"Len Quested","pos":["CM"],"r":85},{"n":"Jimmy Watson","pos":["CM"],"r":85},{"n":"Tom Johnston","pos":["ST"],"r":86},{"n":"Ken Taylor","pos":["CB"],"r":82},{"n":"Derek Ufton","pos":["CB","CM"],"r":82}]},{"team":"Sheffield United","year":1970,"disp":"1970–71","avg":84.2,"players":[{"n":"John Hope","pos":["GK"],"r":83},{"n":"Len Badger","pos":["RB"],"r":83},{"n":"Eddie Colquhoun","pos":["CB"],"r":84},{"n":"John Flynn","pos":["CB"],"r":84},{"n":"Ted Hemsley","pos":["LB"],"r":83},{"n":"Tony Currie","pos":["CM","AM"],"r":84},{"n":"Trevor Hockey","pos":["CM","DM"],"r":85},{"n":"Alan Woodward","pos":["RW"],"r":84},{"n":"Gil Reece","pos":["LW"],"r":85},{"n":"Bill Dearden","pos":["ST"],"r":85},{"n":"John Tudor","pos":["ST"],"r":86},{"n":"David Ford","pos":["RW","ST"],"r":82},{"n":"Tom McAlister","pos":["GK"],"r":82}]},{"team":"Portsmouth","year":1950,"disp":"1950–51","avg":84.2,"players":[{"n":"Ernie Butler","pos":["GK"],"r":83},{"n":"Phil Rookes","pos":["RB"],"r":83},{"n":"Reg Flewin","pos":["CB","DM"],"r":84},{"n":"Harry Ferrier","pos":["CB"],"r":84},{"n":"Jack Froggatt","pos":["LB","LW"],"r":83},{"n":"Jimmy Dickinson","pos":["CM","DM"],"r":84},{"n":"Duggie Reid","pos":["ST","CM"],"r":85},{"n":"Peter Harris","pos":["RW"],"r":84},{"n":"Len Phillips","pos":["AM","ST"],"r":85},{"n":"Ike Clarke","pos":["ST"],"r":85},{"n":"Jackie Henderson","pos":["LW"],"r":86},{"n":"Jimmy Scoular","pos":["CM"],"r":82},{"n":"Cliff Parker","pos":["ST"],"r":82}]},{"team":"Middlesbrough","year":2005,"disp":"2005–06","avg":84.2,"players":[{"n":"Mark Schwarzer","pos":["GK"],"r":83},{"n":"Stuart Parnaby","pos":["RB"],"r":83},{"n":"Gareth Southgate","pos":["CB"],"r":84},{"n":"Chris Riggott","pos":["CB"],"r":84},{"n":"Franck Queudrue","pos":["LB"],"r":83},{"n":"George Boateng","pos":["DM","CM"],"r":84},{"n":"Doriva","pos":["DM","CM"],"r":85},{"n":"Stewart Downing","pos":["LW"],"r":84},{"n":"Gaizka Mendieta","pos":["RW","CM"],"r":85},{"n":"Jimmy Floyd Hasselbaink","pos":["ST"],"r":85},{"n":"Mark Viduka","pos":["ST"],"r":86},{"n":"Yakubu","pos":["ST"],"r":82},{"n":"Massimo Maccarone","pos":["ST"],"r":82}]},{"team":"Southampton","year":2015,"disp":"2015–16","avg":84.2,"players":[{"n":"Fraser Forster","pos":["GK"],"r":83},{"n":"Cédric Soares","pos":["RB"],"r":83},{"n":"José Fonte","pos":["CB"],"r":84},{"n":"Virgil van Dijk","pos":["CB"],"r":84},{"n":"Ryan Bertrand","pos":["LB"],"r":83},{"n":"Victor Wanyama","pos":["DM","CM"],"r":84},{"n":"Steven Davis","pos":["CM"],"r":85},{"n":"Dušan Tadić","pos":["LW","AM"],"r":84},{"n":"Sadio Mané","pos":["RW","ST"],"r":85},{"n":"Graziano Pellè","pos":["ST"],"r":85},{"n":"Shane Long","pos":["ST","RW"],"r":86},{"n":"Oriol Romeu","pos":["DM","CM"],"r":82},{"n":"James Ward-Prowse","pos":["CM","RM"],"r":82}]},{"team":"Norwich City","year":1992,"disp":"1992–93","avg":84.2,"players":[{"n":"Bryan Gunn","pos":["GK"],"r":83},{"n":"Ian Culverhouse","pos":["RB"],"r":83},{"n":"Ian Butterworth","pos":["CB"],"r":84},{"n":"John Polston","pos":["CB"],"r":84},{"n":"Mark Bowen","pos":["LB"],"r":83},{"n":"Ian Crook","pos":["CM"],"r":84},{"n":"Jeremy Goss","pos":["CM","AM"],"r":85},{"n":"Ruel Fox","pos":["RW"],"r":84},{"n":"David Phillips","pos":["CM","RM"],"r":85},{"n":"Mark Robins","pos":["ST"],"r":85},{"n":"Chris Sutton","pos":["ST","CB"],"r":86},{"n":"Dale Gordon","pos":["LW","RW"],"r":82},{"n":"Efan Ekoku","pos":["ST"],"r":82}]},{"team":"Wimbledon","year":1987,"disp":"1987–88","avg":83.2,"players":[{"n":"Dave Beasant","pos":["GK"],"r":82},{"n":"Clive Goodyear","pos":["RB","CB"],"r":82},{"n":"Eric Young","pos":["CB"],"r":83},{"n":"Andy Thorn","pos":["CB"],"r":83},{"n":"Terry Phelan","pos":["LB"],"r":82},{"n":"Vinnie Jones","pos":["CM","DM"],"r":83},{"n":"Dennis Wise","pos":["CM","LM"],"r":84},{"n":"Lawrie Sanchez","pos":["RM","CM"],"r":83},{"n":"Alan Cork","pos":["ST"],"r":84},{"n":"John Fashanu","pos":["ST"],"r":84},{"n":"Terry Gibson","pos":["ST","RW"],"r":85},{"n":"Nigel Winterburn","pos":["LB"],"r":81},{"n":"Carlton Fairweather","pos":["RW","ST"],"r":81}]},{"team":"Crystal Palace","year":1990,"disp":"1990–91","avg":83.2,"players":[{"n":"Nigel Martyn","pos":["GK"],"r":82},{"n":"John Pemberton","pos":["RB"],"r":82},{"n":"Eric Young","pos":["CB"],"r":83},{"n":"Andy Thorn","pos":["CB"],"r":83},{"n":"Jeff Hopkins","pos":["LB","CM"],"r":82},{"n":"Geoff Thomas","pos":["CM"],"r":83},{"n":"Andy Gray","pos":["CM","DM"],"r":84},{"n":"Eddie McGoldrick","pos":["RW","CM"],"r":83},{"n":"John Salako","pos":["LW"],"r":84},{"n":"Ian Wright","pos":["ST"],"r":84},{"n":"Mark Bright","pos":["ST"],"r":85},{"n":"Phil Barber","pos":["CM"],"r":81},{"n":"Alan Pardew","pos":["CM","AM"],"r":81}]},{"team":"West Ham United","year":1985,"disp":"1985–86","avg":83.2,"players":[{"n":"Phil Parkes","pos":["GK"],"r":82},{"n":"Ray Stewart","pos":["RB"],"r":82},{"n":"Alvin Martin","pos":["CB"],"r":83},{"n":"Tony Gale","pos":["CB"],"r":83},{"n":"George Parris","pos":["LB","CM"],"r":82},{"n":"Billy Bonds","pos":["DM","CB"],"r":83},{"n":"Alan Devonshire","pos":["LW","CM"],"r":84},{"n":"Mark Ward","pos":["RW"],"r":83},{"n":"Neil Orr","pos":["CM"],"r":84},{"n":"Tony Cottee","pos":["ST"],"r":84},{"n":"Frank McAvennie","pos":["ST"],"r":85},{"n":"Paul Goddard","pos":["ST"],"r":81},{"n":"Steve Walford","pos":["CB"],"r":81}]},{"team":"Stoke City","year":1971,"disp":"1971–72","avg":83.2,"players":[{"n":"Gordon Banks","pos":["GK"],"r":82},{"n":"Jack Marsh","pos":["RB","CB"],"r":82},{"n":"Denis Smith","pos":["CB"],"r":83},{"n":"Alan Bloor","pos":["CB"],"r":83},{"n":"Mike Pejic","pos":["LB"],"r":82},{"n":"George Eastham","pos":["CM","AM"],"r":83},{"n":"Peter Dobing","pos":["CM","ST"],"r":84},{"n":"Jimmy Greenhoff","pos":["RW","ST"],"r":83},{"n":"John Ritchie","pos":["ST"],"r":84},{"n":"Terry Conroy","pos":["LW","RW"],"r":84},{"n":"Harry Burrows","pos":["LW"],"r":85},{"n":"Eric Skeels","pos":["CM","DM"],"r":81},{"n":"Mike Bernard","pos":["CM"],"r":81}]},{"team":"Manchester City","year":1967,"disp":"1967–68","avg":83.9,"players":[{"n":"Ken Mulhearn","pos":["GK"],"r":82},{"n":"Tony Book","pos":["RB"],"r":82},{"n":"Mike Doyle","pos":["CB","DM"],"r":83},{"n":"George Heslop","pos":["CB"],"r":83},{"n":"Glyn Pardoe","pos":["LB"],"r":82},{"n":"Alan Oakes","pos":["CM","DM"],"r":83},{"n":"Colin Bell","pos":["CM","AM"],"r":92},{"n":"Mike Summerbee","pos":["RW","ST"],"r":83},{"n":"Neil Young","pos":["LW","ST"],"r":84},{"n":"Francis Lee","pos":["ST"],"r":84},{"n":"Tony Coleman","pos":["LW"],"r":85},{"n":"Bobby Kennedy","pos":["RB","CB"],"r":81},{"n":"David Connor","pos":["CM"],"r":81}]},{"team":"Liverpool","year":1978,"disp":"1978–79","avg":83.2,"players":[{"n":"Ray Clemence","pos":["GK"],"r":82},{"n":"Phil Neal","pos":["RB"],"r":82},{"n":"Alan Kennedy","pos":["LB"],"r":83},{"n":"Phil Thompson","pos":["CB"],"r":83},{"n":"Alan Hansen","pos":["CB"],"r":82},{"n":"Graeme Souness","pos":["CM","DM"],"r":83},{"n":"Ray Kennedy","pos":["CM","LM"],"r":84},{"n":"Jimmy Case","pos":["CM","RW"],"r":83},{"n":"Kenny Dalglish","pos":["ST","AM"],"r":84},{"n":"David Johnson","pos":["ST"],"r":84},{"n":"Terry McDermott","pos":["CM","AM"],"r":85},{"n":"Emlyn Hughes","pos":["CB","LB","CM"],"r":81},{"n":"Steve Heighway","pos":["LW"],"r":81}]},{"team":"Manchester United","year":1966,"disp":"1966–67","avg":85.0,"players":[{"n":"Alex Stepney","pos":["GK"],"r":81},{"n":"Shay Brennan","pos":["RB","LB"],"r":81},{"n":"Bill Foulkes","pos":["CB"],"r":82},{"n":"David Sadler","pos":["CB","DM"],"r":82},{"n":"Tony Dunne","pos":["LB"],"r":81},{"n":"Nobby Stiles","pos":["DM","CM"],"r":82},{"n":"Paddy Crerand","pos":["CM"],"r":83},{"n":"George Best","pos":["RW","LW","ST"],"r":94},{"n":"Bobby Charlton","pos":["AM","CM","ST"],"r":93},{"n":"Denis Law","pos":["ST"],"r":92},{"n":"John Aston Jr","pos":["LW"],"r":84},{"n":"Brian Kidd","pos":["ST"],"r":80},{"n":"David Herd","pos":["ST"],"r":80}]},{"team":"Liverpool","year":1976,"disp":"1976–77","avg":82.2,"players":[{"n":"Ray Clemence","pos":["GK"],"r":81},{"n":"Phil Neal","pos":["RB"],"r":81},{"n":"Joey Jones","pos":["LB"],"r":82},{"n":"Phil Thompson","pos":["CB"],"r":82},{"n":"Emlyn Hughes","pos":["CB","LB","CM"],"r":81},{"n":"Ian Callaghan","pos":["CM","RW"],"r":82},{"n":"Ray Kennedy","pos":["CM","LM"],"r":83},{"n":"Jimmy Case","pos":["CM","RW"],"r":82},{"n":"Steve Heighway","pos":["LW"],"r":83},{"n":"Kevin Keegan","pos":["ST","AM"],"r":83},{"n":"John Toshack","pos":["ST"],"r":84},{"n":"David Johnson","pos":["ST"],"r":80},{"n":"Terry McDermott","pos":["CM","AM"],"r":80}]},{"team":"Manchester United","year":1956,"disp":"1956–57","avg":83.4,"players":[{"n":"Ray Wood","pos":["GK"],"r":81},{"n":"Bill Foulkes","pos":["CB","RB"],"r":81},{"n":"Mark Jones","pos":["CB"],"r":82},{"n":"Roger Byrne","pos":["LB"],"r":82},{"n":"Duncan Edwards","pos":["CM","DM","CB"],"r":94},{"n":"Eddie Colman","pos":["CM"],"r":82},{"n":"Johnny Berry","pos":["RW"],"r":83},{"n":"David Pegg","pos":["LW"],"r":82},{"n":"Bobby Charlton","pos":["AM","ST"],"r":83},{"n":"Tommy Taylor","pos":["ST"],"r":83},{"n":"Dennis Viollet","pos":["ST"],"r":84},{"n":"Liam Whelan","pos":["ST","AM"],"r":80},{"n":"Albert Scanlon","pos":["LW"],"r":80}]},{"team":"Arsenal","year":1970,"disp":"1970–71","avg":82.9,"players":[{"n":"Bob Wilson","pos":["GK"],"r":81},{"n":"Pat Rice","pos":["RB"],"r":81},{"n":"Frank McLintock","pos":["CB"],"r":90},{"n":"Peter Simpson","pos":["CB"],"r":82},{"n":"Bob McNab","pos":["LB"],"r":81},{"n":"Peter Storey","pos":["DM","RB"],"r":82},{"n":"George Graham","pos":["CM","ST"],"r":83},{"n":"John Radford","pos":["RW","ST"],"r":82},{"n":"George Armstrong","pos":["LW","RW"],"r":83},{"n":"Charlie George","pos":["ST","AM"],"r":83},{"n":"Ray Kennedy","pos":["ST","LM"],"r":84},{"n":"Jon Sammels","pos":["CM","AM"],"r":80},{"n":"Eddie Kelly","pos":["CM"],"r":80}]},{"team":"Liverpool","year":2019,"disp":"2019–20","avg":84.8,"players":[{"n":"Alisson","pos":["GK"],"r":81},{"n":"Trent Alexander-Arnold","pos":["RB"],"r":81},{"n":"Joe Gomez","pos":["CB","RB"],"r":82},{"n":"Virgil van Dijk","pos":["CB"],"r":93},{"n":"Andrew Robertson","pos":["LB"],"r":81},{"n":"Fabinho","pos":["DM","CB"],"r":82},{"n":"Jordan Henderson","pos":["CM","DM"],"r":83},{"n":"Georginio Wijnaldum","pos":["CM"],"r":82},{"n":"Mohamed Salah","pos":["RW","ST"],"r":92},{"n":"Sadio Mané","pos":["LW","ST"],"r":92},{"n":"Roberto Firmino","pos":["ST","AM"],"r":84},{"n":"Naby Keïta","pos":["CM"],"r":80},{"n":"Divock Origi","pos":["ST","LW"],"r":80}]},{"team":"Manchester City","year":2023,"disp":"2023–24","avg":84.1,"players":[{"n":"Ederson","pos":["GK"],"r":81},{"n":"Kyle Walker","pos":["RB","CB"],"r":81},{"n":"Rúben Dias","pos":["CB"],"r":82},{"n":"Manuel Akanji","pos":["CB","RB"],"r":82},{"n":"Joško Gvardiol","pos":["LB","CB"],"r":81},{"n":"Rodri","pos":["DM","CM"],"r":94},{"n":"Kevin De Bruyne","pos":["CM","AM"],"r":83},{"n":"Bernardo Silva","pos":["CM","RW"],"r":82},{"n":"Phil Foden","pos":["RW","AM"],"r":92},{"n":"Jérémy Doku","pos":["LW","RW"],"r":83},{"n":"Erling Haaland","pos":["ST"],"r":84},{"n":"Julián Álvarez","pos":["ST","AM"],"r":80},{"n":"John Stones","pos":["CB","DM"],"r":80}]},{"team":"Manchester United","year":1993,"disp":"1993–94","avg":82.1,"players":[{"n":"Peter Schmeichel","pos":["GK"],"r":80},{"n":"Paul Parker","pos":["RB"],"r":80},{"n":"Steve Bruce","pos":["CB"],"r":81},{"n":"Gary Pallister","pos":["CB"],"r":81},{"n":"Denis Irwin","pos":["LB","RB"],"r":80},{"n":"Roy Keane","pos":["CM","DM"],"r":81},{"n":"Paul Ince","pos":["CM","DM"],"r":82},{"n":"Andrei Kanchelskis","pos":["RW"],"r":81},{"n":"Ryan Giggs","pos":["LW"],"r":82},{"n":"Eric Cantona","pos":["ST","AM"],"r":92},{"n":"Mark Hughes","pos":["ST"],"r":83},{"n":"Brian McClair","pos":["ST","CM"],"r":79},{"n":"Lee Sharpe","pos":["LW","LB"],"r":79}]},{"team":"Chelsea","year":2014,"disp":"2014–15","avg":82.2,"players":[{"n":"Thibaut Courtois","pos":["GK"],"r":80},{"n":"Branislav Ivanović","pos":["RB","CB"],"r":80},{"n":"John Terry","pos":["CB"],"r":81},{"n":"Gary Cahill","pos":["CB"],"r":81},{"n":"César Azpilicueta","pos":["LB","RB"],"r":80},{"n":"Nemanja Matić","pos":["DM","CM"],"r":81},{"n":"Cesc Fàbregas","pos":["CM","AM"],"r":82},{"n":"Oscar","pos":["AM","CM"],"r":81},{"n":"Willian","pos":["RW","AM"],"r":82},{"n":"Eden Hazard","pos":["LW","AM"],"r":93},{"n":"Diego Costa","pos":["ST"],"r":83},{"n":"Ramires","pos":["CM","RM"],"r":79},{"n":"Loïc Rémy","pos":["ST"],"r":79}]},{"team":"Blackpool","year":1955,"disp":"1955–56","avg":82.3,"players":[{"n":"George Farm","pos":["GK"],"r":80},{"n":"Eddie Garrett","pos":["RB"],"r":80},{"n":"Harry Johnston","pos":["CB","DM"],"r":81},{"n":"Tom Garrett","pos":["CB"],"r":81},{"n":"Tommy Garrett","pos":["LB"],"r":80},{"n":"Jimmy Kelly","pos":["CM"],"r":81},{"n":"Hugh Kelly","pos":["CM","DM"],"r":82},{"n":"Stanley Matthews","pos":["RW"],"r":93},{"n":"Bill Perry","pos":["LW"],"r":82},{"n":"Jackie Mudie","pos":["ST","AM"],"r":82},{"n":"Stan Mortensen","pos":["ST"],"r":83},{"n":"Ernie Taylor","pos":["AM","ST"],"r":79},{"n":"Ray Charnley","pos":["ST"],"r":79}]},{"team":"Preston North End","year":1957,"disp":"1957–58","avg":82.4,"players":[{"n":"Fred Else","pos":["GK"],"r":80},{"n":"Willie Cunningham","pos":["RB"],"r":80},{"n":"Joe Walton","pos":["CB"],"r":81},{"n":"Tommy Docherty","pos":["CM","DM"],"r":81},{"n":"George Ross","pos":["LB"],"r":80},{"n":"Tom Finney","pos":["RW","ST"],"r":94},{"n":"Tommy Thompson","pos":["ST"],"r":82},{"n":"Jimmy Baxter","pos":["CM"],"r":81},{"n":"Charlie Wayman","pos":["ST"],"r":82},{"n":"Derek Mayers","pos":["LW"],"r":82},{"n":"Peter Higham","pos":["RW"],"r":83},{"n":"Ken Horton","pos":["CB"],"r":79},{"n":"David Sneddon","pos":["ST"],"r":79}]},{"team":"Bolton Wanderers","year":1957,"disp":"1957–58","avg":82.1,"players":[{"n":"Eddie Hopkinson","pos":["GK"],"r":80},{"n":"Roy Hartle","pos":["RB"],"r":80},{"n":"Tommy Banks","pos":["LB"],"r":81},{"n":"Malcolm Barrass","pos":["CB","CM"],"r":81},{"n":"Bryan Edwards","pos":["CB"],"r":80},{"n":"Doug Holden","pos":["RW"],"r":81},{"n":"Willie Moir","pos":["CM","AM"],"r":82},{"n":"Ray Parry","pos":["LW","ST"],"r":81},{"n":"Nat Lofthouse","pos":["ST"],"r":92},{"n":"Dennis Stevens","pos":["ST"],"r":82},{"n":"Ralph Gubbins","pos":["ST"],"r":83},{"n":"Eric Bell","pos":["CM"],"r":79},{"n":"Brian Birch","pos":["ST"],"r":79}]},{"team":"Charlton Athletic","year":1956,"disp":"1956–57","avg":81.2,"players":[{"n":"Sam Bartram","pos":["GK"],"r":80},{"n":"John Hewie","pos":["LB","RB"],"r":80},{"n":"Gordon Jago","pos":["CB"],"r":81},{"n":"Benny Fenton","pos":["CM","DM"],"r":81},{"n":"Derek Ufton","pos":["CB"],"r":80},{"n":"Billy Kiernan","pos":["LW"],"r":81},{"n":"Eddie Firmani","pos":["ST","AM"],"r":82},{"n":"Stuart Leary","pos":["ST"],"r":81},{"n":"Johnny Summers","pos":["LW","ST"],"r":82},{"n":"Jimmy Gauld","pos":["ST"],"r":82},{"n":"Ronnie White","pos":["RW"],"r":83},{"n":"Paul Went","pos":["CB"],"r":79},{"n":"John Ryan","pos":["CM"],"r":79}]},{"team":"Birmingham City","year":1955,"disp":"1955–56","avg":80.8,"players":[{"n":"Gil Merrick","pos":["GK"],"r":86},{"n":"Jeff Hall","pos":["RB"],"r":79},{"n":"Ken Green","pos":["LB"],"r":80},{"n":"Trevor Smith","pos":["CB"],"r":80},{"n":"Roy Warhurst","pos":["CM","DM"],"r":79},{"n":"Len Boyd","pos":["CM","DM"],"r":80},{"n":"Johnny Newman","pos":["CB"],"r":81},{"n":"Gordon Astall","pos":["RW"],"r":80},{"n":"Alex Govan","pos":["LW"],"r":81},{"n":"Peter Murphy","pos":["ST","AM"],"r":81},{"n":"Eddy Brown","pos":["ST"],"r":82},{"n":"Noel Kinsey","pos":["CM","AM"],"r":78},{"n":"Jack Badham","pos":["CB"],"r":78}]},{"team":"Birmingham City","year":2009,"disp":"2009–10","avg":80.8,"players":[{"n":"Joe Hart","pos":["GK"],"r":86},{"n":"Stephen Carr","pos":["RB"],"r":79},{"n":"Roger Johnson","pos":["CB"],"r":80},{"n":"Scott Dann","pos":["CB"],"r":80},{"n":"Liam Ridgewell","pos":["LB","CB"],"r":79},{"n":"Barry Ferguson","pos":["CM","DM"],"r":80},{"n":"Lee Bowyer","pos":["CM","AM"],"r":81},{"n":"Sebastian Larsson","pos":["RW","RM"],"r":80},{"n":"James McFadden","pos":["LW","ST"],"r":81},{"n":"Cameron Jerome","pos":["ST"],"r":81},{"n":"Christian Benítez","pos":["ST"],"r":82},{"n":"Keith Fahey","pos":["CM","LM"],"r":78},{"n":"Kevin Phillips","pos":["ST"],"r":78}]},{"team":"Queens Park Rangers","year":1975,"disp":"1975–76","avg":81.1,"players":[{"n":"Phil Parkes","pos":["GK"],"r":79},{"n":"Dave Clement","pos":["RB"],"r":79},{"n":"Frank McLintock","pos":["CB"],"r":80},{"n":"Dave Webb","pos":["CB"],"r":80},{"n":"Ian Gillard","pos":["LB"],"r":79},{"n":"Gerry Francis","pos":["CM","AM"],"r":80},{"n":"Don Masson","pos":["CM"],"r":81},{"n":"Mick Leach","pos":["CM","RM"],"r":80},{"n":"Dave Thomas","pos":["RW"],"r":81},{"n":"Stan Bowles","pos":["ST","AM"],"r":91},{"n":"Don Givens","pos":["ST"],"r":82},{"n":"John Hollins","pos":["CM","RB"],"r":78},{"n":"Frank McEwan","pos":["CB"],"r":78}]},{"team":"West Bromwich Albion","year":1968,"disp":"1968–69","avg":80.9,"players":[{"n":"John Osborne","pos":["GK"],"r":79},{"n":"Doug Fraser","pos":["RB"],"r":79},{"n":"John Talbut","pos":["CB"],"r":80},{"n":"Graham Williams","pos":["LB"],"r":80},{"n":"Bobby Hope","pos":["CM","AM"],"r":79},{"n":"Tony Brown","pos":["CM","AM"],"r":80},{"n":"Clive Clark","pos":["LW"],"r":81},{"n":"Colin Suggett","pos":["CM"],"r":80},{"n":"Jeff Astle","pos":["ST"],"r":89},{"n":"John Kaye","pos":["ST"],"r":81},{"n":"Willie Johnston","pos":["RW","LW"],"r":82},{"n":"Graham Lovett","pos":["CM"],"r":78},{"n":"Ray Fairfax","pos":["CB"],"r":78}]}];
+
+// ---------- DATA: opponents per tournament (name + tier 1 weak … 3 strong) ----------
+
+
+// opponent pools derived from squad data (tier by starting-XI average)
+function derivePool(squads){
+  const seen = {}, out = [];
+  squads.forEach(s=>{
+    if(seen[s.team]) return; seen[s.team] = 1;
+    out.push([s.team, s.avg>=88.5?3 : s.avg>=85.5?2 : 1]);
+  });
+  return out;
+}
+const OPP_CLUBS = derivePool(CLUB_SQUADS);
+
+// ---------- DATA: tournaments ----------
+const TOURNAMENTS = {
+  pl: { name:"Premier League", emoji:"🦁", pool:"club", resc:7, opps:OPP_CLUBS,
+        format:"league", leagueTeams:20 }
+};
+
+
+// Formations + spots exactly as defined in the spreadsheet
+const FORMATIONS = {
+  "4-3-3":   [["LW","ST","RW"],["DM","CM","AM"],["LB","CB","CB","RB"],["GK"]],
+  "4-4-2":   [["ST","ST"],["LM","CM","CM","RM"],["LB","CB","CB","RB"],["GK"]],
+  "4-2-3-1": [["ST"],["LW","AM","RW"],["DM","DM"],["LB","CB","CB","RB"],["GK"]],
+  "4-5-1":   [["ST"],["LM","CM","DM","CM","RM"],["LB","CB","CB","RB"],["GK"]]
+};
+
+// A slot accepts a player if any of his positions fit.
+// Wingers may play wide midfield (RW→RM, LW→LM) since pure RM/LM are rare.
+function slotAccepts(slotPos, playerPositions){
+  if(playerPositions.indexOf(slotPos) !== -1) return true;
+  if(slotPos==="RM" && playerPositions.indexOf("RW") !== -1) return true;
+  if(slotPos==="LM" && playerPositions.indexOf("LW") !== -1) return true;
+  return false;
+}
+
+const RESCOUTS_MAX = 4;
+const SAVE_KEY = "plGlorySave_v1";
+const TROPHY_KEY = "plGloryTrophies_v1";
+const NAMES_KEY = "plGloryTeamNames_v1";
+
+// ============================================================
+// STATE + SAVE
+// ============================================================
+let S = null;          // current game state
+let matchTimer = null; // live ticker interval
+
+// clubs guaranteed to appear once while drafting (PL & FA Cup)
+const GUARANTEED_CLUBS = ["Aston Villa","Birmingham City","Tottenham Hotspur"];
+
+function freshState(tid){
+  return {
+    phase:"name", tour:tid, teamName:"", formation:null,
+    slots:[],            // [{pos, player:{n,pos,r,team,year}|null}]
+    rescouts:(TOURNAMENTS[tid].resc || RESCOUTS_MAX),
+    scout:null, pickedIdx:null,
+    seen:[],             // clubs already offered this draft — never repeated
+    scoutN:0,
+    // guaranteed clubs hidden at random positions within the first 10 scouts
+    guarAt:(tid==="pl"||tid==="fa") ? (function(){
+      const slots = shuffle([1,2,3,4,5,6,7,8,9,10]).slice(0,3);
+      const clubs = shuffle(GUARANTEED_CLUBS.slice());
+      const m = {}; slots.forEach(function(s,i){ m[s] = clubs[i]; });
+      return m;
+    })() : {},
+    campaign:null        // built when XI complete
+  };
+}
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} S = null; }
+function loadSave(){ try{ const j = localStorage.getItem(SAVE_KEY); return j ? JSON.parse(j) : null; }catch(e){ return null; } }
+function getRecords(){ // honours per tournament: {w: wins, ru: runner-up}
+  let t; try{ t = JSON.parse(localStorage.getItem(TROPHY_KEY)) || {}; }catch(e){ t = {}; }
+  const out = {};
+  Object.keys(TOURNAMENTS).forEach(k=>{
+    const v = t[k];
+    out[k] = (typeof v === "number") ? {w:v, ru:0} : (v && typeof v.w==="number" ? v : {w:0, ru:0});
+  });
+  return out;
+}
+function addRecord(tid, type){
+  const t = getRecords();
+  t[tid][type==="w" ? "w" : "ru"]++;
+  try{ localStorage.setItem(TROPHY_KEY, JSON.stringify(t)); }catch(e){}
+}
+
+// helpers
+function rnd(a,b){ return a + Math.random()*(b-a); }
+function ri(a,b){ return Math.floor(rnd(a,b+1)); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function el(id){ return document.getElementById(id); }
+function stopMatchTimer(){ if(matchTimer){ clearInterval(matchTimer); matchTimer = null; } }
+
+// ============================================================
+// TEAM RATING + CHEMISTRY
+// ============================================================
+function myPlayers(){ return S.slots.filter(s=>s.player).map(s=>s.player); }
+function teamRating(){
+  const ps = myPlayers();
+  if(!ps.length) return 0;
+  const avg = ps.reduce((a,b)=>a+b.r,0)/ps.length;
+  return Math.round((avg + chemBonus(ps)) * 10)/10;
+}
+function chemBonus(ps){
+  let chem = 0;
+  for(let i=0;i<ps.length;i++) for(let j=i+1;j<ps.length;j++){
+    if(ps[i].team===ps[j].team && ps[i].year===ps[j].year) chem += 0.4;
+    else if(Math.floor(ps[i].year/10)===Math.floor(ps[j].year/10)) chem += 0.1;
+  }
+  return Math.min(chem, 6);
+}
+
+// ============================================================
+// OPPONENT GENERATION — strength scales AGAINST your rating
+// ============================================================
+// progress: 0 (first game) → 1 (final). Early games sit below your level,
+// the final sits at/above it. Tier adds flavour, plus small randomness.
+function oppRating(tierName, progress, lower){
+  const mine = teamRating();
+  const base = mine - 10 + progress*9.5;        // -10 early → -0.5 at the final
+  const tier = lower ? -5 : (tierName-2)*1.5;   // tier 1:-1.5  2:0  3:+1.5
+  return Math.round(Math.max(55, Math.min(99, base + tier + rnd(-2.5,2.5)))*10)/10;
+}
+function drawOpponents(cfg, count, exclude, useLower){
+  const pool = (useLower && cfg.lowerOpps ? cfg.lowerOpps : cfg.opps).filter(o=>!exclude.includes(o[0]));
+  return shuffle(pool).slice(0,count);
+}
+
+// ============================================================
+// CAMPAIGN BUILD
+// ============================================================
+function buildCampaign(){
+  const cfg = TOURNAMENTS[S.tour];
+  const c = { format:cfg.format, fixtures:[], idx:0, done:false, won:false, wins:0, losses:0 };
+  if(cfg.format==="group_ko"){
+    const g = drawOpponents(cfg, 3, ["__me__"]);
+    c.group = { teams:g.map(t=>({name:t[0], tier:t[1], pts:0, gf:0, ga:0})), myPts:0, myGf:0, myGa:0, played:0 };
+    for(let i=0;i<cfg.groupGames;i++)
+      c.fixtures.push({ round:"Group "+(i+1), opp:g[i][0], tier:g[i][1], prog:i*0.08, played:false });
+    cfg.koRounds.forEach((r,i)=>{
+      c.fixtures.push({ round:r, opp:null, tier:2, prog:0.4 + 0.6*(i/(cfg.koRounds.length-1||1)), ko:true, played:false });
+    });
+  } else if(cfg.format==="knockout"){
+    cfg.koRounds.forEach((r,i)=>{
+      const prog = i/(cfg.koRounds.length-1);
+      c.fixtures.push({ round:r, opp:null, tier:2, prog:prog, ko:true, lower:i<2, played:false });
+    });
+  } else { // league: 20 teams, double round robin = 38 matchdays, home & away
+    // 19 distinct clubs from the 64-squad data (random season variant for each)
+    const byClub = {};
+    CLUB_SQUADS.forEach(s=>{ (byClub[s.team] = byClub[s.team]||[]).push(s); });
+    const clubs = shuffle(Object.keys(byClub)).slice(0, 19);
+    const others = clubs.map(cn=>{ const v = pick(byClub[cn]); return { name:cn, disp:v.disp, avg:v.avg, pts:0, gf:0, ga:0, pl:0 }; });
+    const meanAvg = others.reduce((a,t)=>a+t.avg,0)/others.length;
+    c.league = { teams:others, meanAvg:Math.round(meanAvg*10)/10, myPts:0, myGf:0, myGa:0, myPl:0 };
+    const sched = leagueSchedule(20); // 38 rounds of pairs [home,away], team 0 = me
+    sched.forEach((round,mdi)=>{
+      round.forEach(pair=>{
+        if(pair[0]===0 || pair[1]===0){
+          const oid = (pair[0]===0? pair[1] : pair[0]) - 1;
+          c.fixtures.push({ round:"Matchday "+(mdi+1), opp:others[oid].name, oppAvg:others[oid].avg, oppDisp:others[oid].disp,
+                            home:pair[0]===0, prog:mdi/37, played:false, md:mdi,
+                            aiPairs:round.filter(pr=>pr[0]!==0&&pr[1]!==0) });
+        }
+      });
+    });
+  }
+  return c;
+}
+// circle method double round robin for n teams (n even) → array of rounds, each round = [[a,b],...]
+function leagueSchedule(n){
+  const ids = []; for(let i=0;i<n;i++) ids.push(i);
+  const rounds = [];
+  const arr = ids.slice(1);
+  for(let r=0;r<n-1;r++){
+    let round = [[ids[0], arr[0]]];
+    for(let i=1;i<n/2;i++) round.push([arr[i], arr[arr.length-i]]);
+    if(r%2===1) round = round.map(pr=>[pr[1],pr[0]]); // alternate home/away
+    rounds.push(round);
+    arr.push(arr.shift());
+  }
+  const second = rounds.map(rd=>rd.map(pr=>[pr[1],pr[0]]));
+  return rounds.concat(second);
+}
+
+// quick sim for AI vs AI results
+function quickSim(rA, rB){
+  const d = rA - rB;
+  const xa = Math.max(0.3, 1.35 + d*0.09), xb = Math.max(0.3, 1.35 - d*0.09);
+  return [poisson(xa), poisson(xb)];
+}
+function poisson(x){
+  let L = Math.exp(-x), k = 0, pr = 1;
+  do { k++; pr *= Math.random(); } while (pr > L);
+  return k-1;
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+function render(){
+  stopMatchTimer();
+  const app = el("app");
+  if(!S){ renderTournamentSelect(app); return; }
+  if(S.phase==="name") renderName(app);
+  else if(S.phase==="formation") renderFormation(app);
+  else if(S.phase==="draft") renderDraft(app);
+  else if(S.phase==="campaign") renderCampaign(app);
+  else if(S.phase==="match") renderMatch(app);
+  else if(S.phase==="finished") renderFinished(app);
+  else renderTournamentSelect(app);
+}
+
+function trophyLine(){
+  const t = getRecords();
+  let rows = "";
+  Object.keys(TOURNAMENTS).forEach(k=>{
+    rows += '<tr><td class="tn"><span style="display:inline-block;width:28px;text-align:center;">'+TOURNAMENTS[k].emoji+'</span> '+TOURNAMENTS[k].name+'</td><td>'+t[k].w+'</td><td>'+t[k].ru+'</td></tr>';
+  });
+  return '<table style="margin-top:10px;"><tr><th style="text-align:left">Honours</th><th>🏆 Won</th><th>🥈 2nd</th></tr>'+rows+'</table>';
+}
+
+function renderTournamentSelect(app){
+  let h = '<div class="card center"><h2 class="gold">Premier Glory</h2>'
+        + '<div class="small">Scout classic English squads, build a dream XI, win the title.</div>'+trophyLine()+'</div>';
+  for(const k in TOURNAMENTS){
+    const t = TOURNAMENTS[k];
+    const sub = t.format==="league" ? "38 games, 20 teams — finish top" :
+                t.format==="knockout" ? t.koRounds.length+" knockout rounds" :
+                "Group stage + knockouts";
+    h += '<button class="tour-btn" onclick="startTournament(\''+k+'\')"><span class="emoji">'+t.emoji+'</span>'
+       + '<span><span class="name">'+t.name+'</span><br><span class="sub">'+sub+'</span></span></button>';
+  }
+  const names = getTeamNames();
+  const hasNames = Object.keys(TOURNAMENTS).some(k=>names[k]);
+  h += '<button class="btn secondary" onclick="showNamesModal()">'+(hasNames?'✏️ Change Team Names':'📝 Name Your Teams')+'</button>';
+  app.innerHTML = h;
+}
+function startTournament(tid){
+  S = freshState(tid);
+  const stored = getTeamNames()[tid];
+  if(stored){ S.teamName = stored; S.phase = "formation"; } // named already — straight to formation
+  save(); render();
+}
+
+// ---------- persistent team names per tournament ----------
+function getTeamNames(){
+  let n; try{ n = JSON.parse(localStorage.getItem(NAMES_KEY)) || {}; }catch(e){ n = {}; }
+  const out = {};
+  Object.keys(TOURNAMENTS).forEach(k=>{ out[k] = (typeof n[k]==="string") ? n[k] : ""; });
+  return out;
+}
+function saveTeamNames(n){ try{ localStorage.setItem(NAMES_KEY, JSON.stringify(n)); }catch(e){} }
+function showNamesModal(){
+  const names = getTeamNames();
+  let h = '<h2>📝 Name Your Teams</h2><div class="small" style="margin:6px 0;">These names are kept and used every time you play.</div>';
+  Object.keys(TOURNAMENTS).forEach(k=>{
+    const t = TOURNAMENTS[k];
+    h += '<div class="small" style="margin-top:10px;font-weight:700;">'+t.emoji+' '+t.name+'</div>'
+       + '<input class="txt" id="tn_'+k+'" type="text" maxlength="18" style="margin-top:4px;text-align:left;font-size:15px;padding:10px 12px;" '
+       + 'placeholder="e.g. Jeevan\'s XI" value="'+esc(names[k])+'">';
+  });
+  h += '<button class="btn" onclick="saveNamesModal()">Save Names</button>'
+     + '<button class="btn secondary" onclick="hideModal()">Cancel</button>';
+  showModal(h);
+}
+function saveNamesModal(){
+  const names = getTeamNames();
+  Object.keys(TOURNAMENTS).forEach(k=>{
+    const inp = el("tn_"+k);
+    if(inp && typeof inp.value==="string") names[k] = inp.value.replace(/\s+/g," ").trim().slice(0,18);
+  });
+  saveTeamNames(names);
+  if(S && names[S.tour]){ S.teamName = names[S.tour]; save(); } // apply to a run in progress too
+  hideModal(); render();
+}
+
+function myName(){ return (S && S.teamName) ? S.teamName : "YOUR XI"; }
+
+function renderName(app){
+  const cfg = TOURNAMENTS[S.tour];
+  app.innerHTML = '<div class="card center"><h2>'+cfg.emoji+' '+cfg.name+'</h2>'
+    + '<h3 style="margin-top:8px;">Name your team</h3>'
+    + '<input class="txt" id="teamname" type="text" maxlength="18" placeholder="e.g. Jeevan\'s XI" '
+    + 'value="'+esc(S.teamName||"")+'" onkeydown="if(event.key===\'Enter\')confirmName()">'
+    + '<button class="btn" onclick="confirmName()">Continue ➜</button>'
+    + '<button class="btn danger" onclick="abandon()">Quit Tournament</button></div>';
+  const inp = el("teamname");
+  if(inp && typeof inp.focus==="function") setTimeout(function(){ inp.focus(); }, 50);
+}
+function confirmName(){
+  const inp = el("teamname");
+  let v = (inp && inp.value ? inp.value : "").replace(/\s+/g," ").trim().slice(0,18);
+  S.teamName = v || "YOUR XI";
+  if(v){ const names = getTeamNames(); names[S.tour] = v; saveTeamNames(names); } // remember for next time
+  S.phase = "formation";
+  save(); render();
+}
+
+function renderFormation(app){
+  let h = '<div class="card"><h2>'+TOURNAMENTS[S.tour].emoji+' '+TOURNAMENTS[S.tour].name+'</h2><h3>Pick your formation</h3>';
+  for(const f in FORMATIONS) h += '<button class="btn secondary" onclick="chooseFormation(\''+f+'\')">'+f+'</button>';
+  h += '<button class="btn danger" onclick="abandon()">Quit Tournament</button></div>';
+  app.innerHTML = h;
+}
+function chooseFormation(f){
+  S.formation = f;
+  S.slots = [];
+  FORMATIONS[f].forEach(row=>row.forEach(pos=>S.slots.push({pos:pos, player:null})));
+  S.phase = "draft";
+  newScout();
+}
+
+// ---------- DRAFT ----------
+function poolFor(){ return CLUB_SQUADS; }
+function newScout(){
+  const pool = poolFor();
+  if(!S.seen) S.seen = [];
+  S.scoutN = (S.scoutN||0)+1;
+  let squad = null;
+  // guaranteed club due at this scout position (skipped if it already appeared naturally)
+  const gclub = (S.guarAt||{})[S.scoutN];
+  if(gclub && S.seen.indexOf(gclub)===-1){
+    const cands = pool.filter(sq=>sq.team===gclub);
+    if(cands.length) squad = pick(cands);
+  }
+  if(!squad){
+    // never show a club that's already been offered this draft
+    let cands = pool.filter(sq=>S.seen.indexOf(sq.team)===-1);
+    if(!cands.length){ S.seen = []; cands = pool; } // pool exhausted — reset
+    squad = pick(cands);
+  }
+  S.seen.push(squad.team);
+  const picked = myPlayers().map(pl=>pl.n+"|"+pl.team+"|"+pl.year);
+  const offer = squad.players.filter(pl=>!picked.includes(pl.n+"|"+squad.team+"|"+squad.year));
+  S.scout = { team:squad.team, year:squad.year, disp:squad.disp, ach:squad.ach||null, players:offer };
+  S.pickedIdx = null;
+  save(); render();
+}
+function scoutPickable(pl){ return S.slots.some(s=>!s.player && slotAccepts(s.pos, pl.pos)); }
+function pickPlayer(i){
+  const pl = S.scout.players[i];
+  if(!pl || !scoutPickable(pl)) return;
+  S.pickedIdx = i; save(); render();
+}
+function placeInSlot(si){
+  if(S.pickedIdx===null) return;
+  const slot = S.slots[si], pl = S.scout.players[S.pickedIdx];
+  if(slot.player || !slotAccepts(slot.pos, pl.pos)) return;
+  slot.player = { n:pl.n, pos:pl.pos, r:pl.r, team:S.scout.team, year:S.scout.year };
+  if(S.slots.every(s=>s.player)){
+    S.campaign = buildCampaign();
+    S.phase = "campaign";
+    save(); render();
+  } else newScout();
+}
+function reScout(){
+  if(S.rescouts<=0) return;
+  S.rescouts--; newScout();
+}
+function scoutIsDead(){ return !S.scout.players.some(pl=>scoutPickable(pl)); }
+
+function pitchHTML(clickable){
+  let si = 0, h = '<div id="pitch">';
+  FORMATIONS[S.formation].forEach(row=>{
+    h += '<div class="pitch-row">';
+    row.forEach(()=>{
+      const s = S.slots[si], idx = si;
+      const glow = clickable && S.pickedIdx!==null && !s.player && slotAccepts(s.pos, S.scout.players[S.pickedIdx].pos);
+      h += '<div class="slot '+(s.player?'filled':'')+(glow?' glow':'')+'" '
+         + (glow ? 'onclick="placeInSlot('+idx+')"' : '') + '>'
+         + '<span class="pos">'+s.pos+'</span>'
+         + (s.player ? '<span class="nm">'+esc(s.player.n)+'</span><span class="rt">'+s.player.r+'</span>' : '')
+         + '</div>';
+      si++;
+    });
+    h += '</div>';
+  });
+  return h + '</div>';
+}
+
+function renderDraft(app){
+  const filled = myPlayers().length;
+  let h = '<div class="card" style="padding:10px 12px;"><div class="scout-head">'
+        + '<span class="badge">'+S.formation+'</span>'
+        + '<span class="small">Squad '+filled+'/11 &nbsp;·&nbsp; Rating <b class="gold">'+(filled?teamRating():"–")+'</b></span>'
+        + '<span class="badge">Re-scouts: '+S.rescouts+'</span></div>'
+        + pitchHTML(true);
+  h += '<div class="center" style="margin:8px 0 6px;">'
+     + '<div class="scout-team gold">'+esc(S.scout.team)+'</div>'
+     + '<div style="font-size:14px;font-weight:700;">'+esc(S.scout.disp)+' squad · pick one player</div>'
+     + (S.scout.ach ? '<div class="small">🏵️ '+esc(S.scout.ach)+'</div>' : '')
+     + '</div>';
+  S.scout.players.forEach((pl,i)=>{
+    const ok = scoutPickable(pl), multi = pl.pos.length>1;
+    h += '<div class="player-card '+(ok?'':'disabled')+(S.pickedIdx===i?' selected':'')+'" onclick="pickPlayer('+i+')">'
+       + '<span class="pc-pos'+(multi?' gold':'')+'" style="width:auto;min-width:34px;">'+pl.pos.join("·")+'</span>'
+       + '<span class="pc-name">'+esc(pl.n)+'</span><span class="pc-rat">'+pl.r+'</span></div>';
+  });
+  if(S.pickedIdx!==null) h += '<div class="small center" style="margin-top:6px;">Now tap a glowing '+S.scout.players[S.pickedIdx].pos.join(" or ")+' slot on the pitch</div>';
+  if(scoutIsDead()) h += '<button class="btn" onclick="newScout()">No fit — scout again (free)</button>';
+  else h += '<button class="btn secondary" onclick="reScout()" '+(S.rescouts<=0?'disabled':'')+'>🔄 Re-scout ('+S.rescouts+' left)</button>';
+  h += '<button class="btn danger" onclick="abandon()">Quit Tournament</button></div>';
+  app.innerHTML = h;
+}
+
+function abandon(){
+  showModal('<h2>Quit tournament?</h2><p class="small">Your current run will be lost. Trophy records are kept.</p>'
+    + '<button class="btn danger" onclick="confirmAbandon()">Yes, quit</button>'
+    + '<button class="btn secondary" onclick="hideModal()">Keep playing</button>');
+}
+function confirmAbandon(){ hideModal(); clearSave(); render(); }
+
+// ---------- MODAL ----------
+function showModal(html){ el("modal").innerHTML = html; el("modal-bg").classList.add("show"); }
+function hideModal(){ el("modal-bg").classList.remove("show"); }
+
+// ============================================================
+// CAMPAIGN SCREEN
+// ============================================================
+function nextFixture(){ return S.campaign.fixtures.find(f=>!f.played); }
+
+function renderCampaign(app){
+  const cfg = TOURNAMENTS[S.tour], c = S.campaign;
+  let h = '<div class="card"><div class="scout-head">'
+        + '<h2>'+cfg.emoji+' '+cfg.name+'</h2>'
+        + '<span class="small">'+esc(myName())+': <b class="gold">'+teamRating()+'</b> · '+S.formation+'</span></div>';
+  h += '<div class="small" style="margin-bottom:8px;">Record: <span class="green">'+c.wins+'W</span> – <span class="red">'+c.losses+'L</span></div>';
+
+  if(c.group) h += groupTableHTML();
+  if(c.league) h += leagueTableHTML();
+
+  const nf = nextFixture();
+  if(c.league){
+    // compact view: recent results + next fixture only
+    const played = c.fixtures.filter(f=>f.played);
+    played.slice(-3).forEach(f=>{
+      h += '<div class="fixture"><span class="fr">'+f.round+'</span>'
+         + '<span class="tn">'+esc(f.opp)+' <span class="small">('+(f.home?'H':'A')+')</span></span>'
+         + '<span class="fs">'+f.scoreTxt+'</span></div>';
+    });
+    if(nf){
+      h += '<div class="fixture next"><span class="fr">'+nf.round+'</span>'
+         + '<span class="tn">'+esc(nf.opp)+' <span class="small">('+(nf.home?'Home':'Away')+')</span></span><span class="fs">▶</span></div>';
+    }
+  } else {
+    c.fixtures.forEach(f=>{
+      const isNext = f===nf;
+      h += '<div class="fixture'+(isNext?' next':'')+'"><span class="fr">'+f.round+'</span>'
+         + '<span class="tn">'+(f.opp?esc(f.opp):"TBD")+'</span>'
+         + '<span class="fs">'+(f.played ? f.scoreTxt : (isNext?"▶":""))+'</span></div>';
+    });
+  }
+
+  if(nf){
+    h += '<button class="btn" onclick="kickOff()">⚽ Play '+nf.round+(nf.opp?(' vs '+esc(nf.opp)):'')+'</button>';
+  }
+  h += '<button class="btn danger" onclick="abandon()">Quit Tournament</button></div>';
+  app.innerHTML = h;
+}
+
+function groupTableHTML(){
+  const g = S.campaign.group;
+  const rows = [{name:myName(), me:true, pts:g.myPts, gf:g.myGf, ga:g.myGa}]
+    .concat(g.teams.map(t=>({name:t.name, pts:t.pts, gf:t.gf, ga:t.ga})));
+  rows.sort((a,b)=> b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf);
+  let h = '<h3>Group Table</h3><table><tr><th style="text-align:left">Team</th><th>Pts</th><th>GF</th><th>GA</th></tr>';
+  rows.forEach(r=>{ h += '<tr'+(r.me?' class="me"':'')+'><td class="tn">'+esc(r.name)+'</td><td>'+r.pts+'</td><td>'+r.gf+'</td><td>'+r.ga+'</td></tr>'; });
+  return h+'</table><div class="small" style="margin:6px 0 10px;">Top 2 advance to the knockouts</div>';
+}
+function leagueTableHTML(){
+  const L = S.campaign.league;
+  const rows = [{name:myName(), disp:"", me:true, pts:L.myPts, gf:L.myGf, ga:L.myGa, pl:L.myPl}]
+    .concat(L.teams.map(t=>({name:t.name, disp:t.disp, pts:t.pts, gf:t.gf, ga:t.ga, pl:t.pl})));
+  rows.sort((a,b)=> b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf);
+  let h = '<h3>League Table — Matchday '+S.campaign.league.myPl+'/38</h3>'
+    + '<div style="max-height:260px;overflow-y:auto;"><table><tr><th style="text-align:left">Team</th><th>P</th><th>Pts</th><th>GD</th></tr>';
+  rows.forEach((r,i)=>{ h += '<tr'+(r.me?' class="me"':'')+'><td class="tn">'+(i+1)+'. '+esc(r.name)
+    +(r.disp?' <span class="small">'+esc(r.disp)+'</span>':'')+'</td><td>'+r.pl+'</td><td>'+r.pts+'</td><td>'+(r.gf-r.ga)+'</td></tr>'; });
+  return h+'</table></div><div class="small" style="margin:6px 0 10px;">Finish 1st to win the title</div>';
+}
+
+// ============================================================
+// MATCH ENGINE — live ticker
+// ============================================================
+let M = null; // transient live-match object (not saved; fixture saved only when finished)
+
+function kickOff(){
+  const cfg = TOURNAMENTS[S.tour], f = nextFixture();
+  if(!f) return;
+  if(!f.opp){ // knockout draw happens now
+    const used = S.campaign.fixtures.filter(x=>x.opp).map(x=>x.opp);
+    const d = drawOpponents(cfg, 1, used, f.lower)[0] || pick(cfg.opps);
+    f.opp = d[0]; f.tier = d[1];
+  }
+  let oppR;
+  if(S.campaign.league){
+    // real squad strength, scaled against YOUR rating (avg opponent sits below you
+    // so a title charge is possible over 38 games), plus home/away swing
+    oppR = teamRating() - 3.4 + (f.oppAvg - S.campaign.league.meanAvg)*0.9 + (f.home? -1.2 : 1.2) + rnd(-2,2);
+    oppR = Math.round(Math.max(55, Math.min(99, oppR))*10)/10;
+  } else {
+    oppR = oppRating(f.tier, f.prog, f.lower);
+  }
+  const myR = teamRating();
+  const d = myR - oppR;
+  M = {
+    f:f, oppR:oppR, myR:myR, min:0, gMe:0, gOpp:0, events:[],
+    xgMe:Math.max(0.35, 1.45 + d*0.10), xgOpp:Math.max(0.30, 1.40 - d*0.10),
+    period:"1H", stop:ri(1,5), et:false, pens:null, over:false, speed:1,
+    goalsMe:[], goalsOpp:[], shotsMe:0, shotsOpp:0,
+    cards:[], offMe:[], offOpp:[], bookedMe:{}, bookedOpp:{},
+    note:null, resWon:false, resDrew:false, others:[]
+  };
+  const osq = resolveOppSquad(f);
+  M.oppSquad = osq ? osq.players : null;
+  M.oppDisp = f.oppDisp || (osq ? osq.disp : "");
+  M.oppAch = (osq && osq.ach) ? String(osq.ach).split(";")[0].trim() : "";
+  S.phase = "match"; save(); render();
+  startTicker();
+}
+
+// find the real squad for the opponent so their scorers/cards use real names
+function resolveOppSquad(f){
+  const pool = CLUB_SQUADS;
+  let cands = pool.filter(s=>s.team===f.opp);
+  if(f.oppDisp){ const ex = cands.find(s=>s.disp===f.oppDisp); if(ex) cands = [ex]; }
+  return cands.length ? pick(cands) : null; // full squad {team, disp, players}
+}
+const GENERIC_NAMES = ["Silva","Santos","Costa","Fernández","Rossi","Bianchi","Weber","Kovač","Larsen","Nielsen","Moreau","Okafor","Diallo","Sato","Tanaka","Kim","García","Hernández","Petrov","Ivanov","Yılmaz","Novák","Eriksen","Duarte"];
+
+const SCORE_W = {ST:2.4, LW:1.7, RW:1.7, AM:1.6, LM:1.1, RM:1.1, CM:0.9, DM:0.4, CB:0.25, RB:0.3, LB:0.3, GK:0};
+const CARD_W  = {DM:1.7, CB:1.5, CM:1.2, RB:1.2, LB:1.2, AM:0.8, LM:0.9, RM:0.9, LW:0.7, RW:0.7, ST:0.8, GK:0.15};
+function weightedName(list, wmap, excl){
+  const ps = list.filter(pl=>excl.indexOf(pl.n)===-1);
+  if(!ps.length) return null;
+  const w = ps.map(pl=> pl.r * Math.max.apply(null, pl.pos.map(x=>wmap[x]||0.3)));
+  const sum = w.reduce((a,b)=>a+b,0);
+  if(sum<=0) return ps[0].n;
+  let t = rnd(0, sum);
+  for(let i=0;i<ps.length;i++){ t -= w[i]; if(t<=0) return ps[i].n; }
+  return ps[ps.length-1].n;
+}
+function scorerName(){
+  return weightedName(myPlayers().filter(pl=>pl.pos.indexOf("GK")===-1), SCORE_W, M?M.offMe:[]) || "Your XI";
+}
+function oppScorerName(){
+  if(M.oppSquad){
+    const n = weightedName(M.oppSquad.filter(pl=>pl.pos.indexOf("GK")===-1), SCORE_W, M.offOpp);
+    if(n) return n;
+  }
+  return pick(GENERIC_NAMES);
+}
+function cardName(mine){
+  if(mine) return weightedName(myPlayers(), CARD_W, M.offMe);
+  if(M.oppSquad){ const n = weightedName(M.oppSquad, CARD_W, M.offOpp); if(n) return n; }
+  return pick(GENERIC_NAMES);
+}
+// bookings: ~2 per team per game; reds via straight red or second yellow.
+// a card recalculates strength for the rest of the match.
+function maybeCard(mine){
+  if(Math.random() >= 0.021) return;
+  const n = cardName(mine);
+  if(!n) return;
+  const booked = mine ? M.bookedMe : M.bookedOpp;
+  const off = mine ? M.offMe : M.offOpp;
+  if(off.indexOf(n)!==-1) return;
+  const straightRed = Math.random() < 0.02;
+  // a booked player usually stays out of trouble — second yellows are rare
+  if(booked[n] && !straightRed && Math.random() < 0.78) return;
+  if(!straightRed && !booked[n]){
+    booked[n] = 1;
+    M.cards.push({min:M.min, side:mine?'me':'opp', n:n, t:'Y'});
+    addEv(M.min+"' 🟨 "+n+(mine?"":" ("+M.f.opp+")"), "ev-info");
+    if(mine) M.xgMe *= 0.985; else M.xgOpp *= 0.985; // slight caution
+  } else {
+    const second = !straightRed;
+    off.push(n);
+    M.cards.push({min:M.min, side:mine?'me':'opp', n:n, t:second?'YR':'R'});
+    addEv(M.min+"' 🟥 "+n+(second?" (second yellow)":"")+" — "+(mine?"you're down to 10 men!":M.f.opp+" down to 10 men!"), mine?"ev-opp":"ev-goal");
+    if(mine){ M.xgMe *= 0.72; M.xgOpp *= 1.25; } // 10 men: big strength recalc
+    else    { M.xgOpp *= 0.72; M.xgMe *= 1.25; }
+  }
+}
+function addEv(txt, cls){ M.events.push({t:txt, c:cls||"ev-info"}); }
+
+function startTicker(){
+  stopMatchTimer();
+  matchTimer = setInterval(tick, 320); // ~30s for a 90-minute match at speed x1
+}
+function tick(){
+  if(!M || M.over){ stopMatchTimer(); return; }
+  const steps = M.speed;
+  for(let s=0;s<steps;s++){ if(!minuteStep()) break; }
+  drawMatch();
+}
+function minuteStep(){
+  M.min++;
+  const perMin = 1/93;
+  if(Math.random() < M.xgMe*perMin){
+    M.gMe++; M.shotsMe++;
+    const n = scorerName();
+    M.goalsMe.push({n:n, min:M.min});
+    addEv(M.min+"' ⚽ GOAL! "+n+" scores! "+M.gMe+"–"+M.gOpp, "ev-goal");
+  } else if(Math.random() < M.xgMe*perMin*1.9){ M.shotsMe++; }
+  if(Math.random() < M.xgOpp*perMin){
+    M.gOpp++; M.shotsOpp++;
+    const n = oppScorerName();
+    M.goalsOpp.push({n:n, min:M.min});
+    addEv(M.min+"' ⚽ "+M.f.opp+" score — "+n+". "+M.gMe+"–"+M.gOpp, "ev-opp");
+  } else if(Math.random() < M.xgOpp*perMin*1.9){ M.shotsOpp++; }
+  maybeCard(true); maybeCard(false);
+  if(M.min===45 && M.period==="1H"){ M.period="2H"; addEv("Half-time: "+M.gMe+"–"+M.gOpp); }
+  if(M.min===90+((M.period==="2H")?M.stop:0) && !M.et && M.period==="2H"){ endNinety(); return false; }
+  if(M.min===90 && M.period==="2H" && M.stop>0){ addEv("+"+M.stop+" minutes of stoppage time"); }
+  if(M.et && M.min>=120){ endExtraTime(); return false; }
+  return true;
+}
+function endNinety(){
+  if(M.gMe!==M.gOpp || !M.f.ko){ finishMatch(); return; }
+  addEv("Full-time "+M.gMe+"–"+M.gOpp+" — EXTRA TIME!", "ev-info");
+  M.et = true; M.min = 90; drawMatch();
+}
+function endExtraTime(){
+  if(M.gMe!==M.gOpp){ finishMatch(); return; }
+  addEv("Still level after 120' — PENALTIES!", "ev-info");
+  stopMatchTimer(); runShootout();
+}
+function runShootout(){
+  const meP = 0.76 + (M.myR-M.oppR)*0.006, opP = 0.76 - (M.myR-M.oppR)*0.006;
+  M.pens = { me:0, opp:0, log:[] };
+  let kick = 0;
+  const iv = setInterval(()=>{
+    kick++;
+    const round = Math.ceil(kick/2), myTurn = (kick%2===1);
+    if(myTurn){ const sc = Math.random()<meP; if(sc) M.pens.me++; M.pens.log.push((sc?"✅":"❌")+" "+scorerName()); }
+    else { const sc = Math.random()<opP; if(sc) M.pens.opp++; M.pens.log.push((sc?"🔴✅":"🔴❌")+" "+M.f.opp); }
+    addEv("Pens: "+M.pens.me+"–"+M.pens.opp, myTurn?"ev-goal":"ev-opp");
+    drawMatch();
+    const kicksEach = Math.ceil(kick/2), other = Math.floor(kick/2);
+    let decided = false;
+    if(round<=5){
+      const remMe = 5-Math.ceil(kick/2)+(myTurn?0:0);
+      if(kick>=4){ // possible early decision
+        const meKicks = Math.ceil(kick/2), opKicks = Math.floor(kick/2);
+        if(M.pens.me > M.pens.opp + (5-opKicks)) decided = true;
+        if(M.pens.opp > M.pens.me + (5-meKicks)) decided = true;
+      }
+      if(round===5 && kick%2===0 && M.pens.me!==M.pens.opp) decided = true;
+    } else if(kick%2===0 && M.pens.me!==M.pens.opp) decided = true; // sudden death
+    if(decided){ clearInterval(iv); finishMatch(true); }
+  }, 650);
+  matchTimer = iv;
+}
+
+function finishMatch(byPens){
+  stopMatchTimer();
+  M.over = true;
+  const f = M.f, c = S.campaign;
+  let won = M.gMe > M.gOpp, drew = M.gMe===M.gOpp;
+  if(byPens){ won = M.pens.me > M.pens.opp; drew = false; }
+  f.played = true;
+  f.scoreTxt = M.gMe+"–"+M.gOpp + (byPens ? " ("+M.pens.me+"–"+M.pens.opp+"p)" : "");
+  if(won) c.wins++; else if(!drew) c.losses++;
+  M.resWon = won; M.resDrew = drew;
+
+  // update tables + simulate AI results
+  if(c.group && !f.ko){
+    const g = c.group, oppT = g.teams.find(t=>t.name===f.opp);
+    g.myGf += M.gMe; g.myGa += M.gOpp; oppT.gf += M.gOpp; oppT.ga += M.gMe;
+    if(won) g.myPts += 3; else if(drew){ g.myPts++; oppT.pts++; } else oppT.pts += 3;
+    const others = g.teams.filter(t=>t!==oppT);
+    if(others.length===2){
+      const r = quickSim(72+others[0].tier*6, 72+others[1].tier*6);
+      others[0].gf+=r[0]; others[0].ga+=r[1]; others[1].gf+=r[1]; others[1].ga+=r[0];
+      if(r[0]>r[1]) others[0].pts+=3; else if(r[1]>r[0]) others[1].pts+=3; else { others[0].pts++; others[1].pts++; }
+      M.others.push({a:others[0].name, ga:r[0], gb:r[1], b:others[1].name});
+    }
+    g.played++;
+    if(g.played===3 && !groupQualified()){
+      c.done = true; c.won = false; S.phase = "finished"; M.note = "Knocked out in the group stage";
+    }
+  } else if(c.league){
+    const L = c.league, oppT = L.teams.find(t=>t.name===f.opp);
+    L.myGf += M.gMe; L.myGa += M.gOpp; L.myPl++; oppT.gf += M.gOpp; oppT.ga += M.gMe; oppT.pl++;
+    if(won) L.myPts += 3; else if(drew){ L.myPts++; oppT.pts++; } else oppT.pts += 3;
+    (f.aiPairs||[]).forEach(pr=>{
+      const a = L.teams[pr[0]-1], b = L.teams[pr[1]-1]; // a at home
+      const r = quickSim(a.avg+0.7, b.avg-0.7);
+      a.gf+=r[0]; a.ga+=r[1]; a.pl++; b.gf+=r[1]; b.ga+=r[0]; b.pl++;
+      if(r[0]>r[1]) a.pts+=3; else if(r[1]>r[0]) b.pts+=3; else { a.pts++; b.pts++; }
+      M.others.push({a:a.name, ga:r[0], gb:r[1], b:b.name});
+    });
+  } else if(f.ko && !won){
+    c.done = true; c.won = false; S.phase = "finished"; M.note = "Beaten in the "+f.round;
+    if(f.round==="Final") addRecord(S.tour, "ru"); // lost the final = runner-up
+  }
+
+  // knockout bracket bookkeeping
+  if(f.ko && c.bracket) advanceBracket(won);
+  if(!c.done && !c.bracket){
+    const rem = c.fixtures.filter(x=>!x.played && x.ko).length;
+    if((c.group && c.group.played===3) || (TOURNAMENTS[S.tour].format==="knockout" && rem===3)) buildBracket();
+  }
+
+  // campaign complete?
+  if(!c.done && !nextFixture()){
+    c.done = true;
+    if(c.league){
+      const L = c.league;
+      const best = Math.max.apply(null, L.teams.map(t=>t.pts));
+      const bestGd = Math.max.apply(null, L.teams.filter(t=>t.pts===best).map(t=>t.gf-t.ga));
+      c.won = L.myPts > best || (L.myPts===best && (L.myGf-L.myGa) >= bestGd);
+    } else c.won = true;
+    S.phase = "finished";
+    if(c.won){
+      M.note = "CHAMPIONS!";
+      addRecord(S.tour, "w");
+      celebrate();
+    } else if(c.league){
+      const pos = leaguePosition();
+      M.note = "Finished "+ord(pos);
+      if(pos===2) addRecord(S.tour, "ru");
+    } else M.note = "So close — finished runner-up";
+  }
+  save();
+  drawMatch();
+  showSummary();
+}
+
+// ---------- full-time summary popup ----------
+function showSummary(){
+  if(!M) return;
+  const f = M.f;
+  const head = M.resWon ? '✅ Victory' : M.resDrew ? '🤝 Draw' : '❌ Defeat';
+  let h = '<h2 class="center">'+head+' — '+f.round+'</h2>'
+    + '<div class="bigresult" style="margin:8px 0;">'+esc(myName())+' '+M.gMe+' – '+M.gOpp+' '+esc(f.opp)
+    + (M.oppDisp?' <span class="small">'+esc(M.oppDisp)+'</span>':'')+'</div>';
+  if(M.pens) h += '<div class="center small" style="margin:-4px 0 6px;">Penalties: '+M.pens.me+'–'+M.pens.opp+'</div>';
+  if(M.goalsMe.length || M.goalsOpp.length){
+    h += '<div class="row" style="margin-bottom:8px;"><div style="flex:1">'
+      + M.goalsMe.map(g=>'<div class="small">⚽ '+esc(g.n)+' '+g.min+"'</div>").join('')
+      + '</div><div style="flex:1;text-align:right">'
+      + M.goalsOpp.map(g=>'<div class="small">'+esc(g.n)+' '+g.min+"' ⚽</div>").join('')
+      + '</div></div>';
+  }
+  const yMe = M.cards.filter(x=>x.side==='me'&&x.t==='Y').length, yOp = M.cards.filter(x=>x.side==='opp'&&x.t==='Y').length;
+  const rMe = M.cards.filter(x=>x.side==='me'&&x.t!=='Y').length, rOp = M.cards.filter(x=>x.side==='opp'&&x.t!=='Y').length;
+  h += '<table style="margin:4px 0 8px;">'
+    + '<tr><th>'+esc(myName())+'</th><th></th><th>'+esc(f.opp)+'</th></tr>'
+    + '<tr><td>'+M.shotsMe+'</td><td class="small">Shots on goal</td><td>'+M.shotsOpp+'</td></tr>'
+    + '<tr><td>'+yMe+'</td><td class="small">🟨 Yellow cards</td><td>'+yOp+'</td></tr>'
+    + '<tr><td>'+rMe+'</td><td class="small">🟥 Red cards</td><td>'+rOp+'</td></tr></table>';
+  const reds = M.cards.filter(x=>x.t!=='Y');
+  if(reds.length) h += reds.map(x=>'<div class="small">🟥 '+esc(x.n)+' '+x.min+"'"+(x.t==='YR'?' (2nd yellow)':'')+(x.side==='opp'?' — '+esc(f.opp):'')+'</div>').join('');
+  if(M.others && M.others.length){
+    h += '<h3 style="margin:10px 0 4px;">Around the grounds — '+esc(f.round)+'</h3>'
+      + M.others.map(o=>'<div class="small" style="display:flex;justify-content:space-between;gap:6px;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.07);">'
+        + '<span style="flex:1;">'+esc(o.a)+'</span>'
+        + '<span style="font-weight:800;color:var(--text);">'+o.ga+'–'+o.gb+(o.pn?' ('+o.pn+'p)':'')+'</span>'
+        + '<span style="flex:1;text-align:right;">'+esc(o.b)+'</span></div>').join('');
+  }
+  if(M.note) h += '<div class="bigresult '+(S.campaign.won?'gold':'red')+'">'+(S.campaign.won?'🏆 ':'')+esc(M.note)+'</div>';
+  h += '<button class="btn" onclick="closeSummary()">Continue</button>';
+  showModal(h);
+}
+function closeSummary(){ hideModal(); backToCampaign(); }
+
+// ---------- title celebration: confetti + trophy, fades after ~5.5s ----------
+function celebrate(){
+  if(typeof document.createElement !== "function" || !document.body) return;
+  const old = el("celebrate"); if(old) old.remove();
+  const wrap = document.createElement("div");
+  wrap.id = "celebrate";
+  const colors = ["#f5c542","#e6534f","#37c871","#4f9de6","#e6a24f","#b44fe6","#ffffff"];
+  for(let i=0;i<130;i++){
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = (Math.random()*100)+"vw";
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.width = (6+Math.random()*8)+"px";
+    c.style.height = (10+Math.random()*10)+"px";
+    c.style.animationDuration = (2.6+Math.random()*2.4)+"s";
+    c.style.animationDelay = (Math.random()*2.2)+"s";
+    c.style.transform = "rotate("+Math.floor(Math.random()*360)+"deg)";
+    wrap.appendChild(c);
+  }
+  const cup = document.createElement("div");
+  cup.className = "big-cup";
+  cup.textContent = "🏆";
+  wrap.appendChild(cup);
+  document.body.appendChild(wrap);
+  setTimeout(function(){ wrap.style.opacity = "0"; }, 4500);   // fade away…
+  setTimeout(function(){ if(wrap.parentNode) wrap.remove(); }, 5800);
+}
+function leaguePosition(){
+  const L = S.campaign.league;
+  const rows = [{me:true, pts:L.myPts, gd:L.myGf-L.myGa, gf:L.myGf}]
+    .concat(L.teams.map(t=>({pts:t.pts, gd:t.gf-t.ga, gf:t.gf})));
+  rows.sort((a,b)=> b.pts-a.pts || b.gd-a.gd || b.gf-a.gf);
+  return rows.findIndex(r=>r.me)+1;
+}
+function ord(n){ const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+function groupQualified(){
+  const g = S.campaign.group;
+  const rows = [{me:true, pts:g.myPts, gd:g.myGf-g.myGa, gf:g.myGf}]
+    .concat(g.teams.map(t=>({pts:t.pts, gd:t.gf-t.ga, gf:t.gf})));
+  rows.sort((a,b)=> b.pts-a.pts || b.gd-a.gd || b.gf-a.gf);
+  return rows.findIndex(r=>r.me) < 2;
+}
+
+// ============================================================
+// KNOCKOUT BRACKET — real draw; other ties are simulated,
+// and your next opponent is the winner of the adjacent tie.
+// ============================================================
+function buildBracket(){
+  const cfg = TOURNAMENTS[S.tour], c = S.campaign;
+  const remaining = c.fixtures.filter(f=>!f.played && f.ko);
+  const size = Math.pow(2, remaining.length);      // 16 (WC) or 8 (Euros / FA Cup)
+  const used = c.fixtures.filter(f=>f.opp).map(f=>f.opp);
+  let entrants = [];
+  if(c.group){ // my group's runner-up also advances
+    const rows = c.group.teams.slice().sort((a,b)=> b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga));
+    entrants.push([rows[0].name, rows[0].tier]);
+  }
+  const pool = shuffle(cfg.opps.filter(o=>used.indexOf(o[0])===-1 && !entrants.some(e=>e[0]===o[0])));
+  while(entrants.length < size-1 && pool.length) entrants.push(pool.pop());
+  entrants = shuffle(entrants);
+  const rt = {}, tiers = {};
+  entrants.forEach(e=>{ rt[e[0]] = 74 + e[1]*5 + rnd(-1.5,1.5); tiers[e[0]] = e[1]; });
+  const names = entrants.map(e=>e[0]);
+  const ties = [{a:"ME", b:names[0], ga:null, gb:null, pn:null, w:null, mine:true}];
+  for(let i=1;i<size/2;i++) ties.push({a:names[2*i-1], b:names[2*i], ga:null, gb:null, pn:null, w:null, mine:false});
+  c.bracket = { rt:rt, tiers:tiers, roundNames:remaining.map(f=>f.round), rounds:[ties], idx:0 };
+  syncNextKO();
+}
+function syncNextKO(){
+  const br = S.campaign.bracket; if(!br) return;
+  const nf = S.campaign.fixtures.find(x=>!x.played && x.ko); if(!nf) return;
+  const myTie = br.rounds[br.idx].find(t=>t.mine); if(!myTie) return;
+  nf.opp = myTie.a==="ME" ? myTie.b : myTie.a;
+  nf.tier = br.tiers[nf.opp] || 2;
+}
+function simTie(t, br){
+  if(t.w) return;
+  const ra = br.rt[t.a]||80, rb = br.rt[t.b]||80;
+  const r = quickSim(ra, rb);
+  t.ga = r[0]; t.gb = r[1];
+  if(r[0]===r[1]){ // decided on penalties
+    const aWins = Math.random() < 0.5 + (ra-rb)*0.02;
+    const pw = ri(3,5), pl = pw - ri(1,2);
+    t.pn = aWins ? pw+"–"+pl : pl+"–"+pw;
+    t.w = aWins ? t.a : t.b;
+  } else t.w = r[0]>r[1] ? t.a : t.b;
+}
+function advanceBracket(myWon){
+  const c = S.campaign, br = c.bracket;
+  const round = br.rounds[br.idx];
+  const myTie = round.find(t=>t.mine);
+  myTie.ga = M.gMe; myTie.gb = M.gOpp;
+  myTie.pn = M.pens ? M.pens.me+"–"+M.pens.opp : null;
+  myTie.w = myWon ? "ME" : myTie.b;
+  round.forEach(t=>{ if(!t.mine) simTie(t, br); });
+  M.others = round.filter(t=>!t.mine).map(t=>({a:t.a, ga:t.ga, gb:t.gb, b:t.b, pn:t.pn}));
+  if(round.length > 1){
+    const winners = round.map(t=>t.w);
+    const next = [];
+    for(let i=0;i<winners.length;i+=2){
+      const a = winners[i], b = winners[i+1];
+      const mine = (a==="ME" || b==="ME");
+      next.push({a:mine?"ME":a, b:mine?(a==="ME"?b:a):b, ga:null, gb:null, pn:null, w:null, mine:mine});
+    }
+    br.rounds.push(next);
+    br.idx++;
+    if(myWon) syncNextKO();
+    else finishBracketSim(br); // I'm out — play the rest of the bracket
+  }
+}
+function finishBracketSim(br){
+  let cur = br.rounds[br.rounds.length-1];
+  while(true){
+    cur.forEach(t=>simTie(t, br));
+    if(cur.length===1) break;
+    const winners = cur.map(t=>t.w);
+    const next = [];
+    for(let i=0;i<winners.length;i+=2) next.push({a:winners[i], b:winners[i+1], ga:null, gb:null, pn:null, w:null, mine:false});
+    br.rounds.push(next);
+    cur = next;
+  }
+}
+function bracketHTML(){
+  const br = S.campaign.bracket;
+  let h = '<h3>Tournament Bracket</h3>';
+  br.rounds.forEach((round,i)=>{
+    h += '<div class="small" style="margin:10px 0 4px;font-weight:800;color:var(--gold);">'+esc(br.roundNames[i]||"")+'</div>';
+    round.forEach(t=>{
+      const an = t.a==="ME"?myName():t.a, bn = t.b==="ME"?myName():t.b;
+      const done = t.w!==null, wA = t.w===t.a;
+      h += '<div class="fixture'+(t.mine?' next':'')+'">'
+         + '<span class="tn" style="width:38%;'+(done?(wA?'':'opacity:.55;'):'')+'">'+(t.a==="ME"?'<span class="gold">':'')+esc(an)+(t.a==="ME"?'</span>':'')+'</span>'
+         + '<span class="fs">'+(done ? t.ga+'–'+t.gb+(t.pn?' <span class="small">('+t.pn+'p)</span>':'') : 'vs')+'</span>'
+         + '<span class="tn" style="width:38%;text-align:right;'+(done?(wA?'opacity:.55;':''):'')+'">'+(t.b==="ME"?'<span class="gold">':'')+esc(bn)+(t.b==="ME"?'</span>':'')+'</span></div>';
+    });
+  });
+  return h;
+}
+
+function renderMatch(app){
+  if(!M){ // resumed mid-match (page reloaded): fixture not saved, replay it
+    S.phase = "campaign"; save(); render(); return;
+  }
+  app.innerHTML =
+      '<div class="card"><div id="scoreboard">'
+    + '<div class="team gold">'+esc(myName())+'<br><span class="small">'+M.myR+'</span></div>'
+    + '<div class="score" id="mscore"></div>'
+    + '<div class="team">'+esc(M.f.opp)
+    + (M.oppDisp?'<br><span class="small">'+esc(M.oppDisp)+'</span>':'')
+    + (M.oppAch?'<br><span class="small gold">'+esc(M.oppAch)+'</span>':'')
+    + '<br><span class="small">'+M.oppR+'</span></div></div>'
+    + '<div id="matchclock"></div><div id="ticker"></div>'
+    + '<div class="row"><button class="btn secondary" id="spdbtn" onclick="toggleSpeed()">⏩ Speed ×1</button>'
+    + '<button class="btn secondary" onclick="skipMatch()">⏭ Skip</button></div>'
+    + '<button class="btn" id="contbtn" style="display:none" onclick="showSummary()">Full-Time Summary ➜</button></div>';
+  drawMatch();
+}
+function drawMatch(){
+  if(!el("mscore")) return;
+  el("mscore").textContent = M.gMe+" – "+M.gOpp;
+  const inj = !M.over && !M.pens && !M.et && M.period==="2H" && M.min>90; // injury time
+  const clock = el("matchclock");
+  let ct;
+  if(M.over) ct = "FULL TIME";
+  else if(M.pens) ct = "PENALTIES";
+  else if(inj) ct = "90+"+(M.min-90)+"'";
+  else ct = (M.et&&M.min>=90 ? "ET " : "")+Math.min(M.min,M.et?120:90)+"'";
+  clock.innerHTML = ct+'<span class="mc-round">'+esc(M.f.round)+'</span>';
+  clock.className = inj ? "injury" : "";
+  el("ticker").innerHTML = M.events.slice(-40).map(e=>'<div class="'+e.c+'">'+esc(e.t)+'</div>').reverse().join("");
+  if(M.over){
+    el("contbtn").style.display = "block";
+    const sb = el("spdbtn"); if(sb) sb.style.display = "none";
+  }
+}
+function toggleSpeed(){
+  M.speed = M.speed===1 ? 4 : 1;
+  el("spdbtn").textContent = "⏩ Speed ×"+M.speed;
+}
+function skipMatch(){
+  if(!M || M.over || M.pens) return;
+  stopMatchTimer();
+  while(!M.over && !M.pens){ if(!minuteStep()){ break; } }
+  if(!M.over && !M.pens && M.et){ while(!M.over && !M.pens){ if(!minuteStep()) break; } }
+  drawMatch();
+}
+function backToCampaign(){
+  M = null;
+  if(S && S.phase==="match"){ S.phase = "campaign"; save(); }
+  render();
+}
+
+// ============================================================
+// FINISHED SCREEN
+// ============================================================
+function renderFinished(app){
+  const c = S.campaign, cfg = TOURNAMENTS[S.tour];
+  let h = '<div class="card center">'
+    + '<div style="font-size:56px;">'+(c.won?'🏆':'😞')+'</div>'
+    + '<h2 class="'+(c.won?'gold':'red')+'">'+(c.won ? cfg.name+' Champions!' : (c.league ? 'Season Over' : 'Cup Run Over'))+'</h2>'
+    + '<div class="small" style="margin:8px 0;">Record: '+c.wins+' wins, '+c.losses+' losses · Squad rating '+teamRating()+'</div>'
+    + trophyLine()+'</div>';
+  // final standings / results
+  if(c.league) h += '<div class="card">'+leagueTableHTML()+'</div>';
+  if(c.group)  h += '<div class="card">'+groupTableHTML()+'</div>';
+  if(!c.league){
+    const rh = c.fixtures.filter(f=>f.played).map(f=>
+      '<div class="fixture"><span class="fr">'+f.round+'</span><span class="tn">'+esc(f.opp)+'</span><span class="fs">'+f.scoreTxt+'</span></div>').join('');
+    if(rh) h += '<div class="card"><h3>Your Results</h3>'+rh+'</div>';
+  }
+  if(c.bracket) h += '<div class="card">'+bracketHTML()+'</div>';
+  h += '<div class="card center">'
+    + '<button class="btn" onclick="newRun()">🏠 Back to Opening Screen</button>'
+    + '<a class="btn secondary" style="text-decoration:none" href="index.html">🌱 Games Garden</a></div>';
+  app.innerHTML = h;
+}
+function newRun(){ clearSave(); render(); }
+
+// ============================================================
+// BOOT — resume prompt only if a game is in play
+// ============================================================
+window.addEventListener("load", function(){
+  const saved = loadSave();
+  if(saved && saved.phase && saved.phase!=="finished"){
+    S = saved;
+    if(S.phase==="match") S.phase = "campaign"; // mid-match resumes at fixture list
+    const cfg = TOURNAMENTS[S.tour];
+    render(); // show the game behind the modal
+    showModal('<h2>Welcome back!</h2>'
+      + '<p class="small" style="margin:8px 0 4px;">You have a '+cfg.emoji+' <b>'+cfg.name+'</b> run in progress'
+      + (S.campaign ? ' ('+S.campaign.wins+'W–'+S.campaign.losses+'L)' : ' (building your XI)')+'.</p>'
+      + '<button class="btn" onclick="resumeGame()">▶ Continue Game</button>'
+      + '<button class="btn secondary" onclick="startNewFromModal()">Start New Game</button>');
+  } else {
+    if(saved) clearSave();
+    render();
+  }
+});
+function resumeGame(){ hideModal(); save(); render(); }
+function startNewFromModal(){ hideModal(); clearSave(); render(); }
+// keep state saved when leaving the page (e.g. tapping Menu)
+window.addEventListener("pagehide", function(){ if(S) save(); });
+</script>
+</body>
+</html>
