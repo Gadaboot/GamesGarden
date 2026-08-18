@@ -13,6 +13,7 @@
     background: radial-gradient(ellipse at 50% 25%, #237a44 0%, #14582f 55%, #0b3d1f 100%);
     color:#fff; display:flex; flex-direction:column; align-items:center;
     touch-action:manipulation;
+    transition: background 1s;
   }
   header {
     width:100%; max-width:520px; display:flex; align-items:center; gap:10px;
@@ -25,7 +26,7 @@
   header h1 { font-size:18px; font-weight:700; letter-spacing:.4px; }
   .stats {
     margin-left:auto; display:flex; gap:13px; font-size:11.5px; font-weight:600;
-    color:#d8f0dd; font-variant-numeric:tabular-nums; text-align:center;
+    color:#e8f0ea; font-variant-numeric:tabular-nums; text-align:center;
   }
   .stats b { display:block; color:#fff; font-size:14.5px; }
   .toolbar {
@@ -47,15 +48,15 @@
   }
   .overlay.show { display:flex; }
   .panel {
-    background:linear-gradient(165deg,#1f7a45,#0f4a2a);
+    background:linear-gradient(165deg,#2a3550,#141b33);
     border:2px solid rgba(255,255,255,.25); border-radius:20px;
-    padding:22px 22px; text-align:center; width:min(92%,400px);
+    padding:22px 22px; text-align:center; width:min(92%,420px);
     box-shadow:0 18px 50px rgba(0,0,0,.55);
     animation:pin .35s cubic-bezier(.2,1.5,.4,1);
   }
   @keyframes pin { from { transform:scale(.6); opacity:0; } to { transform:scale(1); opacity:1; } }
   .panel h2 { font-size:24px; margin-bottom:4px; color:#ffd75e; }
-  .panel p { font-size:13.5px; color:#dff1e4; margin:4px 0; line-height:1.45; }
+  .panel p { font-size:13.5px; color:#dfe7f1; margin:4px 0; line-height:1.45; }
   .panel .big {
     margin-top:14px; font:700 15px -apple-system,sans-serif; color:#3a2c05;
     background:#e8b33b; border:none; border-radius:12px; padding:12px 24px; cursor:pointer;
@@ -69,29 +70,47 @@
   #starRow .on { color:#ffd75e; text-shadow:0 0 14px rgba(255,215,94,.7); }
   #starRow .off { color:rgba(255,255,255,.25); }
 
-  #lvlGrid {
-    display:grid; grid-template-columns:repeat(5,1fr); gap:8px;
-    max-height:52vh; overflow-y:auto; margin-top:12px; padding:2px;
-    -webkit-overflow-scrolling:touch;
+  #shopRow { display:flex; gap:8px; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+  .shopBtn {
+    font:700 12px -apple-system,sans-serif; color:#ffd75e;
+    background:rgba(255,215,94,.12); border:1.5px solid rgba(255,215,94,.5);
+    border-radius:11px; padding:9px 12px; cursor:pointer;
   }
+  .shopBtn:active { background:rgba(255,215,94,.3); }
+  .shopBtn.owned { color:#8ef0a0; border-color:rgba(140,240,160,.6); background:rgba(140,240,160,.1); }
+  .shopBtn.poor { opacity:.4; cursor:default; }
+
+  #lvlScroll { max-height:50vh; overflow-y:auto; margin-top:10px; -webkit-overflow-scrolling:touch; }
+  .worldHead {
+    display:flex; align-items:center; gap:8px; margin:12px 2px 6px 2px;
+    font:800 14px -apple-system,sans-serif; letter-spacing:.5px;
+  }
+  .worldHead .bar { flex:1; height:2px; background:rgba(255,255,255,.2); border-radius:2px; }
+  .worldHead .mech { font-size:10.5px; font-weight:600; color:rgba(255,255,255,.6); }
+  .hardHead {
+    margin:18px 2px 4px 2px; text-align:center;
+    font:900 16px -apple-system,sans-serif; letter-spacing:1px; color:#ff9d5e;
+  }
+  .lvlGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; padding:2px; }
   .lvlBtn {
     background:rgba(255,255,255,.13); border:1.5px solid rgba(255,255,255,.28);
     border-radius:12px; padding:8px 2px 6px 2px; color:#fff; cursor:pointer;
     font:700 16px -apple-system,sans-serif; position:relative;
   }
   .lvlBtn:active { background:rgba(255,255,255,.3); }
+  .lvlBtn.hard { border-color:rgba(255,150,90,.55); }
   .lvlBtn .st { display:block; font-size:10.5px; letter-spacing:1px; margin-top:2px; font-weight:600; }
   .lvlBtn .st .on { color:#ffd75e; }
   .lvlBtn .st .off { color:rgba(255,255,255,.28); }
   .lvlBtn .tbadge {
-    position:absolute; top:-6px; right:-4px; font-size:11px;
+    position:absolute; top:-7px; right:-5px; font-size:11px;
     background:#e8b33b; color:#3a2c05; border-radius:8px; padding:1px 4px;
   }
   .lvlBtn.locked { opacity:.38; cursor:default; font-size:13px; }
   #toast {
     position:absolute; top:34%; left:50%; transform:translate(-50%,-50%) scale(.8);
-    background:rgba(10,45,25,.85); border:2px solid #ffd75e; color:#ffd75e;
-    font-size:21px; font-weight:800; padding:12px 24px; border-radius:16px;
+    background:rgba(10,15,35,.88); border:2px solid #ffd75e; color:#ffd75e;
+    font-size:19px; font-weight:800; padding:12px 22px; border-radius:16px;
     opacity:0; pointer-events:none; transition:all .25s; z-index:60; white-space:nowrap;
   }
   #toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
@@ -101,7 +120,7 @@
 
 <header>
   <a class="home" href="index.html" aria-label="Home">⌂</a>
-  <h1>Bubble Shooter</h1>
+  <h1 id="hTitle">Bubble Shooter</h1>
   <div class="stats">
     <div><b id="stScore">0</b>Score</div>
     <div><b id="stLevel">-</b>Level</div>
@@ -122,8 +141,8 @@
     <div class="panel">
       <h2>Bubble Shooter</h2>
       <p id="selStats"></p>
-      <p style="font-size:12px; color:#b9dfc2;">⏱ = timed level · Pop 3+ to clear the board</p>
-      <div id="lvlGrid"></div>
+      <div id="shopRow"></div>
+      <div id="lvlScroll"></div>
     </div>
   </div>
 
@@ -168,8 +187,13 @@ var ROWS_MAX = 16;
 var SHOOT_X = W/2, SHOOT_Y = 604;
 var DEAD_Y = SHOOT_Y - 2*R - 14;
 var BALL_SPEED = 15;
-var MAX_LEVEL = 50;
-var STONE = 6;
+var MAX_BASE = 100;              /* levels in one run of the campaign */
+var MAX_LEVEL = 200;             /* 101-200 = Hard Mode second run   */
+var STONE = 6, GEM = 7, BOMB = 8, RAINBOW = 9, CHEST = 10;
+
+function baseOf(L){ return ((L-1)%MAX_BASE)+1; }
+function isHard(L){ return L>MAX_BASE; }
+function lvlName(L){ return (isHard(L)?'Hard ':'Level ')+baseOf(L); }
 
 /* light, base, dark, deep */
 var PAL = [
@@ -181,6 +205,124 @@ var PAL = [
   ['#f7b6cd','#D4537E','#993556','#5c1c33'],
   ['#e3e3e3','#a8a8a8','#6e6e6e','#3a3a3a']
 ];
+
+/* ---------- worlds (10 x 10 levels) ---------- */
+var WORLDS = [
+  null,
+  { name:'Meadow',        icon:'🌿', body:['#237a44','#14582f','#0b3d1f'], cv:['#0d3d22','#0a2e1a'], mech:'Learn the ropes' },
+  { name:'Ocean',         icon:'🌊', body:['#1d6a8f','#124e6e','#0a3348'], cv:['#0b3247','#072235'], mech:'New: 💎 trapped gems' },
+  { name:'Volcano',       icon:'🌋', body:['#8f4a1d','#6e3312','#48200a'], cv:['#47230c','#331608'], mech:'New: 💣 bombs · 🌈 rainbows · ✖2 multiplier' },
+  { name:'Crystal Caves', icon:'💜', body:['#5d3f96','#452d75','#2c1b4e'], cv:['#2e1d50','#1f1338'], mech:'New: 🔗 cages · 💀 cursed balls' },
+  { name:'Galaxy',        icon:'🌌', body:['#2b3a6e','#1c2750','#101736'], cv:['#131c3d','#0b1128'], mech:'New: 🗝 keys & chests' },
+  { name:'Desert',        icon:'🏜', body:['#a8763a','#7c5426','#4e3315'], cv:['#4a3212','#33230c'], mech:'New: ❓ mystery shots' },
+  { name:'Arctic',        icon:'❄️', body:['#4f86a8','#39647f','#22404f'], cv:['#1e3d4d','#132b37'], mech:'More colours' },
+  { name:'Jungle',        icon:'🌴', body:['#3f7d34','#2c5c24','#183a13'], cv:['#173a12','#0f280c'], mech:'New: 🌫 fog levels' },
+  { name:'Neon City',     icon:'🌆', body:['#7d2f8f','#5a1e6e','#37104a'], cv:['#33104a','#210a30'], mech:'Chaos combos' },
+  { name:'Deep Space',    icon:'🚀', body:['#232a4d','#171d38','#0b0f22'], cv:['#0e1330','#070a1c'], mech:'The final stretch' }
+];
+function worldOf(L){ return Math.ceil(baseOf(L)/10); }
+
+/* ---------- level definitions ----------
+   No timers in the main campaign. Hard Mode (after level 100) re-runs
+   all 100 levels tougher AND adds the timed row push.                 */
+function D(pat,rows,colors,shots,goal,extra){
+  var d={ pat:pat, rows:rows, colors:colors, shots:shots, goal:goal||'clear',
+          gems:0, bombs:0, cages:0, stones:0, timed:false, drop:0,
+          target:0, boss:false };
+  if(extra) for(var k in extra) d[k]=extra[k];
+  return d;
+}
+var LV = [ null,
+  /* World 1 — Meadow: learn the game */
+  D('full',    4,3,30), D('checker', 5,3,28), D('pillars', 5,3,26),
+  D('zigzag',  5,3,26), D('triangle',6,4,28), D('sides',   6,4,24),
+  D('diamond', 6,4,26), D('holes',   6,4,24), D('arch',    7,4,26),
+  D('full',    7,4,30,'clear',{boss:true}),
+  /* World 2 — Ocean: gems */
+  D('checker', 5,4,24,'gems',{gems:2}), D('pillars',6,4,24,'gems',{gems:2}),
+  D('full',    5,4,22),                 D('diamond',6,4,24,'gems',{gems:3}),
+  D('zigzag',  6,5,26),                 D('sides',  6,5,24,'gems',{gems:3}),
+  D('holes',   7,5,24,'clear',{stones:2}), D('arch', 7,5,26,'gems',{gems:3,stones:2}),
+  D('triangle',7,5,26,'clear',{stones:3}),
+  D('full',    8,5,30,'gems',{gems:4,stones:3,boss:true}),
+  /* World 3 — Volcano: bombs + rainbow shots */
+  D('checker', 6,4,22,'clear',{bombs:2}), D('pillars',6,5,22,'clear',{bombs:2}),
+  D('full',    6,5,24,'clear',{bombs:3}), D('diamond',6,5,26,'score',{target:1500}),
+  D('holes',   7,5,24,'gems',{gems:3,bombs:2}), D('zigzag',7,5,24,'clear',{bombs:3,stones:2}),
+  D('sides',   7,5,26,'score',{target:1800}),   D('arch',  7,5,26,'gems',{gems:3,bombs:3}),
+  D('triangle',8,5,26,'clear',{bombs:2,stones:3}),
+  D('full',    8,6,30,'clear',{bombs:4,boss:true}),
+  /* World 4 — Crystal Caves: cages */
+  D('checker', 6,5,24,'clear',{cages:4}), D('pillars',7,5,24,'clear',{cages:5}),
+  D('diamond', 7,5,26,'gems',{gems:3,cages:4}), D('full',7,5,26,'clear',{cages:6,stones:2}),
+  D('holes',   7,6,24,'clear',{cages:5}), D('arch',7,6,26,'gems',{gems:3,cages:6,stones:2}),
+  D('zigzag',  8,6,26,'clear',{cages:6}), D('sides',8,6,26,'clear',{cages:5,bombs:2}),
+  D('triangle',8,6,28,'clear',{cages:8,stones:3}),
+  D('full',    8,6,32,'gems',{gems:4,cages:8,boss:true}),
+  /* World 5 — Galaxy: everything combined */
+  D('checker', 6,5,26,'clear',{bombs:2,cages:3}), D('holes',7,5,24,'gems',{gems:3,bombs:2}),
+  D('full',    7,6,26,'clear',{bombs:3,cages:4}), D('diamond',7,6,26,'gems',{gems:4,stones:2}),
+  D('zigzag',  7,6,26,'score',{target:2000}),     D('holes',8,6,26,'clear',{bombs:3,stones:3}),
+  D('zigzag',  8,6,28,'gems',{gems:4,cages:6}),   D('arch',8,6,26,'clear',{cages:5,bombs:2}),
+  D('sides',   8,6,28,'score',{target:2400,stones:2}),
+  D('full',    9,6,34,'clear',{bombs:4,cages:6,stones:3,boss:true})
+];
+/* Worlds 6-10 (levels 51-100): generated recipe, steadily tougher */
+(function(){
+  var pats=['checker','pillars','zigzag','triangle','diamond','sides','arch','holes'];
+  for(var L=51;L<=100;L++){
+    var i=L-51;
+    if(L%10===0){
+      LV[L]=D('full',9,6,32+Math.floor(i/12),'clear',
+        { bombs:3+(L>=80?1:0), cages:5+(L>=70?2:0), stones:2+(L>=90?1:0), boss:true });
+      continue;
+    }
+    var pat=pats[(i*5+L)%8];
+    var rows=Math.min(9, 6+Math.floor(i/14));
+    var colors=(i<20)?5:6;
+    var shots=22+((i%3)*2);
+    var goal='clear', x={};
+    if(i%9===2){ goal='gems'; x.gems=3+Math.floor(i/16); }
+    else if(i%9===5){ goal='score'; x.target=1800+i*40; }
+    if(i%4===1) x.bombs=2+Math.floor(i/20);
+    if(i%4===3) x.cages=4+Math.floor(i/12);
+    if(i%5===4) x.stones=2+Math.floor(i/18);
+    LV[L]=D(pat,rows,colors,shots,goal,x);
+  }
+})();
+/* the def actually played: adds per-level extras, Hard Mode toughening */
+function levelDef(L){
+  var b=baseOf(L), w=worldOf(L);
+  var base=LV[b], d={}, k;
+  for(k in base) d[k]=base[k];
+  /* deterministic extras by world */
+  d.mult  = w>=3 && b%3===1;                       /* ✖2 multiplier ball  */
+  d.bad   = w>=4 && b%4===2;                       /* 💀 cursed ball      */
+  d.chest = w>=5 && b%4===0;                       /* 🗝 key + 📦 chest   */
+  d.fog   = w>=8 && (b%10===3 || b%10===7);        /* 🌫 fog level        */
+  if(isHard(L)){
+    d.rows   = Math.min(9, d.rows+1);
+    d.colors = Math.min(6, d.colors+1);
+    d.shots  = Math.max(14, Math.round(d.shots*0.85));
+    d.timed  = true;
+    d.drop   = Math.max(9, Math.round(26 - b*0.12));
+    if(d.stones) d.stones = Math.min(8, d.stones+1);
+    if(d.target) d.target = Math.round(d.target*1.2);
+  }
+  return d;
+}
+
+/* ---------- board shape patterns ---------- */
+var PATTERNS = {
+  full:    function(){ return true; },
+  checker: function(r,c){ return (r+c)%2===0; },
+  pillars: function(r,c){ return c%4!==3; },
+  zigzag:  function(r,c){ return (r%4<2) ? (c%6<4) : (c%6>=2); },
+  triangle:function(r,c,C,Rw){ return Math.abs(c-(C-1)/2) <= 1 + r*(C/(2*Rw)); },
+  diamond: function(r,c,C,Rw){ var m=(Rw-1)/2; return Math.abs(c-(C-1)/2) <= (m-Math.abs(r-m))*(C/(Rw+1))+1.2; },
+  sides:   function(r,c,C){ return c < C*0.34 || c > C*0.66-1; },
+  arch:    function(r,c,C,Rw){ return !(r>=Rw-3 && Math.abs(c-(C-1)/2)<2.6); }
+};
 
 var cv = document.getElementById('cv');
 var ctx = cv.getContext('2d');
@@ -195,26 +337,15 @@ function mulberry32(seed){
   };
 }
 
-/* ---------- level definitions ---------- */
-function levelParams(L){
-  return {
-    rows:      Math.min(4 + Math.floor((L-1)/7), 9),
-    colors:    Math.min(3 + Math.floor((L-1)/8), 6),
-    timed:     L % 5 === 0,
-    dropSec:   Math.max(8, Math.round(30 - L*0.24)),
-    pushShots: Math.max(6, 15 - Math.floor((L-1)/9)),
-    stones:    L >= 18 ? Math.min(2 + Math.floor((L-18)/6), 7) : 0,
-    seed:      L*7919 + 13
-  };
-}
-
 /* ---------- progress ---------- */
 function loadProg(){
-  try {
-    var p = JSON.parse(localStorage.getItem('bubbleCampaign')||'null');
-    if(p && p.unlocked) return p;
-  } catch(e){}
-  return { unlocked:1, stars:{}, best:{} };
+  var p=null;
+  try { p = JSON.parse(localStorage.getItem('bubbleCampaign')||'null'); } catch(e){}
+  if(!(p && p.unlocked)) p = { unlocked:1, stars:{}, best:{} };
+  p.coins = p.coins||0;
+  p.boostShots = !!p.boostShots;
+  p.boostFire = !!p.boostFire;
+  return p;
 }
 function saveProg(){
   try { localStorage.setItem('bubbleCampaign', JSON.stringify(prog)); } catch(e){}
@@ -231,12 +362,16 @@ function loadCurLevel(){
 
 /* ---------- state ---------- */
 var state = 'select';            // 'select' | 'play' | 'won' | 'lost'
-var level = 1, params = null;
-var grid, shift, score, shotsUsed, startBubbles;
+var level = 1, def = null;
+var grid, cageG, markG, shift, score, shotsUsed, shotsLeft, gemsLeft;
+var markPend = [];               /* special balls waiting to fire their effect */
+var keyCollected=false, multUntil=0, coinsEarned=0;
 var curC, nextC, ball;
+var curMyst=false, nextMyst=false;
+var fireArmed=false;             /* 🔥 booster: next shot explodes */
 var particles = [], fallers = [];
 var aimAngle = -Math.PI/2, aiming = false;
-var shotsToRow, dropLeft;
+var dropLeft;
 var lastT = 0;
 
 /* ---------- grid helpers ---------- */
@@ -256,30 +391,36 @@ function nbrs(r,c){
 }
 function emptyGrid(){
   shift = 0;
-  grid = [];
+  grid = []; cageG = []; markG = [];
   for(var r=0;r<ROWS_MAX;r++){
-    grid[r]=[];
-    for(var c=0;c<colsAt(r);c++) grid[r][c]=-1;
+    grid[r]=[]; cageG[r]=[]; markG[r]=[];
+    for(var c=0;c<colsAt(r);c++){ grid[r][c]=-1; cageG[r][c]=false; markG[r][c]=null; }
   }
 }
 function coloredLeft(){
   var n=0;
   for(var r=0;r<ROWS_MAX;r++)
     for(var c=0;c<colsAt(r);c++)
-      if(grid[r][c]>=0 && grid[r][c]!==STONE) n++;
+      if(grid[r][c]>=0 && grid[r][c]<STONE) n++;
   return n;
 }
 function colorsOnBoard(){
   var s={};
   for(var r=0;r<ROWS_MAX;r++)
     for(var c=0;c<colsAt(r);c++)
-      if(grid[r][c]>=0 && grid[r][c]!==STONE) s[grid[r][c]]=1;
+      if(grid[r][c]>=0 && grid[r][c]<STONE) s[grid[r][c]]=1;
   var a=Object.keys(s).map(Number);
   return a.length?a:[0,1,2];
 }
 function pickColor(){
+  /* rainbow shots appear from World 3 onward (always in Hard Mode) */
+  if((worldOf(level)>=3 || isHard(level)) && Math.random()<0.10) return RAINBOW;
   var a=colorsOnBoard();
   return a[Math.floor(Math.random()*a.length)];
+}
+function mystRoll(){
+  /* ❓ mystery shots from World 6 onward (always in Hard Mode) */
+  return (worldOf(level)>=6 || isHard(level)) && Math.random()<0.12;
 }
 function lowestY(){
   var y=-1;
@@ -288,49 +429,130 @@ function lowestY(){
       if(grid[r][c]>=0) y=Math.max(y, cy(r));
   return y;
 }
+function lowestRow(){
+  var lr=-1;
+  for(var r=0;r<ROWS_MAX;r++)
+    for(var c=0;c<colsAt(r);c++)
+      if(grid[r][c]>=0){ lr=r; break; }
+  /* need the max, redo properly */
+  lr=-1;
+  for(var r2=0;r2<ROWS_MAX;r2++)
+    for(var c2=0;c2<colsAt(r2);c2++)
+      if(grid[r2][c2]>=0) lr=Math.max(lr,r2);
+  return lr;
+}
 
 /* ---------- level setup ---------- */
 function startLevel(L){
   level = L;
-  params = levelParams(L);
-  var rnd = mulberry32(params.seed);
+  def = levelDef(L);
+  applyTheme(worldOf(L));
+  var rnd = mulberry32(L*7919 + 13);
   emptyGrid();
   var r,c;
-  for(r=0;r<params.rows;r++)
-    for(c=0;c<colsAt(r);c++)
-      grid[r][c] = Math.floor(rnd()*params.colors);
-  /* place stones (never in row 0, so they can always be dropped) */
-  var placed=0, guard=0;
-  while(placed<params.stones && guard++<200){
-    r = 1 + Math.floor(rnd()*(params.rows-1));
-    c = Math.floor(rnd()*colsAt(r));
-    if(grid[r][c]>=0 && grid[r][c]!==STONE){ grid[r][c]=STONE; placed++; }
+  var mask = PATTERNS[def.pat];
+  for(r=0;r<def.rows;r++)
+    for(c=0;c<colsAt(r);c++){
+      var on = def.pat==='holes' ? rnd()<0.8 : mask(r,c,colsAt(r),def.rows);
+      if(on) grid[r][c] = Math.floor(rnd()*def.colors);
+    }
+  /* place specials on existing colored cells (never row 0, so they can drop) */
+  function place(val, count, minRow){
+    var placed=0, guard=0;
+    while(placed<count && guard++<400){
+      var rr = minRow + Math.floor(rnd()*(def.rows-minRow));
+      var cc = Math.floor(rnd()*colsAt(rr));
+      if(grid[rr][cc]>=0 && grid[rr][cc]<STONE && !cageG[rr][cc] && !markG[rr][cc]){
+        if(val==='cage'){ cageG[rr][cc]=true; }
+        else grid[rr][cc]=val;
+        placed++;
+      }
+    }
+    return placed;
   }
-  score=0; shotsUsed=0;
-  startBubbles = coloredLeft();
+  function mark(type){
+    var guard=0;
+    while(guard++<400){
+      var rr = 1 + Math.floor(rnd()*(def.rows-1));
+      var cc = Math.floor(rnd()*colsAt(rr));
+      if(grid[rr][cc]>=0 && grid[rr][cc]<STONE && !cageG[rr][cc] && !markG[rr][cc]){
+        markG[rr][cc]=type;
+        return true;
+      }
+    }
+    return false;
+  }
+  gemsLeft = place(GEM, def.gems, Math.max(1,def.rows-3));
+  place(BOMB, def.bombs, 1);
+  place(STONE, def.stones, 1);
+  place('cage', def.cages, 0);
+  mark('star');                                   /* ⭐ one per level */
+  if(def.mult) mark('mult');                      /* ✖2 */
+  if(def.bad)  mark('bad');                       /* 💀 */
+  keyCollected=false;
+  if(def.chest && mark('key'))                    /* 🗝 + 📦 */
+    place(CHEST, 1, Math.max(1,def.rows-3));
+
+  score=0; shotsUsed=0; markPend=[]; multUntil=0; coinsEarned=0;
+  shotsLeft = def.shots;
   ball=null; particles=[]; fallers=[];
-  shotsToRow = params.pushShots;
-  dropLeft = params.dropSec;
+  dropLeft = def.drop || 0;
   curC = pickColor(); nextC = pickColor();
+  curMyst = mystRoll(); nextMyst = mystRoll();
+  /* 🪙 boosters bought in the shop */
+  fireArmed=false;
+  var boosterMsg=null;
+  if(prog.boostShots){ shotsLeft+=10; prog.boostShots=false; boosterMsg='🪙 +10 booster shots!'; }
+  if(prog.boostFire){ fireArmed=true; prog.boostFire=false; boosterMsg='🔥 Fireball loaded — next shot explodes!'; }
+  saveProg();
   state='play';
   saveCurLevel(L);
   document.getElementById('selOv').classList.remove('show');
   document.getElementById('winOv').classList.remove('show');
   document.getElementById('loseOv').classList.remove('show');
   hud();
+  toast(goalToast());
+  var intro = mechIntro(L);
+  if(intro) setTimeout(function(){ toast(intro); }, 1700);
+  if(boosterMsg) setTimeout(function(){ toast(boosterMsg); }, intro?3400:1700);
   lastT = performance.now();
+}
+function mechIntro(L){
+  if(L===1)   return '⭐ Pop or drop the star ball for a bonus!';
+  if(L===11)  return '💎 Drop the gems to free them!';
+  if(L===21)  return '💣 Land next to a bomb to blow it!';
+  if(L===22)  return '✖2 ball doubles points for 30s!';
+  if(L===31)  return '🔗 Caged bubbles need 2 matches!';
+  if(L===34)  return '💀 Beware the cursed ball…';
+  if(L===44)  return '🗝 Grab the key BEFORE the chest!';
+  if(L===51)  return '🏜 Halfway — watch for ❓ mystery shots!';
+  if(L===73)  return '🌫 Fog! Clear bubbles to reveal the top!';
+  if(L===101) return '🔥 Hard Mode: rows push on a timer!';
+  return null;
+}
+function goalToast(){
+  var pre = def.boss ? '👑 Boss level — ' : (isHard(level) ? '🔥 ' : '');
+  if(def.goal==='gems')  return pre+'💎 Free '+def.gems+' gems!';
+  if(def.goal==='score') return pre+'🎯 Score '+def.target+' points!';
+  return pre+'Clear the board!';
+}
+function applyTheme(w){
+  var t = WORLDS[w];
+  document.body.style.background =
+    'radial-gradient(ellipse at 50% 25%, '+t.body[0]+' 0%, '+t.body[1]+' 55%, '+t.body[2]+' 100%)';
+  document.getElementById('hTitle').textContent = t.icon+' '+t.name;
 }
 
 /* ---------- push row ---------- */
 function pushRow(){
   var last = grid[ROWS_MAX-1];
-  for(var c=0;c<last.length;c++) if(last[c]>=0){ loseLevel(); return; }
-  grid.pop();
+  for(var c=0;c<last.length;c++) if(last[c]>=0){ loseLevel('The bubbles crossed the line!'); return; }
+  grid.pop(); cageG.pop(); markG.pop();
   shift++;
-  var row=[];
-  for(var c2=0;c2<colsAt(0);c2++) row.push(Math.floor(Math.random()*params.colors));
-  grid.unshift(row);
-  if(lowestY()+R > DEAD_Y) loseLevel();
+  var row=[], crow=[], mrow=[];
+  for(var c2=0;c2<colsAt(0);c2++){ row.push(Math.floor(Math.random()*def.colors)); crow.push(false); mrow.push(null); }
+  grid.unshift(row); cageG.unshift(crow); markG.unshift(mrow);
+  if(lowestY()+R > DEAD_Y) loseLevel('The bubbles crossed the line!');
 }
 
 /* ---------- flood ---------- */
@@ -351,10 +573,11 @@ function flood(r,c,sameColor){
 }
 
 /* ---------- fx ---------- */
+function fxIdx(ci){ return ci===GEM ? 3 : ci===BOMB ? 6 : ci===CHEST ? 2 : Math.min(ci,6); }
 function popFx(x,y,ci){
   for(var i=0;i<9;i++){
     var a=Math.random()*Math.PI*2, sp=1.5+Math.random()*3.5;
-    particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,r:2.5+Math.random()*3.5,ci:ci,life:1});
+    particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,r:2.5+Math.random()*3.5,ci:fxIdx(ci),life:1});
   }
 }
 function toast(msg){
@@ -362,45 +585,266 @@ function toast(msg){
   t.textContent=msg;
   t.classList.add('show');
   clearTimeout(t._h);
-  t._h=setTimeout(function(){ t.classList.remove('show'); }, 1400);
+  t._h=setTimeout(function(){ t.classList.remove('show'); }, 1700);
+}
+
+/* ---------- removing cells ---------- */
+function removeCell(r,c,viaExplosion){
+  var v = grid[r][c];
+  if(v<0) return 0;
+  var pts = 0;
+  if(v===GEM){
+    fallers.push({x:cx(r,c), y:cy(r), vx:(Math.random()-.5)*2, vy:-2, ci:GEM});
+    gemsLeft--; pts=60;
+  } else if(v===STONE){
+    popFx(cx(r,c),cy(r),STONE); pts=20;
+  } else if(v===BOMB){
+    popFx(cx(r,c),cy(r),BOMB); pts=30;
+  } else if(v===CHEST){
+    fallers.push({x:cx(r,c), y:cy(r), vx:(Math.random()-.5)*2, vy:-2, ci:CHEST});
+    pts=20;
+    markPend.push({type:'chest', col:-1, r:r, c:c});
+  } else {
+    popFx(cx(r,c),cy(r),v); pts = viaExplosion?15:10;
+    if(markG[r][c]) markPend.push({type:markG[r][c], col:v, r:r, c:c});
+  }
+  grid[r][c]=-1; cageG[r][c]=false; markG[r][c]=null;
+  return pts;
+}
+
+/* ---------- special ball effects ---------- */
+function starRing(r,c,cap){
+  var out=[], seen={}, i, j;
+  var first=nbrs(r,c), second=[];
+  for(i=0;i<first.length;i++){
+    var p=first[i], k=p[0]+','+p[1];
+    if(seen[k]) continue; seen[k]=1;
+    if(grid[p[0]][p[1]]>=0 && out.length<cap) out.push(p);
+    var nb2=nbrs(p[0],p[1]);
+    for(j=0;j<nb2.length;j++) second.push(nb2[j]);
+  }
+  for(i=0;i<second.length && out.length<cap;i++){
+    var p2=second[i], k2=p2[0]+','+p2[1];
+    if(seen[k2] || (p2[0]===r && p2[1]===c)) continue; seen[k2]=1;
+    if(grid[p2[0]][p2[1]]>=0) out.push(p2);
+  }
+  return out;
+}
+function processMarks(){
+  var gained=0, i;
+  while(markPend.length){
+    var m=markPend.shift();
+    if(m.type==='star'){
+      prog.coins+=3; coinsEarned+=3; saveProg();
+      var roll=Math.random();
+      if(roll<0.75){                       /* 75%: +5 shots */
+        if(def.shots) shotsLeft+=5;
+        toast('⭐ +5 shots!');
+      } else if(roll<0.80){                /* 5%: wipe every ball of that colour */
+        toast('⭐ Colour wipe!');
+        for(var r=0;r<ROWS_MAX;r++)
+          for(var c=0;c<colsAt(r);c++)
+            if(grid[r][c]===m.col) gained+=removeCell(r,c,true);
+      } else {                             /* 20%: blast the 8 surrounding balls */
+        toast('⭐ Star blast!');
+        var ring=starRing(m.r,m.c,8);
+        for(i=0;i<ring.length;i++) gained+=removeCell(ring[i][0],ring[i][1],true);
+      }
+    } else if(m.type==='mult'){            /* ✖2 double points for 30s */
+      multUntil = Date.now()+30000;
+      toast('✖2 Double points for 30s!');
+    } else if(m.type==='bad'){             /* 💀 cursed */
+      if(Math.random()<0.5 && def.shots){
+        shotsLeft = Math.max(1, shotsLeft-3);
+        toast('💀 Cursed! Lost 3 shots!');
+      } else {
+        toast('💀 Cursed! 3 bubbles turn to stone!');
+        var cand=[];
+        for(var r2=0;r2<ROWS_MAX;r2++)
+          for(var c2=0;c2<colsAt(r2);c2++)
+            if(grid[r2][c2]>=0 && grid[r2][c2]<STONE && !markG[r2][c2]) cand.push([r2,c2]);
+        for(i=0;i<3 && cand.length;i++){
+          var pick=cand.splice(Math.floor(Math.random()*cand.length),1)[0];
+          grid[pick[0]][pick[1]]=STONE;
+          cageG[pick[0]][pick[1]]=false;
+          popFx(cx(pick[0],pick[1]), cy(pick[0]), STONE);
+        }
+      }
+    } else if(m.type==='key'){             /* 🗝 */
+      keyCollected=true;
+      toast('🗝 Key collected!');
+    } else if(m.type==='chest'){           /* 📦 */
+      if(keyCollected){
+        gained+=500;
+        prog.coins+=25; coinsEarned+=25; saveProg();
+        toast('📦 Chest opened! +500 · +25🪙');
+      } else {
+        toast('📦 The chest was locked…');
+      }
+    }
+  }
+  return gained;
+}
+
+/* ---------- bombs ---------- */
+function explode(startBombs){
+  var gained=0, queue=startBombs.slice(), done={};
+  while(queue.length){
+    var b=queue.shift(), bk=b[0]+','+b[1];
+    if(done[bk]) continue;
+    done[bk]=1;
+    grid[b[0]][b[1]] = -1;
+    popFx(cx(b[0],b[1]), cy(b[0]), BOMB);
+    gained += 30;
+    /* blast radius: neighbours + their neighbours */
+    var zone={}, nb1=nbrs(b[0],b[1]), i, j;
+    for(i=0;i<nb1.length;i++){
+      zone[nb1[i][0]+','+nb1[i][1]] = nb1[i];
+      var nb2=nbrs(nb1[i][0],nb1[i][1]);
+      for(j=0;j<nb2.length;j++) zone[nb2[j][0]+','+nb2[j][1]] = nb2[j];
+    }
+    for(var k in zone){
+      var p=zone[k];
+      if(grid[p[0]][p[1]]===BOMB && !done[p[0]+','+p[1]]) queue.push(p);
+      else gained += removeCell(p[0],p[1],true);
+    }
+  }
+  if(gained) toast('💥 +'+gained);
+  return gained;
+}
+/* 🔥 fireball booster blast, centred on the landed shot */
+function fireBlast(r,c){
+  var gained=removeCell(r,c,true);
+  var zone={}, nb1=nbrs(r,c), i, j, bombs=[];
+  for(i=0;i<nb1.length;i++){
+    zone[nb1[i][0]+','+nb1[i][1]] = nb1[i];
+    var nb2=nbrs(nb1[i][0],nb1[i][1]);
+    for(j=0;j<nb2.length;j++) zone[nb2[j][0]+','+nb2[j][1]] = nb2[j];
+  }
+  for(var k in zone){
+    var p=zone[k];
+    if(grid[p[0]][p[1]]===BOMB) bombs.push(p);
+    else gained += removeCell(p[0],p[1],true);
+  }
+  if(bombs.length) gained += explode(bombs);
+  return gained;
+}
+
+/* ---------- rainbow ---------- */
+function bestNeighborColor(r,c){
+  var nb=nbrs(r,c), bestCol=-1, bestN=0, i;
+  for(i=0;i<nb.length;i++){
+    var v=grid[nb[i][0]][nb[i][1]];
+    if(v<0 || v>=STONE) continue;
+    var n=flood(nb[i][0],nb[i][1],true).length;
+    if(n>bestN){ bestN=n; bestCol=v; }
+  }
+  if(bestCol>=0) return bestCol;
+  var a=colorsOnBoard();
+  return a[Math.floor(Math.random()*a.length)];
+}
+
+/* if a colour has been wiped off the board, the shooter must not offer it */
+function ensureShooterColors(){
+  var a=colorsOnBoard(), s={}, i;
+  for(i=0;i<a.length;i++) s[a[i]]=1;
+  if(curC!==RAINBOW && !s[curC])  curC  = a[Math.floor(Math.random()*a.length)];
+  if(nextC!==RAINBOW && !s[nextC]) nextC = a[Math.floor(Math.random()*a.length)];
+}
+
+/* anything not connected to the top row falls; returns points gained */
+function dropUnanchored(){
+  var anchored={}, i, gained=0, dropped=0;
+  for(var c0=0;c0<colsAt(0);c0++)
+    if(grid[0][c0]>=0){
+      var f=flood(0,c0,false);
+      for(i=0;i<f.length;i++) anchored[f[i][0]+','+f[i][1]]=1;
+    }
+  for(var r2=0;r2<ROWS_MAX;r2++)
+    for(var c2=0;c2<colsAt(r2);c2++)
+      if(grid[r2][c2]>=0 && !anchored[r2+','+c2]){
+        var v=grid[r2][c2];
+        if(v===GEM){ gemsLeft--; gained+=60; }
+        else if(v===CHEST){ gained+=20; markPend.push({type:'chest', col:-1, r:r2, c:c2}); }
+        else if(v<STONE){
+          gained+=20; dropped++;
+          if(markG[r2][c2]) markPend.push({type:markG[r2][c2], col:v, r:r2, c:c2});
+        }
+        else gained+=10;
+        fallers.push({x:cx(r2,c2), y:cy(r2), vx:(Math.random()-.5)*2, vy:-1.5, ci:v});
+        grid[r2][c2]=-1; cageG[r2][c2]=false; markG[r2][c2]=null;
+      }
+  if(dropped>=4) toast('+'+(dropped*20)+' drop bonus!');
+  return gained;
 }
 
 /* ---------- settle ---------- */
 function settle(r,c){
-  grid[r][c]=ball.c;
+  var wasFire = !!ball.fire;
+  var col = ball.c===RAINBOW ? bestNeighborColor(r,c) : ball.c;
+  grid[r][c]=col; cageG[r][c]=false; markG[r][c]=null;
   ball=null;
-  var m=flood(r,c,true), gained=0, i;
-  if(m.length>=3){
-    for(i=0;i<m.length;i++){
-      var p=m[i];
-      popFx(cx(p[0],p[1]), cy(p[0]), grid[p[0]][p[1]]);
-      grid[p[0]][p[1]]=-1;
-    }
-    gained += m.length*10;
-    var anchored={};
-    for(var c0=0;c0<colsAt(0);c0++)
-      if(grid[0][c0]>=0){
-        var f=flood(0,c0,false);
-        for(i=0;i<f.length;i++) anchored[f[i][0]+','+f[i][1]]=1;
-      }
-    var dropped=0;
-    for(var r2=0;r2<ROWS_MAX;r2++)
-      for(var c2=0;c2<colsAt(r2);c2++)
-        if(grid[r2][c2]>=0 && !anchored[r2+','+c2]){
-          fallers.push({x:cx(r2,c2), y:cy(r2), vx:(Math.random()-.5)*2, vy:-1.5, ci:grid[r2][c2]});
-          grid[r2][c2]=-1;
-          dropped++;
+  var gained=0, i;
+
+  if(wasFire){
+    toast('🔥 Fireball!');
+    gained += fireBlast(r,c);
+  } else {
+    /* bombs: landing beside one detonates it */
+    var nb=nbrs(r,c), bombs=[];
+    for(i=0;i<nb.length;i++)
+      if(grid[nb[i][0]][nb[i][1]]===BOMB) bombs.push(nb[i]);
+    if(bombs.length) gained += explode(bombs);
+
+    /* colour match (our bubble may have been destroyed by the blast) */
+    if(grid[r][c]===col){
+      var m=flood(r,c,true);
+      if(m.length>=3){
+        for(i=0;i<m.length;i++){
+          var p=m[i];
+          if(cageG[p[0]][p[1]]){
+            /* cage absorbs this match: break the cage, bubble stays */
+            cageG[p[0]][p[1]]=false;
+            popFx(cx(p[0],p[1]), cy(p[0]), STONE);
+            gained += 15;
+          } else {
+            gained += removeCell(p[0],p[1],false);
+          }
         }
-    gained += dropped*20;
-    if(dropped>=4) toast('+'+(dropped*20)+' drop bonus!');
+      }
+    }
   }
-  if(gained){ score+=gained; hud(); }
+
+  /* drop everything no longer anchored to the top row */
+  gained += dropUnanchored();
+
+  /* special balls popped or dropped fire their effects now */
+  if(markPend.length){
+    gained += processMarks();
+    gained += dropUnanchored();   /* effects may have cut more loose */
+  }
+
+  if(gained){
+    var mul = (Date.now()<multUntil) ? 2 : 1;
+    score += gained*mul;
+    hud();
+  }
   if(state!=='play') return;
-  if(coloredLeft()===0){ winLevel(); return; }
-  if(!params.timed){
-    shotsToRow--;
-    if(shotsToRow<=0){ pushRow(); shotsToRow=params.pushShots; }
+  ensureShooterColors();
+
+  /* ----- win checks ----- */
+  if(coloredLeft()===0){
+    /* free any stragglers hanging by stones/gems, then win */
+    for(var r3=0;r3<ROWS_MAX;r3++)
+      for(var c3=0;c3<colsAt(r3);c3++)
+        if(grid[r3][c3]>=0) removeCell(r3,c3,true);
+    winLevel(); return;
   }
+  if(def.goal==='gems' && gemsLeft<=0){ winLevel(); return; }
+  if(def.goal==='score' && score>=def.target){ winLevel(); return; }
+
+  /* ----- out of shots? ----- */
+  if(def.shots && shotsLeft<=0){ loseLevel('Out of bubbles!'); return; }
 }
 function snapBall(){
   var best=null, bd=1e9;
@@ -415,17 +859,16 @@ function snapBall(){
       if(d<bd){ bd=d; best=[r,c]; }
     }
   if(best){
-    if(cy(best[0])+R > DEAD_Y){ ball=null; loseLevel(); return; }
+    if(cy(best[0])+R > DEAD_Y){ ball=null; loseLevel('The bubbles crossed the line!'); return; }
     settle(best[0],best[1]);
   } else ball=null;
 }
 
 /* ---------- win / lose ---------- */
 function starsEarned(){
-  var ratio = shotsUsed / Math.max(1,startBubbles);
-  if(ratio<=0.55) return 3;
-  if(ratio<=0.85) return 2;
-  return 1;
+  if(!def.shots) return 2;
+  var f = shotsLeft/def.shots;
+  return f>=0.35 ? 3 : f>=0.12 ? 2 : 1;
 }
 function winLevel(){
   state='won';
@@ -436,7 +879,9 @@ function winLevel(){
     if(level>=10) GGA.award('bub_l10');
     GGA.haptic('success');
   }
-  score += 300 + stars*100;
+  score += 300 + stars*100 + (def.boss?250:0) + (isHard(level)?150:0);
+  var coinWin = stars + (def.boss?10:0);
+  prog.coins += coinWin; coinsEarned += coinWin;
   hud();
   var prevStars = prog.stars[level]||0;
   var prevBest = prog.best[level]||0;
@@ -445,26 +890,31 @@ function winLevel(){
   if(isBest) prog.best[level]=score;
   if(level<MAX_LEVEL) prog.unlocked = Math.max(prog.unlocked, level+1);
   saveProg();
-  document.getElementById('winTitle').textContent = 'Level '+level+' Cleared!';
+  document.getElementById('winTitle').textContent =
+    level===MAX_BASE ? '🏆 Campaign Complete!' :
+    (def.boss?'👑 Boss beaten! ':'')+lvlName(level)+' Cleared!';
   var sr='';
   for(var i=1;i<=3;i++) sr += '<span class="'+(i<=stars?'on':'off')+'">★</span>';
   document.getElementById('starRow').innerHTML = sr;
   document.getElementById('winStats').textContent =
-    'Score '+score+'  ·  '+shotsUsed+' shots';
+    'Score '+score+'  ·  '+shotsUsed+' shots' +
+    (def.shots ? '  ·  '+shotsLeft+' spare' : '') +
+    '  ·  +'+coinsEarned+'🪙';
   document.getElementById('winBest').textContent =
-    isBest ? '🎉 New level best!' : 'Level best: '+prevBest;
+    level===MAX_BASE ? '🔥 Hard Mode unlocked — all 100 levels, tougher, with timed rows!' :
+    (isBest ? '🎉 New level best!' : 'Level best: '+prevBest);
   document.getElementById('btnNext').style.display = level<MAX_LEVEL ? 'inline-block' : 'none';
   document.getElementById('winOv').classList.add('show');
 }
-function loseLevel(){
+function loseLevel(why){
   if(state!=='play') return;
   state='lost';
   document.getElementById('loseStats').textContent =
-    'Level '+level+'  ·  Score '+score+'  ·  The bubbles crossed the line!';
+    lvlName(level)+'  ·  Score '+score+'  ·  '+(why||'');
   document.getElementById('loseOv').classList.add('show');
 }
 
-/* ---------- level select ---------- */
+/* ---------- level select + shop ---------- */
 function totalStars(){
   var n=0;
   for(var k in prog.stars) n+=prog.stars[k];
@@ -475,40 +925,97 @@ function totalBest(){
   for(var k in prog.best) n+=prog.best[k];
   return n;
 }
+function lvlBadge(L){
+  var d=levelDef(L);
+  if(d.boss) return '👑';
+  if(d.goal==='gems') return '💎';
+  if(d.goal==='score') return '🎯';
+  if(d.fog) return '🌫';
+  if(d.chest) return '🗝';
+  if(d.bombs) return '💣';
+  if(d.cages) return '🔗';
+  return null;
+}
+function buildShop(){
+  var row=document.getElementById('shopRow');
+  row.innerHTML='';
+  function item(label, cost, owned, buy){
+    var b=document.createElement('button');
+    b.className='shopBtn'+(owned?' owned':(prog.coins<cost?' poor':''));
+    b.textContent = owned ? '✓ '+label+' queued' : label+' — '+cost+'🪙';
+    if(!owned && prog.coins>=cost) b.addEventListener('click', buy);
+    row.appendChild(b);
+  }
+  item('+10 shots next level', 30, prog.boostShots, function(){
+    prog.coins-=30; prog.boostShots=true; saveProg(); showSelect();
+  });
+  item('🔥 Fireball next level', 50, prog.boostFire, function(){
+    prog.coins-=50; prog.boostFire=true; saveProg(); showSelect();
+  });
+}
+function buildWorldRows(scroll, offset){
+  for(var w=1;w<=10;w++){
+    var head=document.createElement('div');
+    head.className='worldHead';
+    head.innerHTML = '<span>'+WORLDS[w].icon+' World '+w+' · '+WORLDS[w].name+'</span>'+
+      '<span class="bar"></span><span class="mech">'+WORLDS[w].mech+'</span>';
+    scroll.appendChild(head);
+    var gridEl=document.createElement('div');
+    gridEl.className='lvlGrid';
+    for(var L=offset+(w-1)*10+1; L<=offset+w*10; L++){
+      var b=document.createElement('button');
+      var locked = L>prog.unlocked;
+      b.className='lvlBtn'+(locked?' locked':'')+(isHard(L)?' hard':'');
+      var st = prog.stars[L]||0, sr='';
+      for(var i=1;i<=3;i++) sr += '<span class="'+(i<=st?'on':'off')+'">★</span>';
+      var badge = lvlBadge(L);
+      b.innerHTML = (locked?'🔒':baseOf(L)) + '<span class="st">'+sr+'</span>' +
+        (badge && !locked ? '<span class="tbadge">'+badge+'</span>' : '');
+      if(!locked){
+        (function(lv){ b.addEventListener('click', function(){ startLevel(lv); }); })(L);
+      }
+      gridEl.appendChild(b);
+    }
+    scroll.appendChild(gridEl);
+  }
+}
 function showSelect(){
   state='select';
   document.getElementById('winOv').classList.remove('show');
   document.getElementById('loseOv').classList.remove('show');
+  var maxStars = (prog.unlocked>MAX_BASE ? MAX_LEVEL : MAX_BASE)*3;
   document.getElementById('selStats').textContent =
-    '★ '+totalStars()+' / '+(MAX_LEVEL*3)+'   ·   Total score: '+totalBest();
-  var gridEl = document.getElementById('lvlGrid');
-  gridEl.innerHTML='';
-  for(var L=1;L<=MAX_LEVEL;L++){
-    var b=document.createElement('button');
-    var locked = L>prog.unlocked;
-    b.className='lvlBtn'+(locked?' locked':'');
-    var st = prog.stars[L]||0, sr='';
-    for(var i=1;i<=3;i++) sr += '<span class="'+(i<=st?'on':'off')+'">★</span>';
-    b.innerHTML = (locked?'🔒':L) + '<span class="st">'+sr+'</span>' +
-      (levelParams(L).timed && !locked ? '<span class="tbadge">⏱</span>' : '');
-    if(!locked){
-      (function(lv){ b.addEventListener('click', function(){ startLevel(lv); }); })(L);
-    }
-    gridEl.appendChild(b);
+    '★ '+totalStars()+' / '+maxStars+'   ·   🪙 '+prog.coins+'   ·   Total score: '+totalBest();
+  buildShop();
+  var scroll = document.getElementById('lvlScroll');
+  scroll.innerHTML='';
+  buildWorldRows(scroll, 0);
+  if(prog.unlocked>MAX_BASE){
+    var hh=document.createElement('div');
+    hh.className='hardHead';
+    hh.textContent='🔥 HARD MODE — timed rows, tougher boards 🔥';
+    scroll.appendChild(hh);
+    buildWorldRows(scroll, MAX_BASE);
   }
   document.getElementById('selOv').classList.add('show');
+  applyTheme(worldOf(Math.min(prog.unlocked,MAX_LEVEL)));
   hud();
 }
 
 function hud(){
   document.getElementById('stScore').textContent = score||0;
-  document.getElementById('stLevel').textContent = state==='select' ? '-' : level;
+  document.getElementById('stLevel').textContent =
+    state==='select' ? '-' : baseOf(level)+(isHard(level)?'🔥':'');
   document.getElementById('stBest').textContent =
     state==='select' ? totalBest() : (prog.best[level]||0);
 }
 
 /* ---------- drawing ---------- */
 function drawBubble(x,y,ci,r){
+  if(ci===GEM){ drawGem(x,y,r); return; }
+  if(ci===BOMB){ drawBomb(x,y,r); return; }
+  if(ci===RAINBOW){ drawRainbow(x,y,r); return; }
+  if(ci===CHEST){ drawChest(x,y,r); return; }
   var p=PAL[ci];
   var g=ctx.createRadialGradient(x-r*0.35, y-r*0.42, r*0.12, x, y, r);
   g.addColorStop(0, p[0]);
@@ -520,7 +1027,6 @@ function drawBubble(x,y,ci,r){
   ctx.fillStyle=g;
   ctx.fill();
   if(ci===STONE){
-    /* rocky cracks */
     ctx.strokeStyle='rgba(0,0,0,0.3)';
     ctx.lineWidth=1.5;
     ctx.beginPath();
@@ -537,6 +1043,179 @@ function drawBubble(x,y,ci,r){
   ctx.arc(x,y,r,0.35*Math.PI,0.85*Math.PI);
   ctx.strokeStyle='rgba(0,0,0,0.22)';
   ctx.lineWidth=r*0.14;
+  ctx.stroke();
+}
+function drawGem(x,y,r){
+  ctx.save();
+  var g=ctx.createLinearGradient(x-r,y-r,x+r,y+r);
+  g.addColorStop(0,'#c8fff6');
+  g.addColorStop(0.5,'#3fd9c4');
+  g.addColorStop(1,'#0e7f70');
+  ctx.beginPath();
+  ctx.moveTo(x,y-r*0.95);
+  ctx.lineTo(x+r*0.85,y-r*0.15);
+  ctx.lineTo(x,y+r*0.95);
+  ctx.lineTo(x-r*0.85,y-r*0.15);
+  ctx.closePath();
+  ctx.fillStyle=g;
+  ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.8)';
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x-r*0.4,y-r*0.15); ctx.lineTo(x+r*0.4,y-r*0.15);
+  ctx.moveTo(x,y-r*0.95); ctx.lineTo(x,y+r*0.95);
+  ctx.strokeStyle='rgba(255,255,255,0.45)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+  ctx.restore();
+}
+function drawBomb(x,y,r){
+  var g=ctx.createRadialGradient(x-r*0.3,y-r*0.35,r*0.1,x,y,r);
+  g.addColorStop(0,'#5a5a66');
+  g.addColorStop(0.6,'#26262e');
+  g.addColorStop(1,'#0c0c12');
+  ctx.beginPath();
+  ctx.arc(x,y,r*0.92,0,7);
+  ctx.fillStyle=g;
+  ctx.fill();
+  ctx.strokeStyle='#c8a866';
+  ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(x+r*0.25,y-r*0.75);
+  ctx.quadraticCurveTo(x+r*0.6,y-r*1.05,x+r*0.42,y-r*1.25);
+  ctx.stroke();
+  ctx.fillStyle = (Math.floor(Date.now()/180)%2===0)?'#ffd75e':'#ff8d4d';
+  ctx.beginPath();
+  ctx.arc(x+r*0.42,y-r*1.25,3.4,0,7);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(x-r*0.3, y-r*0.38, r*0.2, r*0.12, -0.6, 0, 7);
+  ctx.fillStyle='rgba(255,255,255,0.35)';
+  ctx.fill();
+}
+function drawChest(x,y,r){
+  ctx.fillStyle='#8a5a2a';
+  ctx.strokeStyle='#5d3a17';
+  ctx.lineWidth=2;
+  var w=r*1.7, h=r*1.35;
+  ctx.beginPath();
+  ctx.rect(x-w/2, y-h/2, w, h);
+  ctx.fill(); ctx.stroke();
+  /* lid line */
+  ctx.beginPath();
+  ctx.moveTo(x-w/2, y-h/2+h*0.35);
+  ctx.lineTo(x+w/2, y-h/2+h*0.35);
+  ctx.stroke();
+  /* bands */
+  ctx.strokeStyle='#c8a866';
+  ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(x-w*0.28, y-h/2); ctx.lineTo(x-w*0.28, y+h/2);
+  ctx.moveTo(x+w*0.28, y-h/2); ctx.lineTo(x+w*0.28, y+h/2);
+  ctx.stroke();
+  /* lock */
+  ctx.fillStyle='#ffd75e';
+  ctx.beginPath();
+  ctx.arc(x, y-h/2+h*0.35, r*0.24, 0, 7);
+  ctx.fill();
+  ctx.fillStyle='#5d3a17';
+  ctx.fillRect(x-1.5, y-h/2+h*0.35-1, 3, r*0.22);
+}
+function drawRainbow(x,y,r){
+  var cols=[0,1,2,3];
+  for(var i=0;i<4;i++){
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    ctx.arc(x,y,r,i*Math.PI/2, (i+1)*Math.PI/2);
+    ctx.closePath();
+    ctx.fillStyle=PAL[cols[i]][1];
+    ctx.fill();
+  }
+  ctx.beginPath();
+  ctx.arc(x,y,r,0,7);
+  ctx.strokeStyle='rgba(255,255,255,0.8)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  ctx.fillStyle='#fff';
+  ctx.font='700 '+Math.round(r)+'px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText('★',x,y+1);
+  ctx.textBaseline='alphabetic';
+}
+function drawMystery(x,y,r){
+  var g=ctx.createRadialGradient(x-r*0.3,y-r*0.35,r*0.1,x,y,r);
+  g.addColorStop(0,'#9a9aad');
+  g.addColorStop(0.6,'#5c5c72');
+  g.addColorStop(1,'#33334a');
+  ctx.beginPath();
+  ctx.arc(x,y,r,0,7);
+  ctx.fillStyle=g;
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.font='800 '+Math.round(r*1.1)+'px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText('?',x,y+1);
+  ctx.textBaseline='alphabetic';
+}
+function drawStarMark(x,y,r){
+  var pulse = 0.6 + 0.4*Math.abs(Math.sin(Date.now()/300));
+  ctx.globalAlpha = pulse;
+  ctx.beginPath();
+  ctx.arc(x,y,r*0.99,0,7);
+  ctx.strokeStyle='#ffd75e';
+  ctx.lineWidth=3;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle='#fff';
+  ctx.strokeStyle='rgba(0,0,0,0.5)';
+  ctx.lineWidth=3;
+  ctx.font='700 '+Math.round(r*1.05)+'px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.strokeText('★',x,y+1);
+  ctx.fillText('★',x,y+1);
+  ctx.textBaseline='alphabetic';
+}
+function drawMark(x,y,r,type){
+  if(type==='star'){ drawStarMark(x,y,r); return; }
+  var col = type==='bad' ? '#d0d0e0' : type==='mult' ? '#ff9d5e' : '#ffd75e';
+  var pulse = 0.55 + 0.35*Math.abs(Math.sin(Date.now()/300));
+  ctx.globalAlpha = pulse;
+  ctx.beginPath();
+  ctx.arc(x,y,r*0.99,0,7);
+  ctx.strokeStyle=col;
+  ctx.lineWidth=3;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  if(type==='mult'){
+    ctx.fillStyle='#fff';
+    ctx.strokeStyle='rgba(0,0,0,0.55)';
+    ctx.lineWidth=3;
+    ctx.font='800 '+Math.round(r*0.9)+'px -apple-system,sans-serif';
+    ctx.strokeText('×2',x,y+1);
+    ctx.fillText('×2',x,y+1);
+  } else {
+    ctx.font=Math.round(r*1.1)+'px -apple-system,sans-serif';
+    ctx.fillText(type==='bad' ? '💀' : '🗝', x, y+1);
+  }
+  ctx.textBaseline='alphabetic';
+}
+function drawCage(x,y,r){
+  ctx.strokeStyle='rgba(230,238,255,0.85)';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.arc(x,y,r*0.98,0,7);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x-r*0.95,y-r*0.35); ctx.lineTo(x+r*0.95,y-r*0.35);
+  ctx.moveTo(x-r*0.95,y+r*0.35); ctx.lineTo(x+r*0.95,y+r*0.35);
+  ctx.moveTo(x-r*0.35,y-r*0.93); ctx.lineTo(x-r*0.35,y+r*0.93);
+  ctx.moveTo(x+r*0.35,y-r*0.93); ctx.lineTo(x+r*0.35,y+r*0.93);
   ctx.stroke();
 }
 function drawAim(){
@@ -558,10 +1237,16 @@ function drawAim(){
   ctx.stroke();
   ctx.setLineDash([]);
 }
+function goalHudText(){
+  if(def.goal==='gems')  return '💎 '+Math.max(0,gemsLeft)+' gem'+(gemsLeft===1?'':'s')+' left';
+  if(def.goal==='score') return '🎯 '+score+' / '+def.target;
+  return 'Clear all bubbles';
+}
 function draw(){
+  var wt = WORLDS[state==='select' ? worldOf(Math.min(prog.unlocked,MAX_LEVEL)) : worldOf(level)];
   var g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#0d3d22');
-  g.addColorStop(1,'#0a2e1a');
+  g.addColorStop(0,wt.cv[0]);
+  g.addColorStop(1,wt.cv[1]);
   ctx.fillStyle=g;
   ctx.fillRect(0,0,W,H);
 
@@ -572,10 +1257,42 @@ function draw(){
   ctx.setLineDash([]);
 
   var r,c,i;
+  /* 🌫 fog: rows well above the lowest bubble are hidden */
+  var fogAbove = -1;
+  if(def && def.fog && state==='play'){
+    var lr=lowestRow();
+    if(lr>4) fogAbove = lr-5;   /* rows 0..fogAbove hidden */
+  }
   if(grid)
     for(r=0;r<ROWS_MAX;r++)
       for(c=0;c<colsAt(r);c++)
-        if(grid[r]&&grid[r][c]>=0) drawBubble(cx(r,c),cy(r),grid[r][c],R-1);
+        if(grid[r]&&grid[r][c]>=0){
+          if(r<=fogAbove){
+            ctx.beginPath();
+            ctx.arc(cx(r,c),cy(r),R-3,0,7);
+            ctx.fillStyle='rgba(190,200,220,0.16)';
+            ctx.fill();
+            ctx.strokeStyle='rgba(190,200,220,0.25)';
+            ctx.lineWidth=1.5;
+            ctx.stroke();
+          } else {
+            drawBubble(cx(r,c),cy(r),grid[r][c],R-1);
+            if(cageG[r][c]) drawCage(cx(r,c),cy(r),R-1);
+            if(markG[r][c]) drawMark(cx(r,c),cy(r),R-1,markG[r][c]);
+          }
+        }
+  if(fogAbove>=0){
+    var fy=cy(fogAbove)+R;
+    var fg=ctx.createLinearGradient(0,0,0,fy+18);
+    fg.addColorStop(0,'rgba(200,210,230,0.30)');
+    fg.addColorStop(1,'rgba(200,210,230,0)');
+    ctx.fillStyle=fg;
+    ctx.fillRect(0,0,W,fy+18);
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.font='600 11px -apple-system,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('🌫 fog', W/2, 16);
+  }
 
   for(i=fallers.length-1;i>=0;i--){
     var f=fallers[i];
@@ -595,36 +1312,63 @@ function draw(){
 
   if(state==='play'){
     drawAim();
-    drawBubble(SHOOT_X,SHOOT_Y,curC,R);
+    /* shooter ball (mystery = hidden colour, fireball ring if armed) */
+    if(curMyst) drawMystery(SHOOT_X,SHOOT_Y,R);
+    else drawBubble(SHOOT_X,SHOOT_Y,curC,R);
+    if(fireArmed){
+      var fp = 0.5+0.5*Math.abs(Math.sin(Date.now()/220));
+      ctx.globalAlpha=fp;
+      ctx.beginPath();
+      ctx.arc(SHOOT_X,SHOOT_Y,R+4,0,7);
+      ctx.strokeStyle='#ff8d4d';
+      ctx.lineWidth=3.5;
+      ctx.stroke();
+      ctx.globalAlpha=1;
+      ctx.font='14px -apple-system,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('🔥', SHOOT_X, SHOOT_Y-R-9);
+    }
     ctx.font='600 12px -apple-system,sans-serif';
     ctx.fillStyle='rgba(255,255,255,0.65)';
     ctx.textAlign='center';
     ctx.fillText('NEXT', SHOOT_X+72, SHOOT_Y-16);
-    drawBubble(SHOOT_X+72, SHOOT_Y+4, nextC, R*0.68);
+    if(nextMyst) drawMystery(SHOOT_X+72, SHOOT_Y+4, R*0.68);
+    else drawBubble(SHOOT_X+72, SHOOT_Y+4, nextC, R*0.68);
 
-    if(params.timed){
-      var bw=W-40, frac=Math.max(0,dropLeft/params.dropSec);
+    /* shots left, next to the shooter */
+    if(def.shots){
+      ctx.textAlign='center';
+      ctx.font='800 20px -apple-system,sans-serif';
+      ctx.fillStyle = shotsLeft<=5 ? '#ff9d94' : 'rgba(255,255,255,0.9)';
+      ctx.fillText('×'+shotsLeft, SHOOT_X-72, SHOOT_Y+7);
+      ctx.font='600 10.5px -apple-system,sans-serif';
+      ctx.fillStyle='rgba(255,255,255,0.55)';
+      ctx.fillText('SHOTS', SHOOT_X-72, SHOOT_Y+22);
+    }
+
+    /* goal, bottom left */
+    ctx.textAlign='left';
+    ctx.fillStyle='#ffd75e';
+    ctx.font='700 14px -apple-system,sans-serif';
+    ctx.fillText(goalHudText(), 20, H-40);
+
+    /* ✖2 multiplier countdown */
+    if(Date.now()<multUntil){
+      ctx.fillStyle='#ff9d5e';
+      ctx.font='800 14px -apple-system,sans-serif';
+      ctx.fillText('✖2  '+Math.ceil((multUntil-Date.now())/1000)+'s', 20, H-58);
+    }
+
+    if(def.timed){
+      var bw=W-40, frac=Math.max(0,dropLeft/def.drop);
       ctx.fillStyle='rgba(255,255,255,0.15)';
-      ctx.fillRect(20,H-30,bw,10);
+      ctx.fillRect(20,H-26,bw,10);
       ctx.fillStyle = frac<0.25 ? '#E24B4A' : '#e8b33b';
-      ctx.fillRect(20,H-30,bw*frac,10);
+      ctx.fillRect(20,H-26,bw*frac,10);
       ctx.fillStyle='rgba(255,255,255,0.75)';
-      ctx.font='600 12px -apple-system,sans-serif';
-      ctx.textAlign='left';
-      ctx.fillText('⏱ Next row: '+Math.ceil(dropLeft)+'s', 20, H-38);
+      ctx.font='600 11px -apple-system,sans-serif';
       ctx.textAlign='right';
-      ctx.fillText('Timed level', W-20, H-38);
-    } else {
-      ctx.textAlign='left';
-      ctx.fillStyle='rgba(255,255,255,0.75)';
-      ctx.font='600 12px -apple-system,sans-serif';
-      ctx.fillText('Next row in:', 20, H-36);
-      for(i=0;i<params.pushShots;i++){
-        ctx.beginPath();
-        ctx.arc(28+i*20, H-22, 6, 0, 7);
-        ctx.fillStyle = i<shotsToRow ? '#e8b33b' : 'rgba(255,255,255,0.18)';
-        ctx.fill();
-      }
+      ctx.fillText('⏱ next row '+Math.ceil(dropLeft)+'s', W-20, H-32);
     }
   }
   if(ball) drawBubble(ball.x,ball.y,ball.c,R-1);
@@ -635,11 +1379,12 @@ function loop(t){
   var dt=Math.min(0.05,(t-lastT)/1000);
   lastT=t;
   if(state==='play'){
-    if(params.timed && !document.hidden){
+    /* the timed row push only exists in Hard Mode */
+    if(def.timed && !document.hidden){
       dropLeft-=dt;
       if(dropLeft<=0){
         pushRow();
-        if(state==='play') dropLeft=params.dropSec;
+        if(state==='play') dropLeft=def.drop;
       }
     }
     if(ball){
@@ -689,9 +1434,13 @@ cv.addEventListener('pointerup', function(e){
   if(!ball){
     ball={ x:SHOOT_X, y:SHOOT_Y,
            vx:Math.cos(aimAngle)*BALL_SPEED, vy:Math.sin(aimAngle)*BALL_SPEED,
-           c:curC };
-    curC=nextC; nextC=pickColor();
+           c:curC, fire:fireArmed };
+    fireArmed=false;
+    curC=nextC; curMyst=nextMyst;
+    nextC=pickColor(); nextMyst=mystRoll();
     shotsUsed++;
+    if(def.shots) shotsLeft--;
+    hud();
   }
 });
 cv.addEventListener('pointercancel', function(){ aiming=false; });
@@ -704,6 +1453,7 @@ document.getElementById('btnRetry').addEventListener('click', function(){
 document.getElementById('btnSwap').addEventListener('click', function(){
   if(state==='play' && !ball){
     var t=curC; curC=nextC; nextC=t;
+    var tm=curMyst; curMyst=nextMyst; nextMyst=tm;
   }
 });
 document.getElementById('btnNext').addEventListener('click', function(){ startLevel(level+1); });
@@ -726,18 +1476,19 @@ window.addEventListener('resize', fit);
 /* ---------- go ---------- */
 emptyGrid();
 score=0;
+def = levelDef(1);
 showSelect();
 (function bootResume(){
   var sv = loadCurLevel();
-  if(!(sv && sv.level && sv.level<=prog.unlocked)) return;
+  if(!(sv && sv.level && sv.level<=prog.unlocked && sv.level<=MAX_LEVEL)) return;
   var ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;font-family:-apple-system,sans-serif;';
   ov.innerHTML =
     '<div style="background:#141b33;border:2px solid #ffd54a;border-radius:16px;padding:24px 28px;text-align:center;color:#fff;max-width:280px;">'+
     '<div style="font-size:38px;">🫧</div>'+
     '<h2 style="margin:6px 0;">Welcome back!</h2>'+
-    '<p style="opacity:.85;font-size:14px;margin-bottom:14px;">You were on Level '+sv.level+'.</p>'+
-    '<button id="bsResume" style="display:block;width:100%;margin:6px 0;padding:12px;border:none;border-radius:10px;background:#ffd54a;color:#141b33;font-weight:800;font-size:15px;cursor:pointer;">Continue Level '+sv.level+'</button>'+
+    '<p style="opacity:.85;font-size:14px;margin-bottom:14px;">You were on '+lvlName(sv.level)+'.</p>'+
+    '<button id="bsResume" style="display:block;width:100%;margin:6px 0;padding:12px;border:none;border-radius:10px;background:#ffd54a;color:#141b33;font-weight:800;font-size:15px;cursor:pointer;">Continue '+lvlName(sv.level)+'</button>'+
     '<button id="bsFresh" style="display:block;width:100%;margin:6px 0;padding:12px;border:none;border-radius:10px;background:rgba(255,255,255,.15);color:#fff;font-weight:800;font-size:15px;cursor:pointer;">Level Select</button></div>';
   document.body.appendChild(ov);
   document.getElementById('bsResume').addEventListener('click', function(){
