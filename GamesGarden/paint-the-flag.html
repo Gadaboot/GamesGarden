@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Paint the Flag</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; overflow:hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(160deg,#1b1f3b 0%,#2d1b4e 55%,#1b2a4e 100%);
+    color:#fff; display:flex; flex-direction:column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    touch-action:manipulation; user-select:none; -webkit-user-select:none;
+  }
+  header { display:flex; align-items:center; justify-content:space-between; padding:12px 14px 6px; }
+  .menu-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(255,255,255,.12); color:#fff; text-decoration:none;
+    padding:9px 14px; border-radius:12px; font-weight:700; font-size:15px;
+    border:1px solid rgba(255,255,255,.18);
+  }
+  .menu-btn:active { background:rgba(255,255,255,.25); }
+  h1 { font-size:19px; font-weight:800; letter-spacing:.3px; text-align:center; }
+  .hdr-spacer { width:86px; text-align:right; font-size:14px; color:#c9cdee; font-weight:700; }
+
+  .screen { flex:1; display:flex; flex-direction:column; min-height:0; }
+  [hidden] { display:none !important; }
+
+  .scorebar {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    padding:4px 14px 8px; flex-wrap:wrap;
+  }
+  .chip {
+    background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.14);
+    border-radius:12px; padding:6px 12px; font-size:14px; font-weight:700; color:#c9cdee;
+  }
+  .chip b { color:#fff; }
+  .chip.done b { color:#3ddc84; }
+  .chip.passed b { color:#ff9d5c; }
+  .pbar-wrap { flex-basis:100%; max-width:420px; margin:2px auto 0; padding:0 14px; }
+  .pbar { height:8px; background:rgba(255,255,255,.12); border-radius:6px; overflow:hidden; }
+  .pbar > div { height:100%; width:0%; background:linear-gradient(90deg,#22b573,#3ddc84); border-radius:6px; transition:width .5s; }
+
+  .map-wrap { flex:1; position:relative; min-height:0; padding:4px 8px; }
+  #worldMap { width:100%; height:100%; display:block; border-radius:16px; }
+  .tile-x { font-size:9px; fill:#8b8fa8; font-weight:bold; }
+  #marker .bob { animation:bob 1s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+  .cur-tile { animation:pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{stroke-opacity:1} 50%{stroke-opacity:.25} }
+
+  .prompt {
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    padding:10px 16px calc(14px + env(safe-area-inset-bottom)); flex-wrap:wrap;
+  }
+  .prompt .where { font-size:18px; font-weight:800; text-align:center; }
+  .prompt .where small { display:block; font-size:12px; color:#9ba1c9; font-weight:600; }
+  .btn {
+    border:none; border-radius:14px; font-size:16px; font-weight:800;
+    padding:12px 26px; cursor:pointer; color:#fff;
+    box-shadow:0 4px 14px rgba(0,0,0,.3);
+  }
+  .btn:active { transform:translateY(2px); }
+  .btn:disabled { opacity:.4; }
+  .btn-go { background:linear-gradient(135deg,#22b573,#1a9960); }
+  .btn-pass { background:#5b5f8f; }
+  .btn-hint { background:#5b5f8f; }
+  .btn-check { background:linear-gradient(135deg,#22b573,#1a9960); }
+  .btn-map { background:rgba(255,255,255,.14); padding:12px 16px; }
+  .btn-primary { background:linear-gradient(135deg,#ff7847,#e5484d); }
+  .btn-ghost { background:rgba(255,255,255,.14); }
+
+  .info-card {
+    position:absolute; right:14px; top:12px; width:212px; z-index:8;
+    background:#262a4a; border:1px solid rgba(255,255,255,.18); border-radius:16px;
+    padding:14px; box-shadow:0 14px 40px rgba(0,0,0,.5);
+    animation:slidein .35s ease;
+  }
+  @keyframes slidein { from{opacity:0; transform:translateX(30px)} to{opacity:1; transform:none} }
+  .info-card h3 { font-size:17px; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+  .info-card svg { border-radius:3px; box-shadow:0 1px 4px rgba(0,0,0,.4); flex:none; }
+  .info-card p { font-size:13px; color:#c9cdee; margin:3px 0; }
+  .info-card p b { color:#fff; }
+  .info-card .btn { width:100%; margin-top:10px; padding:10px; font-size:15px; }
+  @media (max-width:540px) {
+    .info-card { right:10px; left:10px; top:auto; bottom:8px; width:auto; }
+    .info-card p { display:inline-block; margin-right:10px; }
+  }
+
+  .country { text-align:center; font-size:clamp(22px,6vw,30px); font-weight:800; padding:2px 10px 8px; text-shadow:0 2px 8px rgba(0,0,0,.4); }
+  .flag-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:0 16px; min-height:0; }
+  .flag-card {
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+    border-radius:18px; padding:14px;
+    box-shadow:0 12px 40px rgba(0,0,0,.35);
+    max-width:min(92vw,560px); width:100%;
+  }
+  #flagSvg { display:block; width:100%; height:auto; max-height:40vh; margin:0 auto; }
+  #flagSvg .sec { cursor:pointer; }
+  .shake { animation:shake .5s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
+  .palette { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; padding:12px 16px 4px; }
+  .swatch {
+    width:42px; height:42px; border-radius:50%;
+    border:3px solid rgba(255,255,255,.25); box-shadow:0 3px 10px rgba(0,0,0,.35);
+    cursor:pointer; transition:transform .12s, border-color .12s;
+  }
+  .swatch.selected { transform:scale(1.18); border-color:#ffd54a; box-shadow:0 0 0 3px rgba(255,213,74,.35),0 3px 10px rgba(0,0,0,.35); }
+  .actions { display:flex; justify-content:center; gap:12px; padding:10px 16px calc(16px + env(safe-area-inset-bottom)); }
+
+  .overlay {
+    position:fixed; inset:0; background:rgba(10,10,25,.85);
+    display:flex; align-items:center; justify-content:center; z-index:20;
+    backdrop-filter:blur(4px);
+  }
+  .panel {
+    background:#262a4a; border:1px solid rgba(255,255,255,.15); border-radius:22px;
+    padding:26px 24px; text-align:center; max-width:360px; width:88%;
+    box-shadow:0 20px 60px rgba(0,0,0,.5); max-height:86vh; display:flex; flex-direction:column;
+  }
+  .panel h2 { font-size:25px; margin-bottom:6px; }
+  .panel .big { font-size:38px; margin-bottom:4px; }
+  .panel .pct { font-size:44px; font-weight:900; color:#ffd54a; margin:4px 0; }
+  .panel p { color:#c9cdee; font-size:15px; }
+  .panel .btn { margin-top:12px; width:100%; }
+  .passed-list {
+    margin-top:12px; overflow-y:auto; text-align:left;
+    border-top:1px solid rgba(255,255,255,.12); padding-top:8px; min-height:0;
+  }
+  .passed-list h4 { font-size:14px; color:#ff9d5c; margin-bottom:6px; }
+  .passed-list .row { display:flex; align-items:center; gap:10px; padding:5px 2px; font-size:15px; font-weight:600; }
+  .passed-list svg { border-radius:3px; box-shadow:0 1px 4px rgba(0,0,0,.4); flex:none; }
+
+  .toast {
+    position:fixed; top:16%; left:50%; transform:translateX(-50%);
+    font-size:28px; font-weight:900; padding:14px 30px; border-radius:16px;
+    z-index:25; pointer-events:none; opacity:0; transition:opacity .2s, transform .3s;
+    text-shadow:0 2px 6px rgba(0,0,0,.4); white-space:nowrap;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) scale(1.08); }
+  .toast.good { background:rgba(34,181,115,.94); }
+  .toast.bad { background:rgba(229,72,77,.94); }
+  .confetti { position:fixed; top:-12px; width:10px; height:16px; z-index:24; pointer-events:none; animation:fall linear forwards; }
+  @keyframes fall { to { transform:translateY(105vh) rotate(720deg); opacity:.7; } }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="menu-btn" href="index.html">&#127968; Menu</a>
+  <h1>&#127912; Paint the Flag</h1>
+  <div class="hdr-spacer" id="hdrPct">0%</div>
+</header>
+
+<div class="screen" id="mapScreen">
+  <div class="scorebar">
+    <div class="chip done">&#9989; Done: <b id="doneCount">0</b>/<b id="totalCount">0</b></div>
+    <div class="chip passed">&#9193; Passed: <b id="passCount">0</b></div>
+    <div class="chip">&#127757; <b id="pctText">0%</b> complete</div>
+    <div class="pbar-wrap"><div class="pbar"><div id="pbarFill"></div></div></div>
+  </div>
+  <div class="map-wrap">
+    <svg id="worldMap" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="info-card" id="infoCard" hidden>
+      <h3><span id="infoFlag"></span><span id="infoName"></span></h3>
+      <p>&#127758; Continent: <b id="infoCont"></b></p>
+      <p>&#127963;&#65039; Capital: <b id="infoCap"></b></p>
+      <p>&#128101; Population: <b id="infoPop"></b></p>
+      <button class="btn btn-go" id="continueBtn">Continue &#9654;</button>
+    </div>
+  </div>
+  <div class="prompt" id="promptBar">
+    <div class="where"><small id="promptCont">Next stop&hellip;</small><span id="promptName"></span></div>
+    <button class="btn btn-go" id="goBtn">&#127912; Go!</button>
+    <button class="btn btn-pass" id="passBtn">Pass &#9193;</button>
+  </div>
+</div>
+
+<div class="screen" id="paintScreen" hidden>
+  <div class="country" id="country"></div>
+  <div class="flag-wrap">
+    <div class="flag-card" id="flagCard">
+      <svg id="flagSvg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="hatch" width="14" height="14" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <rect width="14" height="14" fill="#e9eaf2"></rect>
+            <line x1="0" y1="0" x2="0" y2="14" stroke="#c9cbdc" stroke-width="6"></line>
+          </pattern>
+        </defs>
+        <g id="flagG"></g>
+      </svg>
+    </div>
+  </div>
+  <div class="palette" id="palette"></div>
+  <div class="actions">
+    <button class="btn btn-map" id="backBtn">&#128506;&#65039;</button>
+    <button class="btn btn-hint" id="hintBtn">&#128161; Hint</button>
+    <button class="btn btn-check" id="checkBtn" disabled>&#10003; Check</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="resumeOverlay" hidden>
+  <div class="panel">
+    <div class="big">🌍</div>
+    <h2>Welcome back!</h2>
+    <p id="resumeInfo"></p>
+    <button class="btn btn-primary" id="resumeYes">Continue Journey</button>
+    <button class="btn btn-ghost" id="resumeNo">Start New</button>
+  </div>
+</div>
+
+<div class="overlay" id="endOverlay" hidden>
+  <div class="panel">
+    <div class="big" id="endEmoji">&#127942;</div>
+    <h2>Journey Complete!</h2>
+    <p>You painted <b id="endDone">0</b> of <b id="endTotal">0</b> flags</p>
+    <div class="pct" id="endPct">0%</div>
+    <div class="passed-list" id="passedList" hidden>
+      <h4>&#9193; Countries you passed on:</h4>
+      <div id="passedRows"></div>
+    </div>
+    <button class="btn btn-primary" id="restartBtn">Play Again</button>
+    <button class="btn btn-ghost" onclick="location.href='index.html'">&#127968; Main Menu</button>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+"use strict";
+/* ================= colors & geometry helpers ================= */
+const COLORS = {
+  red:"#D80027", maroon:"#8A1538", orange:"#FF8A1E", yellow:"#FFDA2C", green:"#1F9E48",
+  sky:"#63B3E8", blue:"#0052B4", purple:"#6C2D8C", white:"#FFFFFF", gray:"#9BA0AE", black:"#23272F"
+};
+const COLOR_ORDER = ["red","maroon","orange","yellow","green","sky","blue","purple","white","gray","black"];
+const R = (x,y,w,h,c) => ({t:"rect",x,y,w,h,c});
+const C = (cx,cy,r,c)  => ({t:"circle",cx,cy,r,c});
+const P = (d,c)        => ({t:"path",d,c});
+function starPath(cx, cy, rOut, rIn, rot=-90, pts=5) {
+  let d = "";
+  for (let i = 0; i < pts*2; i++) {
+    const r = i % 2 === 0 ? rOut : rIn;
+    const a = (rot + i * 180/pts) * Math.PI / 180;
+    d += (i === 0 ? "M" : "L") + (cx + r * Math.cos(a)).toFixed(1) + " " + (cy + r * Math.sin(a)).toFixed(1);
+  }
+  return d + "Z";
+}
+const stars = list => list.map(a => starPath.apply(null, a)).join("");
+function crossPath(v0, v1, h0, h1, W=900, H=600) {
+  return `M${v0} 0H${v1}V${h0}H${W}V${h1}H${v1}V${H}H${v0}V${h1}H0V${h0}H${v0}Z`;
+}
+function diagBar(x0,y0,x1,y1,t) {
+  const dx=x1-x0, dy=y1-y0, len=Math.hypot(dx,dy);
+  const nx=-dy/len*t/2, ny=dx/len*t/2;
+  return `M${(x0+nx).toFixed(1)} ${(y0+ny).toFixed(1)}L${(x1+nx).toFixed(1)} ${(y1+ny).toFixed(1)}L${(x1-nx).toFixed(1)} ${(y1-ny).toFixed(1)}L${(x0-nx).toFixed(1)} ${(y0-ny).toFixed(1)}Z`;
+}
+function ellipsePath(cx,cy,rx,ry) {
+  return `M${cx} ${cy-ry}A${rx} ${ry} 0 1 1 ${cx} ${cy+ry}A${rx} ${ry} 0 1 1 ${cx} ${cy-ry}Z`;
+}
+function crescent(cx,cy,r) {
+  return `M${cx} ${cy-r}A${r} ${r} 0 1 0 ${cx} ${cy+r}A${(r*1.15).toFixed(1)} ${(r*1.15).toFixed(1)} 0 0 1 ${cx} ${cy-r}Z`;
+}
+/* ---- emblem builder helpers ---- */
+function circlePath(cx,cy,r,sweep=1) {
+  return `M${cx} ${cy-r}A${r} ${r} 0 1 ${sweep} ${cx} ${cy+r}A${r} ${r} 0 1 ${sweep} ${cx} ${cy-r}Z`;
+}
+function ringPath(cx,cy,rO,rI) {
+  return circlePath(cx,cy,rO,1) + circlePath(cx,cy,rI,0);
+}
+function rotRect(cx,cy,len,th,angDeg) {
+  const a=angDeg*Math.PI/180, ux=Math.cos(a), uy=Math.sin(a), vx=-Math.sin(a), vy=Math.cos(a);
+  const hx=ux*len/2, hy=uy*len/2, wx=vx*th/2, wy=vy*th/2;
+  return `M${(cx-hx-wx).toFixed(1)} ${(cy-hy-wy).toFixed(1)}L${(cx+hx-wx).toFixed(1)} ${(cy+hy-wy).toFixed(1)}L${(cx+hx+wx).toFixed(1)} ${(cy+hy+wy).toFixed(1)}L${(cx-hx+wx).toFixed(1)} ${(cy-hy+wy).toFixed(1)}Z`;
+}
+function raysPath(cx,cy,n,r0,r1,halfDeg,rot=-90,arc=360) {
+  let d="";
+  const step = arc < 360 ? arc/(n-1) : 360/n;
+  for (let i=0;i<n;i++) {
+    const a=(rot+i*step)*Math.PI/180;
+    const a1=a-halfDeg*Math.PI/180, a2=a+halfDeg*Math.PI/180;
+    d+=`M${(cx+r0*Math.cos(a1)).toFixed(1)} ${(cy+r0*Math.sin(a1)).toFixed(1)}L${(cx+r1*Math.cos(a)).toFixed(1)} ${(cy+r1*Math.sin(a)).toFixed(1)}L${(cx+r0*Math.cos(a2)).toFixed(1)} ${(cy+r0*Math.sin(a2)).toFixed(1)}Z`;
+  }
+  return d;
+}
+function sunPath(cx,cy,rDisc,n,r1,halfDeg,rot=-90) {
+  return circlePath(cx,cy,rDisc) + raysPath(cx,cy,n,rDisc*0.92,r1,halfDeg,rot);
+}
+function starOutline(cx,cy,rO,rI,rot=-90,pts=5,frac=0.55) {
+  let d = starPath(cx,cy,rO,rI,rot,pts);
+  const n=pts*2;
+  for (let i=n-1;i>=0;i--) {
+    const r=(i%2===0?rO:rI)*frac;
+    const a=(rot+i*180/pts)*Math.PI/180;
+    d+=(i===n-1?"M":"L")+(cx+r*Math.cos(a)).toFixed(1)+" "+(cy+r*Math.sin(a)).toFixed(1);
+  }
+  return d+"Z";
+}
+function triOutline(cx,cy,r,rot,frac=0.6) {
+  let d="", e="";
+  for (let i=0;i<3;i++) {
+    const a=(rot+i*120)*Math.PI/180;
+    d+=(i?"L":"M")+(cx+r*Math.cos(a)).toFixed(1)+" "+(cy+r*Math.sin(a)).toFixed(1);
+  }
+  for (let i=2;i>=0;i--) {
+    const a=(rot+i*120)*Math.PI/180;
+    e+=(i===2?"M":"L")+(cx+r*frac*Math.cos(a)).toFixed(1)+" "+(cy+r*frac*Math.sin(a)).toFixed(1);
+  }
+  return d+"Z"+e+"Z";
+}
+function hexagramOutline(cx,cy,r,frac=0.62) {
+  return triOutline(cx,cy,r,-90,frac) + triOutline(cx,cy,r,90,frac);
+}
+function chakraPath(cx,cy,r) {
+  let d = ringPath(cx,cy,r,r*0.8) + circlePath(cx,cy,r*0.16);
+  for (let i=0;i<24;i++) {
+    const a=i*15*Math.PI/180;
+    const p = (rr,da)=> (cx+rr*Math.cos(a+da)).toFixed(1)+" "+(cy+rr*Math.sin(a+da)).toFixed(1);
+    d+=`M${p(r*0.18,-0.06)}L${p(r*0.5,-0.10)}L${p(r*0.82,0)}L${p(r*0.5,0.10)}Z`;
+  }
+  return d;
+}
+function starsCircle(cx,cy,R,n,rS,rot=-90) {
+  let d="";
+  for (let i=0;i<n;i++) {
+    const a=(rot+i*360/n)*Math.PI/180;
+    d+=starPath(cx+R*Math.cos(a), cy+R*Math.sin(a), rS, rS*0.4);
+  }
+  return d;
+}
+function trigram(cx,cy,angDeg,pattern) {
+  let d="";
+  pattern.forEach((solid,i)=>{
+    const off=(i-1)*26;
+    const a=angDeg*Math.PI/180;
+    const ox=cx-Math.sin(a)*off, oy=cy+Math.cos(a)*off;
+    if (solid) d+=rotRect(ox,oy,84,16,angDeg);
+    else {
+      const ux=Math.cos(a), uy=Math.sin(a);
+      d+=rotRect(ox-ux*23,oy-uy*23,38,16,angDeg)+rotRect(ox+ux*23,oy+uy*23,38,16,angDeg);
+    }
+  });
+  return d;
+}
+/* heraldic eagle (1 or 2 heads), centered, size s = half-height */
+function eaglePath(cx,cy,s,heads=2) {
+  const u=s/100;
+  const X=v=>(cx+v*u).toFixed(1), Y=v=>(cy+v*u).toFixed(1);
+  let d=`M${X(0)} ${Y(-60)}L${X(16)} ${Y(-20)}L${X(14)} ${Y(55)}L${X(0)} ${Y(75)}L${X(-14)} ${Y(55)}L${X(-16)} ${Y(-20)}Z`;
+  const wing=f=>`M${X(14*f)} ${Y(-15)}L${X(95*f)} ${Y(-55)}L${X(70*f)} ${Y(-18)}L${X(105*f)} ${Y(-20)}L${X(72*f)} ${Y(12)}L${X(100*f)} ${Y(22)}L${X(62*f)} ${Y(38)}L${X(14*f)} ${Y(30)}Z`;
+  d+=wing(1)+wing(-1);
+  if (heads===2) {
+    d+=`M${X(4)} ${Y(-48)}L${X(30)} ${Y(-78)}L${X(42)} ${Y(-66)}L${X(14)} ${Y(-38)}Z`;
+    d+=`M${X(-4)} ${Y(-48)}L${X(-30)} ${Y(-78)}L${X(-42)} ${Y(-66)}L${X(-14)} ${Y(-38)}Z`;
+  } else {
+    d+=`M${X(-6)} ${Y(-50)}L${X(4)} ${Y(-84)}L${X(20)} ${Y(-72)}L${X(8)} ${Y(-44)}Z`;
+  }
+  d+=`M${X(0)} ${Y(72)}L${X(24)} ${Y(98)}L${X(0)} ${Y(90)}L${X(-24)} ${Y(98)}Z`;
+  return d;
+}
+/* soaring bird silhouette, s = half wingspan */
+function birdPath(cx,cy,s,flip=1) {
+  const u=s/100, f=flip;
+  const X=v=>(cx+v*u).toFixed(1), Y=v=>(cy+v*u*f).toFixed(1);
+  return `M${X(-100)} ${Y(8)}Q${X(-55)} ${Y(-32)} ${X(-12)} ${Y(-12)}Q${X(-4)} ${Y(-26)} ${X(0)} ${Y(-26)}Q${X(4)} ${Y(-26)} ${X(12)} ${Y(-12)}Q${X(55)} ${Y(-32)} ${X(100)} ${Y(8)}Q${X(56)} ${Y(2)} ${X(30)} ${Y(6)}Q${X(14)} ${Y(22)} ${X(0)} ${Y(22)}Q${X(-14)} ${Y(22)} ${X(-30)} ${Y(6)}Q${X(-56)} ${Y(2)} ${X(-100)} ${Y(8)}Z`;
+}
+/* standing bird (crane/parrot/quetzal base), s = half-height */
+function standingBird(cx,cy,s) {
+  const u=s/100;
+  const X=v=>(cx+v*u).toFixed(1), Y=v=>(cy+v*u).toFixed(1);
+  return `M${X(-8)} ${Y(-95)}Q${X(18)} ${Y(-100)} ${X(20)} ${Y(-78)}Q${X(20)} ${Y(-66)} ${X(8)} ${Y(-60)}Q${X(6)} ${Y(-30)} ${X(16)} ${Y(-8)}Q${X(30)} ${Y(20)} ${X(12)} ${Y(44)}Q${X(-6)} ${Y(64)} ${X(-28)} ${Y(48)}Q${X(-44)} ${Y(30)} ${X(-36)} ${Y(4)}Q${X(-30)} ${Y(-16)} ${X(-10)} ${Y(-26)}Q${X(-6)} ${Y(-44)} ${X(-8)} ${Y(-60)}Q${X(-22)} ${Y(-68)} ${X(-20)} ${Y(-82)}Q${X(-18)} ${Y(-94)} ${X(-8)} ${Y(-95)}Z`
+    + `M${X(-2)} ${Y(56)}L${X(2)} ${Y(92)}L${X(-6)} ${Y(92)}L${X(-8)} ${Y(58)}Z`
+    + `M${X(-18)} ${Y(54)}L${X(-20)} ${Y(92)}L${X(-28)} ${Y(92)}L${X(-26)} ${Y(52)}Z`
+    + `M${X(20)} ${Y(-88)}L${X(34)} ${Y(-84)}L${X(20)} ${Y(-76)}Z`;
+}
+function zigzag(xo,xi,n,color) {
+  let d = `M900 0H${xo}`;
+  const s = 600/(n*2);
+  for (let i=0;i<n;i++) d += `L${xi} ${((2*i+1)*s).toFixed(1)}L${xo} ${((2*i+2)*s).toFixed(1)}`;
+  return P(d+"H900Z", color);
+}
+function leafPath(cx,cy,s) {
+  /* union of lobes (nonzero fill): top chevron, two side arrowheads, skirt, stem */
+  const polys = [
+    [[0,0],[5.5,15],[14,8],[12,24],[10,48],[-10,48],[-12,24],[-14,8],[-5.5,15]],
+    [[8,32],[26,18],[27,28],[50,34],[28,46],[38,58],[8,50]],
+    [[-8,32],[-26,18],[-27,28],[-50,34],[-28,46],[-38,58],[-8,50]],
+    [[16,40],[13,64],[17,80],[3,72],[-3,72],[-17,80],[-13,64],[-16,40]],
+    [[2.5,74],[2.5,100],[-2.5,100],[-2.5,74]]
+  ];
+  return polys.map(poly =>
+    poly.map((p,i)=>(i?"L":"M")+(cx+p[0]*s/100).toFixed(1)+" "+(cy+(p[1]-50)*s/100).toFixed(1)).join("")+"Z"
+  ).join("");
+}
+const V3 = (a,b,c) => [R(0,0,300,600,a), R(300,0,300,600,b), R(600,0,300,600,c)];
+const H3 = (a,b,c) => [R(0,0,900,200,a), R(0,200,900,200,b), R(0,400,900,200,c)];
+const H2 = (a,b)   => [R(0,0,900,300,a), R(0,300,900,300,b)];
+const HS = cols => cols.map((c,i)=>R(0, i*600/cols.length, 900, 600/cols.length, c));
+const TRI = c => P("M0 0L450 300L0 600Z", c);
+/* simplified Union Jack canton (450x300): white diagonals, white cross, red cross */
+const JACK = [
+  P(diagBar(0,0,450,300,66)+diagBar(0,300,450,0,66),"white"),
+  P("M190 0h70v115h190v70H260v115h-70V185H0v-70h190Z","white"),
+  P("M207 0h36v133h207v34H243v133h-36V167H0v-34h207Z","red")
+];
+const nordic = (bg,c1,v0,v1,h0,h1,c2,v2,v3,h2,h3) => {
+  const s=[R(0,0,900,600,bg), P(crossPath(v0,v1,h0,h1),c1)];
+  if(c2) s.push(P(crossPath(v2,v3,h2,h3),c2));
+  return s;
+};
+
+/* ================= country data =================
+   name, iso, ll:[lat,lon], reg: "eu"|"cb" for inset placement,
+   cont, cap, pop, w (flag width if not 900), sec (paintable sections) */
+const FLAGS = [
+/* ---- EUROPE (inset) ---- */
+{name:"Albania",iso:"AL",reg:"eu",ll:[41,20],cont:"Europe",cap:"Tirana",pop:"2.8 million",sec:[R(0,0,900,600,"red"),P(eaglePath(450,300,190,2),"black")]},
+{name:"Andorra",iso:"AD",reg:"eu",ll:[42.5,1.5],cont:"Europe",cap:"Andorra la Vella",pop:"80,000",sec:[...V3("blue","yellow","red"),P("M400 250h100v70a50 50 0 0 1 -100 0Z","maroon"),P("M410 260h80v55a40 40 0 0 1 -80 0Z M445 258h10v100h-10Z M405 300h90v8h-90Z","yellow")]},
+{name:"Austria",iso:"AT",reg:"eu",ll:[47.5,14.5],cont:"Europe",cap:"Vienna",pop:"9.1 million",sec:H3("red","white","red")},
+{name:"Belarus",iso:"BY",reg:"eu",ll:[53.7,28],cont:"Europe",cap:"Minsk",pop:"9.2 million",sec:[R(0,0,900,400,"red"),R(0,400,900,200,"green"),R(0,0,100,600,"white"),P([40,130,220,310,400,490,560].map(y=>`M50 ${y-34}L80 ${y}L50 ${y+34}L20 ${y}Z`).join("")+[85,265,445].map(y=>`M50 ${y-12}L62 ${y}L50 ${y+12}L38 ${y}Z`).join(""),"red")]},
+{name:"Belgium",iso:"BE",reg:"eu",ll:[50.6,4.7],cont:"Europe",cap:"Brussels",pop:"11.8 million",sec:V3("black","yellow","red")},
+{name:"Bosnia & Herzegovina",iso:"BA",reg:"eu",ll:[44,18],cont:"Europe",cap:"Sarajevo",pop:"3.2 million",sec:[R(0,0,900,600,"blue"),P("M310 0H770V500Z","yellow"),P(stars([[300,100,26,10],[370,190,26,10],[440,280,26,10],[510,370,26,10],[580,460,26,10]]),"white")]},
+{name:"Bulgaria",iso:"BG",reg:"eu",ll:[42.8,25.2],cont:"Europe",cap:"Sofia",pop:"6.4 million",sec:H3("white","green","red")},
+{name:"Croatia",iso:"HR",reg:"eu",ll:[45.5,15.5],cont:"Europe",cap:"Zagreb",pop:"3.9 million",sec:[...H3("red","white","blue"),P("M370 165h160v135a80 80 0 0 1 -160 0Z","white"),P((()=>{let d="";for(let r=0;r<4;r++)for(let c=0;c<5;c++){if((r+c)%2===0)d+=`M${370+c*32} ${165+r*32}h32v32h-32Z`;}return d+"M375 293a75 72 0 0 0 150 0v-2h-150Z";})(),"red")]},
+{name:"Cyprus",iso:"CY",reg:"eu",ll:[35,33],cont:"Europe",cap:"Nicosia",pop:"1.3 million",sec:[R(0,0,900,600,"white"),P("M300 280q35 -35 85 -38q50 -22 105 -14q40 -18 80 -22l70 -26q16 -6 12 10l-42 34q-28 22 -62 24q-22 26 -62 28q-50 16 -100 8q-48 0 -86 -4Z","orange"),P(ellipsePath(400,410,70,12)+ellipsePath(500,410,70,12),"green")]},
+{name:"Czech Republic",iso:"CZ",reg:"eu",ll:[49.8,15.5],cont:"Europe",cap:"Prague",pop:"10.9 million",sec:[R(0,0,900,300,"white"),R(0,300,900,300,"red"),P("M0 0L450 300L0 600Z","blue")]},
+{name:"Denmark",iso:"DK",reg:"eu",ll:[56,9.5],cont:"Europe",cap:"Copenhagen",pop:"6 million",sec:nordic("red","white",250,350,250,350)},
+{name:"Estonia",iso:"EE",reg:"eu",ll:[58.7,25.5],cont:"Europe",cap:"Tallinn",pop:"1.4 million",sec:H3("blue","black","white")},
+{name:"Finland",iso:"FI",reg:"eu",ll:[62.5,26],cont:"Europe",cap:"Helsinki",pop:"5.6 million",sec:nordic("white","blue",240,370,235,365)},
+{name:"France",iso:"FR",reg:"eu",ll:[47,2.5],cont:"Europe",cap:"Paris",pop:"68 million",sec:V3("blue","white","red")},
+{name:"Germany",iso:"DE",reg:"eu",ll:[51.2,10.4],cont:"Europe",cap:"Berlin",pop:"84 million",sec:H3("black","red","yellow")},
+{name:"Greece",iso:"GR",reg:"eu",ll:[39,22],cont:"Europe",cap:"Athens",pop:"10.3 million",sec:[...HS(["blue","white","blue","white","blue"]),R(0,0,360,360,"blue"),P("M150 0h60v150h150v60H210v150h-60V210H0v-60h150Z","white")]},
+{name:"Hungary",iso:"HU",reg:"eu",ll:[47.2,19.4],cont:"Europe",cap:"Budapest",pop:"9.6 million",sec:H3("red","white","green")},
+{name:"Iceland",iso:"IS",reg:"eu",ll:[65,-18.7],cont:"Europe",cap:"Reykjavík",pop:"400,000",sec:nordic("blue","white",240,400,220,380,"red",280,360,260,340)},
+{name:"Ireland",iso:"IE",reg:"eu",ll:[53.2,-7.9],cont:"Europe",cap:"Dublin",pop:"5.3 million",sec:V3("green","white","orange")},
+{name:"Italy",iso:"IT",reg:"eu",ll:[42.8,12.5],cont:"Europe",cap:"Rome",pop:"59 million",sec:V3("green","white","red")},
+{name:"Kosovo",iso:"XK",reg:"eu",ll:[42.6,21],cont:"Europe",cap:"Pristina",pop:"1.8 million",sec:[R(0,0,900,600,"blue"),P("M385 260q8 -35 40 -38q12 -22 34 -14q22 -10 30 8q28 0 30 26q18 10 8 32q-24 28 -62 30q-30 12 -50 -6q-32 -6 -30 -38Z","yellow"),P(stars([[280,165,24,9],[350,148,24,9],[418,140,24,9],[486,140,24,9],[554,148,24,9],[622,165,24,9]]),"white")]},
+{name:"Latvia",iso:"LV",reg:"eu",ll:[57,25],cont:"Europe",cap:"Riga",pop:"1.9 million",sec:[R(0,0,900,240,"maroon"),R(0,240,900,120,"white"),R(0,360,900,240,"maroon")]},
+{name:"Liechtenstein",iso:"LI",reg:"eu",ll:[47.15,9.55],cont:"Europe",cap:"Vaduz",pop:"40,000",sec:[...H2("blue","red"),P("M100 130a15 18 0 0 1 30 0a15 20 0 0 1 30 0a15 18 0 0 1 30 0v22H100Z M96 158h98v14H96Z","yellow")]},
+{name:"Lithuania",iso:"LT",reg:"eu",ll:[55.2,23.9],cont:"Europe",cap:"Vilnius",pop:"2.9 million",sec:H3("yellow","green","red")},
+{name:"Luxembourg",iso:"LU",reg:"eu",ll:[49.8,6.1],cont:"Europe",cap:"Luxembourg City",pop:"680,000",sec:H3("red","white","sky")},
+{name:"Malta",iso:"MT",reg:"eu",ll:[35.9,14.4],cont:"Europe",cap:"Valletta",pop:"550,000",sec:[R(0,0,450,600,"white"),R(450,0,450,600,"red"),P("M95 65h28v28h28v28h-28v28h-28v-28H67v-28h28Z","gray")]},
+{name:"Moldova",iso:"MD",reg:"eu",ll:[47,28.8],cont:"Europe",cap:"Chișinău",pop:"2.5 million",sec:[...V3("blue","yellow","red"),P(eaglePath(450,270,120,1),"yellow"),P("M415 270h70v52a35 35 0 0 1 -70 0Z","maroon")]},
+{name:"Monaco",iso:"MC",reg:"eu",ll:[43.7,7.4],cont:"Europe",cap:"Monaco",pop:"39,000",sec:H2("red","white")},
+{name:"Montenegro",iso:"ME",reg:"eu",ll:[42.7,19.3],cont:"Europe",cap:"Podgorica",pop:"620,000",sec:[R(0,0,900,600,"yellow"),R(55,40,790,520,"red"),P(eaglePath(450,290,150,2),"yellow"),P("M425 300h50v38a25 25 0 0 1 -50 0Z","sky")]},
+{name:"Netherlands",iso:"NL",reg:"eu",ll:[52.2,5.6],cont:"Europe",cap:"Amsterdam",pop:"18 million",sec:H3("red","white","blue")},
+{name:"North Macedonia",iso:"MK",reg:"eu",ll:[41.6,21.7],cont:"Europe",cap:"Skopje",pop:"1.8 million",sec:[R(0,0,900,600,"red"),P((()=>{let d=circlePath(450,300,80);const dirs=[[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1]];dirs.forEach(([dx,dy])=>{const len=Math.hypot(dx,dy);const ux=dx/len,uy=dy/len;const tx=dx?450/Math.abs(ux):1e9, ty=dy?300/Math.abs(uy):1e9;const t=Math.min(tx,ty);const ex=450+ux*t, ey=300+uy*t;const px=-uy,py=ux;const w0=26,w1=70;d+=`M${(450+ux*95+px*w0).toFixed(1)} ${(300+uy*95+py*w0).toFixed(1)}L${(ex+px*w1).toFixed(1)} ${(ey+py*w1).toFixed(1)}L${(ex-px*w1).toFixed(1)} ${(ey-py*w1).toFixed(1)}L${(450+ux*95-px*w0).toFixed(1)} ${(300+uy*95-py*w0).toFixed(1)}Z`;});return d;})(),"yellow")]},
+{name:"Norway",iso:"NO",reg:"eu",ll:[61.5,8.5],cont:"Europe",cap:"Oslo",pop:"5.5 million",sec:nordic("red","white",240,400,220,380,"blue",280,360,260,340)},
+{name:"Poland",iso:"PL",reg:"eu",ll:[52,19.4],cont:"Europe",cap:"Warsaw",pop:"38 million",sec:H2("white","red")},
+{name:"Portugal",iso:"PT",reg:"eu",ll:[39.5,-8],cont:"Europe",cap:"Lisbon",pop:"10.4 million",sec:[R(0,0,360,600,"green"),R(360,0,540,600,"red"),P(ringPath(360,300,95,76)+rotRect(360,300,190,16,25)+rotRect(360,300,16,190,25),"yellow"),P("M330 265h60v48a30 30 0 0 1 -60 0Z","white"),P("M338 273h44v40a22 22 0 0 1 -44 0Z","red")]},
+{name:"Romania",iso:"RO",reg:"eu",ll:[45.9,25],cont:"Europe",cap:"Bucharest",pop:"19 million",sec:V3("blue","yellow","red")},
+{name:"San Marino",iso:"SM",reg:"eu",ll:[43.9,12.4],cont:"Europe",cap:"San Marino",pop:"34,000",sec:H2("white","sky")},
+{name:"Serbia",iso:"RS",reg:"eu",ll:[44,20.9],cont:"Europe",cap:"Belgrade",pop:"6.6 million",sec:[...H3("red","blue","white"),P("M320 180h160v120a80 80 0 0 1 -160 0Z","maroon"),P("M390 200h20v130h-20Z M350 235h100v18H350Z","white")]},
+{name:"Slovakia",iso:"SK",reg:"eu",ll:[48.7,19.5],cont:"Europe",cap:"Bratislava",pop:"5.4 million",sec:[...H3("white","blue","red"),P("M260 180h170v130a85 85 0 0 1 -170 0Z","red"),P("M335 195h20v120h-20Z M305 220h80v16h-80Z M298 258h94v16h-94Z","white"),P("M290 310a28 22 0 0 1 56 0a28 22 0 0 1 56 0a28 22 0 0 1 56 0v14H290Z","blue")]},
+{name:"Slovenia",iso:"SI",reg:"eu",ll:[46.1,14.8],cont:"Europe",cap:"Ljubljana",pop:"2.1 million",sec:[...H3("white","blue","red"),P("M230 110h130v100a65 65 0 0 1 -130 0Z","sky"),P("M245 185l25 -38l14 18l11 -16l11 16l14 -18l25 38Z","white")]},
+{name:"Spain",iso:"ES",reg:"eu",ll:[40.2,-3.7],cont:"Europe",cap:"Madrid",pop:"48 million",sec:[R(0,0,900,150,"red"),R(0,150,900,300,"yellow"),R(0,450,900,150,"red")]},
+{name:"Sweden",iso:"SE",reg:"eu",ll:[60,15],cont:"Europe",cap:"Stockholm",pop:"10.6 million",sec:nordic("blue","yellow",250,350,250,350)},
+{name:"Switzerland",iso:"CH",reg:"eu",ll:[46.8,8.2],w:600,cont:"Europe",cap:"Bern",pop:"8.9 million",sec:[R(0,0,600,600,"red"),P("M245 110H355V245H490V355H355V490H245V355H110V245H245Z","white")]},
+{name:"Ukraine",iso:"UA",reg:"eu",ll:[49,31.5],cont:"Europe",cap:"Kyiv",pop:"37 million",sec:H2("blue","yellow")},
+{name:"United Kingdom",iso:"GB",reg:"eu",ll:[54,-2],cont:"Europe",cap:"London",pop:"68 million",sec:[R(0,0,900,600,"blue"),P(diagBar(0,0,900,600,120)+diagBar(0,600,900,0,120),"white"),P(diagBar(0,0,900,600,50)+diagBar(0,600,900,0,50),"red"),P(crossPath(370,530,220,380),"white"),P(crossPath(405,495,255,345),"red")]},
+{name:"Vatican City",iso:"VA",reg:"eu",ll:[41.9,12.4],w:600,cont:"Europe",cap:"Vatican City",pop:"800",sec:[R(0,0,300,600,"yellow"),R(300,0,300,600,"white"),P(rotRect(450,300,170,16,45)+circlePath(392,368,26)+circlePath(392,368,12,0)+"M500 230l16 16l-14 14l10 10l-12 12l-10 -10l-14 14l-16 -16Z","yellow"),P(rotRect(450,300,170,16,-45)+circlePath(508,368,26)+circlePath(508,368,12,0)+"M400 230l-16 16l14 14l-10 10l12 12l10 -10l14 14l16 -16Z","gray")]},
+/* ---- ASIA ---- */
+{name:"Afghanistan",iso:"AF",ll:[34.5,66],cont:"Asia",cap:"Kabul",pop:"42 million",sec:V3("black","red","green")},
+{name:"Armenia",iso:"AM",ll:[40.3,45],cont:"Asia",cap:"Yerevan",pop:"3 million",sec:H3("red","blue","orange")},
+{name:"Azerbaijan",iso:"AZ",ll:[40.3,47.8],cont:"Asia",cap:"Baku",pop:"10.2 million",sec:[...H3("sky","red","green"),C(420,300,70,"white"),C(450,300,56,"red"),P(starPath(530,300,40,16,-90,8),"white")]},
+{name:"Bahrain",iso:"BH",ll:[26,50.5],cont:"Asia",cap:"Manama",pop:"1.5 million",sec:[R(0,0,420,600,"white"),zigzag(360,290,5,"red")]},
+{name:"Bangladesh",iso:"BD",ll:[23.8,90.3],cont:"Asia",cap:"Dhaka",pop:"173 million",sec:[R(0,0,900,600,"green"),C(410,300,130,"red")]},
+{name:"Bhutan",iso:"BT",ll:[27.5,90.5],cont:"Asia",cap:"Thimphu",pop:"780,000",sec:[P("M0 0H900L0 600Z","yellow"),P("M900 0V600H0Z","orange"),P("M435 265A62 62 0 0 1 559 265L529 265A32 32 0 0 0 465 265Z M375 335A62 62 0 0 0 499 335L469 335A32 32 0 0 1 405 335Z M559 265l44 -34l-6 28l30 12l-38 16l-30 -8Z M375 335l-44 34l6 -28l-30 -12l38 -16l30 8Z M435 265l-18 -22l8 22Z M499 335l18 22l-8 -22Z M470 233l-6 -26l14 20Z M404 367l6 26l-14 -20Z","white")]},
+{name:"Brunei",iso:"BN",ll:[4.5,114.7],cont:"Asia",cap:"Bandar Seri Begawan",pop:"460,000",sec:[R(0,0,900,600,"yellow"),P(diagBar(0,150,900,330,120),"white"),P(diagBar(0,290,900,470,80),"black"),P(circlePath(450,330,72)+circlePath(450,300,58,0)+rotRect(450,240,10,70,0)+rotRect(450,208,60,10,0)+"M420 350h60v14h-60Z","red")]},
+{name:"Cambodia",iso:"KH",ll:[12.5,105],cont:"Asia",cap:"Phnom Penh",pop:"17 million",sec:[R(0,0,900,150,"blue"),R(0,150,900,300,"red"),R(0,450,900,150,"blue"),P("M340 400v-16h20v-60l14 8v-28l16 12v-38l14 10v-30l16 14v-42l14 -32l14 32v42l16 -14v30l14 -10v38l16 -12v28l14 -8v60h20v16Z M368 384h22v-46l-22 -14Z M398 384h20v-64l-20 -14Z M426 384h18v-88l-18 -14Z M456 384h18v-88l18 -14v102h18v-78l20 14v64h22v-46l22 -14v60","white")]},
+{name:"China",iso:"CN",ll:[35,103],cont:"Asia",cap:"Beijing",pop:"1.41 billion",sec:[R(0,0,900,600,"red"),P(starPath(200,150,80,32),"yellow"),P(stars([[330,70,24,10],[375,120,24,10],[375,180,24,10],[330,230,24,10]]),"yellow")]},
+{name:"Georgia",iso:"GE",ll:[42,43.5],cont:"Asia",cap:"Tbilisi",pop:"3.7 million",sec:[R(0,0,900,600,"white"),P(crossPath(410,490,260,340),"red"),P(["M197 108h56v56h56v56h-56v56h-56v-56h-56v-56h56Z","M647 108h56v56h56v56h-56v56h-56v-56h-56v-56h56Z","M197 324h56v56h56v56h-56v56h-56v-56h-56v-56h56Z","M647 324h56v56h56v56h-56v56h-56v-56h-56v-56h56Z"].join(""),"red")]},
+{name:"India",iso:"IN",ll:[22,79],cont:"Asia",cap:"New Delhi",pop:"1.43 billion",sec:[...H3("orange","white","green"),P(chakraPath(450,300,92),"blue")]},
+{name:"Indonesia",iso:"ID",ll:[-2,114],cont:"Asia",cap:"Jakarta",pop:"278 million",sec:H2("red","white")},
+{name:"Iran",iso:"IR",ll:[32,54],cont:"Asia",cap:"Tehran",pop:"89 million",sec:[...H3("green","white","red"),P("M450 236c8 22 8 44 0 64c-8 -20 -8 -42 0 -64Z M438 302c-24 -34 -52 -36 -64 -26c6 24 32 38 58 38Z M462 302c24 -34 52 -36 64 -26c-6 24 -32 38 -58 38Z M420 322c-10 14 -6 30 6 38l8 -12Z M480 322c10 14 6 30 -6 38l-8 -12Z","red")]},
+{name:"Iraq",iso:"IQ",ll:[33,44],cont:"Asia",cap:"Baghdad",pop:"45 million",sec:[...H3("red","white","black"),P("M320 320v-40h14v40Z M348 320v-26h12v26Z M374 320v-40h14v26h12v-26h14v40Z M428 320v-26h12v26Z M470 320v-40h14v40h30v-52h14v52h6v14h-64Z M552 320v-26h12v26Z M578 334v-14h6v-40h14v54Z","green")]},
+{name:"Israel",iso:"IL",ll:[31.4,35],cont:"Asia",cap:"Jerusalem",pop:"9.8 million",sec:[R(0,0,900,600,"white"),R(0,80,900,70,"blue"),R(0,450,900,70,"blue"),P(hexagramOutline(450,300,115,0.55),"blue")]},
+{name:"Japan",iso:"JP",ll:[36.5,138.5],cont:"Asia",cap:"Tokyo",pop:"124 million",sec:[R(0,0,900,600,"white"),C(450,300,130,"red")]},
+{name:"Jordan",iso:"JO",ll:[31,36.5],cont:"Asia",cap:"Amman",pop:"11.5 million",sec:[...H3("black","white","green"),TRI("red"),P(starPath(140,300,38,15,-90,7),"white")]},
+{name:"Kazakhstan",iso:"KZ",ll:[48,67],cont:"Asia",cap:"Astana",pop:"20 million",sec:[R(0,0,900,600,"sky"),P(sunPath(450,230,75,24,115,3),"yellow"),P(birdPath(450,360,180),"yellow"),P("M28 20l24 32l-24 32l-24 -32Z M28 104l24 32l-24 32l-24 -32Z M28 188l24 32l-24 32l-24 -32Z M28 272l24 32l-24 32l-24 -32Z M28 356l24 32l-24 32l-24 -32Z M28 440l24 32l-24 32l-24 -32Z M28 524l24 32l-24 32l-24 -32Z","yellow")]},
+{name:"Kuwait",iso:"KW",ll:[29.3,47.7],cont:"Asia",cap:"Kuwait City",pop:"4.9 million",sec:[...H3("green","white","red"),P("M0 0L300 150V450L0 600Z","black")]},
+{name:"Kyrgyzstan",iso:"KG",ll:[41.5,74.5],cont:"Asia",cap:"Bishkek",pop:"7 million",sec:[R(0,0,900,600,"red"),P(raysPath(450,300,40,150,205,3),"yellow"),C(450,300,120,"yellow"),C(450,300,95,"red"),P(ringPath(450,300,80,64)+rotRect(450,300,140,10,20)+rotRect(450,300,140,10,-20)+rotRect(450,300,140,10,90),"yellow")]},
+{name:"Laos",iso:"LA",ll:[18,103.5],cont:"Asia",cap:"Vientiane",pop:"7.6 million",sec:[R(0,0,900,150,"red"),R(0,150,900,300,"blue"),R(0,450,900,150,"red"),C(450,300,110,"white")]},
+{name:"Lebanon",iso:"LB",ll:[33.9,35.9],cont:"Asia",cap:"Beirut",pop:"5.3 million",sec:[R(0,0,900,150,"red"),R(0,150,900,300,"white"),R(0,450,900,150,"red"),P("M450 180L560 400H340Z M435 400h30v40h-30Z","green")]},
+{name:"Malaysia",iso:"MY",ll:[3.5,102],cont:"Asia",cap:"Kuala Lumpur",pop:"34 million",sec:[...HS(["red","white","red","white","red","white","red"]),R(0,0,450,300,"blue"),C(160,150,85,"yellow"),C(190,150,68,"blue"),P(starPath(300,150,62,42,-90,14),"yellow")]},
+{name:"Maldives",iso:"MV",ll:[3.2,73],cont:"Asia",cap:"Malé",pop:"520,000",sec:[R(0,0,900,600,"red"),R(150,150,600,300,"green"),C(450,300,95,"white"),C(485,300,78,"green")]},
+{name:"Mongolia",iso:"MN",ll:[46.9,103.8],cont:"Asia",cap:"Ulaanbaatar",pop:"3.4 million",sec:[...V3("red","blue","red"),P("M150 118q22 30 12 52q-4 -12 -12 -15q-8 3 -12 15q-10 -22 12 -52Z"+circlePath(150,200,22)+circlePath(150,258,26)+"M105 300h90v12h-90Z M105 384h90v12h-90Z M105 316h12v64h-12Z M183 316h12v64h-12Z M126 402h48l-24 22Z M126 286l24 -22l24 22Z","yellow"),C(150,246,20,"red")]},
+{name:"Myanmar",iso:"MM",ll:[21,96],cont:"Asia",cap:"Naypyidaw",pop:"54 million",sec:[...H3("yellow","green","red"),P(starPath(450,300,140,55),"white")]},
+{name:"Nepal",iso:"NP",ll:[28.2,84],cont:"Asia",cap:"Kathmandu",pop:"30 million",sec:[R(0,0,900,600,"white"),P("M150 20L640 200L400 200L700 560L150 560Z","blue"),P("M180 70L560 215L330 215L640 525L180 525Z","red"),C(300,160,32,"white"),P(starPath(300,430,48,19,-90,6),"white")]},
+{name:"North Korea",iso:"KP",ll:[40,127],cont:"Asia",cap:"Pyongyang",pop:"26 million",sec:[R(0,0,900,100,"blue"),R(0,100,900,30,"white"),R(0,130,900,340,"red"),R(0,470,900,30,"white"),R(0,500,900,100,"blue"),C(300,300,95,"white"),P(starPath(300,300,80,32),"red")]},
+{name:"Oman",iso:"OM",ll:[21,57],cont:"Asia",cap:"Muscat",pop:"4.6 million",sec:[R(0,0,900,200,"white"),R(0,200,900,200,"red"),R(0,400,900,200,"green"),R(0,0,220,600,"red"),P(rotRect(85,95,110,10,45)+rotRect(135,95,110,10,-45)+"M92 60q-24 18 -18 48l16 22q4 -22 22 -30q-22 -14 -20 -40Z"+circlePath(110,42,12),"white")]},
+{name:"Pakistan",iso:"PK",ll:[30,70],cont:"Asia",cap:"Islamabad",pop:"240 million",sec:[R(0,0,900,600,"green"),R(0,0,225,600,"white"),C(540,300,140,"white"),C(585,255,115,"green"),P(starPath(640,190,45,18),"white")]},
+{name:"Palestine",iso:"PS",ll:[31.9,35.2],cont:"Asia",cap:"Ramallah (de facto)",pop:"5.5 million",sec:[...H3("black","white","green"),TRI("red")]},
+{name:"Philippines",iso:"PH",ll:[13,122],cont:"Asia",cap:"Manila",pop:"114 million",sec:[...H2("blue","red"),TRI("white"),P(sunPath(160,300,34,8,80,4),"yellow"),P(stars([[60,70,26,10],[60,530,26,10],[350,300,26,10]]),"yellow")]},
+{name:"Qatar",iso:"QA",ll:[25.3,51.2],cont:"Asia",cap:"Doha",pop:"2.7 million",sec:[R(0,0,420,600,"white"),zigzag(380,300,9,"maroon")]},
+{name:"Saudi Arabia",iso:"SA",ll:[24,45],cont:"Asia",cap:"Riyadh",pop:"36 million",sec:[R(0,0,900,600,"green"),P("M230 280v-50h16v50Z M262 280v-34h14v34Z M292 280v-50h16v34h14v-34h16v50Z M354 280v-34h14v34Z M384 280v-50h16v50Z M416 280v-62h16v46h24v-30h16v46Z M488 280v-34h14v34Z M518 280v-50h16v50Z M550 280v-34h34v12h-20v22Z M600 280v-62h16v62Z M632 280v-50h16v22h16v-22h16v50h-16v-14h-16v14Z","white"),P(rotRect(450,395,460,16,0)+"M215 380l-40 15l40 15l14 -15Z M690 387h30v16h-30Z","white")]},
+{name:"Singapore",iso:"SG",ll:[1.35,103.8],cont:"Asia",cap:"Singapore",pop:"6 million",sec:[...H2("red","white"),C(200,150,80,"white"),C(235,150,65,"red"),P(stars([[330,100,22,9],[390,145,22,9],[370,215,22,9],[290,215,22,9],[270,145,22,9]]),"white")]},
+{name:"South Korea",iso:"KR",ll:[36.5,128],cont:"Asia",cap:"Seoul",pop:"52 million",sec:[R(0,0,900,600,"white"),P("M348 371A125 125 0 1 1 552 229 63 63 0 0 1 450 300 63 63 0 0 0 348 371Z","red"),P("M348 371A125 125 0 0 0 552 229 63 63 0 0 0 450 300 63 63 0 0 1 348 371Z","blue"),P(trigram(210,150,34,[1,1,1])+trigram(690,450,34,[0,0,0])+trigram(690,150,-34,[0,1,0])+trigram(210,450,-34,[1,0,1]),"black")]},
+{name:"Sri Lanka",iso:"LK",ll:[7.5,80.7],cont:"Asia",cap:"Sri Jayawardenepura Kotte",pop:"22 million",sec:[R(0,0,900,600,"yellow"),R(60,60,150,480,"green"),R(210,60,150,480,"orange"),R(420,60,420,480,"maroon"),P("M570 380v-95q-12 -18 0 -34q-14 -22 6 -34q-8 -18 12 -22q16 -4 22 10q18 -8 26 8l38 -4q16 2 14 18l-14 8q14 22 6 44l10 60q2 14 -12 12l-8 -40l-10 -6v58l12 18q4 12 -10 10l-16 -20l-12 4l6 16q2 12 -12 8l-10 -22l-14 22q-10 10 -16 -2l10 -22q-14 -2 -18 -14Z","yellow"),P("M448 88l24 10l-24 10q6 -10 0 -20Z M448 512l24 -10l-24 -10q6 10 0 20Z M812 88l-24 10l24 10q-6 -10 0 -20Z M812 512l-24 -10l24 -10q-6 10 0 20Z","yellow")]},
+{name:"Syria",iso:"SY",ll:[35,38],cont:"Asia",cap:"Damascus",pop:"23 million",sec:[...H3("green","white","black"),P(stars([[300,300,32,13],[450,300,32,13],[600,300,32,13]]),"red")]},
+{name:"Taiwan",iso:"TW",ll:[23.8,121],cont:"Asia",cap:"Taipei",pop:"23 million",sec:[R(0,0,900,600,"red"),R(0,0,450,300,"blue"),P(starPath(225,150,95,42,-90,12),"white"),C(225,150,48,"blue"),C(225,150,38,"white")]},
+{name:"Tajikistan",iso:"TJ",ll:[38.5,71],cont:"Asia",cap:"Dushanbe",pop:"10 million",sec:[R(0,0,900,150,"red"),R(0,150,900,300,"white"),R(0,450,900,150,"green"),P("M405 330a15 18 0 0 1 30 0a15 20 0 0 1 30 0a15 18 0 0 1 30 0l8 24H397Z M400 362h100v12H400Z"+stars([[380,260,14,6],[415,240,14,6],[450,232,14,6],[485,240,14,6],[520,260,14,6],[358,290,14,6],[542,290,14,6]]),"yellow")]},
+{name:"Thailand",iso:"TH",ll:[15.5,100],cont:"Asia",cap:"Bangkok",pop:"72 million",sec:[R(0,0,900,100,"red"),R(0,100,900,100,"white"),R(0,200,900,200,"blue"),R(0,400,900,100,"white"),R(0,500,900,100,"red")]},
+{name:"Timor-Leste",iso:"TL",ll:[-8.8,125.7],cont:"Asia",cap:"Dili",pop:"1.4 million",sec:[R(0,0,900,600,"red"),P("M0 0L500 300L0 600Z","yellow"),P("M0 0L320 300L0 600Z","black"),P(starPath(160,300,55,22),"white")]},
+{name:"Turkey",iso:"TR",ll:[39,35],cont:"Europe & Asia",cap:"Ankara",pop:"86 million",sec:[R(0,0,900,600,"red"),C(350,300,135,"white"),C(385,300,108,"red"),P(starPath(545,300,62,24,-90),"white")]},
+{name:"Turkmenistan",iso:"TM",ll:[39,59.5],cont:"Asia",cap:"Ashgabat",pop:"6.5 million",sec:[R(0,0,900,600,"green"),R(80,0,150,600,"maroon"),C(480,180,80,"white"),C(510,160,64,"green"),P(stars([[620,90,20,8],[660,130,20,8],[670,185,20,8],[655,240,20,8],[615,275,20,8]]),"white")]},
+{name:"United Arab Emirates",iso:"AE",ll:[23.9,54.3],cont:"Asia",cap:"Abu Dhabi",pop:"10 million",sec:[R(0,0,900,200,"green"),R(0,200,900,200,"white"),R(0,400,900,200,"black"),R(0,0,225,600,"red")]},
+{name:"Uzbekistan",iso:"UZ",ll:[41.5,64],cont:"Asia",cap:"Tashkent",pop:"36 million",sec:[R(0,0,900,190,"sky"),R(0,190,900,20,"red"),R(0,210,900,180,"white"),R(0,390,900,20,"red"),R(0,410,900,190,"green"),C(200,95,60,"white"),C(225,80,48,"sky"),P(stars([[340,50,14,6],[400,50,14,6],[460,50,14,6],[310,95,14,6],[370,95,14,6],[430,95,14,6],[490,95,14,6],[340,140,14,6],[400,140,14,6],[460,140,14,6],[520,140,14,6],[520,95,14,6]]),"white")]},
+{name:"Vietnam",iso:"VN",ll:[16,109.5],cont:"Asia",cap:"Hanoi",pop:"100 million",sec:[R(0,0,900,600,"red"),P(starPath(450,300,150,60),"yellow")]},
+{name:"Yemen",iso:"YE",ll:[15.5,47.5],cont:"Asia",cap:"Sana'a",pop:"34 million",sec:H3("red","white","black")},
+/* ---- AFRICA ---- */
+{name:"Algeria",iso:"DZ",ll:[28,2.5],cont:"Africa",cap:"Algiers",pop:"45 million",sec:[R(0,0,450,600,"green"),R(450,0,450,600,"white"),P(crescent(430,300,115),"red"),P(starPath(540,300,48,19),"red")]},
+{name:"Angola",iso:"AO",ll:[-12,17.5],cont:"Africa",cap:"Luanda",pop:"36 million",sec:[...H2("red","black"),P(ringPath(450,300,85,62)+raysPath(450,300,12,82,98,6)+rotRect(430,320,150,12,-45)+"M355 395l24 -24l16 16l-24 24Z"+starPath(480,330,32,13),"yellow")]},
+{name:"Benin",iso:"BJ",ll:[9.5,2.3],cont:"Africa",cap:"Porto-Novo",pop:"13.5 million",sec:[R(0,0,340,600,"green"),R(340,0,560,300,"yellow"),R(340,300,560,300,"red")]},
+{name:"Botswana",iso:"BW",ll:[-22,24],cont:"Africa",cap:"Gaborone",pop:"2.7 million",sec:[R(0,0,900,230,"sky"),R(0,230,900,35,"white"),R(0,265,900,70,"black"),R(0,335,900,35,"white"),R(0,370,900,230,"sky")]},
+{name:"Burkina Faso",iso:"BF",ll:[12.5,-1.7],cont:"Africa",cap:"Ouagadougou",pop:"23 million",sec:[...H2("red","green"),P(starPath(450,300,90,36),"yellow")]},
+{name:"Burundi",iso:"BI",ll:[-3.4,29.9],cont:"Africa",cap:"Gitega",pop:"13 million",sec:[P("M0 0H900L450 300Z","red"),P("M0 600H900L450 300Z","red"),P("M0 0L450 300L0 600Z","green"),P("M900 0V600L450 300Z","green"),P(diagBar(0,0,900,600,90)+diagBar(0,600,900,0,90),"white"),C(450,300,110,"white"),P(stars([[450,240,30,12],[395,330,30,12],[505,330,30,12]]),"red")]},
+{name:"Cabo Verde",iso:"CV",ll:[15.1,-23.6],cont:"Africa",cap:"Praia",pop:"600,000",sec:[R(0,0,900,330,"blue"),R(0,330,900,45,"white"),R(0,375,900,45,"red"),R(0,420,900,45,"white"),R(0,465,900,135,"blue"),P(starsCircle(340,378,85,10,16),"yellow")]},
+{name:"Cameroon",iso:"CM",ll:[5.5,12.5],cont:"Africa",cap:"Yaoundé",pop:"28 million",sec:[...V3("green","red","yellow"),P(starPath(450,300,70,28),"yellow")]},
+{name:"Central African Republic",iso:"CF",ll:[6.5,20.5],cont:"Africa",cap:"Bangui",pop:"5.5 million",sec:[R(0,0,900,150,"blue"),R(0,150,900,150,"white"),R(0,300,900,150,"green"),R(0,450,900,150,"yellow"),R(390,0,120,600,"red"),P(starPath(120,80,55,22),"yellow")]},
+{name:"Chad",iso:"TD",ll:[15,18.5],cont:"Africa",cap:"N'Djamena",pop:"18 million",sec:V3("blue","yellow","red")},
+{name:"Comoros",iso:"KM",ll:[-11.7,43.3],cont:"Africa",cap:"Moroni",pop:"850,000",sec:[R(0,0,900,150,"yellow"),R(0,150,900,150,"white"),R(0,300,900,150,"red"),R(0,450,900,150,"blue"),TRI("green"),C(150,300,72,"white"),C(180,300,58,"green"),P(stars([[240,150,20,8],[262,250,20,8],[262,350,20,8],[240,450,20,8]]),"white")]},
+{name:"DR Congo",iso:"CD",ll:[-3,23],cont:"Africa",cap:"Kinshasa",pop:"102 million",sec:[R(0,0,900,600,"sky"),P(diagBar(0,600,900,0,150),"yellow"),P(diagBar(0,600,900,0,80),"red"),P(starPath(150,120,80,32),"yellow")]},
+{name:"Republic of the Congo",iso:"CG",ll:[-1,15.5],cont:"Africa",cap:"Brazzaville",pop:"6 million",sec:[P("M0 0H900L0 600Z","green"),P("M900 0V600H0Z","red"),P(diagBar(900,0,0,600,170),"yellow")]},
+{name:"Djibouti",iso:"DJ",ll:[11.6,42.6],cont:"Africa",cap:"Djibouti",pop:"1.1 million",sec:[...H2("sky","green"),TRI("white"),P(starPath(150,300,55,22),"red")]},
+{name:"Egypt",iso:"EG",ll:[26.5,30],cont:"Africa",cap:"Cairo",pop:"106 million",sec:[...H3("red","white","black"),P(eaglePath(450,290,105,1)+"M400 370h100v14h-100Z","yellow")]},
+{name:"Equatorial Guinea",iso:"GQ",ll:[1.6,10.4],cont:"Africa",cap:"Malabo",pop:"1.7 million",sec:[...H3("green","white","red"),TRI("sky"),P("M444 260h12v56h-12Z M420 316h60v10h-60Z M450 214q30 8 34 34q-16 -4 -34 -18q-18 14 -34 18q4 -26 34 -34Z M450 238q22 6 26 24q-12 -2 -26 -12q-14 10 -26 12q4 -18 26 -24Z","gray")]},
+{name:"Eritrea",iso:"ER",ll:[15.2,39],cont:"Africa",cap:"Asmara",pop:"3.7 million",sec:[P("M0 0H900V300Z","green"),P("M0 600H900V300Z","sky"),P("M0 0L900 300L0 600Z","red"),P(ringPath(200,300,64,50)+starsCircle(200,300,57,10,9)+rotRect(200,378,60,8,25),"yellow")]},
+{name:"Eswatini",iso:"SZ",ll:[-26.5,31.5],cont:"Africa",cap:"Mbabane",pop:"1.2 million",sec:[R(0,0,900,130,"blue"),R(0,130,900,40,"yellow"),R(0,170,900,260,"maroon"),R(0,430,900,40,"yellow"),R(0,470,900,130,"blue"),P(rotRect(450,300,560,7,0)+rotRect(450,278,480,5,0),"yellow"),P(ellipsePath(450,300,190,72),"black"),P("M260 300a190 72 0 0 1 380 0Z M300 300a150 55 0 0 0 300 0Z"+ellipsePath(390,300,16,30)+ellipsePath(510,300,16,30),"white")]},
+{name:"Ethiopia",iso:"ET",ll:[9,39.5],cont:"Africa",cap:"Addis Ababa",pop:"126 million",sec:[...H3("green","yellow","red"),C(450,300,115,"blue"),P(starOutline(450,300,85,34,-90,5,0.5)+raysPath(450,300,5,88,108,3,-54),"yellow")]},
+{name:"Gabon",iso:"GA",ll:[-0.6,11.8],cont:"Africa",cap:"Libreville",pop:"2.4 million",sec:H3("green","yellow","blue")},
+{name:"Gambia",iso:"GM",ll:[13.4,-15.3],cont:"Africa",cap:"Banjul",pop:"2.8 million",sec:[R(0,0,900,200,"red"),R(0,200,900,40,"white"),R(0,240,900,120,"blue"),R(0,360,900,40,"white"),R(0,400,900,200,"green")]},
+{name:"Ghana",iso:"GH",ll:[7.9,-1.2],cont:"Africa",cap:"Accra",pop:"34 million",sec:[...H3("red","yellow","green"),P(starPath(450,300,75,30),"black")]},
+{name:"Guinea",iso:"GN",ll:[10.5,-11],cont:"Africa",cap:"Conakry",pop:"14 million",sec:V3("red","yellow","green")},
+{name:"Guinea-Bissau",iso:"GW",ll:[12,-15],cont:"Africa",cap:"Bissau",pop:"2.2 million",sec:[R(0,0,300,600,"red"),R(300,0,600,300,"yellow"),R(300,300,600,300,"green"),P(starPath(150,300,62,25),"black")]},
+{name:"Ivory Coast",iso:"CI",ll:[7.5,-5.5],cont:"Africa",cap:"Yamoussoukro",pop:"31 million",sec:V3("orange","white","green")},
+{name:"Kenya",iso:"KE",ll:[0.2,37.8],cont:"Africa",cap:"Nairobi",pop:"55 million",sec:[R(0,0,900,160,"black"),R(0,160,900,40,"white"),R(0,200,900,200,"red"),R(0,400,900,40,"white"),R(0,440,900,160,"green"),P(rotRect(450,300,420,10,62)+rotRect(450,300,420,10,118),"white"),P(ellipsePath(450,300,85,155),"maroon"),P(ellipsePath(450,300,85,155)+ellipsePath(450,300,68,132,0),"black"),P(ellipsePath(450,300,14,60)+ellipsePath(430,240,8,26)+ellipsePath(470,240,8,26)+ellipsePath(430,360,8,26)+ellipsePath(470,360,8,26),"white")]},
+{name:"Lesotho",iso:"LS",ll:[-29.5,28.2],cont:"Africa",cap:"Maseru",pop:"2.3 million",sec:[R(0,0,900,150,"sky"),R(0,150,900,300,"white"),R(0,450,900,150,"green"),P("M450 190L540 350H360Z M330 350h240v30H330Z","black")]},
+{name:"Liberia",iso:"LR",ll:[6.5,-9.5],cont:"Africa",cap:"Monrovia",pop:"5.5 million",sec:[...HS(["red","white","red","white","red","white","red"]),R(0,0,300,257,"blue"),P(starPath(150,128,80,32),"white")]},
+{name:"Libya",iso:"LY",ll:[27,17.5],cont:"Africa",cap:"Tripoli",pop:"7 million",sec:[R(0,0,900,150,"red"),R(0,150,900,300,"black"),R(0,450,900,150,"green"),C(390,300,75,"white"),C(420,300,60,"black"),P(starPath(505,300,40,16),"white")]},
+{name:"Madagascar",iso:"MG",ll:[-19,47],cont:"Africa",cap:"Antananarivo",pop:"30 million",sec:[R(0,0,300,600,"white"),R(300,0,600,300,"red"),R(300,300,600,300,"green")]},
+{name:"Malawi",iso:"MW",ll:[-13.5,34],cont:"Africa",cap:"Lilongwe",pop:"21 million",sec:[...H3("black","red","green"),P("M320 200A130 130 0 0 1 580 200Z"+raysPath(450,200,9,135,185,3,-176,172),"red")]},
+{name:"Mali",iso:"ML",ll:[17.5,-2],cont:"Africa",cap:"Bamako",pop:"23 million",sec:V3("green","yellow","red")},
+{name:"Mauritania",iso:"MR",ll:[20,-10.5],cont:"Africa",cap:"Nouakchott",pop:"4.9 million",sec:[R(0,0,900,600,"green"),R(0,0,900,80,"red"),R(0,520,900,80,"red"),C(450,320,120,"yellow"),C(450,285,100,"green"),P(starPath(450,235,48,19),"yellow")]},
+{name:"Mauritius",iso:"MU",ll:[-20.2,57.5],cont:"Africa",cap:"Port Louis",pop:"1.3 million",sec:HS(["red","blue","yellow","green"])},
+{name:"Morocco",iso:"MA",ll:[31.8,-7],cont:"Africa",cap:"Rabat",pop:"38 million",sec:[R(0,0,900,600,"red"),P(starOutline(450,300,145,56,-90,5,0.55),"green")]},
+{name:"Mozambique",iso:"MZ",ll:[-18,35.5],cont:"Africa",cap:"Maputo",pop:"33 million",sec:[R(0,0,900,180,"green"),R(0,180,900,30,"white"),R(0,210,900,180,"black"),R(0,390,900,30,"white"),R(0,420,900,180,"yellow"),TRI("red"),P(starPath(140,300,60,24),"yellow")]},
+{name:"Namibia",iso:"NA",ll:[-22.5,17],cont:"Africa",cap:"Windhoek",pop:"2.6 million",sec:[P("M0 0H900L0 600Z","blue"),P("M900 0V600H0Z","green"),P(diagBar(0,600,900,0,190),"white"),P(diagBar(0,600,900,0,120),"red"),P(starPath(170,130,70,30,-90,12),"yellow")]},
+{name:"Niger",iso:"NE",ll:[17.5,9],cont:"Africa",cap:"Niamey",pop:"27 million",sec:[...H3("orange","white","green"),C(450,300,80,"orange")]},
+{name:"Nigeria",iso:"NG",ll:[9.5,8],cont:"Africa",cap:"Abuja",pop:"230 million",sec:V3("green","white","green")},
+{name:"Rwanda",iso:"RW",ll:[-2,30],cont:"Africa",cap:"Kigali",pop:"14 million",sec:[R(0,0,900,300,"sky"),R(0,300,900,150,"yellow"),R(0,450,900,150,"green"),P(starPath(760,120,58,24,-90,12),"yellow")]},
+{name:"São Tomé & Príncipe",iso:"ST",ll:[0.3,6.7],cont:"Africa",cap:"São Tomé",pop:"230,000",sec:[R(0,0,900,150,"green"),R(0,150,900,300,"yellow"),R(0,450,900,150,"green"),TRI("red"),P(stars([[560,300,50,20],[720,300,50,20]]),"black")]},
+{name:"Senegal",iso:"SN",ll:[14.5,-14.5],cont:"Africa",cap:"Dakar",pop:"18 million",sec:[...V3("green","yellow","red"),P(starPath(450,300,70,28),"green")]},
+{name:"Seychelles",iso:"SC",ll:[-4.6,55.5],cont:"Africa",cap:"Victoria",pop:"100,000",sec:[P("M0 600L0 0L300 0Z","sky"),P("M0 600L300 0L600 0Z","yellow"),P("M0 600L600 0L900 0Z","red"),P("M0 600L900 0L900 300Z","white"),P("M0 600L900 300L900 600Z","green")]},
+{name:"Sierra Leone",iso:"SL",ll:[8.5,-13.5],cont:"Africa",cap:"Freetown",pop:"8.8 million",sec:H3("green","white","blue")},
+{name:"Somalia",iso:"SO",ll:[5,46.5],cont:"Africa",cap:"Mogadishu",pop:"18 million",sec:[R(0,0,900,600,"sky"),P(starPath(450,300,140,55),"white")]},
+{name:"South Africa",iso:"ZA",ll:[-29,25],cont:"Africa",cap:"Pretoria",pop:"60 million",sec:[R(0,0,900,220,"red"),R(0,380,900,220,"blue"),R(0,220,900,160,"white"),P(diagBar(0,90,430,300,105)+diagBar(0,510,430,300,105)+"M430 245H900V355H430Z","green"),P("M0 95L320 300L0 505Z","yellow"),P("M0 150L255 300L0 450Z","black")]},
+{name:"South Sudan",iso:"SS",ll:[7,30],cont:"Africa",cap:"Juba",pop:"11 million",sec:[R(0,0,900,180,"black"),R(0,180,900,30,"white"),R(0,210,900,180,"red"),R(0,390,900,30,"white"),R(0,420,900,180,"green"),TRI("sky"),P(starPath(140,300,58,23),"yellow")]},
+{name:"Sudan",iso:"SD",ll:[15.5,30],cont:"Africa",cap:"Khartoum",pop:"48 million",sec:[...H3("red","white","black"),TRI("green")]},
+{name:"Tanzania",iso:"TZ",ll:[-6.4,35],cont:"Africa",cap:"Dodoma",pop:"67 million",sec:[P("M0 0H900L0 600Z","green"),P("M900 0V600H0Z","sky"),P(diagBar(0,600,900,0,190),"yellow"),P(diagBar(0,600,900,0,130),"black")]},
+{name:"Togo",iso:"TG",ll:[8.5,1.2],cont:"Africa",cap:"Lomé",pop:"9 million",sec:[...HS(["green","yellow","green","yellow","green"]),R(0,0,360,360,"red"),P(starPath(180,180,90,36),"white")]},
+{name:"Tunisia",iso:"TN",ll:[34,9.5],cont:"Africa",cap:"Tunis",pop:"12 million",sec:[R(0,0,900,600,"red"),C(450,300,150,"white"),C(450,300,100,"red"),C(480,300,80,"white"),P(starPath(490,300,45,18),"red")]},
+{name:"Uganda",iso:"UG",ll:[1.5,32.5],cont:"Africa",cap:"Kampala",pop:"47 million",sec:[...HS(["black","yellow","red","black","yellow","red"]),C(450,300,95,"white"),P(standingBird(450,300,62),"gray"),P("M436 230q10 -14 24 -6l-10 14Z"+circlePath(448,364,10),"red")]},
+{name:"Zambia",iso:"ZM",ll:[-14.5,27.5],cont:"Africa",cap:"Lusaka",pop:"20 million",sec:[R(0,0,900,600,"green"),R(600,300,100,300,"red"),R(700,300,100,300,"black"),R(800,300,100,300,"orange"),P(birdPath(750,190,120),"orange")]},
+{name:"Zimbabwe",iso:"ZW",ll:[-19,29.8],cont:"Africa",cap:"Harare",pop:"16 million",sec:[...HS(["green","yellow","red","black","red","yellow","green"]),TRI("white"),P(starPath(140,300,68,27),"red"),P(standingBird(140,300,34),"yellow")]},
+/* ---- NORTH AMERICA ---- */
+{name:"Antigua & Barbuda",iso:"AG",reg:"cb",ll:[17,-61.8],cont:"North America",cap:"St John's",pop:"100,000",sec:[R(0,0,900,600,"red"),P("M60 0H840L450 520Z","black"),P("M190 160H710L450 470Z","blue"),P("M300 300H600L450 470Z","white"),P(starPath(450,110,75,30,-90,8),"yellow")]},
+{name:"Bahamas",iso:"BS",reg:"cb",ll:[25,-77.5],cont:"North America",cap:"Nassau",pop:"410,000",sec:[...H3("sky","yellow","sky"),TRI("black")]},
+{name:"Barbados",iso:"BB",reg:"cb",ll:[13.2,-59.5],cont:"North America",cap:"Bridgetown",pop:"280,000",sec:[...V3("blue","yellow","blue"),P("M443 210h14v250h-14Z M400 430h100v16H400Z M420 446h60v14h-60Z M398 216q-22 30 -8 64l38 26v-30q-22 -18 -16 -48Z M502 216q22 30 8 64l-38 26v-30q22 -18 16 -48Z M450 175l14 24h-28Z","black")]},
+{name:"Belize",iso:"BZ",reg:"cb",ll:[17.2,-88.7],cont:"North America",cap:"Belmopan",pop:"410,000",sec:[R(0,0,900,600,"blue"),R(0,0,900,60,"red"),R(0,540,900,60,"red"),C(450,300,140,"white"),P(ringPath(450,300,126,108),"green"),P("M436 260h28v20h-28Z M420 292h60v60h-60Z M428 280l22 -18l22 18Z","gray")]},
+{name:"Canada",iso:"CA",ll:[56,-106],cont:"North America",cap:"Ottawa",pop:"39 million",sec:[R(0,0,225,600,"red"),R(225,0,450,600,"white"),R(675,0,225,600,"red"),P(leafPath(450,300,300),"red")]},
+{name:"Costa Rica",iso:"CR",reg:"cb",ll:[9.9,-84.2],cont:"North America",cap:"San José",pop:"5.2 million",sec:[R(0,0,900,100,"blue"),R(0,100,900,100,"white"),R(0,200,900,200,"red"),R(0,400,900,100,"white"),R(0,500,900,100,"blue")]},
+{name:"Cuba",iso:"CU",reg:"cb",ll:[21.5,-79.5],cont:"North America",cap:"Havana",pop:"11 million",sec:[...HS(["blue","white","blue","white","blue"]),TRI("red"),P(starPath(150,300,62,25),"white")]},
+{name:"Dominica",iso:"DM",reg:"cb",ll:[15.4,-61.3],cont:"North America",cap:"Roseau",pop:"73,000",sec:[R(0,0,900,600,"green"),R(390,0,40,600,"yellow"),R(430,0,40,600,"black"),R(470,0,40,600,"white"),R(0,260,900,40,"yellow"),R(0,300,900,40,"black"),R(0,340,900,40,"white"),C(450,300,110,"red"),P(standingBird(450,295,64),"purple"),P("M420 375h70v10h-70Z","green"),P(starsCircle(450,300,95,10,10),"green")]},
+{name:"Dominican Republic",iso:"DO",reg:"cb",ll:[19,-70.7],cont:"North America",cap:"Santo Domingo",pop:"11 million",sec:[R(0,0,380,230,"blue"),R(520,0,380,230,"red"),R(0,370,380,230,"red"),R(520,370,380,230,"blue"),P(crossPath(380,520,230,370),"white")]},
+{name:"El Salvador",iso:"SV",reg:"cb",ll:[13.8,-88.9],cont:"North America",cap:"San Salvador",pop:"6.3 million",sec:[...H3("blue","white","blue"),P(triOutline(450,300,75,-90,0.72),"yellow"),P("M410 320a45 30 0 0 1 80 0l-8 6a35 22 0 0 0 -64 0Z","sky"),P("M425 335l14 -22l8 22Z M448 335l12 -26l10 26Z","green")]},
+{name:"Grenada",iso:"GD",reg:"cb",ll:[12.1,-61.7],cont:"North America",cap:"St George's",pop:"125,000",sec:[R(0,0,900,600,"red"),P("M60 40H840L450 300Z","yellow"),P("M60 560H840L450 300Z","yellow"),P("M60 40V560L450 300Z","green"),P("M840 40V560L450 300Z","green"),C(450,300,90,"red"),P(starPath(450,300,58,23),"yellow"),P(stars([[250,70,26,10],[450,70,26,10],[650,70,26,10],[250,530,26,10],[450,530,26,10],[650,530,26,10]]),"yellow")]},
+{name:"Guatemala",iso:"GT",reg:"cb",ll:[15.5,-90.3],cont:"North America",cap:"Guatemala City",pop:"18 million",sec:[...V3("sky","white","sky"),P(standingBird(440,290,60),"green"),P("M420 330q-24 30 -12 62q14 -26 26 -54Z","red"),P("M470 250q26 -12 44 -2l-18 14q-14 -6 -26 -12Z","yellow")]},
+{name:"Haiti",iso:"HT",reg:"cb",ll:[19,-72.7],cont:"North America",cap:"Port-au-Prince",pop:"11.7 million",sec:[...H2("blue","red"),R(330,220,240,160,"white"),P("M444 250h12v90h-12Z"+rotRect(450,264,80,7,-30)+rotRect(450,264,80,7,30)+rotRect(450,286,110,7,-14)+rotRect(450,286,110,7,14)+rotRect(450,278,96,7,90-42)+rotRect(450,278,96,7,-48),"green"),P("M390 340h120v14H390Z","green")]},
+{name:"Honduras",iso:"HN",reg:"cb",ll:[14.8,-86.8],cont:"North America",cap:"Tegucigalpa",pop:"10.6 million",sec:[...H3("sky","white","sky"),P(stars([[350,300,28,11],[550,300,28,11],[450,240,28,11],[400,360,28,11],[500,360,28,11]]),"sky")]},
+{name:"Jamaica",iso:"JM",reg:"cb",ll:[18.1,-77.3],cont:"North America",cap:"Kingston",pop:"2.8 million",sec:[P("M0 0L450 300L0 600Z","black"),P("M900 0V600L450 300Z","black"),P("M0 0H900L450 300Z","green"),P("M0 600H900L450 300Z","green"),P(diagBar(0,0,900,600,90),"yellow"),P(diagBar(0,600,900,0,90),"yellow")]},
+{name:"Mexico",iso:"MX",ll:[23.5,-102.5],cont:"North America",cap:"Mexico City",pop:"129 million",sec:[...V3("green","white","red"),P("M450 350q-36 -6 -50 -34q-10 -22 2 -42q-16 2 -26 -10q20 -2 28 -14q8 -14 26 -16q-8 -10 -2 -20q8 12 22 12q20 -2 28 12q14 2 22 14q10 -8 22 -6q-10 10 -8 22q4 24 -14 40q-16 16 -50 42Z M450 350l-8 18h16Z","maroon"),P("M400 388q22 14 50 14q28 0 50 -14l6 10q-26 16 -56 16q-30 0 -56 -16Z"+ellipsePath(408,368,10,5)+ellipsePath(492,368,10,5),"green")]},
+{name:"Nicaragua",iso:"NI",reg:"cb",ll:[12.9,-85.2],cont:"North America",cap:"Managua",pop:"7 million",sec:[...H3("sky","white","sky"),P(triOutline(450,300,78,-90,0.72),"yellow"),P("M408 322a48 34 0 0 1 84 0l-9 6a37 24 0 0 0 -66 0Z","blue"),P("M418 338l14 -24l9 24Z M444 338l13 -28l11 28Z M472 338l10 -20l8 20Z","green")]},
+{name:"Panama",iso:"PA",reg:"cb",ll:[8.5,-80.1],cont:"North America",cap:"Panama City",pop:"4.5 million",sec:[R(0,0,450,300,"white"),R(450,0,450,300,"red"),R(0,300,450,300,"blue"),R(450,300,450,300,"white"),P(starPath(225,150,70,28),"blue"),P(starPath(675,450,70,28),"red")]},
+{name:"St Kitts & Nevis",iso:"KN",reg:"cb",ll:[17.3,-62.7],cont:"North America",cap:"Basseterre",pop:"48,000",sec:[P("M0 0H900L0 600Z","green"),P("M900 0V600H0Z","red"),P(diagBar(0,600,900,0,210),"yellow"),P(diagBar(0,600,900,0,140),"black"),P(stars([[330,330,45,18],[570,270,45,18]]),"white")]},
+{name:"St Lucia",iso:"LC",reg:"cb",ll:[13.9,-61],cont:"North America",cap:"Castries",pop:"180,000",sec:[R(0,0,900,600,"sky"),P("M450 120L700 480H200Z","white"),P("M450 170L660 470H240Z","black"),P("M450 320L700 480H200Z","yellow")]},
+{name:"St Vincent & the Grenadines",iso:"VC",reg:"cb",ll:[13.2,-61.2],cont:"North America",cap:"Kingstown",pop:"100,000",sec:[R(0,0,250,600,"sky"),R(250,0,400,600,"yellow"),R(650,0,250,600,"green"),P("M450 180l45 65-45 65-45-65Z M360 330l45 65-45 65-45-65Z M540 330l45 65-45 65-45-65Z","green")]},
+{name:"Trinidad & Tobago",iso:"TT",reg:"cb",ll:[10.5,-61.3],cont:"North America",cap:"Port of Spain",pop:"1.5 million",sec:[R(0,0,900,600,"red"),P(diagBar(0,0,900,600,210),"white"),P(diagBar(0,0,900,600,140),"black")]},
+{name:"United States",iso:"US",ll:[39,-98],cont:"North America",cap:"Washington, D.C.",pop:"335 million",sec:[...HS(["red","white","red","white","red","white","red"]),R(0,0,405,300,"blue"),P(stars([[67,60,25,10],[157,60,25,10],[247,60,25,10],[337,60,25,10],[67,150,25,10],[157,150,25,10],[247,150,25,10],[337,150,25,10],[67,240,25,10],[157,240,25,10],[247,240,25,10],[337,240,25,10]]),"white")]},
+/* ---- SOUTH AMERICA ---- */
+{name:"Argentina",iso:"AR",ll:[-34,-64.5],cont:"South America",cap:"Buenos Aires",pop:"46 million",sec:[R(0,0,900,200,"sky"),R(0,200,900,200,"white"),R(0,400,900,200,"sky"),P(sunPath(450,300,52,16,95,3)+raysPath(450,300,16,50,80,5,-90+11.25),"yellow")]},
+{name:"Bolivia",iso:"BO",ll:[-16.7,-64.7],cont:"South America",cap:"Sucre / La Paz",pop:"12 million",sec:H3("red","yellow","green")},
+{name:"Brazil",iso:"BR",ll:[-10,-52],cont:"South America",cap:"Brasília",pop:"216 million",sec:[R(0,0,900,600,"green"),P("M450 60L840 300L450 540L60 300Z","yellow"),C(450,300,120,"blue"),P("M338 268c70 -32 156 -30 228 10l-5 21c-70 -40 -150 -42 -218 -10Z","white")]},
+{name:"Chile",iso:"CL",ll:[-33.5,-70.7],cont:"South America",cap:"Santiago",pop:"19.5 million",sec:[R(300,0,600,300,"white"),R(0,0,300,300,"blue"),R(0,300,900,300,"red"),P(starPath(150,150,80,32),"white")]},
+{name:"Colombia",iso:"CO",ll:[4.5,-73],cont:"South America",cap:"Bogotá",pop:"52 million",sec:[R(0,0,900,300,"yellow"),R(0,300,900,150,"blue"),R(0,450,900,150,"red")]},
+{name:"Ecuador",iso:"EC",ll:[-1.5,-78.5],cont:"South America",cap:"Quito",pop:"18 million",sec:[R(0,0,900,300,"yellow"),R(0,300,900,150,"blue"),R(0,450,900,150,"red"),P(birdPath(450,225,130),"black"),P("M415 260h70v55a35 35 0 0 1 -70 0Z","sky"),P("M425 330a25 18 0 0 0 50 0v-8h-50Z","red")]},
+{name:"Guyana",iso:"GY",ll:[5,-58.8],cont:"South America",cap:"Georgetown",pop:"810,000",sec:[R(0,0,900,600,"green"),P("M0 0L580 300L0 600Z","white"),P("M0 30L520 300L0 570Z","yellow"),P("M0 80L330 300L0 520Z","black"),P("M0 120L300 300L0 480Z","red")]},
+{name:"Paraguay",iso:"PY",ll:[-23.5,-58],cont:"South America",cap:"Asunción",pop:"6.9 million",sec:[...H3("red","white","blue"),P(ringPath(450,300,85,70),"green"),P(starPath(450,300,48,19),"yellow")]},
+{name:"Peru",iso:"PE",ll:[-9.5,-72],cont:"South America",cap:"Lima",pop:"34 million",sec:V3("red","white","red")},
+{name:"Suriname",iso:"SR",ll:[4,-56],cont:"South America",cap:"Paramaribo",pop:"620,000",sec:[R(0,0,900,120,"green"),R(0,120,900,60,"white"),R(0,180,900,240,"red"),R(0,420,900,60,"white"),R(0,480,900,120,"green"),P(starPath(450,300,75,30),"yellow")]},
+{name:"Uruguay",iso:"UY",ll:[-32.8,-56],cont:"South America",cap:"Montevideo",pop:"3.4 million",sec:[...HS(["white","blue","white","blue","white","blue","white","blue","white"]),R(0,0,333,333,"white"),P(sunPath(167,167,60,16,105,3)+raysPath(167,167,16,58,88,5,-90+11.25),"yellow")]},
+{name:"Venezuela",iso:"VE",ll:[7,-66],cont:"South America",cap:"Caracas",pop:"28 million",sec:[...H3("yellow","blue","red"),P(stars([[310,330,20,8],[360,295,20,8],[410,275,20,8],[460,268,20,8],[510,280,20,8],[560,300,20,8],[600,330,20,8]]),"white")]},
+/* ---- OCEANIA ---- */
+{name:"Australia",iso:"AU",ll:[-25,134],cont:"Oceania",cap:"Canberra",pop:"26 million",sec:[R(0,0,900,600,"blue"),...JACK,P(starPath(225,460,80,32,-90,7),"white"),P(stars([[700,120,24,10,-90,7],[760,220,24,10,-90,7],[640,240,24,10,-90,7],[700,360,24,10,-90,7],[745,290,16,7,-90,7]]),"white")]},
+{name:"Fiji",iso:"FJ",ll:[-18,176],cont:"Oceania",cap:"Suva",pop:"900,000",sec:[R(0,0,900,600,"sky"),...JACK,P("M580 330h140v90a70 70 0 0 1 -140 0Z","white"),P("M580 330h140v26h-140Z","yellow"),P("M642 356h16v104h-16Z M580 396h140v14H580Z","red")]},
+{name:"Kiribati",iso:"KI",ll:[1.4,173],cont:"Oceania",cap:"Tarawa",pop:"130,000",sec:[R(0,0,900,300,"red"),P("M340 300A110 110 0 0 1 560 300Z"+raysPath(450,300,9,115,160,3,-172,164),"yellow"),P(birdPath(450,120,110),"yellow"),R(0,300,900,300,"blue"),P("M0 360q75 -28 150 0q75 28 150 0q75 -28 150 0q75 28 150 0q75 -28 150 0q75 28 150 0v45q-75 28 -150 0q-75 -28 -150 0q-75 28 -150 0q-75 -28 -150 0q-75 28 -150 0q-75 -28 -150 0Z M0 470q75 -28 150 0q75 28 150 0q75 -28 150 0q75 28 150 0q75 -28 150 0q75 28 150 0v45q-75 28 -150 0q-75 -28 -150 0q-75 28 -150 0q-75 -28 -150 0q-75 28 -150 0q-75 -28 -150 0Z","white")]},
+{name:"Marshall Islands",iso:"MH",ll:[7.1,171],cont:"Oceania",cap:"Majuro",pop:"42,000",sec:[R(0,0,900,600,"blue"),P(diagBar(0,520,900,60,60),"orange"),P(diagBar(0,600,900,140,60),"white"),P(starPath(200,140,90,36,-90,12),"white")]},
+{name:"Micronesia",iso:"FM",ll:[6.9,158],cont:"Oceania",cap:"Palikir",pop:"100,000",sec:[R(0,0,900,600,"sky"),P(stars([[450,140,45,18],[450,460,45,18],[290,300,45,18],[610,300,45,18]]),"white")]},
+{name:"Nauru",iso:"NR",ll:[-0.5,166.9],cont:"Oceania",cap:"Yaren",pop:"12,000",sec:[R(0,0,900,600,"blue"),R(0,270,900,50,"yellow"),P(starPath(230,430,62,25,-90,12),"white")]},
+{name:"New Zealand",iso:"NZ",ll:[-41,172],cont:"Oceania",cap:"Wellington",pop:"5.2 million",sec:[R(0,0,900,600,"blue"),...JACK,P(stars([[700,150,28,11],[760,250,28,11],[640,260,28,11],[700,380,28,11]]),"red")]},
+{name:"Palau",iso:"PW",ll:[7.5,134.6],cont:"Oceania",cap:"Ngerulmud",pop:"18,000",sec:[R(0,0,900,600,"sky"),C(380,300,130,"yellow")]},
+{name:"Papua New Guinea",iso:"PG",ll:[-6.5,144],cont:"Oceania",cap:"Port Moresby",pop:"10 million",sec:[P("M0 0H900V600Z","red"),P("M0 0V600H900Z","black"),P(birdPath(640,160,120)+"M700 190q60 20 105 70q-50 -10 -85 -38Z M690 205q40 40 55 95q-40 -28 -60 -70Z","yellow"),P(stars([[250,300,20,8],[220,380,20,8],[250,460,20,8],[310,420,20,8],[300,340,20,8]]),"white")]},
+{name:"Samoa",iso:"WS",ll:[-13.8,179.5],cont:"Oceania",cap:"Apia",pop:"220,000",sec:[R(0,0,900,600,"red"),R(0,0,360,240,"blue"),P(stars([[180,60,22,9],[240,110,22,9],[180,170,22,9],[120,110,22,9],[195,130,14,6]]),"white")]},
+{name:"Solomon Islands",iso:"SB",ll:[-9.5,160],cont:"Oceania",cap:"Honiara",pop:"720,000",sec:[P("M0 0H900L0 600Z","blue"),P("M900 0V600H0Z","green"),P(diagBar(900,0,0,600,60),"yellow"),P(stars([[110,80,22,9],[190,80,22,9],[150,145,22,9],[110,210,22,9],[190,210,22,9]]),"white")]},
+{name:"Tonga",iso:"TO",ll:[-21.2,178.5],cont:"Oceania",cap:"Nuku'alofa",pop:"106,000",sec:[R(0,0,900,600,"red"),R(0,0,300,200,"white"),P("M120 30h60v55h55v60h-55v55h-60v-55H65v-60h55Z","red")]},
+{name:"Tuvalu",iso:"TV",ll:[-8,177],cont:"Oceania",cap:"Funafuti",pop:"11,000",sec:[R(0,0,900,600,"sky"),...JACK,P(stars([[600,120,24,10],[700,180,24,10],[780,120,24,10],[620,300,24,10],[720,300,24,10],[790,240,24,10],[560,420,24,10],[660,460,24,10],[760,420,24,10]]),"yellow")]},
+{name:"Vanuatu",iso:"VU",ll:[-17.7,168.3],cont:"Oceania",cap:"Port Vila",pop:"330,000",sec:[R(0,0,900,270,"red"),R(0,330,900,270,"green"),R(0,270,900,60,"yellow"),P("M0 0L350 300L0 600Z","black"),P("M60 240 A70 78 0 1 0 130 320 L112 316 A52 60 0 1 1 78 254 Z","yellow"),P("M96 268q18 -8 32 4l-10 12q-12 -10 -22 -16Z M92 296q18 -2 28 12l-12 9q-9 -13 -16 -21Z","yellow")]},
+/* ---- RUSSIA ---- */
+{name:"Russia",iso:"RU",ll:[57,50],cont:"Europe & Asia",cap:"Moscow",pop:"144 million",sec:H3("white","blue","red")}
+];
+
+/* ================= world map geometry (lat,lon outlines) ================= */
+const LANDS = [
+  [[60,-165],[70,-155],[69,-128],[68,-110],[66,-95],[68,-90],[65,-75],[60,-65],[52,-56],[47,-60],[45,-65],[40,-74],[35,-76],[30,-81],[25,-80],[26,-82],[30,-84],[29,-90],[26,-97],[21,-97],[18,-94],[21.5,-87],[16,-88],[12,-83],[9,-79],[8,-83],[15,-92],[16,-99],[23,-106],[27,-110],[31,-114],[24,-110.5],[23,-109.5],[27,-114],[32,-117],[34,-120],[40,-124],[46,-124],[50,-127],[55,-132],[59,-140],[60,-150],[55,-162],[58,-158]],
+  [[60,-43],[64,-52],[70,-54],[76,-68],[80,-60],[82,-40],[80,-20],[70,-22],[65,-37]],
+  [[11,-74],[10.5,-64],[8,-60],[6,-55],[0,-50],[-5,-35],[-8,-34.8],[-13,-38.5],[-23,-42],[-25,-48],[-34,-53],[-38,-58],[-41,-62],[-47,-66],[-54,-68],[-53,-71],[-46,-74],[-37,-73],[-30,-71.5],[-18,-70],[-14,-76],[-6,-81],[-1,-80],[4,-77],[9,-77]],
+  [[36,-9],[38.7,-9.4],[43,-9],[43.5,-1.8],[47.5,-4.5],[49.5,0],[51,4],[53.5,7],[57,8],[56,10],[54.5,11],[54,14],[54.5,20],[57,21],[59,23],[60,30],[64,36],[66,40],[68,44],[67,53],[69,60],[73,70],[72,80],[76,100],[74,113],[72,130],[70,150],[67,170],[66,179],[62,179],[60,170],[62,163],[54,160],[51,157],[57,156],[59,153],[53,141],[43,132],[40,128],[35,129],[35,126],[38,125],[37,122],[34,120],[31,122],[28,121],[23,117],[21.5,108],[16,108],[10,107],[8.5,105],[10,104],[13,100],[7,100],[1.5,103],[4,101],[8,98],[14,98],[16,94],[21,92],[22,89],[19,85],[13,80],[8,77.5],[15,74],[21,70],[24,67],[25,62],[26,57],[24,54],[26,56.5],[22,60],[17,55],[13,45],[12.5,43.5],[21,39],[28,34.5],[30,32.5],[31,34],[36,36],[36.5,30],[38.5,26],[40.5,26],[38,24],[37,22],[40,19],[44,14],[45.5,13],[44,12],[42,14.5],[40,18.3],[38,16.5],[40,15],[41.5,12.5],[43.5,10],[44,8.5],[43.5,7],[42.5,3],[39.5,0],[36.5,-2],[36,-5.5]],
+  [[55.5,13],[59,10.5],[58,6.5],[62,5],[67,13],[71,26],[70,29],[66,25],[63.5,21.5],[60,22],[59.5,18],[56.5,16]],
+  [[60.2,22],[61,21],[63,21.5],[65.5,25],[68,28],[69.5,28.5],[67,29.5],[63,30],[60.5,27.8]],
+  [[35.8,-5.9],[36.8,10.2],[33.5,11],[32.5,20],[31,25],[31.2,32],[30,32.5],[28,34],[22,36.5],[15.5,39.5],[12.5,43.3],[10.5,44.5],[11.8,51.3],[2,45.5],[-4.7,39.2],[-15,40.5],[-20,35],[-26,32.9],[-30,31],[-34.8,20],[-33,18],[-29,16.5],[-23,14.5],[-15,12],[-9,13],[-5,12],[0,9],[4,9.5],[6,4],[5,-1],[4.8,-7],[7.5,-13],[12,-16.8],[14.7,-17.5],[21,-17],[27,-13],[31,-9.8]],
+  [[-12,49.3],[-16,50.3],[-25,47],[-25.5,45],[-22,43.3],[-16,44.5]],
+  [[50,-5.7],[51.5,1.3],[53,0],[54.5,-1],[57.5,-2],[58.5,-5],[55,-6],[53,-4.5],[51.5,-5]],
+  [[51.5,-9.8],[55.2,-8],[54,-6],[52,-6.3]],
+  [[63.4,-18],[64,-22.5],[65.5,-24],[66.3,-21],[66,-15],[64.5,-14]],
+  [[41,140],[38,141],[35.5,140.5],[34.5,137],[34,135],[34.5,132],[31,130.5],[33,129.5],[35.5,133],[37.5,137],[40,140]],
+  [[41.5,140.5],[43,141],[44,145],[43,145.8],[42,143]],
+  [[5.5,95],[-3,102],[-6,105.5],[-4,106],[3,99]],
+  [[-6,105.5],[-7,110],[-8.5,114],[-8,108]],
+  [[1,109],[4.5,115],[7,117],[1,119],[-3,116],[-1,110]],
+  [[-1,131],[-3,141],[-6.5,147],[-9,143],[-8,138],[-4.5,133]],
+  [[18.5,120.5],[16,122],[13.5,121],[15,120]],
+  [[9.5,122],[9,126],[6,125.5],[6.5,122]],
+  [[-11,142.5],[-16,145.5],[-20,148.5],[-25,153],[-32,152.5],[-37.8,150],[-39,146.5],[-35,138],[-32,133],[-33.8,124],[-34,115],[-31,115.5],[-26,113.5],[-22,114],[-18,122],[-14.8,126.5],[-12,131],[-12,136.5],[-14.5,135.5],[-17.5,140.5],[-14,141.5]],
+  [[-40.8,144.7],[-41,148],[-43.5,147],[-42.5,145.3]],
+  [[-34.5,173],[-37.5,178],[-41.5,175],[-39,174]],
+  [[-40.8,173],[-43.5,173],[-46.5,169],[-44,168]],
+  [[9.8,80],[6.2,81.8],[6,80.5]],
+  [[23,-82],[22,-78],[20,-74.2],[20.5,-77],[22,-84.5]],
+  [[19.8,-71],[18.3,-68.5],[18,-72],[19.5,-73.5]]
+];
+
+const MAP_W = 1000, MAP_H = 520;
+const proj = (lat, lon) => [ (lon+180)/360*MAP_W, (85-lat)/145*MAP_H ];
+
+/* two zoom insets */
+const INSETS = {
+  eu:{label:"EUROPE (zoomed)", x:6, y:298, w:278, h:214, lat0:34.5, lat1:66.8, lon0:-25, lon1:34.5},
+  cb:{label:"CARIBBEAN", x:348, y:114, w:110, h:176, lat0:6.5, lat1:27.5, lon0:-92, lon1:-58}
+};
+const EU_BOX = (() => { const [x0,y0]=proj(67,-13), [x1,y1]=proj(34,34); return {x:x0,y:y0,w:x1-x0,h:y1-y0}; })();
+const CB_BOX = (() => { const [x0,y0]=proj(27.5,-92), [x1,y1]=proj(6.5,-58); return {x:x0,y:y0,w:x1-x0,h:y1-y0}; })();
+
+const TILE_W = 16, TILE_H = 11;
+
+/* place all tiles, then relax overlaps apart */
+function computeLayout() {
+  const pts = FLAGS.map((f,i) => {
+    if (f.reg && INSETS[f.reg]) {
+      const n = INSETS[f.reg];
+      return { i, region:f.reg,
+        x: n.x + 10 + (f.ll[1]-n.lon0)/(n.lon1-n.lon0)*(n.w-20),
+        y: n.y + 22 + (n.lat1-f.ll[0])/(n.lat1-n.lat0)*(n.h-32) };
+    }
+    const [x,y] = proj(f.ll[0], f.ll[1]);
+    return { i, region:"main", x, y };
+  });
+  const bounds = {
+    main:{x0:12, y0:12, x1:MAP_W-12, y1:MAP_H-12},
+    eu:{x0:INSETS.eu.x+10, y0:INSETS.eu.y+20, x1:INSETS.eu.x+INSETS.eu.w-10, y1:INSETS.eu.y+INSETS.eu.h-8},
+    cb:{x0:INSETS.cb.x+10, y0:INSETS.cb.y+20, x1:INSETS.cb.x+INSETS.cb.w-10, y1:INSETS.cb.y+INSETS.cb.h-8}
+  };
+  const obstacles = [INSETS.eu, INSETS.cb].map(n => ({x0:n.x-10, y0:n.y-8, x1:n.x+n.w+10, y1:n.y+n.h+8}));
+  const needX = TILE_W+3, needY = TILE_H+3;
+  for (let it = 0; it < 400; it++) {
+    let moved = false;
+    for (let a = 0; a < pts.length; a++) {
+      for (let b = a+1; b < pts.length; b++) {
+        const A = pts[a], B = pts[b];
+        if (A.region !== B.region) continue;
+        let dx = B.x-A.x, dy = B.y-A.y;
+        if (Math.abs(dx) < needX && Math.abs(dy) < needY) {
+          if (dx === 0 && dy === 0) dy = 0.5;
+          const px = needX-Math.abs(dx), py = needY-Math.abs(dy);
+          if (px < py) { const s = dx>=0?1:-1; A.x -= s*px/2; B.x += s*px/2; }
+          else { const s = dy>=0?1:-1; A.y -= s*py/2; B.y += s*py/2; }
+          moved = true;
+        }
+      }
+    }
+    pts.forEach(p => {
+      const bd = bounds[p.region];
+      p.x = Math.min(bd.x1, Math.max(bd.x0, p.x));
+      p.y = Math.min(bd.y1, Math.max(bd.y0, p.y));
+      if (p.region === "main") obstacles.forEach(o => {
+        if (p.x > o.x0 && p.x < o.x1 && p.y > o.y0 && p.y < o.y1) {
+          const dl = p.x-o.x0, dr = o.x1-p.x, dt = p.y-o.y0, db = o.y1-p.y;
+          const m = Math.min(dl,dr,dt,db);
+          if (m === dl) p.x = o.x0; else if (m === dr) p.x = o.x1;
+          else if (m === dt) p.y = o.y0; else p.y = o.y1;
+          moved = true;
+        }
+      });
+    });
+    if (!moved) break;
+  }
+  return pts;
+}
+/* ===== DOM ===== */
+let AC = null;
+function beep(freq, dur=.12, type="sine", vol=.15, when=0) {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const t = AC.currentTime + when;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(t); o.stop(t + dur + .02);
+  } catch(e){}
+}
+const sndTap  = () => beep(600,.05,"square",.06);
+const sndPick = () => beep(420,.06,"sine",.1);
+const sndGo   = () => beep(520,.09,"sine",.12);
+const sndPass = () => beep(300,.12,"sine",.1);
+const sndWin  = () => { beep(523,.12,"sine",.15); beep(659,.12,"sine",.15,.1); beep(784,.22,"sine",.15,.2); };
+const sndBad  = () => { beep(220,.2,"sawtooth",.12); beep(165,.28,"sawtooth",.12,.15); };
+
+const $ = id => document.getElementById(id);
+const SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function sectionEl(s) {
+  let e;
+  if (s.t === "rect") { e = document.createElementNS(SVGNS,"rect"); e.setAttribute("x",s.x); e.setAttribute("y",s.y); e.setAttribute("width",s.w); e.setAttribute("height",s.h); }
+  else if (s.t === "circle") { e = document.createElementNS(SVGNS,"circle"); e.setAttribute("cx",s.cx); e.setAttribute("cy",s.cy); e.setAttribute("r",s.r); }
+  else { e = document.createElementNS(SVGNS,"path"); e.setAttribute("d",s.d); }
+  return e;
+}
+function miniFlag(f, w) {
+  const fw = f.w || 900;
+  const s = document.createElementNS(SVGNS,"svg");
+  s.setAttribute("viewBox", `0 0 ${fw} 600`);
+  s.setAttribute("width", w);
+  s.setAttribute("height", Math.round(w*600/fw));
+  f.sec.forEach(sec => {
+    const e = sectionEl(sec);
+    e.setAttribute("fill", COLORS[sec.c]);
+    s.appendChild(e);
+  });
+  return s;
+}
+
+/* ================= state ================= */
+let status = [];
+let curIdx = -1;
+let hints = 10;
+let selected = "red";
+let painted = [];
+let locked = false;
+let tiles = [];
+const TOTAL = FLAGS.length;
+
+/* ================= save / resume ================= */
+const SAVE_KEY = "gg-save-paint-flag";
+function saveGame() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ status, hints })); } catch(e) {}
+}
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch(e) {} }
+function loadSave() {
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); } catch(e) { return null; }
+}
+
+function buildMap() {
+  const svg = $("worldMap");
+  svg.innerHTML = "";
+  const defs = el("defs", {}, svg);
+  tiles = [];
+
+  el("rect", {x:0, y:0, width:MAP_W, height:MAP_H, rx:14, fill:"#0d1430"}, svg);
+  LANDS.forEach(poly => {
+    const d = poly.map((p,i) => (i?"L":"M") + proj(p[0],p[1]).map(v=>v.toFixed(1)).join(" ")).join("") + "Z";
+    el("path", {d, fill:"#2e3a5c", stroke:"#465179", "stroke-width":1}, svg);
+  });
+  // source boxes + insets
+  el("rect", {x:EU_BOX.x, y:EU_BOX.y, width:EU_BOX.w, height:EU_BOX.h, fill:"none", stroke:"#ffd54a", "stroke-width":1.2, "stroke-dasharray":"5 4", rx:4, opacity:.7}, svg);
+  el("line", {x1:EU_BOX.x, y1:EU_BOX.y+EU_BOX.h, x2:INSETS.eu.x+INSETS.eu.w, y2:INSETS.eu.y, stroke:"#ffd54a", "stroke-width":1, "stroke-dasharray":"4 4", opacity:.4}, svg);
+  el("rect", {x:CB_BOX.x, y:CB_BOX.y, width:CB_BOX.w, height:CB_BOX.h, fill:"none", stroke:"#63e0b8", "stroke-width":1.2, "stroke-dasharray":"5 4", rx:4, opacity:.7}, svg);
+  el("line", {x1:CB_BOX.x+CB_BOX.w, y1:CB_BOX.y+CB_BOX.h/2, x2:INSETS.cb.x, y2:INSETS.cb.y+INSETS.cb.h/2, stroke:"#63e0b8", "stroke-width":1, "stroke-dasharray":"4 4", opacity:.4}, svg);
+  [["eu","#ffd54a"],["cb","#63e0b8"]].forEach(([k,col]) => {
+    const n = INSETS[k];
+    el("rect", {x:n.x, y:n.y, width:n.w, height:n.h, rx:10, fill:"#101a3d", stroke:col, "stroke-width":1.2, opacity:.97}, svg);
+    const lbl = el("text", {x:n.x+8, y:n.y+14, fill:col, "font-size":10, "font-weight":"bold"}, svg);
+    lbl.textContent = n.label;
+  });
+
+  const layout = computeLayout();
+  layout.forEach(p => {
+    const g = el("g", {}, svg);
+    const rect = el("rect", {
+      x:p.x-TILE_W/2, y:p.y-TILE_H/2, width:TILE_W, height:TILE_H, rx:2,
+      fill:"#556086", stroke:"#7c86b4", "stroke-width":1
+    }, g);
+    tiles[p.i] = {g, rect, x:p.x, y:p.y, tw:TILE_W, th:TILE_H};
+  });
+
+  const mk = el("g", {id:"marker", visibility:"hidden"}, svg);
+  const bob = el("g", {"class":"bob"}, mk);
+  el("line", {x1:0, y1:0, x2:0, y2:-28, stroke:"#e8eaf5", "stroke-width":2.5, "stroke-linecap":"round"}, bob);
+  el("path", {d:"M1 -28L17 -22.5L1 -17Z", fill:"#D80027", stroke:"#8e0019", "stroke-width":1}, bob);
+  el("circle", {cx:0, cy:-28, r:2.4, fill:"#ffd54a"}, bob);
+  el("ellipse", {cx:0, cy:1.5, rx:5, ry:2, fill:"rgba(0,0,0,.45)"}, bob);
+
+  svg._defs = defs;
+}
+
+function moveMarker(i) {
+  const t = tiles[i];
+  const mk = $("marker");
+  mk.setAttribute("visibility", "visible");
+  mk.setAttribute("transform", `translate(${t.x} ${t.y - t.th/2})`);
+  $("worldMap").appendChild(mk);
+  tiles.forEach((tl, j) => {
+    tl.rect.classList.toggle("cur-tile", j === i);
+    if (j === i) { tl.rect.setAttribute("stroke", "#ffd54a"); tl.rect.setAttribute("stroke-width", 2); }
+    else if (status[j] === "pending") { tl.rect.setAttribute("stroke", "#7c86b4"); tl.rect.setAttribute("stroke-width", 1); }
+  });
+}
+
+function markDone(i) {
+  const f = FLAGS[i], t = tiles[i];
+  const fw = f.w || 900;
+  const patId = "pat-" + f.iso;
+  if (!document.getElementById(patId)) {
+    const pat = el("pattern", {id:patId, viewBox:`0 0 ${fw} 600`, width:1, height:1, preserveAspectRatio:"xMidYMid slice"}, $("worldMap")._defs);
+    f.sec.forEach(sec => {
+      const e = sectionEl(sec);
+      e.setAttribute("fill", COLORS[sec.c]);
+      pat.appendChild(e);
+    });
+  }
+  t.rect.classList.remove("cur-tile");
+  t.rect.setAttribute("fill", `url(#${patId})`);
+  t.rect.setAttribute("stroke", "#3ddc84");
+  t.rect.setAttribute("stroke-width", 1.4);
+}
+
+function markPassed(i) {
+  const t = tiles[i];
+  t.rect.classList.remove("cur-tile");
+  t.rect.setAttribute("fill", "#2a2e44");
+  t.rect.setAttribute("stroke", "#565b78");
+  t.rect.setAttribute("stroke-width", 1);
+  const x = el("text", {x:t.x, y:t.y+3.5, "text-anchor":"middle", "class":"tile-x"}, t.g);
+  x.textContent = "✕";
+}
+
+function counts() {
+  let d=0, p=0;
+  status.forEach(s => { if (s==="done") d++; else if (s==="passed") p++; });
+  return {d, p};
+}
+function updateScore() {
+  const {d, p} = counts();
+  const pct = Math.round(d / TOTAL * 100);
+  $("doneCount").textContent = d;
+  $("totalCount").textContent = TOTAL;
+  $("passCount").textContent = p;
+  $("pctText").textContent = pct + "%";
+  $("hdrPct").textContent = pct + "%";
+  $("pbarFill").style.width = pct + "%";
+}
+
+/* ================= flow ================= */
+function pickNext() {
+  $("infoCard").hidden = true;
+  const pending = status.map((s,i) => s==="pending" ? i : -1).filter(i => i>=0);
+  if (pending.length === 0) { endGame(); return; }
+  curIdx = pending[Math.floor(Math.random() * pending.length)];
+  $("promptName").textContent = FLAGS[curIdx].name;
+  $("promptCont").textContent = "Next stop… " + FLAGS[curIdx].cont;
+  $("promptBar").style.visibility = "visible";
+  moveMarker(curIdx);
+}
+
+function onPass() {
+  if (curIdx < 0) return;
+  sndPass();
+  status[curIdx] = "passed";
+  markPassed(curIdx);
+  updateScore();
+  saveGame();
+  pickNext();
+}
+
+function onGo() {
+  sndGo();
+  $("mapScreen").hidden = true;
+  $("paintScreen").hidden = false;
+  loadFlag();
+}
+
+function backToMap() {
+  $("paintScreen").hidden = true;
+  $("mapScreen").hidden = false;
+}
+
+function showInfo(i) {
+  const f = FLAGS[i];
+  $("infoFlag").innerHTML = "";
+  $("infoFlag").appendChild(miniFlag(f, 34));
+  $("infoName").textContent = f.name;
+  $("infoCont").textContent = f.cont;
+  $("infoCap").textContent = f.cap;
+  $("infoPop").textContent = f.pop;
+  $("infoCard").hidden = false;
+  $("promptBar").style.visibility = "hidden";
+}
+
+function onFlagComplete() {
+  status[curIdx] = "done";
+  updateScore();
+  saveGame();
+  if (window.GGA) {
+    const d = status.filter(s => s === "done").length;
+    if (d >= 10) GGA.award('pf_10');
+    if (d >= 25) GGA.award('pf_25');
+    GGA.haptic('success');
+  }
+  toast("\u{1F389} Well done!", true);
+  confetti();
+  sndWin();
+  setTimeout(() => {
+    backToMap();
+    markDone(curIdx);
+    $("marker").setAttribute("visibility", "hidden");
+    showInfo(curIdx);
+  }, 1300);
+}
+
+/* ================= paint screen ================= */
+const flagSvg = $("flagSvg"), flagG = $("flagG");
+
+function buildPalette(flag) {
+  const pal = $("palette");
+  pal.innerHTML = "";
+  const keys = COLOR_ORDER.filter(k => flag.sec.some(s => s.c === k));
+  if (!keys.includes(selected)) selected = keys[0];
+  keys.forEach(key => {
+    const d = document.createElement("div");
+    d.className = "swatch" + (key === selected ? " selected" : "");
+    d.style.background = COLORS[key];
+    d.dataset.key = key;
+    d.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      selected = key;
+      sndPick();
+      [...pal.children].forEach(s => s.classList.toggle("selected", s.dataset.key === key));
+    });
+    pal.appendChild(d);
+  });
+}
+
+function loadFlag() {
+  const f = FLAGS[curIdx];
+  buildPalette(f);
+  const fw = f.w || 900;
+  flagSvg.setAttribute("viewBox", `0 0 ${fw} 600`);
+  flagG.innerHTML = "";
+  painted = f.sec.map(() => null);
+  locked = false;
+  f.sec.forEach((s, i) => {
+    const e = sectionEl(s);
+    e.classList.add("sec");
+    e.setAttribute("fill", "url(#hatch)");
+    e.setAttribute("stroke", "#2b2f3a");
+    e.setAttribute("stroke-width", "3");
+    e.addEventListener("pointerdown", ev => {
+      ev.preventDefault();
+      if (locked) return;
+      painted[i] = selected;
+      e.setAttribute("fill", COLORS[selected]);
+      sndTap();
+      updateCheck();
+    });
+    flagG.appendChild(e);
+  });
+  $("country").textContent = f.name;
+  updateCheck();
+  updateHint();
+}
+
+function updateCheck() {
+  $("checkBtn").disabled = painted.some(p => p === null) || locked;
+}
+function updateHint() {
+  $("hintBtn").textContent = "\u{1F4A1} Hint (" + hints + ")";
+  $("hintBtn").disabled = hints <= 0 || locked;
+}
+
+function check() {
+  if (locked) return;
+  const f = FLAGS[curIdx];
+  const wrong = [];
+  f.sec.forEach((s, i) => { if (painted[i] !== s.c) wrong.push(i); });
+  if (wrong.length === 0) {
+    locked = true;
+    onFlagComplete();
+  } else {
+    toast(wrong.length + " wrong — try again!", false);
+    sndBad();
+    $("flagCard").classList.add("shake");
+    setTimeout(() => $("flagCard").classList.remove("shake"), 550);
+    wrong.forEach(i => {
+      const e = flagG.children[i];
+      e.setAttribute("stroke", "#ff2d2d");
+      e.setAttribute("stroke-width", "8");
+      setTimeout(() => {
+        e.setAttribute("stroke", "#2b2f3a");
+        e.setAttribute("stroke-width", "3");
+        e.setAttribute("fill", "url(#hatch)");
+        painted[i] = null;
+        updateCheck();
+      }, 700);
+    });
+  }
+}
+
+function hint() {
+  if (hints <= 0 || locked) return;
+  const f = FLAGS[curIdx];
+  let i = painted.findIndex(p => p === null);
+  if (i === -1) i = f.sec.findIndex((s, j) => painted[j] !== s.c);
+  if (i === -1) return;
+  hints--;
+  painted[i] = f.sec[i].c;
+  flagG.children[i].setAttribute("fill", COLORS[f.sec[i].c]);
+  sndPick();
+  updateCheck();
+  updateHint();
+  saveGame();
+}
+
+/* ================= end screen ================= */
+function endGame() {
+  clearSave();
+  const {d, p} = counts();
+  const pct = Math.round(d / TOTAL * 100);
+  $("endDone").textContent = d;
+  $("endTotal").textContent = TOTAL;
+  $("endPct").textContent = pct + "%";
+  $("endEmoji").textContent = p === 0 ? "\u{1F3C6}" : "\u{1F3C1}";
+  const rows = $("passedRows");
+  rows.innerHTML = "";
+  const passedIdx = status.map((s,i) => s==="passed" ? i : -1).filter(i => i>=0);
+  $("passedList").hidden = passedIdx.length === 0;
+  passedIdx
+    .map(i => FLAGS[i])
+    .sort((a,b) => a.name.localeCompare(b.name))
+    .forEach(f => {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.appendChild(miniFlag(f, 42));
+      const span = document.createElement("span");
+      span.textContent = f.name;
+      row.appendChild(span);
+      rows.appendChild(row);
+    });
+  $("endOverlay").hidden = false;
+}
+
+/* ================= fx ================= */
+function toast(msg, good) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show " + (good ? "good" : "bad");
+  setTimeout(() => t.classList.remove("show"), 1100);
+}
+function confetti() {
+  const cols = Object.values(COLORS).filter(c => c !== "#FFFFFF");
+  for (let i = 0; i < 40; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = cols[Math.floor(Math.random() * cols.length)];
+    c.style.animationDuration = (1.1 + Math.random() * 1.2) + "s";
+    c.style.animationDelay = Math.random() * .3 + "s";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 2800);
+  }
+}
+
+/* ================= game setup ================= */
+function newGame() {
+  clearSave();
+  status = FLAGS.map(() => "pending");
+  hints = 10;
+  curIdx = -1;
+  $("endOverlay").hidden = true;
+  $("infoCard").hidden = true;
+  $("paintScreen").hidden = true;
+  $("mapScreen").hidden = false;
+  buildMap();
+  updateScore();
+  pickNext();
+}
+
+$("goBtn").addEventListener("click", onGo);
+$("passBtn").addEventListener("click", onPass);
+$("continueBtn").addEventListener("click", pickNext);
+$("checkBtn").addEventListener("click", check);
+$("hintBtn").addEventListener("click", hint);
+$("backBtn").addEventListener("click", backToMap);
+$("restartBtn").addEventListener("click", newGame);
+
+function resumeGame(sv) {
+  status = sv.status;
+  hints = (typeof sv.hints === "number") ? sv.hints : 10;
+  curIdx = -1;
+  $("endOverlay").hidden = true;
+  $("infoCard").hidden = true;
+  $("paintScreen").hidden = true;
+  $("mapScreen").hidden = false;
+  buildMap();
+  status.forEach((s, i) => { if (s === "done") markDone(i); else if (s === "passed") markPassed(i); });
+  updateScore();
+  pickNext();
+}
+
+(function boot() {
+  const sv = loadSave();
+  const started = sv && Array.isArray(sv.status) && sv.status.length === TOTAL &&
+    sv.status.some(s => s !== "pending");
+  if (started) {
+    const d = sv.status.filter(s => s === "done").length;
+    $("resumeInfo").textContent = d + " of " + TOTAL + " flags painted · " + (sv.hints||0) + " hints left";
+    resumeGame(sv);
+    $("resumeOverlay").hidden = false;
+    $("resumeYes").addEventListener("click", () => { $("resumeOverlay").hidden = true; });
+    $("resumeNo").addEventListener("click", () => { $("resumeOverlay").hidden = true; newGame(); });
+  } else {
+    newGame();
+  }
+})();
+</script>
+</body>
+</html>

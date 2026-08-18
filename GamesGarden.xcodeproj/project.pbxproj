@@ -1,0 +1,444 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6703E67D3007A173000B3226 /* icon_2048.png in Resources */ = {isa = PBXBuildFile; fileRef = 6703E67C3007A173000B3226 /* icon_2048.png */; };
+		6703E67F3007A17A000B3226 /* 2048-merge-blocks.html in Resources */ = {isa = PBXBuildFile; fileRef = 6703E67E3007A17A000B3226 /* 2048-merge-blocks.html */; };
+		6703E6813007A182000B3226 /* cat-invaders.html in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6803007A182000B3226 /* cat-invaders.html */; };
+		6703E6833007A18E000B3226 /* icon_cat-invaders.png in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6823007A18E000B3226 /* icon_cat-invaders.png */; };
+		6703E6853007A1E3000B3226 /* cartoon-cat-invaders.html in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6843007A1E3000B3226 /* cartoon-cat-invaders.html */; };
+		6703E6873007A1EB000B3226 /* icon_cartoon-cat-invaders.png in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6863007A1EB000B3226 /* icon_cartoon-cat-invaders.png */; };
+		6731DF1F300FCF7B0070AC8B /* icon_magic-towers.png in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */; };
+		6731DF20300FCF7B0070AC8B /* icon_duo.png in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF1D300FCF7B0070AC8B /* icon_duo.png */; };
+		6731DF22300FCF8E0070AC8B /* magic-towers-solitaire.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */; };
+		6731DF24300FCF9E0070AC8B /* duo.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF23300FCF9E0070AC8B /* duo.html */; };
+		6731DF28300FD9510070AC8B /* privacy.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF27300FD9510070AC8B /* privacy.html */; };
+		6731DF2C300FDCA90070AC8B /* support.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF2B300FDCA90070AC8B /* support.html */; };
+		6731DF2E300FDEF70070AC8B /* trophies.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF2D300FDEF70070AC8B /* trophies.html */; };
+		6731DF30300FDF040070AC8B /* achievements.js in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF2F300FDF040070AC8B /* achievements.js */; };
+		67C56400300CD09500D2D146 /* battleships.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C563FF300CD09500D2D146 /* battleships.html */; };
+		67C56402300CD09C00D2D146 /* icon_battleships.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56401300CD09C00D2D146 /* icon_battleships.png */; };
+		67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56403300CD0A600D2D146 /* icon_Ludo.png */; };
+		67C56406300CD0AF00D2D146 /* icon_scopa.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56405300CD0AF00D2D146 /* icon_scopa.png */; };
+		67C56408300CD0BA00D2D146 /* ludo.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C56407300CD0BA00D2D146 /* ludo.html */; };
+		67C5640A300CD0C200D2D146 /* scopa.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C56409300CD0C200D2D146 /* scopa.html */; };
+		67C5640C300CD3C900D2D146 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C5640B300CD3C900D2D146 /* index.html */; };
+		67C5640E300CECEC00D2D146 /* paint-the-flag.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C5640D300CECEC00D2D146 /* paint-the-flag.html */; };
+		67C56410300CEDDB00D2D146 /* icon_paint-the-flag.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C5640F300CEDDB00D2D146 /* icon_paint-the-flag.png */; };
+		67D823872FFEDC9900892511 /* icon_octo.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823862FFEDC9900892511 /* icon_octo.png */; };
+		67D8238B2FFF955C00892511 /* octo.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D8238A2FFF955C00892511 /* octo.html */; };
+		67D8238E2FFFA18C00892511 /* chess.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D8238D2FFFA18C00892511 /* chess.html */; };
+		67D8238F2FFFA18C00892511 /* checkers.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D8238C2FFFA18C00892511 /* checkers.html */; };
+		67D823922FFFA1EB00892511 /* icon_checkers.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823902FFFA1EB00892511 /* icon_checkers.png */; };
+		67D823932FFFA1EB00892511 /* icon_chess.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823912FFFA1EB00892511 /* icon_chess.png */; };
+		67D8239B2FFFA51400892511 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 67D8239A2FFFA51400892511 /* Assets.xcassets */; };
+		67D8239D2FFFA7ED00892511 /* solitaire.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D8239C2FFFA7ED00892511 /* solitaire.html */; };
+		67D8239F2FFFA7F800892511 /* icon_solitaire.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D8239E2FFFA7F800892511 /* icon_solitaire.png */; };
+		67D823A12FFFAD1C00892511 /* icon_bubbleshooter.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A02FFFAD1C00892511 /* icon_bubbleshooter.png */; };
+		67D823A32FFFAD7700892511 /* bubbleshooter.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A22FFFAD7700892511 /* bubbleshooter.html */; };
+		67D823A52FFFB4A700892511 /* frogger.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A42FFFB4A700892511 /* frogger.html */; };
+		67D823A72FFFB4AF00892511 /* wordle.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A62FFFB4AF00892511 /* wordle.html */; };
+		67D823AA2FFFB4E000892511 /* icon_wordle.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A92FFFB4E000892511 /* icon_wordle.png */; };
+		67D823AB2FFFB4E000892511 /* icon_frogger.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A82FFFB4E000892511 /* icon_frogger.png */; };
+		67D823AD2FFFBBCD00892511 /* anagram-crosswords.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D823AC2FFFBBCD00892511 /* anagram-crosswords.html */; };
+		67D823B32FFFBBEC00892511 /* icon_anagram-crosswords.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */; };
+		67E1D1ED3024B8DF002AEE31 /* cup-run-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1EC3024B8DF002AEE31 /* cup-run-icon.png */; };
+		67E1D1EF3024B8EC002AEE31 /* cup-run.html in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1EE3024B8EC002AEE31 /* cup-run.html */; };
+		67E1D1F13024BE3A002AEE31 /* cup-glory.html in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1F03024BE3A002AEE31 /* cup-glory.html */; };
+		67E1D1F330261ACB002AEE31 /* premier-glory.html in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1F230261ACB002AEE31 /* premier-glory.html */; };
+		67E1D1F730261BB3002AEE31 /* england-football-coach.html in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1F630261BB3002AEE31 /* england-football-coach.html */; };
+		AA0000000000000000000002 /* GamesGardenApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000005 /* GamesGardenApp.swift */; };
+		AA0000000000000000000008 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000B /* ContentView.swift */; };
+		AA0000000000000000000009 /* yahtzee.html in Resources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000C /* yahtzee.html */; };
+		AA000000000000000000000A /* icon_yahtzee.png in Resources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000D /* icon_yahtzee.png */; };
+		AA000000000000000000000F /* welcome.png in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* welcome.png */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		6703E67C3007A173000B3226 /* icon_2048.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_2048.png; sourceTree = "<group>"; };
+		6703E67E3007A17A000B3226 /* 2048-merge-blocks.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "2048-merge-blocks.html"; sourceTree = "<group>"; };
+		6703E6803007A182000B3226 /* cat-invaders.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cat-invaders.html"; sourceTree = "<group>"; };
+		6703E6823007A18E000B3226 /* icon_cat-invaders.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cat-invaders.png"; sourceTree = "<group>"; };
+		6703E6843007A1E3000B3226 /* cartoon-cat-invaders.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cartoon-cat-invaders.html"; sourceTree = "<group>"; };
+		6703E6863007A1EB000B3226 /* icon_cartoon-cat-invaders.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cartoon-cat-invaders.png"; sourceTree = "<group>"; };
+		6731DF1D300FCF7B0070AC8B /* icon_duo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_duo.png; sourceTree = "<group>"; };
+		6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_magic-towers.png"; sourceTree = "<group>"; };
+		6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "magic-towers-solitaire.html"; sourceTree = "<group>"; };
+		6731DF23300FCF9E0070AC8B /* duo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = duo.html; sourceTree = "<group>"; };
+		6731DF27300FD9510070AC8B /* privacy.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = privacy.html; sourceTree = "<group>"; };
+		6731DF2B300FDCA90070AC8B /* support.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = support.html; sourceTree = "<group>"; };
+		6731DF2D300FDEF70070AC8B /* trophies.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = trophies.html; sourceTree = "<group>"; };
+		6731DF2F300FDF040070AC8B /* achievements.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = achievements.js; sourceTree = "<group>"; };
+		67C563FF300CD09500D2D146 /* battleships.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = battleships.html; sourceTree = "<group>"; };
+		67C56401300CD09C00D2D146 /* icon_battleships.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_battleships.png; sourceTree = "<group>"; };
+		67C56403300CD0A600D2D146 /* icon_Ludo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_Ludo.png; sourceTree = "<group>"; };
+		67C56405300CD0AF00D2D146 /* icon_scopa.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_scopa.png; sourceTree = "<group>"; };
+		67C56407300CD0BA00D2D146 /* ludo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = ludo.html; sourceTree = "<group>"; };
+		67C56409300CD0C200D2D146 /* scopa.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = scopa.html; sourceTree = "<group>"; };
+		67C5640B300CD3C900D2D146 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		67C5640D300CECEC00D2D146 /* paint-the-flag.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "paint-the-flag.html"; sourceTree = "<group>"; };
+		67C5640F300CEDDB00D2D146 /* icon_paint-the-flag.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_paint-the-flag.png"; sourceTree = "<group>"; };
+		67D823862FFEDC9900892511 /* icon_octo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_octo.png; sourceTree = "<group>"; };
+		67D8238A2FFF955C00892511 /* octo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = octo.html; sourceTree = "<group>"; };
+		67D8238C2FFFA18C00892511 /* checkers.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = checkers.html; sourceTree = "<group>"; };
+		67D8238D2FFFA18C00892511 /* chess.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = chess.html; sourceTree = "<group>"; };
+		67D823902FFFA1EB00892511 /* icon_checkers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_checkers.png; sourceTree = "<group>"; };
+		67D823912FFFA1EB00892511 /* icon_chess.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_chess.png; sourceTree = "<group>"; };
+		67D8239A2FFFA51400892511 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		67D8239C2FFFA7ED00892511 /* solitaire.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = solitaire.html; sourceTree = "<group>"; };
+		67D8239E2FFFA7F800892511 /* icon_solitaire.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_solitaire.png; sourceTree = "<group>"; };
+		67D823A02FFFAD1C00892511 /* icon_bubbleshooter.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_bubbleshooter.png; sourceTree = "<group>"; };
+		67D823A22FFFAD7700892511 /* bubbleshooter.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = bubbleshooter.html; sourceTree = "<group>"; };
+		67D823A42FFFB4A700892511 /* frogger.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = frogger.html; sourceTree = "<group>"; };
+		67D823A62FFFB4AF00892511 /* wordle.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = wordle.html; sourceTree = "<group>"; };
+		67D823A82FFFB4E000892511 /* icon_frogger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_frogger.png; sourceTree = "<group>"; };
+		67D823A92FFFB4E000892511 /* icon_wordle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wordle.png; sourceTree = "<group>"; };
+		67D823AC2FFFBBCD00892511 /* anagram-crosswords.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "anagram-crosswords.html"; sourceTree = "<group>"; };
+		67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_anagram-crosswords.png"; sourceTree = "<group>"; };
+		67E1D1EC3024B8DF002AEE31 /* cup-run-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cup-run-icon.png"; sourceTree = "<group>"; };
+		67E1D1EE3024B8EC002AEE31 /* cup-run.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cup-run.html"; sourceTree = "<group>"; };
+		67E1D1F03024BE3A002AEE31 /* cup-glory.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cup-glory.html"; sourceTree = "<group>"; };
+		67E1D1F230261ACB002AEE31 /* premier-glory.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "premier-glory.html"; sourceTree = "<group>"; };
+		67E1D1F630261BB3002AEE31 /* england-football-coach.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "england-football-coach.html"; sourceTree = "<group>"; };
+		AA0000000000000000000001 /* welcome.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = welcome.png; sourceTree = "<group>"; };
+		AA0000000000000000000005 /* GamesGardenApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamesGardenApp.swift; sourceTree = "<group>"; };
+		AA000000000000000000000B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AA000000000000000000000C /* yahtzee.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = yahtzee.html; sourceTree = "<group>"; };
+		AA000000000000000000000D /* icon_yahtzee.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_yahtzee.png; sourceTree = "<group>"; };
+		F19999999999999999999999 /* GamesGarden.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GamesGarden.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B19999999999999999999993 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C19999999999999999999991 = {
+			isa = PBXGroup;
+			children = (
+				C19999999999999999999993 /* GamesGarden */,
+				C19999999999999999999992 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C19999999999999999999992 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F19999999999999999999999 /* GamesGarden.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C19999999999999999999993 /* GamesGarden */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000000000000000000005 /* GamesGardenApp.swift */,
+				AA000000000000000000000B /* ContentView.swift */,
+				6731DF2F300FDF040070AC8B /* achievements.js */,
+				67C5640B300CD3C900D2D146 /* index.html */,
+				6703E67E3007A17A000B3226 /* 2048-merge-blocks.html */,
+				67D823AC2FFFBBCD00892511 /* anagram-crosswords.html */,
+				67C563FF300CD09500D2D146 /* battleships.html */,
+				67D823A22FFFAD7700892511 /* bubbleshooter.html */,
+				6703E6843007A1E3000B3226 /* cartoon-cat-invaders.html */,
+				6703E6803007A182000B3226 /* cat-invaders.html */,
+				67D8238C2FFFA18C00892511 /* checkers.html */,
+				67D8238D2FFFA18C00892511 /* chess.html */,
+				67E1D1EE3024B8EC002AEE31 /* cup-run.html */,
+				67E1D1F03024BE3A002AEE31 /* cup-glory.html */,
+				6731DF23300FCF9E0070AC8B /* duo.html */,
+				67E1D1F630261BB3002AEE31 /* england-football-coach.html */,
+				67D823A42FFFB4A700892511 /* frogger.html */,
+				67C56407300CD0BA00D2D146 /* ludo.html */,
+				6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */,
+				67D8238A2FFF955C00892511 /* octo.html */,
+				6731DF27300FD9510070AC8B /* privacy.html */,
+				67C5640D300CECEC00D2D146 /* paint-the-flag.html */,
+				67E1D1F230261ACB002AEE31 /* premier-glory.html */,
+				67C56409300CD0C200D2D146 /* scopa.html */,
+				67D8239C2FFFA7ED00892511 /* solitaire.html */,
+				6731DF2B300FDCA90070AC8B /* support.html */,
+				6731DF2D300FDEF70070AC8B /* trophies.html */,
+				67D823A62FFFB4AF00892511 /* wordle.html */,
+				AA000000000000000000000C /* yahtzee.html */,
+				AA0000000000000000000001 /* welcome.png */,
+				6703E67C3007A173000B3226 /* icon_2048.png */,
+				67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */,
+				67C56401300CD09C00D2D146 /* icon_battleships.png */,
+				67D823A02FFFAD1C00892511 /* icon_bubbleshooter.png */,
+				6703E6863007A1EB000B3226 /* icon_cartoon-cat-invaders.png */,
+				6703E6823007A18E000B3226 /* icon_cat-invaders.png */,
+				67E1D1EC3024B8DF002AEE31 /* cup-run-icon.png */,
+				6731DF1D300FCF7B0070AC8B /* icon_duo.png */,
+				67D823902FFFA1EB00892511 /* icon_checkers.png */,
+				67D823912FFFA1EB00892511 /* icon_chess.png */,
+				67D823A82FFFB4E000892511 /* icon_frogger.png */,
+				67C56403300CD0A600D2D146 /* icon_Ludo.png */,
+				6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */,
+				67D823862FFEDC9900892511 /* icon_octo.png */,
+				67C5640F300CEDDB00D2D146 /* icon_paint-the-flag.png */,
+				67C56405300CD0AF00D2D146 /* icon_scopa.png */,
+				67D8239E2FFFA7F800892511 /* icon_solitaire.png */,
+				AA000000000000000000000D /* icon_yahtzee.png */,
+				67D823A92FFFB4E000892511 /* icon_wordle.png */,
+				67D8239A2FFFA51400892511 /* Assets.xcassets */,
+			);
+			path = GamesGarden;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D19999999999999999999991 /* GamesGarden */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E19999999999999999999992 /* Build configuration list for PBXNativeTarget "GamesGarden" */;
+			buildPhases = (
+				B19999999999999999999991 /* Sources */,
+				B19999999999999999999993 /* Frameworks */,
+				B19999999999999999999992 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GamesGarden;
+			productName = GamesGarden;
+			productReference = F19999999999999999999999 /* GamesGarden.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D19999999999999999999992 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					D19999999999999999999991 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = E19999999999999999999991 /* Build configuration list for PBXProject "GamesGarden" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C19999999999999999999991;
+			productRefGroup = C19999999999999999999992 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D19999999999999999999991 /* GamesGarden */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B19999999999999999999992 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				67C56406300CD0AF00D2D146 /* icon_scopa.png in Resources */,
+				67C5640E300CECEC00D2D146 /* paint-the-flag.html in Resources */,
+				6703E6853007A1E3000B3226 /* cartoon-cat-invaders.html in Resources */,
+				6731DF30300FDF040070AC8B /* achievements.js in Resources */,
+				67C56410300CEDDB00D2D146 /* icon_paint-the-flag.png in Resources */,
+				6731DF2E300FDEF70070AC8B /* trophies.html in Resources */,
+				6731DF2C300FDCA90070AC8B /* support.html in Resources */,
+				67D8239F2FFFA7F800892511 /* icon_solitaire.png in Resources */,
+				67D823A12FFFAD1C00892511 /* icon_bubbleshooter.png in Resources */,
+				67E1D1F13024BE3A002AEE31 /* cup-glory.html in Resources */,
+				6731DF1F300FCF7B0070AC8B /* icon_magic-towers.png in Resources */,
+				6731DF20300FCF7B0070AC8B /* icon_duo.png in Resources */,
+				67C5640C300CD3C900D2D146 /* index.html in Resources */,
+				67C56408300CD0BA00D2D146 /* ludo.html in Resources */,
+				67D823872FFEDC9900892511 /* icon_octo.png in Resources */,
+				67C56400300CD09500D2D146 /* battleships.html in Resources */,
+				67D823922FFFA1EB00892511 /* icon_checkers.png in Resources */,
+				67D823932FFFA1EB00892511 /* icon_chess.png in Resources */,
+				6703E6813007A182000B3226 /* cat-invaders.html in Resources */,
+				6731DF28300FD9510070AC8B /* privacy.html in Resources */,
+				6703E67F3007A17A000B3226 /* 2048-merge-blocks.html in Resources */,
+				6703E67D3007A173000B3226 /* icon_2048.png in Resources */,
+				67E1D1EF3024B8EC002AEE31 /* cup-run.html in Resources */,
+				67D823A32FFFAD7700892511 /* bubbleshooter.html in Resources */,
+				67D8238E2FFFA18C00892511 /* chess.html in Resources */,
+				6731DF22300FCF8E0070AC8B /* magic-towers-solitaire.html in Resources */,
+				67D8239B2FFFA51400892511 /* Assets.xcassets in Resources */,
+				67D823A72FFFB4AF00892511 /* wordle.html in Resources */,
+				67D8238F2FFFA18C00892511 /* checkers.html in Resources */,
+				67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */,
+				67E1D1F730261BB3002AEE31 /* england-football-coach.html in Resources */,
+				AA0000000000000000000009 /* yahtzee.html in Resources */,
+				6703E6833007A18E000B3226 /* icon_cat-invaders.png in Resources */,
+				67D8239D2FFFA7ED00892511 /* solitaire.html in Resources */,
+				67D823A52FFFB4A700892511 /* frogger.html in Resources */,
+				67D8238B2FFF955C00892511 /* octo.html in Resources */,
+				67E1D1F330261ACB002AEE31 /* premier-glory.html in Resources */,
+				AA000000000000000000000F /* welcome.png in Resources */,
+				67C56402300CD09C00D2D146 /* icon_battleships.png in Resources */,
+				67E1D1ED3024B8DF002AEE31 /* cup-run-icon.png in Resources */,
+				67D823AA2FFFB4E000892511 /* icon_wordle.png in Resources */,
+				6731DF24300FCF9E0070AC8B /* duo.html in Resources */,
+				67D823AB2FFFB4E000892511 /* icon_frogger.png in Resources */,
+				AA000000000000000000000A /* icon_yahtzee.png in Resources */,
+				67D823AD2FFFBBCD00892511 /* anagram-crosswords.html in Resources */,
+				6703E6873007A1EB000B3226 /* icon_cartoon-cat-invaders.png in Resources */,
+				67C5640A300CD0C200D2D146 /* scopa.html in Resources */,
+				67D823B32FFFBBEC00892511 /* icon_anagram-crosswords.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B19999999999999999999991 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0000000000000000000002 /* GamesGardenApp.swift in Sources */,
+				AA0000000000000000000008 /* ContentView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		E19999999999999999999993 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		E19999999999999999999994 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E19999999999999999999995 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 59H7A8BRFT;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Offline Games Arcade";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jeevan.gamesgarden;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E19999999999999999999996 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 59H7A8BRFT;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Offline Games Arcade";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jeevan.gamesgarden;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E19999999999999999999991 /* Build configuration list for PBXProject "GamesGarden" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E19999999999999999999993 /* Debug */,
+				E19999999999999999999994 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E19999999999999999999992 /* Build configuration list for PBXNativeTarget "GamesGarden" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E19999999999999999999995 /* Debug */,
+				E19999999999999999999996 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = D19999999999999999999992 /* Project object */;
+}
