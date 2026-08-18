@@ -68,22 +68,6 @@
     grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr;}
   #seatTop{grid-area:top;display:flex;justify-content:center;align-items:flex-start;gap:10px;flex-wrap:wrap;padding:4px 6px;}
   #seatLeft{grid-area:left;} #seatRight{grid-area:right;}
-
-  /* ---------- phone layout: fold side seats into a top row ---------- */
-  @media (max-width:600px){
-    #board{display:flex;flex-direction:column;}
-    #seatTop{order:0;}
-    #seatLeft{order:1;} #seatRight{order:2;}
-    #centerArea{order:3;flex:1;}
-    .sidecol{flex-direction:row;justify-content:center;flex-wrap:wrap;gap:8px;padding:2px 6px;}
-    .sidecol:empty{display:none;}
-    .pod{padding:7px 10px;min-width:78px;max-width:130px;border-radius:12px;}
-    .pod .pname{font-size:12.5px;max-width:104px;}
-    .pod .pcount{font-size:11px;margin-top:1px;}
-    .pod .minis{height:18px;margin-top:4px;gap:2px;}
-    .pod .mini{width:12px;height:18px;border-radius:3px;}
-    #table{gap:16px;padding:8px 10px;}
-  }
   .sidecol{display:flex;flex-direction:column;justify-content:center;gap:14px;padding:4px 6px;}
   #centerArea{grid-area:center;display:flex;flex-direction:column;justify-content:center;}
   .pod{
@@ -127,10 +111,8 @@
   }
   .card.big .glyph{font-size:40px;}
   .card::before{
-    content:'';position:absolute;left:50%;top:50%;width:58%;height:58%;
-    border-radius:16%;
-    background:rgba(255,255,255,.22);
-    transform:translate(-50%,-50%) rotate(45deg);
+    content:'';position:absolute;inset:8%;border-radius:50%;
+    background:rgba(255,255,255,.22);transform:rotate(-28deg) scaleX(.72);
   }
   .card .corner{position:absolute;font-size:12px;font-weight:900;color:#fff;text-shadow:1px 1px 0 rgba(0,0,0,.4);z-index:2;}
   .card .tl{top:3px;left:6px;} .card .br{bottom:3px;right:6px;transform:rotate(180deg);}
@@ -174,7 +156,7 @@
   .toast{
     background:rgba(20,10,50,.92);border:1px solid #b3a2ec;color:#fff;padding:8px 18px;border-radius:20px;
     font-size:14px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.5);
-    animation:toastIn .25s ease-out, toastOut .4s ease-in 3.4s forwards;
+    animation:toastIn .25s ease-out, toastOut .35s ease-in 1.9s forwards;
   }
   @keyframes toastIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:none;}}
   @keyframes toastOut{to{opacity:0;transform:translateY(-8px);}}
@@ -297,7 +279,6 @@
   </div>
 </div>
 
-<script src="achievements.js"></script>
 <script>
 'use strict';
 /* ================= DUO — UNO-style card game =================
@@ -321,12 +302,24 @@ function shuffle(a){
   }
   return a;
 }
+/* Toasts queue up and show ONE at a time so each action is readable */
+var toastQ = [], toastBusy = false;
 function toast(msg){
+  toastQ.push(msg);
+  pumpToast();
+}
+function pumpToast(){
+  if (toastBusy || !toastQ.length) return;
+  toastBusy = true;
   var d = document.createElement('div');
   d.className = 'toast';
-  d.textContent = msg;
+  d.textContent = toastQ.shift();
   $('toasts').appendChild(d);
-  setTimeout(function(){ d.remove(); }, 3900);
+  setTimeout(function(){
+    d.remove();
+    toastBusy = false;
+    pumpToast();
+  }, 2300);
 }
 function showScreen(name){
   $('setupScreen').classList.toggle('hidden', name !== 'setup');
@@ -537,7 +530,7 @@ function beginTurn(){
   if (!p.human){
     setStatus(p.name + ' is thinking…');
     lock = true;
-    setTimeout(aiTurn, 950);
+    setTimeout(aiTurn, 1900);
   } else if (G.humans > 1 && G.viewIndex !== G.cur){
     lock = true;
     $('passName').textContent = 'Pass the device to ' + p.name;
@@ -587,14 +580,15 @@ function applyPlay(pIdx, cardIdx, chosenColor){
   }
   G.cur = nextIdx(step);
   save();
-  setTimeout(beginTurn, 750);
+  /* longer pause when the play had an effect (skip/draw), so it can be read */
+  var pause = (c.kind === 'num') ? 1300 : 2600;
+  setTimeout(beginTurn, pause);
 }
 function gameOver(winner){
   G.over = true;
   clearSave();
   render();
   var human = winner.human;
-  if (window.GGA && human){ GGA.award('duo_win'); GGA.haptic('success'); }
   $('overTitle').textContent = human ? '🎉 ' + winner.name + ' wins!' : winner.name + ' wins!';
   $('overText').textContent = human
     ? 'Brilliant! You emptied your hand first.'
@@ -648,7 +642,7 @@ function onDraw(){
       toast("It can't be played — turn passes");
       G.cur = nextIdx(1);
       beginTurn();
-    }, 900);
+    }, 1400);
   }
 }
 function drawnPlay(){
@@ -700,17 +694,16 @@ function aiTurn(){
   if (drawn && isPlayable(drawn)){
     setTimeout(function(){
       applyPlay(G.cur, p.hand.length - 1, drawn.color === 'black' ? bestColor(p.hand) : null);
-    }, 800);
+    }, 1600);
   } else {
     setTimeout(function(){
       G.cur = nextIdx(1);
       beginTurn();
-    }, 800);
+    }, 1600);
   }
 }
 
 /* ---------- rendering ---------- */
-window.addEventListener('resize', function(){ if (typeof G !== 'undefined' && G) render(); });
 function seatPlan(n){
   if (n <= 1) return ['top'];
   if (n === 2) return ['left','right'];
@@ -733,8 +726,7 @@ function render(){
     var idx = (base + i) % nP;
     if (idx !== G.viewIndex) opps.push(idx);
   }
-  var phone = window.matchMedia && window.matchMedia('(max-width:600px)').matches;
-  var plan = phone ? opps.map(function(){ return 'top'; }) : seatPlan(opps.length);
+  var plan = seatPlan(opps.length);
   for (i = 0; i < opps.length; i++){
     p = G.players[opps[i]];
     var pod = document.createElement('div');
