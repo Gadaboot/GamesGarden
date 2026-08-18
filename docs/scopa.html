@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Scopa</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
+  html,body { height:100%; overflow:hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(160deg,#ff9a56 0%,#ffca3a 30%,#8ac926 60%,#1fb5a3 100%);
+    display:flex; flex-direction:column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px; gap:8px;
+  }
+  .btn {
+    border:none; cursor:pointer; font-weight:800; font-size:15px;
+    padding:10px 16px; border-radius:14px; color:#fff;
+    background: linear-gradient(180deg,#ff6b9d,#e0447c);
+    box-shadow: 0 4px 0 #b02f60, 0 8px 14px rgba(0,0,0,.25);
+    transition: transform .08s, box-shadow .08s;
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 0 0 #b02f60, 0 2px 6px rgba(0,0,0,.25); }
+  .btn.teal { background:linear-gradient(180deg,#2ec4b6,#199e91); box-shadow:0 4px 0 #0f7c72, 0 8px 14px rgba(0,0,0,.25); }
+  .btn.teal:active { box-shadow:0 0 0 #0f7c72, 0 2px 6px rgba(0,0,0,.25); }
+  .btn.big { font-size:20px; padding:16px 26px; margin:8px 6px; }
+  .title {
+    font-size:26px; font-weight:900; color:#fff; letter-spacing:2px;
+    text-shadow: 0 3px 0 rgba(176,47,96,.6), 0 6px 12px rgba(0,0,0,.3);
+  }
+  .scores { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .scorepill {
+    background:rgba(255,255,255,.9); border-radius:12px; padding:4px 9px;
+    font-weight:800; font-size:11px; color:#444;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.18);
+    text-align:center; min-width:50px;
+  }
+  .scorepill span { display:block; font-size:16px; color:#199e91; }
+  .scorepill.you span { color:#e0447c; }
+  .scorepill.active { outline:3px solid #ffca3a; }
+
+  /* ---------- Layout ---------- */
+  .game { flex:1; display:flex; flex-direction:column; perspective:1100px; min-height:0; }
+  .row { display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; padding:6px; }
+  .hand-row { min-height:120px; padding-bottom:14px; }
+
+  /* ---------- Opponents ---------- */
+  .opps { display:flex; justify-content:center; gap:14px; padding:4px 6px; flex-wrap:wrap; }
+  .midrow { flex:1; display:flex; align-items:center; justify-content:center; min-height:0; }
+  .opps.side { flex-direction:column; padding:4px 2px; min-width:64px; }
+  .opps.side .backs { flex-direction:column; }
+  .opps.side .card.tiny { width:36px; height:26px; }
+  .opps.side .card.tiny.back::after { transform:rotate(90deg); }
+  .opp {
+    background:rgba(0,0,0,.18); border-radius:16px; padding:6px 10px;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  .opp.active { background:rgba(255,255,255,.28); box-shadow:0 0 0 3px #ffca3a; }
+  .opp .oname { font-size:12px; font-weight:900; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); }
+  .opp .backs { display:flex; gap:3px; min-height:38px; }
+  .opp .opile { font-size:10px; font-weight:800; color:rgba(255,255,255,.9); }
+
+  /* ---------- Table (board) ---------- */
+  .table-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:4px 10px; min-height:0; }
+  .table3d {
+    width:100%; max-width:560px; min-height:170px;
+    background: linear-gradient(180deg,#25a18e,#0f8a76);
+    border-radius:26px;
+    border:6px solid #ffca3a;
+    box-shadow:
+      0 14px 0 #c98f0a,
+      0 24px 34px rgba(0,0,0,.35),
+      inset 0 6px 18px rgba(255,255,255,.25),
+      inset 0 -10px 20px rgba(0,0,0,.25);
+    transform: rotateX(9deg);
+    display:flex; align-items:center; justify-content:center;
+    flex-wrap:wrap; gap:10px; padding:16px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card {
+    width:62px; height:88px; border-radius:10px; position:relative;
+    background: linear-gradient(160deg,#ffffff 0%,#fdf6e3 60%,#f4e8c8 100%);
+    box-shadow: 0 5px 0 rgba(0,0,0,.18), 0 9px 14px rgba(0,0,0,.28), inset 0 2px 2px rgba(255,255,255,.9);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:pointer; transition: transform .15s, box-shadow .15s;
+    border:2px solid #fff;
+  }
+  .card svg { width:100%; height:100%; display:block; pointer-events:none; }
+  .card.selected { transform: translateY(-14px) scale(1.06); box-shadow: 0 10px 0 rgba(0,0,0,.15), 0 18px 24px rgba(0,0,0,.35), 0 0 0 4px #ff6b9d; }
+  .card.capturable { box-shadow: 0 5px 0 rgba(0,0,0,.18), 0 9px 14px rgba(0,0,0,.28), 0 0 0 4px #ffca3a; animation:pulse 1s infinite; }
+  @keyframes pulse { 50% { transform: translateY(-4px); } }
+  .card.back {
+    background:
+      repeating-linear-gradient(45deg, rgba(255,255,255,.15) 0 6px, transparent 6px 12px),
+      linear-gradient(160deg,#ff6b9d,#c73e77);
+    border:2px solid #ffd7e6;
+  }
+  .card.back::after { content:"S"; font-size:30px; font-weight:900; color:rgba(255,255,255,.85); text-shadow:0 2px 3px rgba(0,0,0,.3); }
+  .card.small { width:44px; height:62px; border-radius:8px; }
+  .card.tiny { width:26px; height:36px; border-radius:5px; border-width:1.5px; box-shadow:0 2px 0 rgba(0,0,0,.18), 0 4px 6px rgba(0,0,0,.25); }
+  .card.tiny.back::after { font-size:13px; }
+
+  .pilecount {
+    font-size:12px; font-weight:800; color:#fff; background:rgba(0,0,0,.25);
+    padding:4px 10px; border-radius:10px;
+  }
+
+  /* ---------- Message ---------- */
+  .msg {
+    text-align:center; font-weight:800; color:#fff; font-size:15px; min-height:22px;
+    text-shadow:0 2px 4px rgba(0,0,0,.35); padding:0 12px;
+  }
+
+  /* ---------- Overlays ---------- */
+  .overlay {
+    position:fixed; inset:0; background:rgba(20,40,40,.6); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .overlay.show { display:flex; }
+  .panel {
+    background: linear-gradient(180deg,#fffdf5,#ffeccc);
+    border-radius:24px; padding:22px; max-width:440px; width:100%;
+    box-shadow: 0 10px 0 #c98f0a, 0 24px 40px rgba(0,0,0,.4);
+    border:5px solid #ffca3a; text-align:center;
+    max-height:85vh; overflow-y:auto;
+  }
+  .panel h2 { color:#e0447c; margin-bottom:12px; font-size:24px; }
+  .panel p { color:#777; font-weight:700; font-size:14px; margin-bottom:6px; }
+  .panel table { width:100%; border-collapse:collapse; margin:10px 0 16px; font-weight:700; color:#555; }
+  .panel td, .panel th { padding:6px 3px; border-bottom:2px dashed #ffca3a; font-size:13px; }
+  .panel th { color:#e0447c; }
+  .panel td:not(:first-child) { text-align:center; font-size:14px; }
+  .panel td:first-child { text-align:left; }
+  .option {
+    display:flex; gap:6px; justify-content:center; align-items:center;
+    background:#fff; border:3px solid #2ec4b6; border-radius:16px;
+    padding:10px; margin:10px 0; cursor:pointer;
+    box-shadow:0 4px 0 #199e91, 0 8px 12px rgba(0,0,0,.15);
+    transition: transform .08s;
+  }
+  .option:active { transform:translateY(3px); box-shadow:0 1px 0 #199e91; }
+
+  .scopa-flash {
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    z-index:60; pointer-events:none;
+  }
+  .scopa-flash.show { display:flex; }
+  .scopa-flash div {
+    font-size:58px; font-weight:900; color:#ffca3a; text-align:center;
+    text-shadow: 0 4px 0 #e0447c, 0 10px 20px rgba(0,0,0,.5);
+    animation: boom .9s ease-out;
+  }
+  @keyframes boom { 0%{transform:scale(.2) rotate(-8deg);opacity:0;} 50%{transform:scale(1.2) rotate(3deg);opacity:1;} 100%{transform:scale(1);} }
+
+  @media (max-height:640px){
+    .card{width:52px;height:74px;}
+    .table3d{min-height:130px;}
+    .hand-row{min-height:100px;}
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <button class="btn" onclick="location.href='index.html'">☰ Menu</button>
+    <div class="title">SCOPA</div>
+    <div class="scores" id="scorePills"></div>
+  </div>
+
+  <div class="game">
+    <div class="opps" id="oppTop"></div>
+    <div class="row"><div class="pilecount" id="deckCount">Deck: 40</div>
+      <div class="pilecount" id="pPile">Your pile: 0</div></div>
+    <div class="midrow">
+      <div class="opps side" id="oppLeft"></div>
+      <div class="table-wrap"><div class="table3d" id="tableCards"></div></div>
+      <div class="opps side" id="oppRight"></div>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="row hand-row" id="playerHand"></div>
+  </div>
+
+  <div class="overlay" id="chooseOverlay">
+    <div class="panel">
+      <h2>Choose a capture</h2>
+      <div id="options"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="summaryOverlay">
+    <div class="panel">
+      <h2 id="sumTitle">Round over</h2>
+      <table id="sumTable"></table>
+      <button class="btn teal" id="sumBtn" onclick="closeSummary()">Continue</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="resumeOverlay">
+    <div class="panel">
+      <h2>Welcome back 🃏</h2>
+      <p id="resumeInfo"></p>
+      <button class="btn teal" id="btnResume">Continue Game</button>
+      <button class="btn" id="btnFresh">Start New</button>
+    </div>
+  </div>
+
+  <div class="scopa-flash" id="scopaFlash"><div>SCOPA!</div></div>
+
+<script src="achievements.js"></script>
+<script>
+(() => {
+  const SUITS = ['denari','coppe','spade','bastoni'];
+  const NAMES = {1:'Asso',8:'Fante',9:'Cavallo',10:'Re'};
+  const PRIM = {7:21,6:18,1:16,5:15,4:14,3:13,2:12,8:10,9:10,10:10};
+  const WIN = 11;
+  const AI_NAMES = ['Luca','Sofia','Marco'];
+
+  let players = [];       // {name, ai, hand, pile, scopa, score}
+  let deck = [], table = [];
+  let turn = 0, startPlayer = 0, lastCapturer = -1, selected = null, busy = true;
+
+  const $ = id => document.getElementById(id);
+
+  /* ---------- save / resume ---------- */
+  const SAVE_KEY = 'gg-save-scopa';
+  function saveGame(){
+    try{
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        players: players.map(p=>({hand:p.hand, pile:p.pile, scopa:p.scopa, score:p.score})),
+        deck, table, turn, startPlayer, lastCapturer
+      }));
+    }catch(e){}
+  }
+  function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+  function loadSave(){
+    try{ return JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){ return null; }
+  }
+
+  /* ---------- Neapolitan-style card faces ---------- */
+  const COL  = { denari:'#c98f0a', coppe:'#d33f49', spade:'#3557a7', bastoni:'#2e7d32' };
+  const DARK = { denari:'#8a5f06', coppe:'#9c2531', spade:'#24397a', bastoni:'#1d5220' };
+
+  const SYM = {
+    denari: `<g>
+      <circle r="11" fill="#f5b915" stroke="#a97508" stroke-width="2"/>
+      <circle r="6.5" fill="none" stroke="#a97508" stroke-width="1.5" stroke-dasharray="3 2.5"/>
+      <circle cx="-3.5" cy="-3.5" r="2" fill="#ffe680"/>
+    </g>`,
+    coppe: `<g>
+      <path d="M-9,-10 h18 c0,8 -4,12 -9,12 c-5,0 -9,-4 -9,-12 z" fill="#f5b915" stroke="#a97508" stroke-width="1.6"/>
+      <path d="M-9,-10 h18 l-1.5,3.5 h-15 z" fill="#d33f49"/>
+      <rect x="-1.7" y="2" width="3.4" height="5.5" fill="#a97508"/>
+      <path d="M-7.5,11 h15 l-2.5,-3.5 h-10 z" fill="#f5b915" stroke="#a97508" stroke-width="1.4"/>
+    </g>`,
+    spade: `<g transform="rotate(40)">
+      <path d="M-2,-14 Q0,-18 2,-14 L2,3 h-4 z" fill="#b9cdea" stroke="#3557a7" stroke-width="1.4"/>
+      <rect x="-6.5" y="3" width="13" height="3" rx="1.5" fill="#f5b915" stroke="#a97508" stroke-width="1"/>
+      <rect x="-1.8" y="6" width="3.6" height="6.5" rx="1.8" fill="#3557a7"/>
+    </g>`,
+    bastoni: `<g transform="rotate(24)">
+      <path d="M0,-14 C5,-12 4,-6 2.2,-2 L2.2,10 C2.2,12.6 -2.2,12.6 -2.2,10 L-2.2,-2 C-4,-6 -5,-12 0,-14 z"
+        fill="#a5692a" stroke="#6b4318" stroke-width="1.5"/>
+      <line x1="-1.5" y1="-9" x2="1.5" y2="-8.4" stroke="#6b4318" stroke-width="1"/>
+      <line x1="-1.8" y1="-5.5" x2="1.8" y2="-4.9" stroke="#6b4318" stroke-width="1"/>
+    </g>`
+  };
+
+  const PIPS = {
+    1: [[50,80]],
+    2: [[50,48],[50,112]],
+    3: [[50,40],[50,80],[50,120]],
+    4: [[31,48],[69,48],[31,112],[69,112]],
+    5: [[31,45],[69,45],[50,80],[31,115],[69,115]],
+    6: [[31,40],[69,40],[31,80],[69,80],[31,120],[69,120]],
+    7: [[31,38],[69,38],[50,60],[31,84],[69,84],[31,124],[69,124]]
+  };
+
+  function figureSVG(c){
+    const col = COL[c.s], dark = DARK[c.s];
+    const held = `<g transform="translate(79,62) scale(0.7)">${SYM[c.s]}</g>`;
+    if (c.v === 8) return `
+      <g transform="translate(48,78)">
+        <rect x="-9" y="22" width="7" height="17" rx="3.5" fill="${dark}"/>
+        <rect x="2" y="22" width="7" height="17" rx="3.5" fill="${dark}"/>
+        <rect x="-19" y="-4" width="8" height="18" rx="4" fill="${col}"/>
+        <rect x="11" y="-4" width="8" height="18" rx="4" fill="${col}"/>
+        <path d="M-12,-8 h24 l3,32 h-30 z" fill="${col}" stroke="${dark}" stroke-width="1.5"/>
+        <rect x="-13.5" y="10" width="27" height="4.5" rx="2" fill="#f5b915"/>
+        <circle cy="-19" r="10" fill="#ffd9b3" stroke="#c98f6b" stroke-width="1.2"/>
+        <path d="M-11,-24 q11,-13 22,0 z" fill="${col}" stroke="${dark}" stroke-width="1.2"/>
+        <circle cx="10" cy="-32" r="2.6" fill="#ffca3a"/>
+        <circle cx="-3.5" cy="-20" r="1.4" fill="#333"/><circle cx="3.5" cy="-20" r="1.4" fill="#333"/>
+        <path d="M-3,-14.5 q3,2.5 6,0" stroke="#333" fill="none" stroke-width="1.3" stroke-linecap="round"/>
+      </g>${held}`;
+    if (c.v === 9) return `
+      <g transform="translate(48,84)">
+        <rect x="-21" y="16" width="5" height="17" rx="2.5" fill="#8a5f2a"/>
+        <rect x="-9" y="17" width="5" height="16" rx="2.5" fill="#8a5f2a"/>
+        <rect x="5" y="17" width="5" height="16" rx="2.5" fill="#8a5f2a"/>
+        <rect x="16" y="16" width="5" height="17" rx="2.5" fill="#8a5f2a"/>
+        <path d="M-27,6 q-7,4 -5,14" stroke="#6b4318" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cy="9" rx="26" ry="12" fill="#b07c3f" stroke="#6b4318" stroke-width="1.5"/>
+        <path d="M19,4 q9,-7 8,-17 q9,2 4,11 q-2,8 -8,11 z" fill="#b07c3f" stroke="#6b4318" stroke-width="1.4"/>
+        <circle cx="27" cy="-9" r="1.2" fill="#333"/>
+        <rect x="-9" y="-24" width="15" height="22" rx="6" fill="${col}" stroke="${dark}" stroke-width="1.4"/>
+        <circle cx="-1.5" cy="-31" r="8" fill="#ffd9b3" stroke="#c98f6b" stroke-width="1.1"/>
+        <path d="M-9.5,-35 q8,-9 16,0 z" fill="${col}" stroke="${dark}" stroke-width="1"/>
+        <circle cx="-4.5" cy="-31.5" r="1.2" fill="#333"/><circle cx="1.5" cy="-31.5" r="1.2" fill="#333"/>
+      </g>${held}`;
+    return `
+      <g transform="translate(48,80)">
+        <path d="M-18,38 h36 l-7,-40 h-22 z" fill="${col}" stroke="${dark}" stroke-width="1.6"/>
+        <path d="M-14,10 h28" stroke="#f5b915" stroke-width="4"/>
+        <path d="M-16,26 h32" stroke="#f5b915" stroke-width="4"/>
+        <circle cy="-12" r="11" fill="#ffd9b3" stroke="#c98f6b" stroke-width="1.2"/>
+        <path d="M-8,-7 q8,11 16,0 v7 q-8,9 -16,0 z" fill="#e8e3d8" stroke="#c9c2b2" stroke-width="1"/>
+        <path d="M-12,-26 l5,7 7,-9 7,9 5,-7 v9 h-24 z" fill="#ffca3a" stroke="#a97508" stroke-width="1.4"/>
+        <circle cx="-4" cy="-14" r="1.4" fill="#333"/><circle cx="4" cy="-14" r="1.4" fill="#333"/>
+      </g>${held}`;
+  }
+
+  function cardSVG(c){
+    const col = COL[c.s];
+    let body;
+    if (c.v <= 7){
+      const scale = c.v === 1 ? 1.9 : 1.05;
+      body = PIPS[c.v].map(p => `<g transform="translate(${p[0]},${p[1]}) scale(${scale})">${SYM[c.s]}</g>`).join('');
+    } else {
+      body = figureSVG(c) +
+        `<text x="50" y="144" text-anchor="middle" font-family="-apple-system,Arial,sans-serif"
+           font-size="11" font-weight="800" fill="${col}">${NAMES[c.v].toUpperCase()}</text>`;
+    }
+    return `<svg viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+      <text x="7" y="18" font-family="-apple-system,Arial,sans-serif" font-size="16" font-weight="900" fill="${col}">${c.v}</text>
+      <g transform="translate(86,14) scale(0.34)">${SYM[c.s]}</g>
+      ${body}
+    </svg>`;
+  }
+
+  function cardEl(c, small){
+    const el = document.createElement('div');
+    el.className = `card ${c.s}` + (small?' small':'');
+    el.innerHTML = cardSVG(c);
+    return el;
+  }
+
+  /* ---------- Game setup ---------- */
+  function newDeck(){
+    const d = [];
+    for (const s of SUITS) for (let v=1; v<=10; v++) d.push({s,v});
+    for (let i=d.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
+    return d;
+  }
+
+  function init(){
+    players = [{name:'You', ai:false, score:0}];
+    for (let i=0; i<3; i++) players.push({name:AI_NAMES[i], ai:true, score:0});
+    startPlayer = 0;
+    startRound();
+  }
+
+  function dealHands(){ players.forEach(p => p.hand = deck.splice(0,3)); }
+
+  function startRound(){
+    deck = newDeck(); table = deck.splice(0,4);
+    players.forEach(p => { p.hand = []; p.pile = []; p.scopa = 0; });
+    dealHands();
+    lastCapturer = -1; selected = null; turn = startPlayer;
+    render();
+    saveGame();
+    if (players[turn].ai){
+      busy = true;
+      msg(`${players[turn].name} starts this round…`);
+      setTimeout(()=>aiMove(turn), 900);
+    } else {
+      busy = false;
+      msg('You start — tap a card');
+    }
+  }
+
+  /* ---------- Rules ---------- */
+  function captureOptions(card, tbl){
+    const singles = [], combos = [];
+    const n = tbl.length;
+    for (let mask=1; mask < (1<<n); mask++){
+      let sum = 0, idx = [];
+      for (let i=0;i<n;i++) if (mask & (1<<i)){ sum += tbl[i].v; idx.push(i); }
+      if (sum === card.v){ (idx.length===1 ? singles : combos).push(idx); }
+    }
+    return singles.length ? singles : combos; // must take a single match if one exists
+  }
+
+  /* ---------- Rendering ---------- */
+  function render(){
+    // opponents seated left, top, right
+    const seats = {1:'oppLeft', 2:'oppTop', 3:'oppRight'};
+    Object.values(seats).forEach(id => $(id).innerHTML = '');
+    players.forEach((p,i)=>{
+      if (!p.ai) return;
+      const d = document.createElement('div');
+      d.className = 'opp' + (turn===i && !allHandsEmpty() ? ' active' : '');
+      const backs = p.hand.map(()=> '<div class="card tiny back"></div>').join('');
+      d.innerHTML = `<div class="oname">${p.name}</div><div class="backs">${backs}</div><div class="opile">pile ${p.pile.length}</div>`;
+      $(seats[i]).appendChild(d);
+    });
+
+    // table
+    const tc = $('tableCards'); tc.innerHTML = '';
+    let capIdx = new Set();
+    if (selected !== null){
+      captureOptions(players[0].hand[selected], table).forEach(o => o.forEach(i => capIdx.add(i)));
+    }
+    table.forEach((c,i)=>{
+      const el = cardEl(c);
+      if (capIdx.has(i)) el.classList.add('capturable');
+      tc.appendChild(el);
+    });
+
+    // player hand
+    const ph = $('playerHand'); ph.innerHTML = '';
+    players[0].hand.forEach((c,i)=>{
+      const el = cardEl(c);
+      if (i === selected) el.classList.add('selected');
+      el.onclick = () => onHandTap(i);
+      ph.appendChild(el);
+    });
+
+    // pills
+    const sp = $('scorePills'); sp.innerHTML = '';
+    players.forEach((p,i)=>{
+      const d = document.createElement('div');
+      d.className = 'scorepill' + (p.ai?'':' you') + (turn===i?' active':'');
+      d.innerHTML = `${p.name.toUpperCase()}<span>${p.score}</span>`;
+      sp.appendChild(d);
+    });
+
+    $('pPile').textContent = `Your pile: ${players[0].pile.length}`;
+    $('deckCount').textContent = `Deck: ${deck.length}`;
+  }
+
+  function allHandsEmpty(){ return players.every(p => p.hand.length === 0); }
+  function msg(t){ $('msg').textContent = t; }
+
+  /* ---------- Player interaction ---------- */
+  function onHandTap(i){
+    if (busy || turn !== 0) return;
+    if (selected !== i){
+      selected = i; render();
+      const opts = captureOptions(players[0].hand[i], table);
+      msg(opts.length ? 'Tap again to capture' : 'No capture — tap again to place on table');
+      return;
+    }
+    const card = players[0].hand[i];
+    const opts = captureOptions(card, table);
+    if (opts.length === 0) playCard(0, i, null);
+    else if (opts.length === 1) playCard(0, i, opts[0]);
+    else showChooser(card, opts, i);
+  }
+
+  function showChooser(card, opts, handIdx){
+    const box = $('options'); box.innerHTML = '';
+    opts.forEach(o => {
+      const row = document.createElement('div'); row.className = 'option';
+      o.forEach(idx => row.appendChild(cardEl(table[idx], true)));
+      row.onclick = () => { $('chooseOverlay').classList.remove('show'); playCard(0, handIdx, o); };
+      box.appendChild(row);
+    });
+    $('chooseOverlay').classList.add('show');
+  }
+
+  /* ---------- Playing ---------- */
+  function playCard(pi, handIdx, opt){
+    busy = true; selected = null;
+    const p = players[pi];
+    const card = p.hand.splice(handIdx,1)[0];
+    const who = pi===0 ? 'You' : p.name;
+
+    if (opt){
+      const taken = opt.map(i => table[i]);
+      table = table.filter((_,i) => !opt.includes(i));
+      p.pile.push(card, ...taken);
+      lastCapturer = pi;
+      const roundEnds = deck.length===0 && allHandsEmpty();
+      if (table.length===0 && !roundEnds){
+        p.scopa++;
+        flashScopa(who);
+      }
+      msg(`${who} captured with the ${card.v}`);
+    } else {
+      table.push(card);
+      msg(`${who} placed the ${card.v}`);
+    }
+    render();
+    setTimeout(nextTurn, 900);
+  }
+
+  function nextTurn(){
+    if (allHandsEmpty()){
+      if (deck.length > 0) dealHands();
+      else { endRound(); return; }
+    }
+    turn = (turn + 1) % players.length;
+    busy = false; render();
+    saveGame();
+    if (players[turn].ai){
+      busy = true;
+      msg(`${players[turn].name} is thinking…`);
+      setTimeout(()=>aiMove(turn), 800);
+    } else msg('Your turn — tap a card');
+  }
+
+  /* ---------- AI ---------- */
+  function aiMove(pi){
+    const p = players[pi];
+    let best = null;
+    p.hand.forEach((c,i)=>{
+      const opts = captureOptions(c, table);
+      opts.forEach(o=>{
+        const taken = o.map(j=>table[j]);
+        let s = 10 + taken.length*2;
+        if (table.length - o.length === 0) s += 15;                  // scopa
+        taken.concat([c]).forEach(t=>{
+          if (t.s==='denari') s += 3;
+          if (t.s==='denari' && t.v===7) s += 12;                    // settebello
+          if (t.v===7) s += 2;                                       // primiera
+        });
+        if (!best || s > best.score) best = {idx:i, opt:o, score:s};
+      });
+    });
+    if (best){ playCard(pi, best.idx, best.opt); return; }
+    // discard: keep valuable cards, throw low-risk ones
+    let di = 0, ds = Infinity;
+    p.hand.forEach((c,i)=>{
+      let s = c.v + (c.s==='denari'?5:0) + (c.v===7?4:0);
+      if (c.s==='denari' && c.v===7) s += 20;
+      if (s < ds){ ds = s; di = i; }
+    });
+    playCard(pi, di, null);
+  }
+
+  function flashScopa(who){
+    if (window.GGA && who === 'You'){ GGA.award('scopa_sweep'); GGA.haptic('medium'); }
+    const f = $('scopaFlash');
+    f.firstElementChild.textContent = who==='You' ? 'SCOPA!' : `SCOPA! (${who})`;
+    f.classList.add('show');
+    setTimeout(()=>f.classList.remove('show'), 1000);
+  }
+
+  /* ---------- Scoring ---------- */
+  function primiera(pile){
+    const best = {};
+    for (const s of SUITS) best[s] = 0;
+    pile.forEach(c => { if (PRIM[c.v] > best[c.s]) best[c.s] = PRIM[c.v]; });
+    return SUITS.reduce((a,s)=>a+best[s],0);
+  }
+
+  function endRound(){
+    if (table.length && lastCapturer >= 0){
+      players[lastCapturer].pile.push(...table);
+      table = [];
+    }
+    const pts = players.map(p => p.scopa);
+    const rows = [];
+
+    function award(label, vals, display){
+      const mx = Math.max(...vals);
+      const winners = vals.map((v,i)=>v===mx && mx>0);
+      const unique = vals.filter(v=>v===mx).length === 1;
+      const cells = players.map((p,i)=>{
+        const win = unique && winners[i];
+        if (win) pts[i]++;
+        return (display ? display[i] : vals[i]) + (win ? ' ✅' : '');
+      });
+      rows.push([label, ...cells]);
+    }
+
+    award('Most cards', players.map(p=>p.pile.length));
+    award('Most coins 🪙', players.map(p=>p.pile.filter(c=>c.s==='denari').length));
+    award('Sette bello', players.map(p=>p.pile.some(c=>c.s==='denari'&&c.v===7)?1:0),
+          players.map(p=>p.pile.some(c=>c.s==='denari'&&c.v===7)?'7🪙':'—'));
+    award('Primiera', players.map(p=>primiera(p.pile)));
+    rows.push(['Scope', ...players.map(p=>p.scopa)]);
+
+    players.forEach((p,i)=> p.score += pts[i]);
+    rows.push(['Round points', ...pts]);
+    rows.push(['TOTAL', ...players.map(p=>p.score)]);
+
+    const tbl = $('sumTable');
+    tbl.innerHTML = '<tr><th></th>' + players.map(p=>`<th>${p.name}</th>`).join('') + '</tr>' +
+      rows.map(r=>'<tr>' + r.map((c,i)=>`<td>${c}</td>`).join('') + '</tr>').join('');
+
+    const mx = Math.max(...players.map(p=>p.score));
+    const leaders = players.filter(p=>p.score===mx);
+    const over = mx >= WIN && leaders.length === 1;
+    if (window.GGA && over && !leaders[0].ai) GGA.award('scopa_win');
+    $('sumTitle').textContent = over
+      ? (leaders[0].ai ? `😅 ${leaders[0].name} wins the game!` : '🎉 You win the game!')
+      : 'Round over';
+    $('sumBtn').textContent = over ? 'New game' : 'Next round';
+    $('sumBtn').dataset.over = over ? '1' : '';
+    if (over) clearSave();
+    else {
+      try{
+        localStorage.setItem(SAVE_KEY, JSON.stringify({
+          between:true, scores:players.map(p=>p.score), startPlayer:(startPlayer+1)%players.length
+        }));
+      }catch(e){}
+    }
+    render();
+    $('summaryOverlay').classList.add('show');
+  }
+
+  window.closeSummary = function(){
+    $('summaryOverlay').classList.remove('show');
+    if ($('sumBtn').dataset.over){
+      players.forEach(p => p.score = 0);
+      startPlayer = 0;
+    } else {
+      startPlayer = (startPlayer + 1) % players.length;
+    }
+    startRound();
+  };
+
+  function resumeGame(sv){
+    players = [{name:'You', ai:false}];
+    for (let i=0; i<3; i++) players.push({name:AI_NAMES[i], ai:true});
+    players.forEach((p,i)=>{
+      const d = sv.players[i];
+      p.hand = d.hand; p.pile = d.pile; p.scopa = d.scopa; p.score = d.score;
+    });
+    deck = sv.deck; table = sv.table; turn = sv.turn;
+    startPlayer = sv.startPlayer; lastCapturer = sv.lastCapturer;
+    selected = null;
+    render();
+    if (players[turn].ai){
+      busy = true;
+      msg(`${players[turn].name} is thinking…`);
+      setTimeout(()=>aiMove(turn), 1200);
+    } else {
+      busy = false;
+      msg('Your turn — tap a card');
+    }
+  }
+  function hideResume(){ $('resumeOverlay').classList.remove('show'); }
+  $('btnResume').onclick = hideResume;
+  $('btnFresh').onclick = () => { hideResume(); init(); };
+
+  (function boot(){
+    const sv = loadSave();
+    if (sv && sv.between){
+      players = [{name:'You', ai:false, score:sv.scores[0]}];
+      for (let i=0; i<3; i++) players.push({name:AI_NAMES[i], ai:true, score:sv.scores[i+1]});
+      startPlayer = sv.startPlayer;
+      startRound();
+      $('resumeInfo').textContent = 'Next round ready · ' + players.map(p=>`${p.name} ${p.score}`).join(' · ');
+      $('resumeOverlay').classList.add('show');
+    } else if (sv && sv.players){
+      resumeGame(sv);
+      $('resumeInfo').textContent = 'Mid-round · ' + players.map(p=>`${p.name} ${p.score}`).join(' · ');
+      $('resumeOverlay').classList.add('show');
+    } else {
+      init();
+    }
+  })();
+})();
+</script>
+</body>
+</html>

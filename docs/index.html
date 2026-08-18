@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Offline Games Arcade</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; background: #0f2419;}
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(180deg, #1c3a2a 0%, #0f2419 100%);
+    color: #f5efdd;
+    min-height: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* ---------- WELCOME ---------- */
+  #welcome {
+    position: fixed; inset: 0;
+    background: linear-gradient(180deg, #1c3a2a 0%, #0f2419 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 50;
+    text-align: center;
+  }
+  #welcome.hidden { display: none; }
+  .wimg {
+    width: min(78vw, 340px);
+    height: min(50vw, 220px);
+    object-fit: cover;
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    margin-bottom: 26px;
+    background: #234730;
+  }
+  .wtitle { font-size: 15px; letter-spacing: 3px; opacity: .8; font-weight: 700; }
+  .wname {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #ffd24a;
+    text-shadow: 0 2px 8px rgba(0,0,0,.5);
+    margin: 6px 0 14px;
+  }
+  .wsub { font-size: 14px; opacity: .85; margin-bottom: 34px; }
+  .wsub .leaf { margin: 0 4px; }
+  .enter-btn {
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffd24a, #d9a821);
+    color: #22302a;
+    font-size: 17px; font-weight: 800; letter-spacing: 2px;
+    padding: 15px 60px;
+    box-shadow: 0 5px 0 #a67f14, 0 8px 18px rgba(0,0,0,.4);
+    cursor: pointer;
+  }
+  .enter-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #a67f14; }
+  /* ---------- MENU ---------- */
+  #menu {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: max(20px, env(safe-area-inset-top)) 14px 40px;
+  }
+  .mhead { text-align: center; margin-bottom: 22px; padding: 0 48px; }
+  .mhead .t {
+    font-size: clamp(19px, 5.5vw, 26px);
+    font-weight: 900;
+    letter-spacing: 3px;
+    line-height: 1.25;
+    color: #ffd24a;
+    text-shadow: 0 2px 6px rgba(0,0,0,.5);
+  }
+  .mhead .s { font-size: 12px; opacity: .7; margin-top: 4px; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  .gcard {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 16px;
+    padding: 12px 6px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .12s, background .12s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .gcard:active { transform: scale(.96); background: rgba(255,255,255,.12); }
+  .gcard img {
+    width: clamp(48px, 16vw, 64px);
+    height: clamp(48px, 16vw, 64px);
+    border-radius: 14px;
+    object-fit: cover;
+    box-shadow: 0 5px 12px rgba(0,0,0,.4);
+    background: #234730;
+  }
+  .gcard .gname {
+    font-size: 11.5px; font-weight: 800;
+    margin-top: 8px;
+    letter-spacing: .3px;
+    line-height: 1.2;
+    min-height: 2.4em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .gcard .gsub { font-size: 9px; opacity: .65; margin-top: 2px; }
+  /* ---------- TOP-RIGHT MENU ---------- */
+  #menuBtn {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    right: 14px;
+    width: 40px; height: 40px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 12px;
+    background: rgba(255,255,255,.08);
+    color: #ffd24a;
+    font-size: 19px;
+    cursor: pointer;
+    z-index: 60;
+  }
+  #dropdown {
+    position: fixed;
+    top: calc(max(14px, env(safe-area-inset-top)) + 46px);
+    right: 14px;
+    background: #16301f;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.5);
+    overflow: hidden;
+    z-index: 60;
+    display: none;
+    min-width: 190px;
+  }
+  #dropdown.open { display: block; }
+  #dropdown button, #dropdown a {
+    display: block;
+    width: 100%;
+    padding: 13px 18px;
+    background: none; border: none;
+    color: #f5efdd;
+    font-size: 14px; font-weight: 700;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #dropdown button:active, #dropdown a:active { background: rgba(255,255,255,.1); }
+  #dropdown .sep { height: 1px; background: rgba(255,255,255,.12); }
+  footer {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 6px 14px calc(24px + env(safe-area-inset-bottom));
+    text-align: center;
+    font-size: 12px;
+    opacity: .6;
+  }
+  footer a { color: #ffd24a; text-decoration: none; margin: 0 8px; }
+</style>
+</head>
+<body>
+  <button id="menuBtn" aria-label="Menu">☰</button>
+  <div id="dropdown">
+    <a href="trophies.html">🏆 Trophies</a>
+    <div class="sep"></div>
+    <button id="soundToggle">🔊 Sound: On</button>
+    <div class="sep"></div>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="support.html">Support</a>
+  </div>
+
+  <div id="menu">
+    <div class="mhead">
+      <div class="t">OFFLINE GAMES<br>ARCADE</div>
+      <div class="s">Pick a game — all playable offline</div>
+      <a href="trophies.html" id="trophyPill" style="display:inline-block;margin-top:10px;background:rgba(255,210,74,.14);border:1px solid rgba(255,210,74,.4);border-radius:999px;padding:6px 16px;color:#ffd24a;font-size:12px;font-weight:800;text-decoration:none;letter-spacing:.5px;">🏆 Trophies</a>
+    </div>
+    <div class="grid">
+        <div class="gcard" onclick="location.href='octo.html'">
+        <img src="icon_octo.png" alt="Octo Trivia">
+        <div class="gname">Octo Trivia</div>
+        <div class="gsub">1–6 players · 800 questions</div>
+      </div>
+        <div class="gcard" onclick="location.href='yahtzee.html'">
+        <img src="icon_yahtzee.png" alt="Five Dice">
+        <div class="gname">Five Dice</div>
+        <div class="gsub">Solo · 2P · vs Computer</div>
+      </div>
+        <div class="gcard" onclick="location.href='chess.html'">
+        <img src="icon_chess.png" alt="Chess">
+        <div class="gname">Chess</div>
+        <div class="gsub">1-2 players</div>
+      </div>
+        <div class="gcard" onclick="location.href='checkers.html'">
+        <img src="icon_checkers.png" alt="Checkers">
+        <div class="gname">Checkers</div>
+        <div class="gsub">1-2 players</div>
+      </div>
+        <div class="gcard" onclick="location.href='solitaire.html'">
+        <img src="icon_solitaire.png" alt="Solitaire">
+        <div class="gname">Solitaire</div>
+        <div class="gsub">1 player</div>
+      </div>
+        <div class="gcard" onclick="location.href='bubbleshooter.html'">
+        <img src="icon_bubbleshooter.png" alt="Bubbleshooter">
+        <div class="gname">Bubble Shooter</div>
+        <div class="gsub">1 player</div>
+      </div>
+        <div class="gcard" onclick="location.href='wordle.html'">
+        <img src="icon_wordle.png" alt="Word Guess">
+        <div class="gname">Word Guess</div>
+        <div class="gsub">1 player</div>
+      </div>
+        <div class="gcard" onclick="location.href='frogger.html'">
+        <img src="icon_frogger.png" alt="Frog Jump">
+        <div class="gname">Frog Jump</div>
+        <div class="gsub">1 player</div>
+      </div>
+        <div class="gcard" onclick="location.href='anagram-crosswords.html'">
+        <img src="icon_anagram-crosswords.png" alt="Anagram-Crossword">
+        <div class="gname">Anagram-Crossword</div>
+        <div class="gsub">1 player</div>
+      </div>
+       <div class="gcard" onclick="location.href='cat-invaders.html'">
+        <img src="icon_cat-invaders.png" alt="Cat Invaders">
+        <div class="gname">Cat Invaders</div>
+        <div class="gsub">1 player</div>
+      </div>
+       <div class="gcard" onclick="location.href='2048-merge-blocks.html'">
+        <img src="icon_2048.png" alt="2048">
+        <div class="gname">2048</div>
+        <div class="gsub">1 player</div>
+      </div>
+       <div class="gcard" onclick="location.href='cartoon-cat-invaders.html'">
+        <img src="icon_cartoon-cat-invaders.png" alt="Cartoon Cat Invaders">
+        <div class="gname">Cartoon Cat Invaders</div>
+        <div class="gsub">1 player</div>
+      </div>
+       <div class="gcard" onclick="location.href='battleships.html'">
+        <img src="icon_battleships.png" alt="Sea Battle">
+        <div class="gname">Sea Battle</div>
+        <div class="gsub">1 player</div>
+      </div>
+       <div class="gcard" onclick="location.href='ludo.html'">
+        <img src="icon_Ludo.png" alt="Ludo">
+        <div class="gname">Ludo</div>
+        <div class="gsub">1-4 players</div>
+      </div>
+       <div class="gcard" onclick="location.href='scopa.html'">
+        <img src="icon_scopa.png" alt="Scopa">
+        <div class="gname">Scopa</div>
+        <div class="gsub">1 player</div>
+      </div>
+       <div class="gcard" onclick="location.href='paint-the-flag.html'">
+        <img src="icon_paint-the-flag.png" alt="Flag Painter">
+        <div class="gname">Flag Painter</div>
+        <div class="gsub">1 player</div>
+      </div>
+      <div class="gcard" onclick="location.href='magic-towers-solitaire.html'">
+        <img src="icon_magic-towers.png" alt="Solitaire Tower">
+        <div class="gname">Solitaire Tower</div>
+        <div class="gsub">1 player</div>
+      </div>
+      <div class="gcard" onclick="location.href='duo.html'">
+        <img src="icon_duo.png" alt="Una Due">
+        <div class="gname">Una Due</div>
+        <div class="gsub">1-6 players</div>
+      </div>
+      <div class="gcard" onclick="location.href='cup-glory.html'">
+        <img src="cup-run-icon.png" alt="Cup Glory">
+        <div class="gname">Cup Glory</div>
+        <div class="gsub">1 player</div>
+      </div>
+      <div class="gcard" onclick="location.href='england-football-coach.html'">
+        <img src="cup-run-icon.png" alt="Football Coach">
+        <div class="gname">Football Coach</div>
+        <div class="gsub">1 player</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <a href="privacy.html">Privacy Policy</a>·<a href="support.html">Support</a>
+    <div style="margin-top:6px;">No ads · No tracking · Fully offline</div>
+  </footer>
+
+  <div id="welcome">
+    <img class="wimg" src="welcome.png" alt="Offline Games Arcade">
+    <div class="wtitle">WELCOME TO</div>
+    <div class="wname">OFFLINE GAMES ARCADE</div>
+    <div class="wsub"><span class="leaf">🌿</span>All games are available to play offline<span class="leaf">🌿</span></div>
+    <button class="enter-btn" id="enterBtn">ENTER</button>
+  </div>
+
+<script>
+"use strict";
+// welcome shows once per app launch (resets when the app is closed)
+let seen = false;
+try { seen = sessionStorage.getItem("gg_welcomed") === "1"; } catch (e) {}
+if (seen) document.getElementById("welcome").classList.add("hidden");
+document.getElementById("enterBtn").addEventListener("click", () => {
+  try { sessionStorage.setItem("gg_welcomed", "1"); } catch (e) {}
+  document.getElementById("welcome").classList.add("hidden");
+});
+
+// ---------- top-right menu ----------
+const dd = document.getElementById("dropdown");
+document.getElementById("menuBtn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  dd.classList.toggle("open");
+});
+document.addEventListener("click", (e) => {
+  if (!dd.contains(e.target)) dd.classList.remove("open");
+});
+
+// ---------- global sound toggle (games read gg_muted on load) ----------
+const sndBtn = document.getElementById("soundToggle");
+function sndLabel() {
+  let m = false;
+  try { m = localStorage.getItem("gg_muted") === "1"; } catch (e) {}
+  sndBtn.textContent = m ? "🔇 Sound: Off" : "🔊 Sound: On";
+}
+sndBtn.addEventListener("click", () => {
+  let m = false;
+  try { m = localStorage.getItem("gg_muted") === "1"; } catch (e) {}
+  try { localStorage.setItem("gg_muted", m ? "0" : "1"); } catch (e) {}
+  sndLabel();
+});
+sndLabel();
+</script>
+</body>
+</html>
