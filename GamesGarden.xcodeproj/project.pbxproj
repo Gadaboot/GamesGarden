@@ -19,6 +19,8 @@
 		6705008C303DDA090096E2BC /* arrow-exit.html in Resources */ = {isa = PBXBuildFile; fileRef = 6705008B303DDA090096E2BC /* arrow-exit.html */; };
 		67050092303DDCB10096E2BC /* billiards.html in Resources */ = {isa = PBXBuildFile; fileRef = 67050091303DDCB10096E2BC /* billiards.html */; };
 		67050094303DDD240096E2BC /* icon_billiards.png in Resources */ = {isa = PBXBuildFile; fileRef = 67050093303DDD240096E2BC /* icon_billiards.png */; };
+		67050096303DDFB80096E2BC /* icon_arrowshapes.png in Resources */ = {isa = PBXBuildFile; fileRef = 67050095303DDFB80096E2BC /* icon_arrowshapes.png */; };
+		67050098303DDFC80096E2BC /* arrow-exit-shapes.html in Resources */ = {isa = PBXBuildFile; fileRef = 67050097303DDFC80096E2BC /* arrow-exit-shapes.html */; };
 		6731DF1F300FCF7B0070AC8B /* icon_magic-towers.png in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */; };
 		6731DF20300FCF7B0070AC8B /* icon_duo.png in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF1D300FCF7B0070AC8B /* icon_duo.png */; };
 		6731DF22300FCF8E0070AC8B /* magic-towers-solitaire.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */; };
@@ -78,6 +80,8 @@
 		6705008B303DDA090096E2BC /* arrow-exit.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "arrow-exit.html"; sourceTree = "<group>"; };
 		67050091303DDCB10096E2BC /* billiards.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = billiards.html; sourceTree = "<group>"; };
 		67050093303DDD240096E2BC /* icon_billiards.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_billiards.png; sourceTree = "<group>"; };
+		67050095303DDFB80096E2BC /* icon_arrowshapes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_arrowshapes.png; sourceTree = "<group>"; };
+		67050097303DDFC80096E2BC /* arrow-exit-shapes.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "arrow-exit-shapes.html"; sourceTree = "<group>"; };
 		6731DF1D300FCF7B0070AC8B /* icon_duo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_duo.png; sourceTree = "<group>"; };
 		6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_magic-towers.png"; sourceTree = "<group>"; };
 		6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "magic-towers-solitaire.html"; sourceTree = "<group>"; };
@@ -163,6 +167,7 @@
 				67050089303DD9F60096E2BC /* 3d-sniper.html */,
 				67D823AC2FFFBBCD00892511 /* anagram-crosswords.html */,
 				6705008B303DDA090096E2BC /* arrow-exit.html */,
+				67050097303DDFC80096E2BC /* arrow-exit-shapes.html */,
 				67C563FF300CD09500D2D146 /* battleships.html */,
 				67050091303DDCB10096E2BC /* billiards.html */,
 				67D823A22FFFAD7700892511 /* bubbleshooter.html */,
@@ -192,6 +197,7 @@
 				6703E67C3007A173000B3226 /* icon_2048.png */,
 				67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */,
 				67050085303DD9D30096E2BC /* icon_arrowexit.png */,
+				67050095303DDFB80096E2BC /* icon_arrowshapes.png */,
 				67C56401300CD09C00D2D146 /* icon_battleships.png */,
 				67050093303DDD240096E2BC /* icon_billiards.png */,
 				67D823A02FFFAD1C00892511 /* icon_bubbleshooter.png */,
@@ -288,6 +294,7 @@
 				6731DF20300FCF7B0070AC8B /* icon_duo.png in Resources */,
 				6705008C303DDA090096E2BC /* arrow-exit.html in Resources */,
 				67C5640C300CD3C900D2D146 /* index.html in Resources */,
+				67050096303DDFB80096E2BC /* icon_arrowshapes.png in Resources */,
 				67C56408300CD0BA00D2D146 /* ludo.html in Resources */,
 				67D823872FFEDC9900892511 /* icon_octo.png in Resources */,
 				67C56400300CD09500D2D146 /* battleships.html in Resources */,
@@ -308,6 +315,7 @@
 				67D8238F2FFFA18C00892511 /* checkers.html in Resources */,
 				67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */,
 				67E1D1F730261BB3002AEE31 /* england-football-coach.html in Resources */,
+				67050098303DDFC80096E2BC /* arrow-exit-shapes.html in Resources */,
 				AA0000000000000000000009 /* yahtzee.html in Resources */,
 				6703E6833007A18E000B3226 /* icon_cat-invaders.png in Resources */,
 				67D8239D2FFFA7ED00892511 /* solitaire.html in Resources */,
