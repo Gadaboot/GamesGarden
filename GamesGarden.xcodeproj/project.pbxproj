@@ -13,6 +13,12 @@
 		6703E6833007A18E000B3226 /* icon_cat-invaders.png in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6823007A18E000B3226 /* icon_cat-invaders.png */; };
 		6703E6853007A1E3000B3226 /* cartoon-cat-invaders.html in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6843007A1E3000B3226 /* cartoon-cat-invaders.html */; };
 		6703E6873007A1EB000B3226 /* icon_cartoon-cat-invaders.png in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6863007A1EB000B3226 /* icon_cartoon-cat-invaders.png */; };
+		67050086303DD9D30096E2BC /* icon_arrowexit.png in Resources */ = {isa = PBXBuildFile; fileRef = 67050085303DD9D30096E2BC /* icon_arrowexit.png */; };
+		67050088303DD9E20096E2BC /* icon_3dsniper.png in Resources */ = {isa = PBXBuildFile; fileRef = 67050087303DD9E20096E2BC /* icon_3dsniper.png */; };
+		6705008A303DD9F60096E2BC /* 3d-sniper.html in Resources */ = {isa = PBXBuildFile; fileRef = 67050089303DD9F60096E2BC /* 3d-sniper.html */; };
+		6705008C303DDA090096E2BC /* arrow-exit.html in Resources */ = {isa = PBXBuildFile; fileRef = 6705008B303DDA090096E2BC /* arrow-exit.html */; };
+		67050092303DDCB10096E2BC /* billiards.html in Resources */ = {isa = PBXBuildFile; fileRef = 67050091303DDCB10096E2BC /* billiards.html */; };
+		67050094303DDD240096E2BC /* icon_billiards.png in Resources */ = {isa = PBXBuildFile; fileRef = 67050093303DDD240096E2BC /* icon_billiards.png */; };
 		6731DF1F300FCF7B0070AC8B /* icon_magic-towers.png in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */; };
 		6731DF20300FCF7B0070AC8B /* icon_duo.png in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF1D300FCF7B0070AC8B /* icon_duo.png */; };
 		6731DF22300FCF8E0070AC8B /* magic-towers-solitaire.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */; };
@@ -66,6 +72,12 @@
 		6703E6823007A18E000B3226 /* icon_cat-invaders.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cat-invaders.png"; sourceTree = "<group>"; };
 		6703E6843007A1E3000B3226 /* cartoon-cat-invaders.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cartoon-cat-invaders.html"; sourceTree = "<group>"; };
 		6703E6863007A1EB000B3226 /* icon_cartoon-cat-invaders.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cartoon-cat-invaders.png"; sourceTree = "<group>"; };
+		67050085303DD9D30096E2BC /* icon_arrowexit.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_arrowexit.png; sourceTree = "<group>"; };
+		67050087303DD9E20096E2BC /* icon_3dsniper.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_3dsniper.png; sourceTree = "<group>"; };
+		67050089303DD9F60096E2BC /* 3d-sniper.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "3d-sniper.html"; sourceTree = "<group>"; };
+		6705008B303DDA090096E2BC /* arrow-exit.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "arrow-exit.html"; sourceTree = "<group>"; };
+		67050091303DDCB10096E2BC /* billiards.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = billiards.html; sourceTree = "<group>"; };
+		67050093303DDD240096E2BC /* icon_billiards.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_billiards.png; sourceTree = "<group>"; };
 		6731DF1D300FCF7B0070AC8B /* icon_duo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_duo.png; sourceTree = "<group>"; };
 		6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_magic-towers.png"; sourceTree = "<group>"; };
 		6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "magic-towers-solitaire.html"; sourceTree = "<group>"; };
@@ -148,8 +160,11 @@
 				6731DF2F300FDF040070AC8B /* achievements.js */,
 				67C5640B300CD3C900D2D146 /* index.html */,
 				6703E67E3007A17A000B3226 /* 2048-merge-blocks.html */,
+				67050089303DD9F60096E2BC /* 3d-sniper.html */,
 				67D823AC2FFFBBCD00892511 /* anagram-crosswords.html */,
+				6705008B303DDA090096E2BC /* arrow-exit.html */,
 				67C563FF300CD09500D2D146 /* battleships.html */,
+				67050091303DDCB10096E2BC /* billiards.html */,
 				67D823A22FFFAD7700892511 /* bubbleshooter.html */,
 				6703E6843007A1E3000B3226 /* cartoon-cat-invaders.html */,
 				6703E6803007A182000B3226 /* cat-invaders.html */,
@@ -173,9 +188,12 @@
 				67D823A62FFFB4AF00892511 /* wordle.html */,
 				AA000000000000000000000C /* yahtzee.html */,
 				AA0000000000000000000001 /* welcome.png */,
+				67050087303DD9E20096E2BC /* icon_3dsniper.png */,
 				6703E67C3007A173000B3226 /* icon_2048.png */,
 				67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */,
+				67050085303DD9D30096E2BC /* icon_arrowexit.png */,
 				67C56401300CD09C00D2D146 /* icon_battleships.png */,
+				67050093303DDD240096E2BC /* icon_billiards.png */,
 				67D823A02FFFAD1C00892511 /* icon_bubbleshooter.png */,
 				6703E6863007A1EB000B3226 /* icon_cartoon-cat-invaders.png */,
 				6703E6823007A18E000B3226 /* icon_cat-invaders.png */,
@@ -256,6 +274,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				67C56406300CD0AF00D2D146 /* icon_scopa.png in Resources */,
+				67050094303DDD240096E2BC /* icon_billiards.png in Resources */,
 				67C5640E300CECEC00D2D146 /* paint-the-flag.html in Resources */,
 				6703E6853007A1E3000B3226 /* cartoon-cat-invaders.html in Resources */,
 				6731DF30300FDF040070AC8B /* achievements.js in Resources */,
@@ -267,12 +286,15 @@
 				67E1D1F13024BE3A002AEE31 /* cup-glory.html in Resources */,
 				6731DF1F300FCF7B0070AC8B /* icon_magic-towers.png in Resources */,
 				6731DF20300FCF7B0070AC8B /* icon_duo.png in Resources */,
+				6705008C303DDA090096E2BC /* arrow-exit.html in Resources */,
 				67C5640C300CD3C900D2D146 /* index.html in Resources */,
 				67C56408300CD0BA00D2D146 /* ludo.html in Resources */,
 				67D823872FFEDC9900892511 /* icon_octo.png in Resources */,
 				67C56400300CD09500D2D146 /* battleships.html in Resources */,
 				67D823922FFFA1EB00892511 /* icon_checkers.png in Resources */,
+				67050092303DDCB10096E2BC /* billiards.html in Resources */,
 				67D823932FFFA1EB00892511 /* icon_chess.png in Resources */,
+				6705008A303DD9F60096E2BC /* 3d-sniper.html in Resources */,
 				6703E6813007A182000B3226 /* cat-invaders.html in Resources */,
 				6731DF28300FD9510070AC8B /* privacy.html in Resources */,
 				6703E67F3007A17A000B3226 /* 2048-merge-blocks.html in Resources */,
@@ -295,11 +317,13 @@
 				AA000000000000000000000F /* welcome.png in Resources */,
 				67C56402300CD09C00D2D146 /* icon_battleships.png in Resources */,
 				67E1D1ED3024B8DF002AEE31 /* cup-run-icon.png in Resources */,
+				67050086303DD9D30096E2BC /* icon_arrowexit.png in Resources */,
 				67D823AA2FFFB4E000892511 /* icon_wordle.png in Resources */,
 				6731DF24300FCF9E0070AC8B /* duo.html in Resources */,
 				67D823AB2FFFB4E000892511 /* icon_frogger.png in Resources */,
 				AA000000000000000000000A /* icon_yahtzee.png in Resources */,
 				67D823AD2FFFBBCD00892511 /* anagram-crosswords.html in Resources */,
+				67050088303DD9E20096E2BC /* icon_3dsniper.png in Resources */,
 				6703E6873007A1EB000B3226 /* icon_cartoon-cat-invaders.png in Resources */,
 				67C5640A300CD0C200D2D146 /* scopa.html in Resources */,
 				67D823B32FFFBBEC00892511 /* icon_anagram-crosswords.png in Resources */,
