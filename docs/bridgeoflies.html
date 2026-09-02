@@ -45,7 +45,9 @@ body::before{
 }
 .chip .k{font-size:8.5px;letter-spacing:1.3px;opacity:.7;font-weight:800}
 .chip .v{font-size:clamp(12px,4vw,17px);font-weight:900;line-height:1.2}
-.v-gold{color:#ffd83d}.v-safe{color:#7dffb0}.v-bad{color:#ff7a92}
+.v-gold{color:#ffd83d}.v-safe{color:#7dffb0}.v-bad{color:#ff7a92}.v-info{color:#7de6ff}
+.v.tick{animation:tickpulse .9s ease-in-out infinite alternate}
+@keyframes tickpulse{from{opacity:.45}to{opacity:1}}
 
 .qcard{
   background:linear-gradient(135deg,rgba(255,255,255,.17),rgba(255,255,255,.06));
@@ -68,11 +70,23 @@ body::before{
   word-break:break-word;hyphens:auto
 }
 .tile span{display:block;width:100%}
+.tile.dormant{
+  background:radial-gradient(circle at 34% 26%,#5c6376,#343a4c 70%,#262b39);
+  border-color:rgba(255,255,255,.09);
+  box-shadow:0 3px 6px rgba(0,0,0,.5),inset 0 1px 2px rgba(255,255,255,.10)
+}
+.tile.justopened span{animation:reveal .5s ease}
+@keyframes reveal{
+  0%{opacity:0;transform:scale(.6)}
+  60%{opacity:1;transform:scale(1.12)}
+  100%{opacity:1;transform:scale(1)}
+}
 .tile.can{
   cursor:pointer;border-color:#ffd83d;z-index:5;
   background:radial-gradient(circle at 34% 26%,#4a5580,#181f3a 72%,#0c1020);
-  animation:pulse 1.2s ease-in-out infinite alternate
+  box-shadow:0 0 8px rgba(255,216,61,.55),0 3px 6px rgba(0,0,0,.5)
 }
+.tile.can.near{animation:pulse 1.2s ease-in-out infinite alternate}
 @keyframes pulse{
   from{box-shadow:0 0 7px rgba(255,216,61,.5),0 3px 6px rgba(0,0,0,.5)}
   to{box-shadow:0 0 18px rgba(255,216,61,.95),0 3px 6px rgba(0,0,0,.5)}
@@ -349,7 +363,7 @@ const CATS=[
      (5,0) left and (0,5) right = SAFE SPOTS, each exposes a lie
    That leaves 32 playing tiles: 22 truths and 10 lies, as in the board game.
    ========================================================== */
-const N=6, N_LIES=10, MAX_STRIKES=3, PER_TRUTH=500, CROSS_BONUS=5000;
+const N=6, N_LIES=10, MAX_STRIKES=3, PER_TRUTH=500, CROSS_BONUS=5000, TIME_LIMIT=300;
 const START="0,0", EXIT="5,5", SAFE_L="5,0", SAFE_R="0,5";
 const CORNERS=[START,EXIT,SAFE_L,SAFE_R];
 
@@ -357,7 +371,18 @@ let S={};
 const $=id=>document.getElementById(id);
 const K=(r,c)=>r+","+c;
 const money=n=>"£"+Math.round(n).toLocaleString();
-const clock=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+const clock=s=>Math.floor(s/60)+":"+String(Math.max(0,s)%60).padStart(2,"0");
+function tick(){
+  if(S.over || S.paused) return;
+  if($("ovl").classList.contains("on")) return;      // not while a dialog is up
+  S.left--; updateClock();
+  if(S.left<=0){ S.left=0; updateClock(); timeUp(); }
+}
+function updateClock(){
+  const el=$("timeV");
+  el.textContent=(S.paused?"❚❚ ":"")+clock(S.left);
+  el.className="v "+(S.paused?"v-info":(S.left<=30?"v-bad tick":(S.left<=60?"v-gold":"v-safe")));
+}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function esc(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 
@@ -367,8 +392,26 @@ function neighbours(r,c){
   if(r-1>=0)o.push([r-1,c]); if(c-1>=0)o.push([r,c-1]);
   return o;
 }
+/* landing safely lights up every stone you can now touch */
+function openAround(r,c){
+  const opened=[];
+  neighbours(r,c).forEach(([nr,nc])=>{
+    const cell=S.cells[K(nr,nc)];
+    if(!cell.open){ cell.open=true; opened.push(K(nr,nc)); }
+  });
+  return opened;
+}
+/* a plain shuffle of five downs and five rights clusters around the middle
+   diagonal, so lean the walk to one side or the other for real variety */
 function buildPath(){
-  const mv=shuffle(["D","D","D","D","D","R","R","R","R","R"]);
+  const bias=[0.18,0.3,0.42,0.5,0.58,0.7,0.82][Math.floor(Math.random()*7)];
+  let d=5,r0=5; const mv=[];
+  while(d+r0>0){
+    let pD;
+    if(!r0) pD=1; else if(!d) pD=0;
+    else pD=(d*bias)/(d*bias + r0*(1-bias));
+    if(Math.random()<pD){mv.push("D");d--;} else {mv.push("R");r0--;}
+  }
   const path=[[0,0]]; let r=0,c=0;
   mv.forEach(m=>{ m==="D"?r++:c++; path.push([r,c]); });
   return path;
@@ -382,7 +425,8 @@ function newGame(){
   const cells={};
   for(let r=0;r<N;r++)for(let c=0;c<N;c++){
     const k=K(r,c);
-    cells[k]={r:r,c:c,corner:CORNERS.indexOf(k)>=0,lie:false,label:"",state:"hidden"};
+    cells[k]={r:r,c:c,corner:CORNERS.indexOf(k)>=0,lie:false,label:"",state:"hidden",
+              open:CORNERS.indexOf(k)>=0};   // corners are landmarks, always on show
   }
   // lies only go on playing tiles that are off the guaranteed path
   const spare=Object.values(cells).filter(x=>!x.corner && !onPath[K(x.r,x.c)]);
@@ -396,15 +440,17 @@ function newGame(){
   cells[START].state="truth";
 
   S={cat:cat, cells:cells, pos:[0,0], strikes:0, truths:0, pot:0,
-     busy:false, over:false, secs:0, lastLie:null, timer:S.timer};
+     busy:false, over:false, left:TIME_LIMIT, paused:false,
+     lastLie:null, justOpened:[], timer:S.timer};
+  S.justOpened=openAround(0,0);        // only the two stones touching START are lit
 
   $("question").textContent=cat.q;
   if(S.timer) clearInterval(S.timer);
-  S.timer=setInterval(()=>{ if(!S.over){S.secs++; $("timeV").textContent=clock(S.secs);} },1000);
-  $("timeV").textContent="0:00";
+  S.timer=setInterval(tick,1000);
+  updateClock();
 
   layout(); render();
-  setHint("Read the board, then step onto a stone you believe is <b>true</b>.");
+  setHint("Only the two stones ahead are lit. <b>5:00</b> on the clock — step onto the one you believe is <b>true</b>.");
 }
 
 /* ---------------- layout: the biggest circles the screen allows ---------------- */
@@ -413,7 +459,7 @@ function layout(){
   const board=$("board");
   const W=board.clientWidth||320;
   const top=board.getBoundingClientRect().top;
-  let avail=window.innerHeight - top - 118;      // leave room for the hint + bank button
+  let avail=window.innerHeight - top - 132;      // leave room for the hint + bank button
   avail=Math.max(250,Math.min(avail, W*1.75, 660));
   const g=4;
   let best=null;
@@ -454,9 +500,20 @@ function fontFor(text,d,max){
 }
 
 /* ---------------- render ---------------- */
+/* every stone touching ANY proven stone stays live, so you can always
+   go back and branch off somewhere else on the safe ground you own */
 function moves(){
   if(S.busy||S.over) return [];
-  return neighbours(S.pos[0],S.pos[1]).filter(([r,c])=>S.cells[K(r,c)].state!=="lie");
+  const seen={}, out=[];
+  Object.values(S.cells).forEach(x=>{
+    if(x.state!=="truth") return;                       // proven ground only
+    neighbours(x.r,x.c).forEach(([nr,nc])=>{
+      const k=K(nr,nc), n=S.cells[k];
+      if(seen[k] || n.state==="lie" || n.state==="truth") return;
+      seen[k]=1; out.push([nr,nc]);
+    });
+  });
+  return out;
 }
 function render(){
   $("lieV").textContent=S.strikes+"/"+MAX_STRIKES;
@@ -464,7 +521,8 @@ function render(){
   $("potV").textContent=money(S.pot);
 
   const board=$("board"); board.innerHTML="";
-  const can={}; moves().forEach(([r,c])=>can[K(r,c)]=true);
+  const can={}; moves().forEach(([r,c])=>{ can[K(r,c)]=true; S.cells[K(r,c)].open=true; });
+  const near={}; neighbours(S.pos[0],S.pos[1]).forEach(([r,c])=>{ if(can[K(r,c)]) near[K(r,c)]=true; });
   const hereK=K(S.pos[0],S.pos[1]);
 
   Object.values(S.cells).forEach(x=>{
@@ -477,14 +535,23 @@ function render(){
     else if(k===SAFE_L||k===SAFE_R){ el.classList.add("safespot"); text="SAFE"; big=true; }
     else if(x.state==="lie"){ el.classList.add("lie"); if(k===S.lastLie)el.classList.add("fresh"); text="LIE"; big=true; }
     else if(x.state==="truth"){ el.classList.add("truth"); text=x.label; }
-    else { text=x.label; }
+    else if(x.open){ text=x.label; }
+    else { el.classList.add("dormant"); text=""; }        // still in the dark
+
+    if(S.justOpened && S.justOpened.indexOf(k)>=0) el.classList.add("justopened");
 
     if(k===hereK) el.classList.add("here");
-    if(can[k]){ el.classList.add("can"); el.addEventListener("click",()=>step(x.r,x.c)); }
+    if(can[k]){
+      el.classList.add("can");
+      if(near[k]) el.classList.add("near");            // one step from where you stand
+      el.addEventListener("click",()=>step(x.r,x.c));
+    }
 
-    const fs = fontFor(text, DIM.d, big ? Math.max(8,DIM.d*0.26) : 11.5);
-    el.style.fontSize=fs.toFixed(1)+"px";
-    el.innerHTML="<span>"+esc(text)+"</span>";
+    if(text){
+      const fs = fontFor(text, DIM.d, big ? Math.max(8,DIM.d*0.26) : 11.5);
+      el.style.fontSize=fs.toFixed(1)+"px";
+      el.innerHTML="<span>"+esc(text)+"</span>";
+    }
 
     el.style.width=el.style.height=DIM.d+"px";
     el.style.left=(DIM.w/2 + (x.c-x.r)*DIM.dx - DIM.d/2)+"px";
@@ -511,7 +578,9 @@ function listMoves(){
     if(x.corner) return "a safe spot";
     return x.state==="truth" ? "✔ "+x.label : x.label;
   });
-  return names.length ? "From here: <b>"+names.join("</b> · <b>")+"</b>" : "";
+  if(!names.length) return "";
+  if(names.length>3) return "<b>"+names.length+" stones</b> are open — take any of them.";
+  return "Open: <b>"+names.join("</b> · <b>")+"</b>";
 }
 function toast(msg,kind){
   const el=$("toast"); el.textContent=msg;
@@ -523,25 +592,26 @@ function step(r,c){
   if(S.busy||S.over) return;
   if(!moves().some(m=>m[0]===r&&m[1]===c)) return;
   const k=K(r,c), x=S.cells[k];
+  if(S.paused){ S.paused=false; updateClock(); }      // choosing restarts the clock
 
   if(k===EXIT){ S.pos=[r,c]; win(); return; }
 
   if(k===SAFE_L||k===SAFE_R){
-    S.pos=[r,c]; S.busy=true; render();
+    S.pos=[r,c]; S.busy=true; x.state="truth";        // a safe stone counts as proven ground
+    S.justOpened=openAround(r,c);
+    S.paused=true; updateClock();                     // and it stops the clock
+    render();
     const found=exposeALie();
-    toast(found?"SAFE SPOT — a lie is exposed!":"SAFE SPOT", found?"info":"good");
+    toast(found?"SAFE — clock stopped, a lie exposed!":"SAFE — the clock stops","info");
     setTimeout(()=>{ S.busy=false; render();
-      setHint((found?"The board gives up a lie. ":"")+listMoves()); },1000);
+      setHint("❚❚ <b>Clock stopped</b> — it restarts the moment you choose."+
+              (found?"<br>The board has given up a lie.":"")); },1000);
     return;
-  }
-
-  if(k===START || x.state==="truth"){            // walking back over proven ground
-    S.pos=[r,c]; render(); setHint(listMoves()); return;
   }
 
   S.busy=true;                                    // an untested stone
   if(x.lie){
-    x.state="lie"; S.lastLie=k; S.strikes++;
+    x.state="lie"; x.open=true; S.lastLie=k; S.strikes++; S.justOpened=[];
     S.pot=Math.floor(S.pot/2/50)*50;              // a lie slashes the bank
     render();
     toast(S.strikes>=MAX_STRIKES?"THREE LIES — YOU'RE OUT!":"THAT'S A LIE!","bad");
@@ -554,6 +624,7 @@ function step(r,c){
     },1400);
   }else{
     x.state="truth"; S.pos=[r,c]; S.truths++; S.pot+=PER_TRUTH;
+    S.justOpened=openAround(r,c);                 // the stones you can now touch light up
     render();
     toast("TRUE — +"+money(PER_TRUTH),"good");
     setTimeout(()=>{ S.busy=false; render(); setHint(listMoves()); },700);
@@ -564,13 +635,13 @@ function exposeALie(){
   const hidden=Object.values(S.cells).filter(x=>x.lie && x.state==="hidden");
   if(!hidden.length) return false;
   const pick=hidden[Math.floor(Math.random()*hidden.length)];
-  pick.state="lie"; S.lastLie=K(pick.r,pick.c);
+  pick.state="lie"; pick.open=true; S.lastLie=K(pick.r,pick.c);
   render();
   return true;
 }
 function revealAll(){
-  Object.values(S.cells).forEach(x=>{ if(!x.corner) x.state = x.lie ? "lie" : "truth"; });
-  S.lastLie=null;
+  Object.values(S.cells).forEach(x=>{ x.open=true; if(!x.corner) x.state = x.lie ? "lie" : "truth"; });
+  S.lastLie=null; S.justOpened=[];
 }
 
 function bank(){
@@ -587,9 +658,18 @@ function win(){
   overlay("🏆 YOU CROSSED THE BRIDGE!",
     "<p class='mid'>Safe on the far side with <b>"+money(S.pot)+"</b><br>"+
     S.truths+" truths &times; "+money(PER_TRUTH)+" plus a "+money(CROSS_BONUS)+" crossing bonus</p>"+
-    "<p class='mid'>Lies stepped on: <b>"+S.strikes+"</b> &nbsp;·&nbsp; Time: <b>"+clock(S.secs)+"</b></p>"+
+    "<p class='mid'>Lies stepped on: <b>"+S.strikes+"</b> &nbsp;·&nbsp; Time left: <b>"+clock(S.left)+"</b></p>"+
     "<p class='mid'><i>"+esc(S.cat.q)+"</i></p>",
     [{l:"PLAY AGAIN",c:"b-go",f:()=>{closeOverlay();newGame();}}]);
+}
+function timeUp(){
+  if(S.over) return;
+  S.over=true; revealAll(); render();
+  overlay("⏰ TIME'S UP",
+    "<p class='mid'>Five minutes gone and you were still on the bridge, so the "+
+    money(S.pot)+" goes with it.</p>"+
+    "<p class='mid'>You had found <b>"+S.truths+"</b> truths. Next time, bank before the clock beats you.</p>",
+    [{l:"TRY AGAIN",c:"b-pink",f:()=>{closeOverlay();newGame();}}]);
 }
 function lose(){
   S.over=true; revealAll(); render();
@@ -625,14 +705,16 @@ window.addEventListener("resize",()=>{
 /* ---------------- start ---------------- */
 newGame();
 overlay("BRIDGE OF LIES",
-  "<p>Every stone on the diamond carries an answer. <b>22 are true, 10 are lies</b> — "+
-  "and there is always a safe path across.</p>"+
-  "<p>Step from stone to stone up to the crossing at the top. You can step "+
-  "<b>backwards</b> at any time and take a different route — nothing you learn is ever hidden again.</p>"+
+  "<p>The diamond hides <b>22 truths and 10 lies</b>, and there is always a safe path across. "+
+  "Only the <b>two stones ahead of you</b> show their answer — the rest stay dark until you "+
+  "reach them. Every safe landing lights up the stones it touches.</p>"+
+  "<p>Work your way up to the crossing at the top. <b>Every stone touching ground you have "+
+  "already proven stays live</b>, so you can always drop back and branch off somewhere else.</p>"+
   "<p>✅ Each truth banks <b>"+money(PER_TRUTH)+"</b><br>"+
   "💀 A lie turns the stone red and <b>halves your bank</b><br>"+
   "🛑 <b>Three lies and you are out</b><br>"+
-  "🔷 The <b>SAFE</b> stones left and right expose a lie for free<br>"+
+  "🔷 The <b>SAFE</b> stones left and right expose a lie <i>and stop the clock</i><br>"+
+  "⏰ You have <b>5 minutes</b> to get across<br>"+
   "🏁 Reach <b>CROSS</b> at the top for a "+money(CROSS_BONUS)+" bonus</p>",
   [{l:"STEP ON",c:"b-go",f:closeOverlay}]);
 })();
