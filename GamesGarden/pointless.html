@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#160a36">
+<title>Pointless! — 2 Player</title>
+<style>
+/* ============================================================
+   POINTLESS! — colourful 2-player quiz game
+   Single self-contained file. No external assets.
+   ============================================================ */
+:root{
+  --bg1:#1b0b3d; --bg2:#3a0f5e; --bg3:#0b1240;
+  --ink:#ffffff;
+  --cyan:#25e6ff; --pink:#ff3ea5; --lime:#a8ff3e;
+  --amber:#ffc93c; --violet:#a06bff; --coral:#ff6b5e;
+  --p1:#25e6ff; --p2:#ff5fbf;
+  --panel:rgba(255,255,255,.09);
+  --panel-b:rgba(255,255,255,.18);
+  --shadow:0 14px 34px rgba(0,0,0,.42);
+  --r:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none !important}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Avenir,"Helvetica Neue",Arial,sans-serif;
+  color:var(--ink);
+  background:var(--bg1);
+  overflow-x:hidden;
+  -webkit-user-select:none;user-select:none;
+  -webkit-text-size-adjust:100%;
+}
+/* fixed backdrop layers (kept off `background-attachment:fixed`, which is unreliable in iOS web views) */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(1100px 700px at 12% -8%, #6a1fb0 0%, transparent 60%),
+    radial-gradient(900px 640px at 96% 6%, #0f4fd8 0%, transparent 58%),
+    radial-gradient(900px 700px at 50% 108%, #ff2e88 0%, transparent 55%),
+    linear-gradient(165deg,var(--bg1),var(--bg3) 55%,#12073a);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:
+    radial-gradient(2px 2px at 18% 22%, rgba(255,255,255,.7), transparent),
+    radial-gradient(2px 2px at 74% 14%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1.5px 1.5px at 42% 66%, rgba(255,255,255,.5), transparent),
+    radial-gradient(2px 2px at 88% 74%, rgba(255,255,255,.45), transparent),
+    radial-gradient(1.5px 1.5px at 8% 82%, rgba(255,255,255,.45), transparent);
+}
+.wrap{
+  position:relative;z-index:1;
+  max-width:760px;margin:0 auto;
+  padding:calc(10px + env(safe-area-inset-top)) 16px calc(26px + env(safe-area-inset-bottom));
+  min-height:100%;
+  display:flex;flex-direction:column;
+}
+
+/* ---------------- buttons / bar ---------------- */
+.topbar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.btn{
+  border:0;cursor:pointer;font:inherit;font-weight:800;color:#fff;text-decoration:none;
+  border-radius:999px;padding:11px 16px;
+  background:linear-gradient(135deg,var(--violet),var(--pink));
+  box-shadow:0 8px 20px rgba(255,62,165,.34);
+  transition:transform .12s ease, filter .12s ease;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn:active{transform:scale(.95)}
+.btn.ghost{background:var(--panel);border:1px solid var(--panel-b);box-shadow:none;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.btn.big{padding:16px 30px;font-size:1.1rem;border-radius:22px}
+.btn.lime{background:linear-gradient(135deg,#5ddb2f,var(--lime));color:#10240a;box-shadow:0 8px 20px rgba(168,255,62,.3)}
+.btn.cyan{background:linear-gradient(135deg,#1aa9ff,var(--cyan));color:#04202b;box-shadow:0 8px 20px rgba(37,230,255,.3)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.spacer{flex:1}
+.pill{
+  background:var(--panel);border:1px solid var(--panel-b);border-radius:999px;
+  padding:7px 11px;font-size:.62rem;font-weight:800;letter-spacing:.05em;
+  text-transform:uppercase;white-space:nowrap;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.pill b{font-size:.85rem;letter-spacing:0}
+.pill.jack b{color:var(--lime)}
+#sndBtn{padding:10px 12px;font-size:.95rem;line-height:1}
+.topbar .btn{font-size:.85rem}
+
+/* ---------------- screens ---------------- */
+.screen{display:none;flex:1;flex-direction:column;animation:fade .35s ease both}
+.screen.on{display:flex}
+@keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ---------------- home ---------------- */
+.hero{text-align:center;margin:auto 0;padding:10px 0}
+.logo{font-size:clamp(3rem,15vw,5.4rem);font-weight:900;letter-spacing:-.04em;line-height:.92;margin:0;
+  animation:bob 3.4s ease-in-out infinite}
+.logo span{
+  display:inline-block;
+  background-image:linear-gradient(100deg,var(--amber),var(--pink) 38%,var(--violet) 66%,var(--cyan));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-10px) rotate(-2deg)}}
+.sub{margin:6px 0 0;font-size:.8rem;letter-spacing:.28em;text-transform:uppercase;font-weight:900;color:var(--lime)}
+.tag{margin:14px auto 0;max-width:430px;font-size:1rem;line-height:1.5;color:rgba(255,255,255,.82)}
+.tag em{color:var(--lime);font-style:normal;font-weight:800}
+.menu{display:flex;flex-direction:column;gap:12px;max-width:330px;margin:28px auto 0}
+
+/* ---------------- cards / rules ---------------- */
+.card{
+  background:var(--panel);border:1px solid var(--panel-b);border-radius:var(--r);
+  padding:20px;box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.card h2{margin:0 0 12px;font-size:1.35rem}
+.rules{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+.rules li{display:flex;gap:12px;align-items:flex-start;font-size:.95rem;line-height:1.5;color:rgba(255,255,255,.88)}
+.num{flex:0 0 30px;height:30px;border-radius:10px;display:grid;place-items:center;
+  font-weight:900;font-size:.9rem;color:#1a0733;background:linear-gradient(135deg,var(--amber),var(--lime))}
+
+/* ---------------- setup ---------------- */
+.setup{margin:auto 0}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;font-weight:900;margin-bottom:8px}
+.field.one label{color:var(--p1)} .field.two label{color:var(--p2)}
+.field input{
+  width:100%;font:inherit;font-weight:800;font-size:1.05rem;color:#fff;
+  background:rgba(0,0,0,.28);border:2px solid var(--panel-b);border-radius:16px;
+  padding:14px 16px;outline:none;-webkit-user-select:text;user-select:text;
+}
+.field.one input:focus{border-color:var(--p1)} .field.two input:focus{border-color:var(--p2)}
+.field input::placeholder{color:rgba(255,255,255,.35)}
+
+/* ---------------- scoreboard ---------------- */
+.sboard{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pcard{
+  position:relative;border-radius:16px;padding:10px 12px;
+  background:var(--panel);border:1px solid var(--panel-b);
+  transition:box-shadow .2s, border-color .2s, transform .2s;
+}
+.pcard.active{transform:translateY(-2px)}
+.pcard.one.active{border-color:var(--p1);box-shadow:0 0 0 2px rgba(37,230,255,.5), 0 10px 22px rgba(37,230,255,.28)}
+.pcard.two.active{border-color:var(--p2);box-shadow:0 0 0 2px rgba(255,95,191,.5), 0 10px 22px rgba(255,95,191,.28)}
+.pname{font-weight:900;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard.one .pname{color:var(--p1)} .pcard.two .pname{color:var(--p2)}
+.pips{display:flex;gap:5px;margin:7px 0 6px}
+.pip{width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.16)}
+.pcard.one .pip.on{background:var(--p1);box-shadow:0 0 10px rgba(37,230,255,.8)}
+.pcard.two .pip.on{background:var(--p2);box-shadow:0 0 10px rgba(255,95,191,.8)}
+.prow{font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.62);font-weight:800}
+.prow b{font-size:.95rem;color:#fff;letter-spacing:0}
+
+/* ---------------- question ---------------- */
+.roundhead{text-align:center;margin-bottom:10px}
+.roundtag{display:inline-block;font-size:.7rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
+  padding:6px 14px;border-radius:999px;color:#1a0733;background:linear-gradient(135deg,var(--amber),var(--coral))}
+.cat{margin:10px 0 4px;font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);font-weight:800}
+.q{margin:0;font-size:clamp(1.1rem,4.4vw,1.5rem);font-weight:800;line-height:1.28}
+
+.turn{
+  margin:12px 0 4px;padding:12px 14px;border-radius:16px;text-align:center;
+  font-weight:900;font-size:1rem;
+  background:rgba(255,255,255,.07);border:1px solid var(--panel-b);
+  animation:pulse 2s ease-in-out infinite;
+}
+.turn small{display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:800;color:rgba(255,255,255,.6);margin-top:4px}
+.turn.one{border-color:rgba(37,230,255,.55);color:var(--p1)}
+.turn.two{border-color:rgba(255,95,191,.55);color:var(--p2)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.72}}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:12px 0 4px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+.tile{
+  position:relative;border:0;cursor:pointer;font:inherit;color:#fff;
+  min-height:64px;padding:12px 10px;border-radius:16px;
+  font-weight:800;font-size:.92rem;line-height:1.2;text-align:center;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 18px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .14s ease, opacity .25s ease, filter .25s ease;
+  animation:pop .3s ease both;
+}
+@keyframes pop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
+.tile:active{transform:scale(.94)}
+.tile.taken{
+  cursor:default;
+  box-shadow:inset 0 0 0 999px rgba(9,4,28,.66), 0 6px 14px rgba(0,0,0,.28);
+}
+.tile.taken > span{opacity:.5}
+.tile.taken{outline:3px solid rgba(255,255,255,.28);outline-offset:-3px}
+.tile.taken.one{outline:3px solid var(--p1);outline-offset:-3px}
+.tile.taken.two{outline:3px solid var(--p2);outline-offset:-3px}
+.tile .badge{
+  position:absolute;top:-8px;right:-6px;min-width:30px;height:30px;padding:0 6px;
+  border-radius:999px;display:grid;place-items:center;
+  font-size:.82rem;font-weight:900;color:#10102a;
+  box-shadow:0 4px 12px rgba(0,0,0,.45);
+}
+.tile.one .badge{background:var(--p1)} .tile.two .badge{background:var(--p2)}
+.tile .badge.zero{background:var(--lime)}
+.tile .badge.wrong{background:var(--coral);color:#2a0505}
+
+/* ---------------- countdown board ---------------- */
+.board{
+  margin:8px 0 0;padding:16px 18px 18px;border-radius:24px;text-align:center;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.05));
+  border:1px solid var(--panel-b);box-shadow:var(--shadow);
+}
+.board .lbl{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:800}
+.answered{margin:6px 0 2px;font-size:1.1rem;font-weight:900;color:var(--amber)}
+.bignum{
+  font-size:clamp(3.6rem,18vw,6.4rem);font-weight:900;line-height:1;letter-spacing:-.05em;
+  font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 6px 26px rgba(37,230,255,.55);
+}
+.bignum.zero{color:var(--lime);text-shadow:0 0 34px rgba(168,255,62,.95);animation:zoom .5s ease}
+.bignum.wrong{color:var(--coral);text-shadow:0 0 26px rgba(255,107,94,.8)}
+@keyframes zoom{0%{transform:scale(.6)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.bar{height:13px;border-radius:999px;background:rgba(0,0,0,.35);overflow:hidden;margin:10px 0 12px}
+.bar i{display:block;height:100%;width:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--lime),var(--cyan) 45%,var(--violet) 75%,var(--pink))}
+.verdict{font-size:.98rem;font-weight:800;min-height:1.4em;color:rgba(255,255,255,.9)}
+.verdict.good{color:var(--lime)} .verdict.bad{color:var(--coral)}
+.center{display:flex;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+
+/* ---------------- round result ---------------- */
+.vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:16px 0 6px}
+.vs .side{text-align:center;padding:14px 8px;border-radius:18px;background:var(--panel);border:1px solid var(--panel-b)}
+.vs .side.win{border-color:var(--lime);box-shadow:0 0 0 2px rgba(168,255,62,.35)}
+.vs .side .n{font-size:.8rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vs .side.one .n{color:var(--p1)} .vs .side.two .n{color:var(--p2)}
+.vs .side .t{font-size:2.3rem;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.vs .side .d{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:800}
+.vs .mid{font-size:.85rem;font-weight:900;color:rgba(255,255,255,.5)}
+.headline{text-align:center;font-size:1.15rem;font-weight:900;margin:12px 0 0}
+.headline.good{color:var(--lime)}
+
+/* ---------------- final ---------------- */
+.finalpick{display:flex;flex-direction:column;gap:12px;margin:18px 0}
+.catbtn{border:0;cursor:pointer;font:inherit;color:#fff;text-align:left;
+  padding:16px 18px;border-radius:18px;font-weight:800;font-size:1rem;line-height:1.3;
+  box-shadow:0 8px 18px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .12s ease}
+.catbtn:active{transform:scale(.97)}
+.lives{display:flex;gap:8px;justify-content:center;margin:12px 0 2px}
+.life{width:16px;height:16px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px rgba(168,255,62,.7)}
+.life.used{background:rgba(255,255,255,.2);box-shadow:none}
+.hint{margin:8px 0 0;font-size:.82rem;color:rgba(255,255,255,.6)}
+
+/* ---------------- results ---------------- */
+.result{text-align:center;margin:auto 0}
+.rank{font-size:clamp(1.9rem,8.4vw,3rem);font-weight:900;line-height:1.05;margin:0 0 10px;
+  background-image:linear-gradient(100deg,var(--lime),var(--cyan) 50%,var(--pink));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent}
+.totlbl{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);font-weight:800}
+.breakdown{margin:20px auto 0;max-width:440px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;
+  background:var(--panel);border:1px solid var(--panel-b);font-size:.84rem;text-align:left}
+.row .r-q{flex:1;color:rgba(255,255,255,.82);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .r-a{font-weight:900;font-variant-numeric:tabular-nums}
+.row .r-a.one{color:var(--p1)} .row .r-a.two{color:var(--p2)}
+
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+.footer{margin-top:18px;text-align:center;font-size:.7rem;color:rgba(255,255,255,.35);letter-spacing:.08em}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="wrap">
+
+  <!-- ============ TOP BAR ============ -->
+  <div class="topbar">
+    <a class="btn ghost" href="index.html" aria-label="Back to menu">&#9776; Menu</a>
+    <div class="spacer"></div>
+    <div class="pill jack" id="pillJack" hidden>Jackpot <b id="jackVal">£1,000</b></div>
+    <button class="btn ghost" id="sndBtn" title="Sound">&#128266;</button>
+  </div>
+
+  <!-- ============ HOME ============ -->
+  <section class="screen on" id="scHome">
+    <div class="hero">
+      <h1 class="logo"><span>Pointless!</span></h1>
+      <div class="sub">2 Player</div>
+      <p class="tag">We asked <em>100 people</em> to name as many answers as they could.<br>
+        Two picks each per question — the <em>lowest</em> total takes the round.<br>
+        First to <em>5 points</em> plays the final.</p>
+      <div class="menu">
+        <button class="btn big lime" id="playBtn">▶  Play</button>
+        <button class="btn big ghost" id="howBtn">How to play</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW TO ============ -->
+  <section class="screen" id="scHow">
+    <div class="card">
+      <h2>How to play</h2>
+      <ul class="rules">
+        <li><span class="num">1</span><span>Every question was put to <b>100 people</b>. Each correct answer they gave scores a point — so <b>obscure is good</b>.</span></li>
+        <li><span class="num">2</span><span>Players take it in turns on the <b>same board</b>: two picks each, four answers in all. You can't take an answer that's already gone.</span></li>
+        <li><span class="num">3</span><span>A <b>wrong</b> answer stops the board dead on <b>100</b>. Ouch.</span></li>
+        <li><span class="num">4</span><span>Lowest combined total wins the round and takes <b>1 point</b>. Level scores — the round is drawn and nobody scores.</span></li>
+        <li><span class="num">5</span><span>An answer nobody gave is a <b>POINTLESS ANSWER</b> — it puts £250 on the jackpot.</span></li>
+        <li><span class="num">6</span><span>First to <b>5 points</b> goes through to the <b>final</b>: three guesses to land a pointless answer and win the jackpot.</span></li>
+      </ul>
+      <div class="center"><button class="btn lime" id="howBack">Got it</button></div>
+    </div>
+  </section>
+
+  <!-- ============ SETUP ============ -->
+  <section class="screen" id="scSetup">
+    <div class="setup">
+      <div class="card">
+        <h2>Who's playing?</h2>
+        <div class="field one">
+          <label for="n1">Player 1</label>
+          <input id="n1" type="text" maxlength="14" placeholder="Player 1" autocomplete="off" autocapitalize="words" spellcheck="false">
+        </div>
+        <div class="field two">
+          <label for="n2">Player 2</label>
+          <input id="n2" type="text" maxlength="14" placeholder="Player 2" autocomplete="off" autocapitalize="words" spellcheck="false">
+        </div>
+        <div class="center">
+          <button class="btn big lime" id="startBtn">Start the match</button>
+          <button class="btn ghost" id="setupBack">Back</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section class="screen" id="scGame">
+    <div class="sboard">
+      <div class="pcard one" id="pc0">
+        <div class="pname" id="nm0">Player 1</div>
+        <div class="pips" id="pip0"></div>
+        <div class="prow">This round <b id="rt0">0</b></div>
+      </div>
+      <div class="pcard two" id="pc1">
+        <div class="pname" id="nm1">Player 2</div>
+        <div class="pips" id="pip1"></div>
+        <div class="prow">This round <b id="rt1">0</b></div>
+      </div>
+    </div>
+
+    <div class="roundhead">
+      <span class="roundtag" id="roundTag">Round 1</span>
+      <div class="cat" id="catTxt">Geography</div>
+      <h2 class="q" id="qTxt">Question</h2>
+    </div>
+
+    <div class="turn one" id="turnBox">Player 1 to answer<small>Pick 1 of 2</small></div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="board" id="board" hidden>
+      <div class="lbl" id="boardWho">Player 1 answered</div>
+      <div class="answered" id="ansTxt">—</div>
+      <div class="bignum" id="bigNum">100</div>
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="center"><button class="btn cyan" id="nextBtn">Continue →</button></div>
+    </div>
+
+    <div class="board" id="roundEnd" hidden>
+      <div class="lbl">Round result</div>
+      <div class="vs">
+        <div class="side one" id="vs0"><div class="n" id="vn0">Player 1</div><div class="t" id="vt0">0</div><div class="d">total</div></div>
+        <div class="mid">v</div>
+        <div class="side two" id="vs1"><div class="n" id="vn1">Player 2</div><div class="t" id="vt1">0</div><div class="d">total</div></div>
+      </div>
+      <div class="headline" id="roundHead">Winner</div>
+      <div class="center"><button class="btn cyan" id="roundNextBtn">Next round →</button></div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL ============ -->
+  <section class="screen" id="scFinal">
+    <div class="roundhead">
+      <span class="roundtag" style="background:linear-gradient(135deg,var(--lime),var(--cyan))">The Final</span>
+      <h2 class="q" id="finalTitle" style="margin-top:12px">Choose your category</h2>
+      <p class="hint" id="finalHint">One pointless answer wins the jackpot. You have three guesses.</p>
+    </div>
+    <div class="finalpick" id="finalPick"></div>
+    <div class="lives" id="lives" hidden><i class="life"></i><i class="life"></i><i class="life"></i></div>
+    <div class="grid" id="finalGrid" hidden></div>
+    <div class="board" id="finalBoard" hidden>
+      <div class="lbl">Your answer</div>
+      <div class="answered" id="fAnsTxt">—</div>
+      <div class="bignum" id="fBigNum">100</div>
+      <div class="bar"><i id="fBarFill"></i></div>
+      <div class="verdict" id="fVerdict"></div>
+      <div class="center"><button class="btn cyan" id="fNextBtn">Continue</button></div>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="screen" id="scEnd">
+    <div class="result">
+      <h2 class="rank" id="rankTxt">Winner</h2>
+      <div class="totlbl" id="matchTxt">5 – 3</div>
+      <div class="totlbl" id="jackTxt" style="margin-top:14px"></div>
+      <div class="breakdown" id="breakdown"></div>
+      <div class="center">
+        <button class="btn big lime" id="againBtn">Play again</button>
+        <a class="btn big ghost" href="index.html">Menu</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">A colourful quiz in the spirit of the BBC's Pointless.</div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   QUESTION BANK
+   score = how many of "100 people" gave that answer.
+   -1 = not a valid answer (scores the full 100).
+   ============================================================ */
+const QUESTIONS = [
+ {cat:"Geography", q:"Countries that share a land border with France",
+  a:[["Spain",71],["Germany",63],["Italy",57],["Belgium",44],["Switzerland",35],["Luxembourg",14],["Andorra",6],["Monaco",3],
+     ["Portugal",-1],["Austria",-1],["Netherlands",-1],["Denmark",-1]]},
+
+ {cat:"Cinema", q:"Films starring Tom Hanks",
+  a:[["Forrest Gump",82],["Toy Story",56],["Cast Away",45],["Saving Private Ryan",38],["Big",22],["The Green Mile",17],
+     ["Philadelphia",9],["Road to Perdition",2],["Cloud Atlas",0],
+     ["Rain Man",-1],["Jerry Maguire",-1],["Gladiator",-1]]},
+
+ {cat:"Science", q:"Chemical elements with a one-letter symbol",
+  a:[["Hydrogen",46],["Oxygen",39],["Carbon",31],["Nitrogen",24],["Potassium",12],["Sulfur",9],["Fluorine",5],["Phosphorus",3],
+     ["Boron",1],["Iodine",1],["Tungsten",0],["Vanadium",0],
+     ["Helium",-1],["Sodium",-1],["Zinc",-1]]},
+
+ {cat:"Music", q:"Songs recorded by The Beatles",
+  a:[["Yesterday",66],["Hey Jude",58],["Let It Be",52],["Help!",37],["Something",15],["Blackbird",8],["Taxman",3],["Rain",1],
+     ["Imagine",-1],["Mull of Kintyre",-1],["My Sweet Lord",-1]]},
+
+ {cat:"USA", q:"US states beginning with the letter M",
+  a:[["Michigan",44],["Missouri",37],["Mississippi",35],["Massachusetts",30],["Minnesota",26],["Maryland",19],["Maine",15],["Montana",7],
+     ["Nebraska",-1],["Idaho",-1],["Delaware",-1],["Wyoming",-1]]},
+
+ {cat:"Theatre", q:"Plays written by William Shakespeare",
+  a:[["Romeo and Juliet",79],["Hamlet",74],["Macbeth",68],["A Midsummer Night's Dream",41],["The Tempest",29],["King Lear",26],
+     ["Titus Andronicus",4],["Coriolanus",2],["Cymbeline",1],["Pericles",0],
+     ["Doctor Faustus",-1],["The Duchess of Malfi",-1]]},
+
+ {cat:"Africa", q:"African countries beginning with a vowel",
+  a:[["Egypt",58],["Ethiopia",42],["Algeria",36],["Uganda",30],["Angola",22],["Eritrea",8],["Ivory Coast",6],
+     ["Equatorial Guinea",3],["Eswatini",1],
+     ["Zambia",-1],["Oman",-1],["Namibia",-1]]},
+
+ {cat:"Film", q:"Actors who have played James Bond in an official film",
+  a:[["Sean Connery",76],["Daniel Craig",71],["Roger Moore",63],["Pierce Brosnan",57],["Timothy Dalton",31],["George Lazenby",18],
+     ["Michael Caine",-1],["Jason Statham",-1],["David Niven",-1],["Idris Elba",-1],["Hugh Grant",-1],["Clive Owen",-1]]},
+
+ {cat:"Capitals", q:"Capital cities of South American countries",
+  a:[["Buenos Aires",54],["Lima",41],["Santiago",36],["Brasília",33],["Bogotá",28],["Quito",21],["Caracas",18],["La Paz",14],
+     ["Montevideo",11],["Asunción",5],["Georgetown",1],["Paramaribo",0],
+     ["Rio de Janeiro",-1],["Medellín",-1]]},
+
+ {cat:"Tradition", q:"Animals of the Chinese zodiac",
+  a:[["Dragon",44],["Rat",38],["Tiger",36],["Snake",30],["Horse",28],["Monkey",25],["Rabbit",24],["Dog",22],["Ox",19],
+     ["Pig",17],["Rooster",15],["Goat",9],
+     ["Cat",-1],["Bear",-1],["Fox",-1]]},
+
+ {cat:"Politics", q:"People who have served as UK Prime Minister since 1900",
+  a:[["Winston Churchill",74],["Margaret Thatcher",71],["Tony Blair",66],["Boris Johnson",60],["David Cameron",50],
+     ["Gordon Brown",42],["Neville Chamberlain",26],["Clement Attlee",22],["Harold Wilson",20],["Anthony Eden",12],
+     ["Stanley Baldwin",11],["H. H. Asquith",8],["Alec Douglas-Home",5],["Arthur Balfour",3],["Bonar Law",1],
+     ["Henry Campbell-Bannerman",0],
+     ["Neil Kinnock",-1],["Nick Clegg",-1],["Michael Foot",-1]]},
+
+ {cat:"Anatomy", q:"Named bones of the human body",
+  a:[["Femur",52],["Skull",44],["Tibia",34],["Humerus",30],["Fibula",22],["Radius",20],["Ulna",17],["Sternum",15],
+     ["Clavicle",13],["Scapula",11],["Patella",9],["Mandible",6],["Hyoid",1],["Stapes",0],
+     ["Cartilage",-1],["Tendon",-1]]},
+
+ {cat:"Animation", q:"Walt Disney Animation Studios feature films",
+  a:[["Frozen",71],["The Lion King",68],["Aladdin",45],["Moana",40],["Bambi",25],["Dumbo",21],["Hercules",12],
+     ["Atlantis: The Lost Empire",3],["The Black Cauldron",1],
+     ["Shrek",-1],["Despicable Me",-1],["Toy Story",-1]]},
+
+ {cat:"Games", q:"Games played with a standard deck of cards",
+  a:[["Poker",74],["Blackjack",51],["Bridge",40],["Snap",34],["Rummy",30],["Whist",15],["Cribbage",12],["Canasta",8],["Piquet",1],
+     ["Backgammon",-1],["Yahtzee",-1],["Dominoes",-1]]},
+
+ {cat:"Fiction", q:"Fictional detectives",
+  a:[["Sherlock Holmes",81],["Hercule Poirot",58],["Miss Marple",44],["Inspector Morse",33],["Columbo",30],
+     ["Jessica Fletcher",12],["Sam Spade",7],["Philip Marlowe",6],["Cormoran Strike",3],
+     ["Doctor Watson",-1],["Professor Moriarty",-1]]},
+
+ {cat:"Music", q:"Instruments in a standard symphony orchestra",
+  a:[["Violin",72],["Cello",55],["Flute",48],["Trumpet",44],["Oboe",26],["Bassoon",19],["Timpani",12],["Cor anglais",3],["Celesta",1],
+     ["Electric guitar",-1],["Accordion",-1],["Bagpipes",-1]]},
+
+ {cat:"Sport", q:"Sports contested at the Summer Olympics",
+  a:[["Athletics",70],["Swimming",66],["Gymnastics",52],["Cycling",44],["Boxing",34],["Fencing",21],["Archery",18],
+     ["Handball",9],["Modern pentathlon",4],["Trampoline",2],
+     ["Curling",-1],["Ice hockey",-1],["Cricket",-1]]},
+
+ {cat:"Language", q:"Countries where Spanish is an official language",
+  a:[["Spain",74],["Mexico",62],["Argentina",47],["Colombia",35],["Peru",31],["Chile",29],["Cuba",24],["Costa Rica",12],
+     ["Paraguay",6],["Equatorial Guinea",1],
+     ["Brazil",-1],["Portugal",-1],["Philippines",-1]]},
+
+ {cat:"Literature", q:"Novels written by Charles Dickens",
+  a:[["Oliver Twist",64],["A Christmas Carol",58],["Great Expectations",46],["David Copperfield",33],["A Tale of Two Cities",27],
+     ["Bleak House",14],["Hard Times",9],["Little Dorrit",5],["Barnaby Rudge",1],
+     ["Jane Eyre",-1],["Wuthering Heights",-1],["Middlemarch",-1]]},
+
+ {cat:"Space", q:"Moons of planets in our solar system",
+  a:[["The Moon",61],["Europa",30],["Titan",28],["Io",22],["Ganymede",19],["Phobos",13],["Callisto",10],["Deimos",8],
+     ["Enceladus",6],["Triton",4],["Miranda",1],["Ariel",0],
+     ["Pluto",-1],["Ceres",-1],["Halley",-1]]},
+
+ {cat:"Food", q:"Fruits that grow on trees",
+  a:[["Apple",78],["Orange",64],["Pear",49],["Cherry",41],["Peach",36],["Mango",30],["Plum",26],["Fig",12],
+     ["Quince",4],["Persimmon",2],["Medlar",0],
+     ["Strawberry",-1],["Blueberry",-1],["Rhubarb",-1]]},
+
+ {cat:"Britain", q:"Cities in the United Kingdom with a cathedral",
+  a:[["London",67],["York",44],["Canterbury",38],["Durham",26],["Salisbury",24],["Winchester",18],["Exeter",14],
+     ["Truro",3],["Lichfield",5],["Ripon",2],["St Davids",1],
+     ["Milton Keynes",-1],["Slough",-1],["Blackpool",-1]]}
+];
+
+/* Final-round categories: several genuine pointless (0) answers hidden in the board */
+const FINALS = [
+ {cat:"Countries with a land border with Russia",
+  a:[["China",46],["Ukraine",42],["Finland",30],["Norway",21],["Poland",18],["Belarus",16],["Kazakhstan",14],["Mongolia",11],
+     ["Estonia",6],["Latvia",4],["Lithuania",3],["Georgia",2],["Azerbaijan",0],["North Korea",0],
+     ["Armenia",-1],["Turkmenistan",-1]]},
+ {cat:"Shakespeare plays with a person's name in the title",
+  a:[["Romeo and Juliet",62],["Hamlet",60],["Macbeth",55],["King Lear",40],["Julius Caesar",38],["Othello",30],
+     ["Antony and Cleopatra",14],["Richard III",11],["Henry V",8],["Pericles",2],["Cymbeline",1],
+     ["Coriolanus",0],["Timon of Athens",0],["Troilus and Cressida",0],
+     ["The Tempest",-1],["Twelfth Night",-1]]},
+ {cat:"The first twenty elements of the periodic table",
+  a:[["Hydrogen",58],["Helium",44],["Oxygen",40],["Carbon",36],["Nitrogen",30],["Calcium",18],["Sodium",16],["Neon",12],
+     ["Magnesium",9],["Aluminium",7],["Chlorine",6],["Lithium",5],["Silicon",4],["Boron",2],["Beryllium",1],
+     ["Argon",0],["Scandium",-1],["Iron",-1],["Zinc",-1]]}
+];
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const TILE_COLOURS = [
+  "linear-gradient(135deg,#ff5f9e,#ff2e6b)",
+  "linear-gradient(135deg,#7a5cff,#4b2ddb)",
+  "linear-gradient(135deg,#18c8ff,#0a7bd4)",
+  "linear-gradient(135deg,#31d97a,#0fa35c)",
+  "linear-gradient(135deg,#ffb020,#ff7a1a)",
+  "linear-gradient(135deg,#ff6f5e,#e0322c)",
+  "linear-gradient(135deg,#c05bff,#7a1fd0)",
+  "linear-gradient(135deg,#00d4c1,#03908d)",
+  "linear-gradient(135deg,#ffd23f,#f0a30a)",
+  "linear-gradient(135deg,#5b8cff,#2748d8)",
+  "linear-gradient(135deg,#ff8fd0,#e5399a)",
+  "linear-gradient(135deg,#8de23a,#4aa312)"
+];
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+/* Board of n answers: at least one very obscure one, up to 3 wrong ones, rest correct */
+function pickTiles(list, n){
+  const good = shuffle(list.filter(x=>x[1]>=0));
+  const bad  = shuffle(list.filter(x=>x[1]<0));
+  const low  = good.filter(x=>x[1]<=6);
+  const chosen = [];
+  if(low.length) chosen.push(low[Math.floor(Math.random()*low.length)]);
+  for(const g of good){ if(chosen.length >= n-2) break; if(chosen.indexOf(g)<0) chosen.push(g); }
+  const wrongs = bad.slice(0, Math.min(3, bad.length, n - chosen.length));
+  const out = chosen.concat(wrongs);
+  for(const g of good){ if(out.length >= n) break; if(out.indexOf(g)<0) out.push(g); }
+  return shuffle(out);
+}
+/* Final board: guarantee at least two genuinely pointless (0) answers are on it */
+function finalTiles(list, n){
+  const zeros = shuffle(list.filter(x=>x[1]===0));
+  const rest  = shuffle(list.filter(x=>x[1]!==0));
+  const keep  = zeros.slice(0, Math.min(2, zeros.length));
+  for(const r of rest){ if(keep.length>=n) break; keep.push(r); }
+  return shuffle(keep);
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ---------- sound ---------- */
+let soundOn = true, actx = null;
+function ac(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return actx; }
+function beep(freq, dur, type, vol){
+  if(!soundOn) return; const c = ac(); if(!c) return;
+  try{
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type || "square"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol||0.05, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + (dur||0.08));
+    o.connect(g); g.connect(c.destination);
+    o.start(); o.stop(c.currentTime + (dur||0.08) + 0.02);
+  }catch(e){}
+}
+function fanfare(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.22,"triangle",.09), i*110)); }
+function buzzer(){ beep(140,.5,"sawtooth",.07); setTimeout(()=>beep(105,.55,"sawtooth",.07),110); }
+
+/* ---------- confetti ---------- */
+const cvs = $("confetti"), ctx = cvs.getContext("2d");
+let bits = [], raf = null;
+function sizeCanvas(){ cvs.width = innerWidth; cvs.height = innerHeight; }
+sizeCanvas(); addEventListener("resize", sizeCanvas);
+function confetti(n){
+  const cols = ["#25e6ff","#ff3ea5","#a8ff3e","#ffc93c","#a06bff","#ffffff"];
+  for(let i=0;i<(n||90);i++){
+    bits.push({x:Math.random()*cvs.width, y:-20-Math.random()*cvs.height*0.3,
+      w:6+Math.random()*7, h:8+Math.random()*10,
+      vy:2.2+Math.random()*3.4, vx:-1.6+Math.random()*3.2,
+      rot:Math.random()*6.28, vr:-0.16+Math.random()*0.32,
+      c:cols[Math.floor(Math.random()*cols.length)]});
+  }
+  if(!raf) raf = requestAnimationFrame(tick);
+}
+function tick(){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  bits = bits.filter(b=>b.y < cvs.height+40);
+  bits.forEach(b=>{
+    b.x+=b.vx; b.y+=b.vy; b.rot+=b.vr;
+    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.rot);
+    ctx.fillStyle=b.c; ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h); ctx.restore();
+  });
+  if(bits.length) raf = requestAnimationFrame(tick); else { raf=null; ctx.clearRect(0,0,cvs.width,cvs.height); }
+}
+
+/* ============================================================
+   MATCH STATE
+   ============================================================ */
+const TARGET   = 5;              // match points needed to reach the final
+const ORDER    = [0,1,0,1];      // pick order within a round
+const BOARD_N  = 12;             // answers on a round board
+let state = null, busy = false;
+
+function newMatch(n1, n2){
+  state = {
+    p:[ {name:n1||"Player 1", pts:0, round:0},
+        {name:n2||"Player 2", pts:0, round:0} ],
+    roundNo:0, pickIdx:0, q:null,
+    queue:shuffle(QUESTIONS),
+    jackpot:1000, finalist:null, guesses:0, wonJackpot:false,
+    history:[]
+  };
+  $("nm0").textContent = state.p[0].name;
+  $("nm1").textContent = state.p[1].name;
+  renderPips(); updateHUD();
+}
+function updateHUD(){ $("jackVal").textContent = "£" + state.jackpot.toLocaleString("en-GB"); }
+function renderPips(){
+  [0,1].forEach(i=>{
+    const box = $("pip"+i); box.innerHTML = "";
+    for(let k=0;k<TARGET;k++){
+      const d = document.createElement("i");
+      d.className = "pip" + (k < state.p[i].pts ? " on" : "");
+      box.appendChild(d);
+    }
+    $("rt"+i).textContent = state.p[i].round;
+  });
+}
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
+  window.scrollTo(0,0);
+  $("pillJack").hidden = !(id==="scGame" || id==="scFinal" || id==="scEnd");
+}
+
+/* ============================================================
+   ROUNDS
+   ============================================================ */
+function startRound(){
+  busy = false;
+  state.roundNo++;
+  state.pickIdx = 0;
+  state.p[0].round = 0; state.p[1].round = 0;
+  if(!state.queue.length) state.queue = shuffle(QUESTIONS);
+  state.q = state.queue.pop();
+
+  $("roundTag").textContent = "Round " + state.roundNo;
+  $("catTxt").textContent = state.q.cat;
+  $("qTxt").textContent = state.q.q;
+  $("board").hidden = true;
+  $("roundEnd").hidden = true;
+  $("turnBox").hidden = false;
+
+  const grid = $("grid");
+  grid.innerHTML = "";
+  pickTiles(state.q.a, BOARD_N).forEach((t,i)=>{
+    const b = document.createElement("button");
+    b.className = "tile"; b.type = "button";
+    b.innerHTML = '<span>'+esc(t[0])+'</span>';
+    b.style.background = TILE_COLOURS[i % TILE_COLOURS.length];
+    b.style.animationDelay = (i*0.03)+"s";
+    b.addEventListener("click", ()=>choose(b, t));
+    grid.appendChild(b);
+  });
+  renderPips();
+  updateTurn();
+  show("scGame");
+}
+
+function updateTurn(){
+  const i = ORDER[state.pickIdx];
+  const nth = state.pickIdx < 2 ? 1 : 2;
+  const box = $("turnBox");
+  box.className = "turn " + (i===0 ? "one" : "two");
+  box.innerHTML = esc(state.p[i].name) + " to answer<small>Pick " + nth + " of 2</small>";
+  $("pc0").classList.toggle("active", i===0);
+  $("pc1").classList.toggle("active", i===1);
+}
+
+function choose(btn, t){
+  if(busy || btn.classList.contains("taken")) return;
+  busy = true;
+  beep(880,.06,"square",.05);
+  const pi = ORDER[state.pickIdx];
+  const wrong = t[1] < 0;
+  const score = wrong ? 100 : t[1];
+
+  btn.classList.add("taken", pi===0 ? "one" : "two");
+  const badge = document.createElement("i");
+  badge.className = "badge" + (wrong ? " wrong" : (score===0 ? " zero" : ""));
+  badge.textContent = score;
+  badge.style.visibility = "hidden";
+  btn.appendChild(badge);
+
+  $("boardWho").textContent = state.p[pi].name + " answered";
+  $("ansTxt").textContent = t[0];
+  $("board").hidden = false;
+  $("nextBtn").disabled = true;
+  $("verdict").textContent = ""; $("verdict").className = "verdict";
+  setTimeout(()=> $("board").scrollIntoView({behavior:"smooth", block:"nearest"}), 60);
+
+  countdown($("bigNum"), $("barFill"), score, wrong, ()=>{
+    badge.style.visibility = "visible";
+    state.p[pi].round += score;
+    state.history.push({r:state.roundNo, q:state.q.q, p:pi, a:t[0], s:score, wrong:wrong});
+    if(!wrong && score===0){ state.jackpot += 250; confetti(120); fanfare(); }
+    renderPips(); updateHUD();
+
+    const v = $("verdict");
+    if(wrong){ v.textContent = "✗ Not a valid answer — 100 points!"; v.className = "verdict bad"; }
+    else if(score===0){ v.textContent = "★ POINTLESS ANSWER! +£250 on the jackpot"; v.className = "verdict good"; }
+    else if(score<=6){ v.textContent = "Superb — barely anybody said that."; v.className = "verdict good"; }
+    else if(score<=25){ v.textContent = "A good, low score."; v.className = "verdict good"; }
+    else { v.textContent = "A bit obvious, that one."; v.className = "verdict bad"; }
+
+    const last = state.pickIdx >= ORDER.length - 1;
+    $("nextBtn").textContent = last ? "Round result →" : ("Over to " + state.p[ORDER[state.pickIdx+1]].name + " →");
+    $("nextBtn").disabled = false;
+  });
+}
+
+/* animated 100 → score countdown */
+function countdown(numEl, barEl, target, wrong, done){
+  numEl.className = "bignum";
+  let v = 100;
+  numEl.textContent = v; barEl.style.width = "100%";
+  if(wrong){
+    setTimeout(()=>{ numEl.classList.add("wrong"); buzzer(); done && done(); }, 700);
+    return;
+  }
+  const step = () => {
+    if(v <= target){
+      if(target===0) numEl.classList.add("zero");
+      done && done();
+      return;
+    }
+    v--;
+    numEl.textContent = v;
+    barEl.style.width = v + "%";
+    if(v % 2 === 0) beep(300 + v*6, .03, "square", .028);
+    const near = v - target;
+    const delay = near > 30 ? 16 : near > 12 ? 42 : near > 4 ? 110 : 240;
+    setTimeout(step, delay);
+  };
+  setTimeout(step, 450);
+}
+
+function afterPick(){
+  if(state.pickIdx >= ORDER.length - 1){ endRound(); return; }
+  state.pickIdx++;
+  busy = false;
+  $("board").hidden = true;
+  updateTurn();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function endRound(){
+  $("board").hidden = true;
+  $("turnBox").hidden = true;
+  $("pc0").classList.remove("active");
+  $("pc1").classList.remove("active");
+  const a = state.p[0].round, b = state.p[1].round;
+  $("vn0").textContent = state.p[0].name; $("vt0").textContent = a;
+  $("vn1").textContent = state.p[1].name; $("vt1").textContent = b;
+  $("vs0").classList.toggle("win", a < b);
+  $("vs1").classList.toggle("win", b < a);
+
+  const head = $("roundHead");
+  if(a === b){
+    head.textContent = "Round drawn — no point awarded";
+    head.className = "headline";
+    beep(300,.2,"triangle",.05);
+  } else {
+    const w = a < b ? 0 : 1;
+    state.p[w].pts++;
+    head.textContent = state.p[w].name + " wins the round  ·  +1 point";
+    head.className = "headline good";
+    fanfare();
+  }
+  renderPips();
+
+  const winner = state.p[0].pts >= TARGET ? 0 : (state.p[1].pts >= TARGET ? 1 : -1);
+  if(winner >= 0){
+    state.finalist = winner;
+    $("roundNextBtn").textContent = state.p[winner].name + " goes to the final →";
+  } else {
+    $("roundNextBtn").textContent = "Next round →";
+  }
+  $("roundEnd").hidden = false;
+  setTimeout(()=> $("roundEnd").scrollIntoView({behavior:"smooth", block:"nearest"}), 60);
+}
+
+/* ============================================================
+   FINAL
+   ============================================================ */
+function startFinal(){
+  busy = false;
+  state.guesses = 0;
+  const name = state.p[state.finalist].name;
+  $("finalTitle").textContent = name + ", choose your category";
+  $("finalHint").textContent = "Three guesses. One pointless answer wins £" + state.jackpot.toLocaleString("en-GB") + ".";
+  $("finalBoard").hidden = true;
+  $("finalGrid").hidden = true;
+  $("lives").hidden = true;
+  const pick = $("finalPick");
+  pick.hidden = false; pick.innerHTML = "";
+  shuffle(FINALS).forEach((f,i)=>{
+    const b = document.createElement("button");
+    b.className = "catbtn"; b.type = "button";
+    b.textContent = f.cat;
+    b.style.background = TILE_COLOURS[(i*3) % TILE_COLOURS.length];
+    b.addEventListener("click", ()=>{ beep(660,.08,"triangle",.05); openFinal(f); });
+    pick.appendChild(b);
+  });
+  show("scFinal");
+}
+function openFinal(f){
+  $("finalPick").hidden = true;
+  $("finalTitle").textContent = f.cat;
+  $("finalHint").textContent = "Name an answer nobody gave. Guesses remaining: 3";
+  const grid = $("finalGrid");
+  grid.hidden = false; grid.innerHTML = "";
+  $("lives").hidden = false; renderLives();
+  finalTiles(f.a, 12).forEach((t,i)=>{
+    const b = document.createElement("button");
+    b.className = "tile"; b.type = "button";
+    b.innerHTML = '<span>'+esc(t[0])+'</span>';
+    b.style.background = TILE_COLOURS[i % TILE_COLOURS.length];
+    b.style.animationDelay = (i*0.03)+"s";
+    b.addEventListener("click", ()=>finalGuess(b,t));
+    grid.appendChild(b);
+  });
+}
+function renderLives(){
+  const l = $("lives").children;
+  for(let i=0;i<l.length;i++) l[i].className = "life" + (i < state.guesses ? " used" : "");
+}
+function finalGuess(btn, t){
+  if(busy || btn.classList.contains("taken")) return;
+  busy = true;
+  beep(880,.06,"square",.05);
+  btn.classList.add("taken");
+  const wrong = t[1] < 0;
+  const score = wrong ? 100 : t[1];
+  const fbadge = document.createElement("i");
+  fbadge.className = "badge" + (wrong ? " wrong" : (score===0 ? " zero" : ""));
+  fbadge.textContent = score;
+  fbadge.style.background = wrong ? "" : (score===0 ? "" : "var(--amber)");
+  fbadge.style.visibility = "hidden";
+  btn.appendChild(fbadge);
+  $("fAnsTxt").textContent = t[0];
+  $("finalBoard").hidden = false;
+  $("fNextBtn").disabled = true;
+  $("fVerdict").textContent = ""; $("fVerdict").className = "verdict";
+  setTimeout(()=> $("finalBoard").scrollIntoView({behavior:"smooth", block:"nearest"}), 60);
+
+  countdown($("fBigNum"), $("fBarFill"), score, wrong, ()=>{
+    fbadge.style.visibility = "visible";
+    state.guesses++; renderLives();
+    $("fNextBtn").disabled = false;
+    const v = $("fVerdict");
+    if(!wrong && score===0){
+      v.textContent = "★ POINTLESS! The jackpot is won!";
+      v.className = "verdict good";
+      confetti(220); fanfare();
+      state.wonJackpot = true;
+      $("fNextBtn").textContent = "See the result →";
+      $("fNextBtn").onclick = endMatch;
+    } else {
+      v.textContent = wrong ? "✗ Not a valid answer." :
+        "Not pointless — " + score + (score===1 ? " person" : " people") + " said that.";
+      v.className = "verdict bad";
+      if(state.guesses >= 3){
+        $("fNextBtn").textContent = "See the result →";
+        $("fNextBtn").onclick = endMatch;
+      } else {
+        $("fNextBtn").textContent = "Guess again →";
+        $("fNextBtn").onclick = ()=>{
+          busy = false;
+          $("finalBoard").hidden = true;
+          $("finalHint").textContent = "Name an answer nobody gave. Guesses remaining: " + (3 - state.guesses);
+        };
+      }
+    }
+  });
+}
+
+/* ============================================================
+   RESULT
+   ============================================================ */
+function endMatch(){
+  const w = state.finalist, l = 1 - w;
+  $("rankTxt").textContent = state.wonJackpot
+    ? state.p[w].name + " wins the jackpot!"
+    : state.p[w].name + " wins the match";
+  $("matchTxt").textContent = "Match " + state.p[w].pts + " – " + state.p[l].pts +
+                             "  ·  " + state.p[l].name + " runner-up";
+  $("jackTxt").innerHTML = state.wonJackpot
+    ? "Jackpot won: <b style='color:var(--lime)'>£" + state.jackpot.toLocaleString("en-GB") + "</b>"
+    : "Jackpot not won — it rolls over to £" + (state.jackpot + 250).toLocaleString("en-GB");
+
+  const bd = $("breakdown"); bd.innerHTML = "";
+  const rounds = {};
+  state.history.forEach(h=>{ (rounds[h.r] = rounds[h.r] || []).push(h); });
+  Object.keys(rounds).forEach(r=>{
+    const picks = rounds[r];
+    const t0 = picks.filter(h=>h.p===0).reduce((s,h)=>s+h.s,0);
+    const t1 = picks.filter(h=>h.p===1).reduce((s,h)=>s+h.s,0);
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = '<span class="r-q"><b>Round '+r+'</b> · '+esc(picks[0].q||"")+'</span>' +
+                    '<span class="r-a one">'+t0+'</span><span style="opacity:.4">–</span>' +
+                    '<span class="r-a two">'+t1+'</span>';
+    bd.appendChild(row);
+  });
+  if(state.wonJackpot) confetti(160);
+  show("scEnd");
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+$("playBtn").addEventListener("click", ()=>{ ac(); show("scSetup"); });
+$("howBtn").addEventListener("click", ()=> show("scHow"));
+$("howBack").addEventListener("click", ()=> show("scHome"));
+$("setupBack").addEventListener("click", ()=> show("scHome"));
+$("startBtn").addEventListener("click", ()=>{
+  ac();
+  const a = $("n1").value.trim(), b = $("n2").value.trim();
+  newMatch(a || "Player 1", b || "Player 2");
+  state.roundNo = 0;
+  startRound();
+});
+$("nextBtn").addEventListener("click", afterPick);
+$("roundNextBtn").addEventListener("click", ()=>{
+  if(state.finalist !== null) startFinal(); else startRound();
+});
+$("againBtn").addEventListener("click", ()=> show("scSetup"));
+$("sndBtn").addEventListener("click", e=>{
+  soundOn = !soundOn;
+  e.currentTarget.textContent = soundOn ? "🔊" : "🔇";
+  if(soundOn){ ac(); beep(660,.08,"triangle",.05); }
+});
+show("scHome");
+</script>
+</body>
+</html>
