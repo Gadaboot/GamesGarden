@@ -99,8 +99,7 @@ body::before{
 }
 .tile.lie{
   background:#e00d2c;color:#fff;border-color:#ff8fa3;
-  box-shadow:0 0 16px rgba(255,40,70,.85),0 3px 6px rgba(0,0,0,.45);
-  letter-spacing:1px
+  box-shadow:0 0 16px rgba(255,40,70,.85),0 3px 6px rgba(0,0,0,.45)
 }
 .tile.lie.fresh{animation:shake .5s ease}
 @keyframes shake{
@@ -142,6 +141,17 @@ body::before{
 .b-pink{background:linear-gradient(180deg,#ff9ecb,#ff3d92);color:#fff}
 .crow{display:flex;gap:8px}
 .crow .btn{flex:1}
+
+/* ---------------- end of game ---------------- */
+.endpanel{margin-top:7px;text-align:center;animation:rise .4s ease}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.endpanel .etitle{
+  font-size:clamp(14px,4.4vw,19px);font-weight:900;color:#57e6ff;line-height:1.2;margin-bottom:3px
+}
+.endpanel .esub{font-size:11.5px;opacity:.92;line-height:1.45;margin-bottom:8px}
+.endpanel .esub b{color:#ffd83d}
+.legend{display:flex;gap:14px;justify-content:center;font-size:10.5px;opacity:.8;margin-top:3px}
+.legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:-1px}
 
 /* ---------------- overlay / toast ---------------- */
 .ovl{position:fixed;inset:0;background:rgba(2,8,26,.9);backdrop-filter:blur(7px);
@@ -197,6 +207,12 @@ body::before{
 
   <div class="hint" id="hint">Choose a stone.</div>
   <button class="btn b-bank" id="bBank">BANK &amp; WALK AWAY</button>
+
+  <div class="endpanel" id="endpanel" hidden>
+    <div class="etitle" id="etitle"></div>
+    <div class="esub" id="esub"></div>
+    <button class="btn b-go" id="bAgain">PLAY AGAIN?</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -368,6 +384,18 @@ const START="0,0", EXIT="5,5", SAFE_L="5,0", SAFE_R="0,5";
 const CORNERS=[START,EXIT,SAFE_L,SAFE_R];
 
 let S={};
+let CAT_QUEUE=[];
+/* work through every bridge before any of them comes round again — and never
+   hand a player back the question they just lost on */
+function pickCat(){
+  if(!CAT_QUEUE.length){
+    CAT_QUEUE=shuffle(CATS.slice());
+    if(S.cat && CAT_QUEUE.length>1 && CAT_QUEUE[CAT_QUEUE.length-1]===S.cat){
+      CAT_QUEUE.splice(Math.floor(CAT_QUEUE.length/2),0,CAT_QUEUE.pop());
+    }
+  }
+  return CAT_QUEUE.pop();
+}
 const $=id=>document.getElementById(id);
 const K=(r,c)=>r+","+c;
 const money=n=>"£"+Math.round(n).toLocaleString();
@@ -418,7 +446,7 @@ function buildPath(){
 }
 
 function newGame(){
-  const cat=CATS[Math.floor(Math.random()*CATS.length)];
+  const cat=pickCat();
   const path=buildPath();
   const onPath={}; path.forEach(p=>onPath[K(p[0],p[1])]=true);
 
@@ -459,7 +487,7 @@ function layout(){
   const board=$("board");
   const W=board.clientWidth||320;
   const top=board.getBoundingClientRect().top;
-  let avail=window.innerHeight - top - 132;      // leave room for the hint + bank button
+  let avail=window.innerHeight - top - (S.over?162:132);   // room for the hint/bank, or the result
   avail=Math.max(250,Math.min(avail, W*1.75, 660));
   const g=4;
   let best=null;
@@ -533,7 +561,12 @@ function render(){
     if(k===START){ el.classList.add("endpt"); text="START"; big=true; }
     else if(k===EXIT){ el.classList.add("endpt"); text="CROSS"; big=true; }
     else if(k===SAFE_L||k===SAFE_R){ el.classList.add("safespot"); text="SAFE"; big=true; }
-    else if(x.state==="lie"){ el.classList.add("lie"); if(k===S.lastLie)el.classList.add("fresh"); text="LIE"; big=true; }
+    else if(x.state==="lie"){
+      el.classList.add("lie");
+      if(k===S.lastLie) el.classList.add("fresh");
+      if(S.finished){ text=x.label; }                 // at the end, name the lie
+      else { text="LIE"; big=true; }
+    }
     else if(x.state==="truth"){ el.classList.add("truth"); text=x.label; }
     else if(x.open){ text=x.label; }
     else { el.classList.add("dormant"); text=""; }        // still in the dark
@@ -641,43 +674,46 @@ function exposeALie(){
 }
 function revealAll(){
   Object.values(S.cells).forEach(x=>{ x.open=true; if(!x.corner) x.state = x.lie ? "lie" : "truth"; });
-  S.lastLie=null; S.justOpened=[];
+  S.lastLie=null; S.justOpened=[]; S.finished=true;
+}
+
+/* the board stays on screen, fully open, with the result underneath it */
+function endGame(title,sub){
+  S.over=true; revealAll();
+  $("hint").hidden=true; $("bBank").hidden=true;
+  $("etitle").innerHTML=title;
+  $("esub").innerHTML=sub+
+    '<div class="legend">'+
+      '<span><i style="background:#2ee06e"></i>truth</span>'+
+      '<span><i style="background:#e00d2c"></i>lie</span></div>';
+  $("endpanel").hidden=false;
+  layout(); render();
 }
 
 function bank(){
   if(S.busy||S.over||S.pot<=0) return;
-  S.over=true; revealAll(); render();
-  overlay("💰 BANKED "+money(S.pot),
-    "<p class='mid'>You walked off the bridge with <b>"+money(S.pot)+"</b> from "+S.truths+
-    " truths"+(S.strikes?" and "+S.strikes+" "+(S.strikes===1?"lie":"lies"):"")+".</p>"+
-    "<p class='mid'>The board is open — green was true, red was a lie.</p>",
-    [{l:"PLAY AGAIN",c:"b-go",f:()=>{closeOverlay();newGame();}}]);
+  endGame("💰 BANKED "+money(S.pot),
+    "You walked off with <b>"+money(S.pot)+"</b> from "+S.truths+" truths"+
+    (S.strikes?" and "+S.strikes+" "+(S.strikes===1?"lie":"lies"):"")+
+    ". Here is the whole board.");
 }
 function win(){
-  S.over=true; S.pot+=CROSS_BONUS; revealAll(); render();
-  overlay("🏆 YOU CROSSED THE BRIDGE!",
-    "<p class='mid'>Safe on the far side with <b>"+money(S.pot)+"</b><br>"+
-    S.truths+" truths &times; "+money(PER_TRUTH)+" plus a "+money(CROSS_BONUS)+" crossing bonus</p>"+
-    "<p class='mid'>Lies stepped on: <b>"+S.strikes+"</b> &nbsp;·&nbsp; Time left: <b>"+clock(S.left)+"</b></p>"+
-    "<p class='mid'><i>"+esc(S.cat.q)+"</i></p>",
-    [{l:"PLAY AGAIN",c:"b-go",f:()=>{closeOverlay();newGame();}}]);
+  S.pot+=CROSS_BONUS;
+  endGame("🏆 YOU CROSSED THE BRIDGE!",
+    "Safe on the far side with <b>"+money(S.pot)+"</b> — "+S.truths+" truths plus a "+
+    money(CROSS_BONUS)+" bonus.<br>Lies stepped on: <b>"+S.strikes+
+    "</b> · Time left: <b>"+clock(S.left)+"</b>");
 }
 function timeUp(){
   if(S.over) return;
-  S.over=true; revealAll(); render();
-  overlay("⏰ TIME'S UP",
-    "<p class='mid'>Five minutes gone and you were still on the bridge, so the "+
-    money(S.pot)+" goes with it.</p>"+
-    "<p class='mid'>You had found <b>"+S.truths+"</b> truths. Next time, bank before the clock beats you.</p>",
-    [{l:"TRY AGAIN",c:"b-pink",f:()=>{closeOverlay();newGame();}}]);
+  endGame("⏰ TIME'S UP",
+    "Five minutes gone with you still on the bridge, so the "+money(S.pot)+" goes with it. "+
+    "You had found <b>"+S.truths+"</b> truths — next time, bank before the clock beats you.");
 }
 function lose(){
-  S.over=true; revealAll(); render();
-  overlay("💥 THREE LIES — THE BRIDGE WINS",
-    "<p class='mid'>Three lies and you are off the bridge with nothing. You had found <b>"+
-    S.truths+"</b> truths.</p>"+
-    "<p class='mid'>The board is open — the green stones were the way across.</p>",
-    [{l:"TRY AGAIN",c:"b-pink",f:()=>{closeOverlay();newGame();}}]);
+  endGame("💥 THREE LIES — THE BRIDGE WINS",
+    "Off the bridge with nothing after <b>"+S.truths+"</b> truths. "+
+    "Every answer is showing now — the green stones were the way across.");
 }
 
 /* ---------------- overlay ---------------- */
@@ -697,6 +733,10 @@ function closeOverlay(){$("ovl").classList.remove("on");}
 
 /* ---------------- events ---------------- */
 $("bBank").addEventListener("click",bank);
+$("bAgain").addEventListener("click",()=>{
+  $("endpanel").hidden=true; $("hint").hidden=false; $("bBank").hidden=false;
+  newGame();                                   // a fresh bridge, never the same question
+});
 let rt=null;
 window.addEventListener("resize",()=>{
   clearTimeout(rt); rt=setTimeout(()=>{ if(S.cells){layout();render();} },120);
