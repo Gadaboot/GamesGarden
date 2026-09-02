@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Bridge of Lies</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  color:#fff;overflow-x:hidden;-webkit-user-select:none;user-select:none;
+  background:linear-gradient(180deg,#06122e 0%,#0b2a5e 38%,#123c7a 62%,#06122e 100%);
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 10%,rgba(0,229,255,.30),transparent 46%),
+    radial-gradient(circle at 84% 16%,rgba(255,0,128,.26),transparent 44%),
+    radial-gradient(circle at 50% 92%,rgba(120,0,255,.34),transparent 56%);
+}
+body::after{
+  content:"";position:fixed;left:-30%;right:-30%;bottom:-8%;height:42%;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 100%,rgba(150,200,255,.20),transparent 70%);
+  animation:mist 13s ease-in-out infinite alternate;
+}
+@keyframes mist{from{transform:translateX(-4%)}to{transform:translateX(4%)}}
+
+.wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:8px 12px 26px}
+
+/* ---------------- top ---------------- */
+.topbar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.menu-btn{
+  display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#fff;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);
+  padding:8px 13px;border-radius:999px;font-size:14px;font-weight:700;
+  backdrop-filter:blur(8px);white-space:nowrap
+}
+.menu-btn:active{transform:scale(.95)}
+.title{
+  flex:1;text-align:center;font-weight:900;white-space:nowrap;line-height:1.05;
+  font-size:clamp(13px,4vw,22px);letter-spacing:.5px;
+  background:linear-gradient(180deg,#eafcff,#57e6ff 50%,#0aa6ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 2px 16px rgba(0,190,255,.45)
+}
+.lives{font-size:15px;letter-spacing:0;white-space:nowrap}
+
+.strip{display:flex;gap:6px;margin-bottom:8px}
+.chip{
+  flex:1;text-align:center;padding:6px 3px;border-radius:11px;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18)
+}
+.chip .k{font-size:9px;letter-spacing:1.4px;opacity:.7;font-weight:800}
+.chip .v{font-size:clamp(13px,4.2vw,18px);font-weight:900}
+.v-gold{color:#ffd83d}.v-safe{color:#7dffb0}
+
+.qcard{
+  background:linear-gradient(135deg,rgba(255,255,255,.17),rgba(255,255,255,.06));
+  border:1px solid rgba(255,255,255,.26);border-radius:14px;padding:9px 12px;text-align:center;
+  margin-bottom:8px;backdrop-filter:blur(8px)
+}
+.qcard .lbl{font-size:9px;letter-spacing:2.4px;font-weight:800;color:#8ff6ff;margin-bottom:2px}
+.qcard .q{font-size:clamp(14px,4.3vw,18px);font-weight:800;line-height:1.3}
+
+/* ---------------- the diamond board ---------------- */
+.boardwrap{display:flex;justify-content:center;margin:2px 0 10px}
+.board{position:relative;width:100%;max-width:330px}
+.stone{
+  position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:900;color:#fff;border:2px solid rgba(255,255,255,.14);
+  background:radial-gradient(circle at 35% 28%,#5b6a8f,#28324e 70%,#1a2138);
+  box-shadow:0 3px 6px rgba(0,0,0,.5),inset 0 1px 2px rgba(255,255,255,.2);
+  transition:transform .2s, box-shadow .25s, background .25s;
+}
+.stone.safe{
+  background:radial-gradient(circle at 35% 28%,#a8ffcd,#2ee06e 60%,#0f9b47);
+  border-color:rgba(190,255,215,.85);
+  box-shadow:0 0 16px rgba(50,240,130,.75),0 3px 6px rgba(0,0,0,.45)
+}
+.stone.lie{
+  background:radial-gradient(circle at 35% 28%,#ff9aa9,#e11d3c 60%,#8b0f22);
+  border-color:rgba(255,190,200,.85);
+  box-shadow:0 0 16px rgba(255,60,90,.75),0 3px 6px rgba(0,0,0,.45)
+}
+.stone.lie.fresh{animation:shake .5s ease}
+@keyframes shake{
+  0%,100%{transform:translate(0,0)}
+  20%{transform:translate(-4px,2px)}45%{transform:translate(4px,-2px)}
+  70%{transform:translate(-3px,1px)}
+}
+.stone.opt{
+  background:radial-gradient(circle at 35% 28%,#2a2f45,#0c0f1c);
+  border-color:#ffd83d;cursor:pointer;z-index:4;
+  animation:optpulse 1.15s ease-in-out infinite alternate
+}
+@keyframes optpulse{
+  from{box-shadow:0 0 8px rgba(255,216,61,.55),0 3px 6px rgba(0,0,0,.5)}
+  to{box-shadow:0 0 20px rgba(255,216,61,1),0 3px 6px rgba(0,0,0,.5)}
+}
+.stone.opt:active{transform:scale(.9)}
+.stone .badge{font-size:15px;color:#ffd83d;text-shadow:0 0 8px rgba(255,216,61,.9)}
+.stone .x{font-size:14px;color:#fff}
+.stone.exit{border-color:rgba(140,220,255,.7);background:radial-gradient(circle at 35% 28%,#2b4a7a,#0d1b33)}
+.stone .flag{font-size:13px;filter:drop-shadow(0 0 6px rgba(120,220,255,.9))}
+.walker{
+  position:absolute;z-index:6;display:flex;align-items:center;justify-content:center;
+  font-size:18px;pointer-events:none;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.7));
+  transition:left .22s ease, top .22s ease
+}
+.walker.hop{animation:hop .22s ease}
+@keyframes hop{50%{transform:translateY(-10px) scale(1.1)}}
+
+/* ---------------- option cards ---------------- */
+.opts{display:flex;flex-direction:column;gap:8px;margin-bottom:9px;min-height:118px}
+.choice{
+  position:relative;display:flex;align-items:center;gap:11px;
+  border:none;border-radius:14px;padding:13px 14px;cursor:pointer;text-align:left;
+  font-size:clamp(15px,4.4vw,18px);font-weight:800;color:#12204a;
+  background:linear-gradient(180deg,#ffffff,#c9d6f2);
+  box-shadow:0 5px 0 rgba(0,0,0,.35),0 9px 20px rgba(0,0,0,.3);
+  transition:transform .09s
+}
+.choice:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.choice:disabled{opacity:.45;cursor:default}
+.choice .ab{
+  flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:#0c0f1c;color:#ffd83d;font-size:15px;font-weight:900;box-shadow:0 0 10px rgba(255,216,61,.7)
+}
+.choice.truth{background:linear-gradient(180deg,#9dffc4,#1fbe63);color:#04331a;box-shadow:0 5px 0 #0d7a3f,0 0 22px rgba(60,255,150,.5)}
+.choice.wrong{background:linear-gradient(180deg,#ff9b9b,#d61f3c);color:#fff;box-shadow:0 5px 0 #8b0f22,0 0 22px rgba(255,60,90,.5)}
+.choice.truth .ab,.choice.wrong .ab{background:rgba(0,0,0,.35);color:#fff;box-shadow:none}
+
+.btn{
+  width:100%;border:none;border-radius:13px;padding:12px 8px;font-weight:900;font-size:14px;
+  cursor:pointer;color:#0d1f45;box-shadow:0 5px 0 rgba(0,0,0,.35);transition:transform .08s
+}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.btn:disabled{opacity:.35;cursor:default}
+.b-bank{background:linear-gradient(180deg,#ffe36b,#ffb01f)}
+.b-go{background:linear-gradient(180deg,#8affc1,#20d17c)}
+.b-pink{background:linear-gradient(180deg,#ff9ecb,#ff3d92);color:#fff}
+.crow{display:flex;gap:8px}
+.crow .btn{flex:1}
+
+.hint{text-align:center;font-size:12.5px;opacity:.82;margin-top:9px;min-height:32px;line-height:1.45}
+
+/* ---------------- overlay / toast ---------------- */
+.ovl{position:fixed;inset:0;background:rgba(2,8,26,.88);backdrop-filter:blur(7px);
+  display:none;align-items:center;justify-content:center;padding:22px;z-index:50}
+.ovl.on{display:flex}
+.card{
+  background:linear-gradient(160deg,#123c7a,#06122e);border:2px solid rgba(255,255,255,.25);
+  border-radius:22px;padding:22px 20px;max-width:410px;width:100%;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.65);max-height:88vh;overflow-y:auto
+}
+.card h2{font-size:22px;margin-bottom:10px;color:#57e6ff}
+.card p{font-size:14px;line-height:1.6;opacity:.93;margin-bottom:16px}
+.toast{
+  position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));
+  transform:translate(-50%,24px) scale(.6);opacity:0;
+  padding:13px 22px;border-radius:16px;font-weight:900;font-size:16px;z-index:60;
+  pointer-events:none;text-align:center;max-width:88vw;box-shadow:0 10px 30px rgba(0,0,0,.55)
+}
+.toast.good{background:linear-gradient(135deg,#20d17c,#0d7a3f)}
+.toast.bad{background:linear-gradient(135deg,#ff3d92,#d61f3c)}
+.toast.show{animation:tst 1.7s ease forwards}
+@keyframes tst{
+  0%{opacity:0;transform:translate(-50%,24px) scale(.6)}
+  14%{opacity:1;transform:translate(-50%,0) scale(1.07)}
+  24%{opacity:1;transform:translate(-50%,0) scale(1)}
+  80%{opacity:1;transform:translate(-50%,0) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-16px) scale(.95)}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="menu-btn" href="index.html">&#9776; Menu</a>
+    <div class="title">BRIDGE OF LIES</div>
+    <div class="lives" id="lives">❤️❤️❤️</div>
+  </div>
+
+  <div class="strip">
+    <div class="chip"><div class="k">STEP</div><div class="v" id="stepV">0/10</div></div>
+    <div class="chip"><div class="k">PRIZE</div><div class="v v-gold" id="potV">&pound;0</div></div>
+    <div class="chip"><div class="k">TIME</div><div class="v v-safe" id="timeV">0:00</div></div>
+  </div>
+
+  <div class="qcard">
+    <div class="lbl">STEP ONLY ON THE TRUTH</div>
+    <div class="q" id="question">&nbsp;</div>
+  </div>
+
+  <div class="boardwrap"><div class="board" id="board"></div></div>
+
+  <div class="opts" id="opts"></div>
+  <button class="btn b-bank" id="bBank">BANK &amp; WALK AWAY</button>
+  <div class="hint" id="hint">Pick a stone to take your first step.</div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ==================== CATEGORIES ==================== */
+const CATS=[
+{q:"Which of these are real chemical elements?",
+ truths:["Krypton","Bismuth","Rhenium","Yttrium","Hafnium","Osmium","Thulium","Selenium",
+         "Zirconium","Rubidium","Terbium","Erbium","Indium","Cerium","Gallium","Niobium"],
+ lies:["Adamantium","Vibranium","Dilithium","Mythril","Tiberium","Kryptonite","Orichalcum",
+       "Unobtainium","Cavorite","Etherium","Novacite","Zephyrium","Aurorium","Lunarium",
+       "Draconium","Solarite"]},
+
+{q:"Which of these countries are in South America?",
+ truths:["Peru","Guyana","Suriname","Paraguay","Uruguay","Ecuador","Bolivia","Venezuela",
+         "Chile","Colombia","Brazil","Argentina"],
+ lies:["Panama","Belize","Honduras","Nicaragua","Guatemala","Cuba","Jamaica","Mexico",
+       "Haiti","Barbados","Costa Rica","Grenada","Bahamas","Dominica","Trinidad","Puerto Rico"]},
+
+{q:"Which of these are moons of Jupiter?",
+ truths:["Io","Europa","Ganymede","Callisto","Amalthea","Himalia","Elara","Thebe","Metis",
+         "Pasiphae","Sinope","Carme","Leda","Ananke","Lysithea","Adrastea"],
+ lies:["Titan","Enceladus","Triton","Phobos","Deimos","Miranda","Oberon","Titania","Rhea",
+       "Iapetus","Charon","Umbriel","Dione","Tethys","Mimas","Nereid"]},
+
+{q:"Which of these are recognised dog breeds?",
+ truths:["Vizsla","Weimaraner","Keeshond","Schipperke","Puli","Komondor","Basenji","Otterhound",
+         "Bergamasco","Papillon","Whippet","Saluki","Borzoi","Akita","Shar Pei","Beauceron"],
+ lies:["Alpine Hound","Nordic Pointer","Baltic Spaniel","Tuscan Setter","Corsican Barb",
+       "Aztec Terrier","Volga Retriever","Sussex Ridgeback","Bavarian Collie","Ligurian Hound",
+       "Cypriot Wolfhound","Andalusian Beagle","Umbrian Setter","Tyrol Terrier","Danube Spaniel",
+       "Orkney Collie"]},
+
+{q:"Which of these are capital cities?",
+ truths:["Ljubljana","Bratislava","Chisinau","Tirana","Podgorica","Valletta","Nicosia","Reykjavik",
+         "Vilnius","Tallinn","Skopje","Sarajevo","Zagreb","Riga","Helsinki","Ankara"],
+ lies:["Zurich","Porto","Milan","Hamburg","Rotterdam","Bergen","Salzburg","Marseille",
+       "Barcelona","Krakow","Antwerp","Gothenburg","Naples","Lyon","Seville","Bilbao"]},
+
+{q:"Which of these are Greek gods (not Roman)?",
+ truths:["Hermes","Hestia","Hephaestus","Demeter","Artemis","Athena","Poseidon","Hera","Ares",
+         "Dionysus","Persephone","Hades","Zeus","Eros","Hypnos","Nike"],
+ lies:["Mercury","Vesta","Vulcan","Ceres","Diana","Minerva","Neptune","Juno","Mars","Bacchus",
+       "Proserpina","Pluto","Jupiter","Cupid","Somnus","Victoria"]},
+
+{q:"Which of these are US states?",
+ truths:["Nebraska","Vermont","Delaware","Oregon","Kansas","Idaho","Utah","Maine","Iowa",
+         "Nevada","Montana","Arkansas","Georgia","Alabama","Arizona","Missouri"],
+ lies:["Alberta","Manitoba","Ontario","Yukon","Nunavut","Quebec","Labrador","Calgary",
+       "Winnipeg","Halifax","Regina","Edmonton","Toronto","Ottawa","Vancouver","Saskatoon"]},
+
+{q:"Which of these were British Prime Ministers?",
+ truths:["Attlee","Macmillan","Eden","Callaghan","Heath","Baldwin","Chamberlain","Asquith",
+         "Balfour","Peel","Gladstone","Disraeli","Churchill","Wilson","Salisbury","Palmerston"],
+ lies:["Foot","Kinnock","Hague","Clegg","Miliband","Healey","Benn","Ashdown","Cable","Straw",
+       "Prescott","Burnham","Portillo","Corbyn","Farage","Abbott"]},
+
+{q:"Which of these songs were recorded by The Beatles?",
+ truths:["Taxman","Rain","Blackbird","Michelle","Girl","Piggies","Julia","Two of Us","Dig a Pony",
+         "Yesterday","Something","Birthday","Revolution","Get Back","Let It Be","Doctor Robert"],
+ lies:["Ruby Tuesday","My Generation","Gimme Shelter","Pinball Wizard","Substitute","Bus Stop",
+       "See Emily Play","Under My Thumb","Itchycoo Park","Sloop John B","Wild Thing",
+       "Paint It Black","Lola","Waterloo Sunset","Sunny Afternoon","Days"]},
+
+{q:"Which of these plays were written by Shakespeare?",
+ truths:["Cymbeline","Coriolanus","Pericles","King John","Macbeth","Hamlet","Othello",
+         "The Tempest","King Lear","Twelfth Night","Henry V","Richard III","As You Like It",
+         "Titus Andronicus","Timon of Athens","The Winter's Tale"],
+ lies:["Doctor Faustus","Volpone","The Alchemist","Tamburlaine","The White Devil",
+       "The Roaring Girl","The Changeling","The Malcontent","Eastward Ho","The Jew of Malta",
+       "Bartholomew Fair","Edward the Second","The Duchess of Malfi","A Mad World",
+       "Women Beware","The Broken Heart"]}
+];
+
+/* ==================== BOARD SHAPE ====================
+   A 6x6 grid turned 45° gives the diamond: 1,2,3,4,5,6,5,4,3,2,1 = 36 stones.
+   From (r,c) you step to (r+1,c) or (r,c+1) — always two stones, one truth, one lie.
+   The path runs (0,0) → (4,4) → (5,4)|(4,5) → (5,5): 10 steps, 9 real decisions.  */
+const N=6, STEPS=10, MAX_LIES=10, START_LIVES=3;
+const LADDER=[100,250,500,1000,1500,2500,4000,6000,8000,12500];
+
+let S={};
+
+function $(id){return document.getElementById(id);}
+function key(r,c){return r+","+c;}
+function money(n){return "£"+n.toLocaleString();}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function buildPath(){
+  const moves=shuffle(["D","D","D","D","R","R","R","R"]);
+  const path=[{r:0,c:0}]; let r=0,c=0;
+  moves.forEach(m=>{ m==="D"?r++:c++; path.push({r:r,c:c}); });   // now at (4,4)
+  if(Math.random()<0.5) path.push({r:5,c:4}); else path.push({r:4,c:5});
+  path.push({r:5,c:5});
+  return path;
+}
+
+function newGame(){
+  const cat=CATS[Math.floor(Math.random()*CATS.length)];
+  const path=buildPath();
+  const cells={};
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++) cells[key(r,c)]={r:r,c:c,lie:false,label:null,state:"hidden"};
+
+  const onPath={}; path.forEach(p=>onPath[key(p.r,p.c)]=true);
+
+  // one lie on the losing option of every decision
+  let lies=0;
+  for(let i=0;i<STEPS;i++){
+    const a=path[i], nx=path[i+1];
+    const opts=neighbours(a);
+    opts.forEach(o=>{
+      if(o.r===nx.r && o.c===nx.c) return;
+      cells[key(o.r,o.c)].lie=true; lies++;
+    });
+  }
+  // top the board up to the show's ten lies
+  const spare=Object.values(cells).filter(x=>!x.lie && !onPath[key(x.r,x.c)]);
+  shuffle(spare);
+  while(lies<MAX_LIES && spare.length){ spare.pop().lie=true; lies++; }
+
+  cells[key(0,0)].state="safe";
+
+  S={cat:cat, path:path, cells:cells, pos:0, best:0, lives:START_LIVES, banked:0,
+     busy:false, over:false, secs:0, lastLie:null,
+     truthPool:shuffle(cat.truths.slice()), liePool:shuffle(cat.lies.slice())};
+
+  $("question").textContent=cat.q;
+  if(S.timer) clearInterval(S.timer);
+  S.timer=setInterval(()=>{ if(!S.over){S.secs++; $("timeV").textContent=clock(S.secs);} },1000);
+  $("timeV").textContent="0:00";
+
+  layout(); render();
+  setHint("Two stones ahead — one is true, one is a lie. Choose well.");
+}
+function clock(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+
+function neighbours(p){
+  const out=[];
+  if(p.r+1<N) out.push({r:p.r+1,c:p.c});   // left on screen
+  if(p.c+1<N) out.push({r:p.r,c:p.c+1});   // right on screen
+  return out;
+}
+function options(){ return S.pos>=STEPS ? [] : neighbours(S.path[S.pos]); }
+function isTruth(o){ const n=S.path[S.pos+1]; return o.r===n.r && o.c===n.c; }
+
+/* label pools — a stone only gets its wording when it lights up */
+function drawLabel(cell){
+  if(cell.label) return cell.label;
+  const pool = cell.lie ? "liePool" : "truthPool";
+  if(!S[pool].length) S[pool]=shuffle((cell.lie?S.cat.lies:S.cat.truths).slice());
+  cell.label=S[pool].pop();
+  return cell.label;
+}
+
+/* ==================== LAYOUT ==================== */
+let DIM={d:34,dx:28,dy:28,w:330};
+function layout(){
+  const board=$("board");
+  const W=board.clientWidth || 330;
+  const g=5;
+  const d=Math.max(18,(W - (2*(N-1)/Math.SQRT2)*g) / ((2*(N-1)/Math.SQRT2)+1));
+  const dx=(d+g)/Math.SQRT2;
+  DIM={d:d,dx:dx,dy:dx,w:W};
+  board.style.height=((2*(N-1))*dx + d)+"px";
+}
+
+/* ==================== RENDER ==================== */
+function render(){
+  $("lives").textContent="❤️".repeat(S.lives)+"🖤".repeat(START_LIVES-S.lives);
+  $("stepV").textContent=S.pos+"/"+STEPS;
+  $("potV").textContent=money(S.pos?LADDER[S.pos-1]:0);
+
+  const board=$("board");
+  board.innerHTML="";
+  const opts=S.busy||S.over ? [] : options();
+  const optKey={}; opts.forEach((o,i)=>optKey[key(o.r,o.c)]=i);
+  const here=S.path[Math.min(S.pos,STEPS)];
+
+  Object.values(S.cells).forEach(cell=>{
+    const el=document.createElement("div");
+    el.className="stone";
+    const oi=optKey[key(cell.r,cell.c)];
+    if(cell.state==="safe")      el.classList.add("safe");
+    else if(cell.state==="lie"){ el.classList.add("lie");
+                                 if(key(cell.r,cell.c)===S.lastLie) el.classList.add("fresh"); }
+    else if(oi!==undefined){
+      el.classList.add("opt");
+      el.innerHTML='<span class="badge">'+"AB"[oi]+"</span>";
+      el.addEventListener("click",()=>choose(oi));
+    }
+    else if(cell.r===5&&cell.c===5){ el.classList.add("exit"); el.innerHTML='<span class="flag">🏁</span>'; }
+    if(cell.state==="lie") el.innerHTML='<span class="x">✕</span>';
+
+    el.style.width=el.style.height=DIM.d+"px";
+    // rotate the 6x6 grid 45°: row (r+c) counts up from the bottom point
+    el.style.left=(DIM.w/2 + (cell.c-cell.r)*DIM.dx - DIM.d/2)+"px";
+    el.style.top =(((2*(N-1)) - (cell.r+cell.c))*DIM.dy)+"px";
+    board.appendChild(el);
+  });
+
+  // walker
+  const w=document.createElement("div");
+  w.className="walker hop"; w.textContent="🚶";
+  w.style.width=w.style.height=DIM.d+"px";
+  w.style.left=(DIM.w/2 + (here.c-here.r)*DIM.dx - DIM.d/2)+"px";
+  w.style.top =(((2*(N-1)) - (here.r+here.c))*DIM.dy)+"px";
+  board.appendChild(w);
+
+  renderOptions(opts);
+
+  $("bBank").disabled = S.busy || S.over || S.pos===0;
+  $("bBank").textContent = S.pos ? ("BANK "+money(LADDER[S.pos-1])+" & WALK AWAY") : "BANK & WALK AWAY";
+}
+
+function renderOptions(opts){
+  const box=$("opts"); box.innerHTML="";
+  opts.forEach((o,i)=>{
+    const cell=S.cells[key(o.r,o.c)];
+    const b=document.createElement("button");
+    b.className="choice";
+    b.innerHTML='<span class="ab">'+"AB"[i]+'</span><span>'+esc(drawLabel(cell))+"</span>";
+    b.addEventListener("click",()=>choose(i));
+    box.appendChild(b);
+  });
+  if(!opts.length && !S.over){
+    const d=document.createElement("div");
+    d.style.cssText="text-align:center;opacity:.6;font-size:13px;padding:16px";
+    d.textContent="…";
+    box.appendChild(d);
+  }
+}
+function esc(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+function setHint(t){$("hint").textContent=t;}
+function toast(msg,good){
+  const el=$("toast"); el.textContent=msg;
+  el.className="toast "+(good?"good":"bad");
+  void el.offsetWidth; el.classList.add("show");
+}
+
+/* ==================== PLAY ==================== */
+function choose(i){
+  if(S.busy||S.over)return;
+  const opts=options(); const o=opts[i]; if(!o)return;
+  S.busy=true;
+  const cell=S.cells[key(o.r,o.c)];
+  const good=isTruth(o);
+
+  // colour the cards
+  [...$("opts").children].forEach((el,j)=>{
+    el.disabled=true;
+    if(j===i) el.classList.add(good?"truth":"wrong");
+    else if(!good) el.classList.add("truth");
+  });
+
+  if(good){
+    cell.state="safe";
+    S.pos++; S.best=Math.max(S.best,S.pos);
+    toast("SOLID GROUND — "+money(LADDER[S.pos-1]),true);
+    setTimeout(()=>{
+      if(S.pos>=STEPS){ win(); return; }
+      S.busy=false; render();
+      setHint("Step "+(S.pos+1)+" of "+STEPS+". "+money(LADDER[S.pos])+" if you go on, "+
+              money(LADDER[S.pos-1])+" if you bank.");
+    },1000);
+  }else{
+    cell.state="lie"; S.lastLie=key(o.r,o.c);
+    S.lives--;
+    render();                                  // shows the red stone straight away
+    toast(S.lives>0?"THAT WAS A LIE!":"YOU FALL!",false);
+    setTimeout(()=>{
+      if(S.lives<=0){ lose(); return; }
+      climbBack();
+    },1500);
+  }
+}
+
+/* after a fall you drop to the start, then re-cross everything already proven —
+   including the step you just solved by elimination */
+function climbBack(){
+  const target=frontier();
+  S.pos=0; render();
+  setHint("You climb back up and re-cross the stones you already know…");
+  let t=520;
+  const step=()=>{
+    if(S.pos>=target){
+      S.busy=false; render();
+      setHint(S.lives+" "+(S.lives===1?"life":"lives")+" left. Step "+(S.pos+1)+" of "+STEPS+" — choose.");
+      return;
+    }
+    S.pos++; S.best=Math.max(S.best,S.pos); render(); setTimeout(step,230);
+  };
+  setTimeout(step,t);
+}
+/* how far the player can walk on knowledge alone */
+function frontier(){
+  let p=0;
+  while(p<STEPS){
+    const nx=S.path[p+1];
+    const nxCell=S.cells[key(nx.r,nx.c)];
+    if(nxCell.state==="safe"){ p++; continue; }
+    const opts=neighbours(S.path[p]);
+    const other=opts.find(o=>!(o.r===nx.r&&o.c===nx.c));
+    if(other && S.cells[key(other.r,other.c)].state==="lie"){   // known by elimination
+      nxCell.state="safe"; p++; continue;
+    }
+    break;
+  }
+  return p;
+}
+
+function revealAll(){
+  const onPath={}; S.path.forEach(p=>onPath[key(p.r,p.c)]=true);
+  Object.values(S.cells).forEach(c=>{
+    if(c.lie) c.state="lie";
+    else if(onPath[key(c.r,c.c)]) c.state="safe";
+  });
+}
+
+function bank(){
+  if(S.busy||S.over||!S.pos)return;
+  S.banked=LADDER[S.pos-1]; S.over=true; revealAll(); render();
+  overlay("💰 BANKED!",
+    "You walked away with <b>"+money(S.banked)+"</b> after "+S.pos+" safe "+
+    (S.pos===1?"step":"steps")+".<br><br>The board is revealed — green was the path, red were the lies.",
+    [{l:"PLAY AGAIN",c:"b-go",f:()=>{closeOverlay();newGame();}}]);
+}
+function win(){
+  S.banked=LADDER[STEPS-1]; S.over=true; revealAll(); render();
+  overlay("🏆 YOU CROSSED THE BRIDGE!",
+    "Ten steps, every one of them true. The jackpot is yours: <b>"+money(S.banked)+"</b>."+
+    "<br><br>Time: <b>"+clock(S.secs)+"</b> &nbsp;·&nbsp; Falls: <b>"+(START_LIVES-S.lives)+"</b>"+
+    "<br><br><i>"+esc(S.cat.q)+"</i>",
+    [{l:"PLAY AGAIN",c:"b-go",f:()=>{closeOverlay();newGame();}}]);
+}
+function lose(){
+  S.over=true; revealAll(); render();
+  overlay("💥 THE BRIDGE WINS",
+    "Three falls and the bridge has you. You got to step <b>"+S.best+" of "+STEPS+"</b>"+
+    " — worth "+money(S.best?LADDER[S.best-1]:0)+" if you'd banked it."+
+    "<br><br>The board is revealed: green was the way through.",
+    [{l:"TRY AGAIN",c:"b-pink",f:()=>{closeOverlay();newGame();}}]);
+}
+
+/* ==================== OVERLAY ==================== */
+function overlay(title,body,buttons){
+  const c=$("card");
+  c.innerHTML="<h2>"+title+"</h2><p>"+body+"</p>";
+  const row=document.createElement("div"); row.className="crow";
+  buttons.forEach(b=>{
+    const el=document.createElement("button");
+    el.className="btn "+(b.c||"b-go"); el.textContent=b.l;
+    el.addEventListener("click",b.f); row.appendChild(el);
+  });
+  c.appendChild(row);
+  $("ovl").classList.add("on");
+}
+function closeOverlay(){$("ovl").classList.remove("on");}
+
+/* ==================== EVENTS ==================== */
+$("bBank").addEventListener("click",bank);
+document.addEventListener("keydown",e=>{
+  if($("ovl").classList.contains("on"))return;
+  const k=e.key.toUpperCase();
+  if(k==="A"||k==="1") choose(0);
+  if(k==="B"||k==="2") choose(1);
+});
+window.addEventListener("resize",()=>{ if(S.cells){ layout(); render(); } });
+
+/* ==================== START ==================== */
+newGame();
+overlay("BRIDGE OF LIES",
+  "A diamond of 36 stones spans the drop. At every step two stones light up — "+
+  "<b>one tells the truth, one is a lie</b>.<br><br>"+
+  "✅ Step on the truth and climb the money ladder<br>"+
+  "💀 Step on a lie and you fall — <b>3 lives</b>, and the lie stays exposed<br>"+
+  "🧠 A revealed lie proves its partner, so you resume where you fell<br>"+
+  "💰 <b>Bank</b> at any time · 🏆 Cross all 10 for "+money(LADDER[STEPS-1]),
+  [{l:"STEP ON",c:"b-go",f:closeOverlay}]);
+})();
+</script>
+</body>
+</html>
