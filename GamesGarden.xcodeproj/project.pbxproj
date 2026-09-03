@@ -9,43 +9,44 @@
 /* Begin PBXBuildFile section */
 		6703E67D3007A173000B3226 /* icon_2048.png in Resources */ = {isa = PBXBuildFile; fileRef = 6703E67C3007A173000B3226 /* icon_2048.png */; };
 		6703E67F3007A17A000B3226 /* 2048-merge-blocks.html in Resources */ = {isa = PBXBuildFile; fileRef = 6703E67E3007A17A000B3226 /* 2048-merge-blocks.html */; };
-		6703E6813007A182000B3226 /* cat-invaders.html in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6803007A182000B3226 /* cat-invaders.html */; };
-		6703E6833007A18E000B3226 /* icon_cat-invaders.png in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6823007A18E000B3226 /* icon_cat-invaders.png */; };
-		6703E6853007A1E3000B3226 /* cartoon-cat-invaders.html in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6843007A1E3000B3226 /* cartoon-cat-invaders.html */; };
-		6703E6873007A1EB000B3226 /* icon_cartoon-cat-invaders.png in Resources */ = {isa = PBXBuildFile; fileRef = 6703E6863007A1EB000B3226 /* icon_cartoon-cat-invaders.png */; };
 		67050086303DD9D30096E2BC /* icon_arrowexit.png in Resources */ = {isa = PBXBuildFile; fileRef = 67050085303DD9D30096E2BC /* icon_arrowexit.png */; };
-		67050088303DD9E20096E2BC /* icon_3dsniper.png in Resources */ = {isa = PBXBuildFile; fileRef = 67050087303DD9E20096E2BC /* icon_3dsniper.png */; };
-		6705008A303DD9F60096E2BC /* 3d-sniper.html in Resources */ = {isa = PBXBuildFile; fileRef = 67050089303DD9F60096E2BC /* 3d-sniper.html */; };
 		6705008C303DDA090096E2BC /* arrow-exit.html in Resources */ = {isa = PBXBuildFile; fileRef = 6705008B303DDA090096E2BC /* arrow-exit.html */; };
 		67050092303DDCB10096E2BC /* billiards.html in Resources */ = {isa = PBXBuildFile; fileRef = 67050091303DDCB10096E2BC /* billiards.html */; };
 		67050094303DDD240096E2BC /* icon_billiards.png in Resources */ = {isa = PBXBuildFile; fileRef = 67050093303DDD240096E2BC /* icon_billiards.png */; };
 		67050096303DDFB80096E2BC /* icon_arrowshapes.png in Resources */ = {isa = PBXBuildFile; fileRef = 67050095303DDFB80096E2BC /* icon_arrowshapes.png */; };
 		67050098303DDFC80096E2BC /* arrow-exit-shapes.html in Resources */ = {isa = PBXBuildFile; fileRef = 67050097303DDFC80096E2BC /* arrow-exit-shapes.html */; };
-		6731DF1F300FCF7B0070AC8B /* icon_magic-towers.png in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */; };
-		6731DF20300FCF7B0070AC8B /* icon_duo.png in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF1D300FCF7B0070AC8B /* icon_duo.png */; };
-		6731DF22300FCF8E0070AC8B /* magic-towers-solitaire.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */; };
-		6731DF24300FCF9E0070AC8B /* duo.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF23300FCF9E0070AC8B /* duo.html */; };
 		6731DF28300FD9510070AC8B /* privacy.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF27300FD9510070AC8B /* privacy.html */; };
 		6731DF2C300FDCA90070AC8B /* support.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF2B300FDCA90070AC8B /* support.html */; };
 		6731DF2E300FDEF70070AC8B /* trophies.html in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF2D300FDEF70070AC8B /* trophies.html */; };
 		6731DF30300FDF040070AC8B /* achievements.js in Resources */ = {isa = PBXBuildFile; fileRef = 6731DF2F300FDF040070AC8B /* achievements.js */; };
-		675D4CB130485FB7005C8C19 /* wordblitz.html in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CB030485FB7005C8C19 /* wordblitz.html */; };
-		675D4CB330485FC5005C8C19 /* icon_wordblitz.png in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CB230485FC5005C8C19 /* icon_wordblitz.png */; };
-		675D4CB530486DF8005C8C19 /* wheeloffortune.html in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CB430486DF8005C8C19 /* wheeloffortune.html */; };
-		675D4CB730486E08005C8C19 /* icon_wheeloffortune.png in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CB630486E08005C8C19 /* icon_wheeloffortune.png */; };
-		675D4CB930486E16005C8C19 /* icon_bridgeoflies.png in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CB830486E16005C8C19 /* icon_bridgeoflies.png */; };
-		675D4CBB30486E25005C8C19 /* bridgeoflies.html in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CBA30486E25005C8C19 /* bridgeoflies.html */; };
 		6761C90E30495EB70050EC58 /* nullpoints.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90D30495EB70050EC58 /* nullpoints.html */; };
 		6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90F30495EC50050EC58 /* icon_nullpoints.png */; };
-		67C56400300CD09500D2D146 /* battleships.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C563FF300CD09500D2D146 /* battleships.html */; };
-		67C56402300CD09C00D2D146 /* icon_battleships.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56401300CD09C00D2D146 /* icon_battleships.png */; };
+		6761C912304969D20050EC58 /* icon_wordguess.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C911304969D20050EC58 /* icon_wordguess.png */; };
+		6761C914304969DD0050EC58 /* word-guess.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C913304969DD0050EC58 /* word-guess.html */; };
+		6761C91630496FFC0050EC58 /* icon_spinny-letters.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C91530496FFC0050EC58 /* icon_spinny-letters.png */; };
+		6761C9183049700B0050EC58 /* spinny-letters.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C9173049700B0050EC58 /* spinny-letters.html */; };
+		6761C91E30497A1A0050EC58 /* icon_empty-hand.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C91D30497A1A0050EC58 /* icon_empty-hand.png */; };
+		6761C92230497A3B0050EC58 /* empty-hand.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C92130497A3B0050EC58 /* empty-hand.html */; };
+		6761C92630498D240050EC58 /* icon_cat-poopers.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C92530498D240050EC58 /* icon_cat-poopers.png */; };
+		6761C92830498D320050EC58 /* cat-poopers.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C92730498D320050EC58 /* cat-poopers.html */; };
+		6761C92A30498E2A0050EC58 /* one-false-step.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C92930498E2A0050EC58 /* one-false-step.html */; };
+		6761C92C30498E3F0050EC58 /* icon_one-false-step.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C92B30498E3F0050EC58 /* icon_one-false-step.png */; };
+		6761C92E30498EF10050EC58 /* solitaire-tower.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C92D30498EF10050EC58 /* solitaire-tower.html */; };
+		6761C93030498EFD0050EC58 /* icon_solitaire-tower.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C92F30498EFD0050EC58 /* icon_solitaire-tower.png */; };
+		6761C932304995620050EC58 /* word-points.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C931304995620050EC58 /* word-points.html */; };
+		6761C934304995740050EC58 /* icon_word-points.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C933304995740050EC58 /* icon_word-points.png */; };
+		6761C9363049962A0050EC58 /* icon_cup-run.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C9353049962A0050EC58 /* icon_cup-run.png */; };
+		6761C93D304999900050EC58 /* icon_sea-battle.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C93B304999900050EC58 /* icon_sea-battle.png */; };
+		6761C93E304999900050EC58 /* frog-jump.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C938304999900050EC58 /* frog-jump.html */; };
+		6761C93F304999900050EC58 /* icon_frog-jump.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C93A304999900050EC58 /* icon_frog-jump.png */; };
+		6761C940304999900050EC58 /* sea-battle.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C93C304999900050EC58 /* sea-battle.html */; };
+		6761C941304999900050EC58 /* five-dice.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C937304999900050EC58 /* five-dice.html */; };
+		6761C942304999900050EC58 /* icon_five-dice.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C939304999900050EC58 /* icon_five-dice.png */; };
 		67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56403300CD0A600D2D146 /* icon_Ludo.png */; };
 		67C56406300CD0AF00D2D146 /* icon_scopa.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56405300CD0AF00D2D146 /* icon_scopa.png */; };
 		67C56408300CD0BA00D2D146 /* ludo.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C56407300CD0BA00D2D146 /* ludo.html */; };
 		67C5640A300CD0C200D2D146 /* scopa.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C56409300CD0C200D2D146 /* scopa.html */; };
 		67C5640C300CD3C900D2D146 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C5640B300CD3C900D2D146 /* index.html */; };
-		67C5640E300CECEC00D2D146 /* paint-the-flag.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C5640D300CECEC00D2D146 /* paint-the-flag.html */; };
-		67C56410300CEDDB00D2D146 /* icon_paint-the-flag.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C5640F300CEDDB00D2D146 /* icon_paint-the-flag.png */; };
 		67D823872FFEDC9900892511 /* icon_octo.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823862FFEDC9900892511 /* icon_octo.png */; };
 		67D8238B2FFF955C00892511 /* octo.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D8238A2FFF955C00892511 /* octo.html */; };
 		67D8238E2FFFA18C00892511 /* chess.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D8238D2FFFA18C00892511 /* chess.html */; };
@@ -57,64 +58,55 @@
 		67D8239F2FFFA7F800892511 /* icon_solitaire.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D8239E2FFFA7F800892511 /* icon_solitaire.png */; };
 		67D823A12FFFAD1C00892511 /* icon_bubbleshooter.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A02FFFAD1C00892511 /* icon_bubbleshooter.png */; };
 		67D823A32FFFAD7700892511 /* bubbleshooter.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A22FFFAD7700892511 /* bubbleshooter.html */; };
-		67D823A52FFFB4A700892511 /* frogger.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A42FFFB4A700892511 /* frogger.html */; };
-		67D823A72FFFB4AF00892511 /* wordle.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A62FFFB4AF00892511 /* wordle.html */; };
-		67D823AA2FFFB4E000892511 /* icon_wordle.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A92FFFB4E000892511 /* icon_wordle.png */; };
-		67D823AB2FFFB4E000892511 /* icon_frogger.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823A82FFFB4E000892511 /* icon_frogger.png */; };
 		67D823AD2FFFBBCD00892511 /* anagram-crosswords.html in Resources */ = {isa = PBXBuildFile; fileRef = 67D823AC2FFFBBCD00892511 /* anagram-crosswords.html */; };
 		67D823B32FFFBBEC00892511 /* icon_anagram-crosswords.png in Resources */ = {isa = PBXBuildFile; fileRef = 67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */; };
-		67E1D1ED3024B8DF002AEE31 /* cup-run-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1EC3024B8DF002AEE31 /* cup-run-icon.png */; };
-		67E1D1EF3024B8EC002AEE31 /* cup-run.html in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1EE3024B8EC002AEE31 /* cup-run.html */; };
-		67E1D1F13024BE3A002AEE31 /* cup-glory.html in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1F03024BE3A002AEE31 /* cup-glory.html */; };
-		67E1D1F330261ACB002AEE31 /* premier-glory.html in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1F230261ACB002AEE31 /* premier-glory.html */; };
 		67E1D1F730261BB3002AEE31 /* england-football-coach.html in Resources */ = {isa = PBXBuildFile; fileRef = 67E1D1F630261BB3002AEE31 /* england-football-coach.html */; };
 		AA0000000000000000000002 /* GamesGardenApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000005 /* GamesGardenApp.swift */; };
 		AA0000000000000000000008 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000B /* ContentView.swift */; };
-		AA0000000000000000000009 /* yahtzee.html in Resources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000C /* yahtzee.html */; };
-		AA000000000000000000000A /* icon_yahtzee.png in Resources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000D /* icon_yahtzee.png */; };
 		AA000000000000000000000F /* welcome.png in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* welcome.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		6703E67C3007A173000B3226 /* icon_2048.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_2048.png; sourceTree = "<group>"; };
 		6703E67E3007A17A000B3226 /* 2048-merge-blocks.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "2048-merge-blocks.html"; sourceTree = "<group>"; };
-		6703E6803007A182000B3226 /* cat-invaders.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cat-invaders.html"; sourceTree = "<group>"; };
-		6703E6823007A18E000B3226 /* icon_cat-invaders.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cat-invaders.png"; sourceTree = "<group>"; };
-		6703E6843007A1E3000B3226 /* cartoon-cat-invaders.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cartoon-cat-invaders.html"; sourceTree = "<group>"; };
-		6703E6863007A1EB000B3226 /* icon_cartoon-cat-invaders.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cartoon-cat-invaders.png"; sourceTree = "<group>"; };
 		67050085303DD9D30096E2BC /* icon_arrowexit.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_arrowexit.png; sourceTree = "<group>"; };
-		67050087303DD9E20096E2BC /* icon_3dsniper.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_3dsniper.png; sourceTree = "<group>"; };
-		67050089303DD9F60096E2BC /* 3d-sniper.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "3d-sniper.html"; sourceTree = "<group>"; };
 		6705008B303DDA090096E2BC /* arrow-exit.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "arrow-exit.html"; sourceTree = "<group>"; };
 		67050091303DDCB10096E2BC /* billiards.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = billiards.html; sourceTree = "<group>"; };
 		67050093303DDD240096E2BC /* icon_billiards.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_billiards.png; sourceTree = "<group>"; };
 		67050095303DDFB80096E2BC /* icon_arrowshapes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_arrowshapes.png; sourceTree = "<group>"; };
 		67050097303DDFC80096E2BC /* arrow-exit-shapes.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "arrow-exit-shapes.html"; sourceTree = "<group>"; };
-		6731DF1D300FCF7B0070AC8B /* icon_duo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_duo.png; sourceTree = "<group>"; };
-		6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_magic-towers.png"; sourceTree = "<group>"; };
-		6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "magic-towers-solitaire.html"; sourceTree = "<group>"; };
-		6731DF23300FCF9E0070AC8B /* duo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = duo.html; sourceTree = "<group>"; };
 		6731DF27300FD9510070AC8B /* privacy.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = privacy.html; sourceTree = "<group>"; };
 		6731DF2B300FDCA90070AC8B /* support.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = support.html; sourceTree = "<group>"; };
 		6731DF2D300FDEF70070AC8B /* trophies.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = trophies.html; sourceTree = "<group>"; };
 		6731DF2F300FDF040070AC8B /* achievements.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = achievements.js; sourceTree = "<group>"; };
-		675D4CB030485FB7005C8C19 /* wordblitz.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = wordblitz.html; sourceTree = "<group>"; };
-		675D4CB230485FC5005C8C19 /* icon_wordblitz.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wordblitz.png; sourceTree = "<group>"; };
-		675D4CB430486DF8005C8C19 /* wheeloffortune.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = wheeloffortune.html; sourceTree = "<group>"; };
-		675D4CB630486E08005C8C19 /* icon_wheeloffortune.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wheeloffortune.png; sourceTree = "<group>"; };
-		675D4CB830486E16005C8C19 /* icon_bridgeoflies.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_bridgeoflies.png; sourceTree = "<group>"; };
-		675D4CBA30486E25005C8C19 /* bridgeoflies.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = bridgeoflies.html; sourceTree = "<group>"; };
 		6761C90D30495EB70050EC58 /* nullpoints.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = nullpoints.html; sourceTree = "<group>"; };
 		6761C90F30495EC50050EC58 /* icon_nullpoints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_nullpoints.png; sourceTree = "<group>"; };
-		67C563FF300CD09500D2D146 /* battleships.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = battleships.html; sourceTree = "<group>"; };
-		67C56401300CD09C00D2D146 /* icon_battleships.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_battleships.png; sourceTree = "<group>"; };
+		6761C911304969D20050EC58 /* icon_wordguess.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wordguess.png; sourceTree = "<group>"; };
+		6761C913304969DD0050EC58 /* word-guess.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "word-guess.html"; sourceTree = "<group>"; };
+		6761C91530496FFC0050EC58 /* icon_spinny-letters.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_spinny-letters.png"; sourceTree = "<group>"; };
+		6761C9173049700B0050EC58 /* spinny-letters.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "spinny-letters.html"; sourceTree = "<group>"; };
+		6761C91D30497A1A0050EC58 /* icon_empty-hand.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_empty-hand.png"; sourceTree = "<group>"; };
+		6761C92130497A3B0050EC58 /* empty-hand.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "empty-hand.html"; sourceTree = "<group>"; };
+		6761C92530498D240050EC58 /* icon_cat-poopers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cat-poopers.png"; sourceTree = "<group>"; };
+		6761C92730498D320050EC58 /* cat-poopers.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cat-poopers.html"; sourceTree = "<group>"; };
+		6761C92930498E2A0050EC58 /* one-false-step.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "one-false-step.html"; sourceTree = "<group>"; };
+		6761C92B30498E3F0050EC58 /* icon_one-false-step.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_one-false-step.png"; sourceTree = "<group>"; };
+		6761C92D30498EF10050EC58 /* solitaire-tower.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "solitaire-tower.html"; sourceTree = "<group>"; };
+		6761C92F30498EFD0050EC58 /* icon_solitaire-tower.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_solitaire-tower.png"; sourceTree = "<group>"; };
+		6761C931304995620050EC58 /* word-points.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "word-points.html"; sourceTree = "<group>"; };
+		6761C933304995740050EC58 /* icon_word-points.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_word-points.png"; sourceTree = "<group>"; };
+		6761C9353049962A0050EC58 /* icon_cup-run.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cup-run.png"; sourceTree = "<group>"; };
+		6761C937304999900050EC58 /* five-dice.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "five-dice.html"; sourceTree = "<group>"; };
+		6761C938304999900050EC58 /* frog-jump.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "frog-jump.html"; sourceTree = "<group>"; };
+		6761C939304999900050EC58 /* icon_five-dice.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_five-dice.png"; sourceTree = "<group>"; };
+		6761C93A304999900050EC58 /* icon_frog-jump.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_frog-jump.png"; sourceTree = "<group>"; };
+		6761C93B304999900050EC58 /* icon_sea-battle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_sea-battle.png"; sourceTree = "<group>"; };
+		6761C93C304999900050EC58 /* sea-battle.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "sea-battle.html"; sourceTree = "<group>"; };
 		67C56403300CD0A600D2D146 /* icon_Ludo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_Ludo.png; sourceTree = "<group>"; };
 		67C56405300CD0AF00D2D146 /* icon_scopa.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_scopa.png; sourceTree = "<group>"; };
 		67C56407300CD0BA00D2D146 /* ludo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = ludo.html; sourceTree = "<group>"; };
 		67C56409300CD0C200D2D146 /* scopa.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = scopa.html; sourceTree = "<group>"; };
 		67C5640B300CD3C900D2D146 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
-		67C5640D300CECEC00D2D146 /* paint-the-flag.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "paint-the-flag.html"; sourceTree = "<group>"; };
-		67C5640F300CEDDB00D2D146 /* icon_paint-the-flag.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_paint-the-flag.png"; sourceTree = "<group>"; };
 		67D823862FFEDC9900892511 /* icon_octo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_octo.png; sourceTree = "<group>"; };
 		67D8238A2FFF955C00892511 /* octo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = octo.html; sourceTree = "<group>"; };
 		67D8238C2FFFA18C00892511 /* checkers.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = checkers.html; sourceTree = "<group>"; };
@@ -126,22 +118,12 @@
 		67D8239E2FFFA7F800892511 /* icon_solitaire.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_solitaire.png; sourceTree = "<group>"; };
 		67D823A02FFFAD1C00892511 /* icon_bubbleshooter.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_bubbleshooter.png; sourceTree = "<group>"; };
 		67D823A22FFFAD7700892511 /* bubbleshooter.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = bubbleshooter.html; sourceTree = "<group>"; };
-		67D823A42FFFB4A700892511 /* frogger.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = frogger.html; sourceTree = "<group>"; };
-		67D823A62FFFB4AF00892511 /* wordle.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = wordle.html; sourceTree = "<group>"; };
-		67D823A82FFFB4E000892511 /* icon_frogger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_frogger.png; sourceTree = "<group>"; };
-		67D823A92FFFB4E000892511 /* icon_wordle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wordle.png; sourceTree = "<group>"; };
 		67D823AC2FFFBBCD00892511 /* anagram-crosswords.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "anagram-crosswords.html"; sourceTree = "<group>"; };
 		67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_anagram-crosswords.png"; sourceTree = "<group>"; };
-		67E1D1EC3024B8DF002AEE31 /* cup-run-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cup-run-icon.png"; sourceTree = "<group>"; };
-		67E1D1EE3024B8EC002AEE31 /* cup-run.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cup-run.html"; sourceTree = "<group>"; };
-		67E1D1F03024BE3A002AEE31 /* cup-glory.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cup-glory.html"; sourceTree = "<group>"; };
-		67E1D1F230261ACB002AEE31 /* premier-glory.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "premier-glory.html"; sourceTree = "<group>"; };
 		67E1D1F630261BB3002AEE31 /* england-football-coach.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "england-football-coach.html"; sourceTree = "<group>"; };
 		AA0000000000000000000001 /* welcome.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = welcome.png; sourceTree = "<group>"; };
 		AA0000000000000000000005 /* GamesGardenApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamesGardenApp.swift; sourceTree = "<group>"; };
 		AA000000000000000000000B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		AA000000000000000000000C /* yahtzee.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = yahtzee.html; sourceTree = "<group>"; };
-		AA000000000000000000000D /* icon_yahtzee.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_yahtzee.png; sourceTree = "<group>"; };
 		F19999999999999999999999 /* GamesGarden.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GamesGarden.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -180,66 +162,57 @@
 				6731DF2F300FDF040070AC8B /* achievements.js */,
 				67C5640B300CD3C900D2D146 /* index.html */,
 				6703E67E3007A17A000B3226 /* 2048-merge-blocks.html */,
-				67050089303DD9F60096E2BC /* 3d-sniper.html */,
 				67D823AC2FFFBBCD00892511 /* anagram-crosswords.html */,
 				6705008B303DDA090096E2BC /* arrow-exit.html */,
 				67050097303DDFC80096E2BC /* arrow-exit-shapes.html */,
-				67C563FF300CD09500D2D146 /* battleships.html */,
 				67050091303DDCB10096E2BC /* billiards.html */,
-				675D4CBA30486E25005C8C19 /* bridgeoflies.html */,
 				67D823A22FFFAD7700892511 /* bubbleshooter.html */,
-				6703E6843007A1E3000B3226 /* cartoon-cat-invaders.html */,
-				6703E6803007A182000B3226 /* cat-invaders.html */,
+				6761C92730498D320050EC58 /* cat-poopers.html */,
 				67D8238C2FFFA18C00892511 /* checkers.html */,
 				67D8238D2FFFA18C00892511 /* chess.html */,
-				67E1D1EE3024B8EC002AEE31 /* cup-run.html */,
-				67E1D1F03024BE3A002AEE31 /* cup-glory.html */,
-				6731DF23300FCF9E0070AC8B /* duo.html */,
 				67E1D1F630261BB3002AEE31 /* england-football-coach.html */,
-				67D823A42FFFB4A700892511 /* frogger.html */,
+				6761C92130497A3B0050EC58 /* empty-hand.html */,
+				6761C937304999900050EC58 /* five-dice.html */,
+				6761C938304999900050EC58 /* frog-jump.html */,
 				67C56407300CD0BA00D2D146 /* ludo.html */,
-				6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */,
 				6761C90D30495EB70050EC58 /* nullpoints.html */,
 				67D8238A2FFF955C00892511 /* octo.html */,
+				6761C92930498E2A0050EC58 /* one-false-step.html */,
 				6731DF27300FD9510070AC8B /* privacy.html */,
-				67C5640D300CECEC00D2D146 /* paint-the-flag.html */,
-				67E1D1F230261ACB002AEE31 /* premier-glory.html */,
 				67C56409300CD0C200D2D146 /* scopa.html */,
+				6761C93C304999900050EC58 /* sea-battle.html */,
 				67D8239C2FFFA7ED00892511 /* solitaire.html */,
+				6761C92D30498EF10050EC58 /* solitaire-tower.html */,
+				6761C9173049700B0050EC58 /* spinny-letters.html */,
 				6731DF2B300FDCA90070AC8B /* support.html */,
 				6731DF2D300FDEF70070AC8B /* trophies.html */,
-				675D4CB430486DF8005C8C19 /* wheeloffortune.html */,
-				67D823A62FFFB4AF00892511 /* wordle.html */,
-				675D4CB030485FB7005C8C19 /* wordblitz.html */,
-				AA000000000000000000000C /* yahtzee.html */,
+				6761C931304995620050EC58 /* word-points.html */,
+				6761C913304969DD0050EC58 /* word-guess.html */,
 				AA0000000000000000000001 /* welcome.png */,
-				67050087303DD9E20096E2BC /* icon_3dsniper.png */,
 				6703E67C3007A173000B3226 /* icon_2048.png */,
 				67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */,
 				67050085303DD9D30096E2BC /* icon_arrowexit.png */,
 				67050095303DDFB80096E2BC /* icon_arrowshapes.png */,
-				67C56401300CD09C00D2D146 /* icon_battleships.png */,
 				67050093303DDD240096E2BC /* icon_billiards.png */,
-				675D4CB830486E16005C8C19 /* icon_bridgeoflies.png */,
 				67D823A02FFFAD1C00892511 /* icon_bubbleshooter.png */,
-				6703E6863007A1EB000B3226 /* icon_cartoon-cat-invaders.png */,
-				6703E6823007A18E000B3226 /* icon_cat-invaders.png */,
-				67E1D1EC3024B8DF002AEE31 /* cup-run-icon.png */,
-				6731DF1D300FCF7B0070AC8B /* icon_duo.png */,
+				6761C92530498D240050EC58 /* icon_cat-poopers.png */,
 				67D823902FFFA1EB00892511 /* icon_checkers.png */,
 				67D823912FFFA1EB00892511 /* icon_chess.png */,
-				67D823A82FFFB4E000892511 /* icon_frogger.png */,
+				6761C9353049962A0050EC58 /* icon_cup-run.png */,
+				6761C91D30497A1A0050EC58 /* icon_empty-hand.png */,
+				6761C939304999900050EC58 /* icon_five-dice.png */,
+				6761C93A304999900050EC58 /* icon_frog-jump.png */,
 				67C56403300CD0A600D2D146 /* icon_Ludo.png */,
-				6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */,
 				6761C90F30495EC50050EC58 /* icon_nullpoints.png */,
 				67D823862FFEDC9900892511 /* icon_octo.png */,
-				67C5640F300CEDDB00D2D146 /* icon_paint-the-flag.png */,
+				6761C92B30498E3F0050EC58 /* icon_one-false-step.png */,
 				67C56405300CD0AF00D2D146 /* icon_scopa.png */,
+				6761C93B304999900050EC58 /* icon_sea-battle.png */,
 				67D8239E2FFFA7F800892511 /* icon_solitaire.png */,
-				AA000000000000000000000D /* icon_yahtzee.png */,
-				675D4CB630486E08005C8C19 /* icon_wheeloffortune.png */,
-				67D823A92FFFB4E000892511 /* icon_wordle.png */,
-				675D4CB230485FC5005C8C19 /* icon_wordblitz.png */,
+				6761C92F30498EFD0050EC58 /* icon_solitaire-tower.png */,
+				6761C91530496FFC0050EC58 /* icon_spinny-letters.png */,
+				6761C933304995740050EC58 /* icon_word-points.png */,
+				6761C911304969D20050EC58 /* icon_wordguess.png */,
 				67D8239A2FFFA51400892511 /* Assets.xcassets */,
 			);
 			path = GamesGarden;
@@ -305,66 +278,57 @@
 			files = (
 				67C56406300CD0AF00D2D146 /* icon_scopa.png in Resources */,
 				67050094303DDD240096E2BC /* icon_billiards.png in Resources */,
-				67C5640E300CECEC00D2D146 /* paint-the-flag.html in Resources */,
-				6703E6853007A1E3000B3226 /* cartoon-cat-invaders.html in Resources */,
+				6761C914304969DD0050EC58 /* word-guess.html in Resources */,
 				6731DF30300FDF040070AC8B /* achievements.js in Resources */,
-				67C56410300CEDDB00D2D146 /* icon_paint-the-flag.png in Resources */,
+				6761C9183049700B0050EC58 /* spinny-letters.html in Resources */,
+				6761C934304995740050EC58 /* icon_word-points.png in Resources */,
 				6731DF2E300FDEF70070AC8B /* trophies.html in Resources */,
 				6731DF2C300FDCA90070AC8B /* support.html in Resources */,
 				67D8239F2FFFA7F800892511 /* icon_solitaire.png in Resources */,
+				6761C9363049962A0050EC58 /* icon_cup-run.png in Resources */,
 				67D823A12FFFAD1C00892511 /* icon_bubbleshooter.png in Resources */,
-				67E1D1F13024BE3A002AEE31 /* cup-glory.html in Resources */,
-				6731DF1F300FCF7B0070AC8B /* icon_magic-towers.png in Resources */,
-				675D4CB330485FC5005C8C19 /* icon_wordblitz.png in Resources */,
-				6731DF20300FCF7B0070AC8B /* icon_duo.png in Resources */,
 				6705008C303DDA090096E2BC /* arrow-exit.html in Resources */,
 				67C5640C300CD3C900D2D146 /* index.html in Resources */,
+				6761C92E30498EF10050EC58 /* solitaire-tower.html in Resources */,
+				6761C912304969D20050EC58 /* icon_wordguess.png in Resources */,
+				6761C92630498D240050EC58 /* icon_cat-poopers.png in Resources */,
 				67050096303DDFB80096E2BC /* icon_arrowshapes.png in Resources */,
+				6761C92A30498E2A0050EC58 /* one-false-step.html in Resources */,
 				67C56408300CD0BA00D2D146 /* ludo.html in Resources */,
 				67D823872FFEDC9900892511 /* icon_octo.png in Resources */,
-				67C56400300CD09500D2D146 /* battleships.html in Resources */,
 				67D823922FFFA1EB00892511 /* icon_checkers.png in Resources */,
 				67050092303DDCB10096E2BC /* billiards.html in Resources */,
 				6761C90E30495EB70050EC58 /* nullpoints.html in Resources */,
 				67D823932FFFA1EB00892511 /* icon_chess.png in Resources */,
-				6705008A303DD9F60096E2BC /* 3d-sniper.html in Resources */,
-				6703E6813007A182000B3226 /* cat-invaders.html in Resources */,
+				6761C92830498D320050EC58 /* cat-poopers.html in Resources */,
+				6761C93030498EFD0050EC58 /* icon_solitaire-tower.png in Resources */,
 				6731DF28300FD9510070AC8B /* privacy.html in Resources */,
 				6703E67F3007A17A000B3226 /* 2048-merge-blocks.html in Resources */,
 				6703E67D3007A173000B3226 /* icon_2048.png in Resources */,
-				67E1D1EF3024B8EC002AEE31 /* cup-run.html in Resources */,
-				675D4CB130485FB7005C8C19 /* wordblitz.html in Resources */,
+				6761C93D304999900050EC58 /* icon_sea-battle.png in Resources */,
+				6761C93E304999900050EC58 /* frog-jump.html in Resources */,
+				6761C93F304999900050EC58 /* icon_frog-jump.png in Resources */,
+				6761C940304999900050EC58 /* sea-battle.html in Resources */,
+				6761C941304999900050EC58 /* five-dice.html in Resources */,
+				6761C942304999900050EC58 /* icon_five-dice.png in Resources */,
 				67D823A32FFFAD7700892511 /* bubbleshooter.html in Resources */,
 				67D8238E2FFFA18C00892511 /* chess.html in Resources */,
-				6731DF22300FCF8E0070AC8B /* magic-towers-solitaire.html in Resources */,
 				67D8239B2FFFA51400892511 /* Assets.xcassets in Resources */,
-				67D823A72FFFB4AF00892511 /* wordle.html in Resources */,
-				675D4CB730486E08005C8C19 /* icon_wheeloffortune.png in Resources */,
+				6761C932304995620050EC58 /* word-points.html in Resources */,
 				67D8238F2FFFA18C00892511 /* checkers.html in Resources */,
 				6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */,
 				67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */,
+				6761C92230497A3B0050EC58 /* empty-hand.html in Resources */,
 				67E1D1F730261BB3002AEE31 /* england-football-coach.html in Resources */,
 				67050098303DDFC80096E2BC /* arrow-exit-shapes.html in Resources */,
-				AA0000000000000000000009 /* yahtzee.html in Resources */,
-				6703E6833007A18E000B3226 /* icon_cat-invaders.png in Resources */,
 				67D8239D2FFFA7ED00892511 /* solitaire.html in Resources */,
-				67D823A52FFFB4A700892511 /* frogger.html in Resources */,
+				6761C91E30497A1A0050EC58 /* icon_empty-hand.png in Resources */,
 				67D8238B2FFF955C00892511 /* octo.html in Resources */,
-				67E1D1F330261ACB002AEE31 /* premier-glory.html in Resources */,
 				AA000000000000000000000F /* welcome.png in Resources */,
-				67C56402300CD09C00D2D146 /* icon_battleships.png in Resources */,
-				67E1D1ED3024B8DF002AEE31 /* cup-run-icon.png in Resources */,
-				675D4CB930486E16005C8C19 /* icon_bridgeoflies.png in Resources */,
+				6761C92C30498E3F0050EC58 /* icon_one-false-step.png in Resources */,
 				67050086303DD9D30096E2BC /* icon_arrowexit.png in Resources */,
-				67D823AA2FFFB4E000892511 /* icon_wordle.png in Resources */,
-				675D4CB530486DF8005C8C19 /* wheeloffortune.html in Resources */,
-				6731DF24300FCF9E0070AC8B /* duo.html in Resources */,
-				67D823AB2FFFB4E000892511 /* icon_frogger.png in Resources */,
-				675D4CBB30486E25005C8C19 /* bridgeoflies.html in Resources */,
-				AA000000000000000000000A /* icon_yahtzee.png in Resources */,
+				6761C91630496FFC0050EC58 /* icon_spinny-letters.png in Resources */,
 				67D823AD2FFFBBCD00892511 /* anagram-crosswords.html in Resources */,
-				67050088303DD9E20096E2BC /* icon_3dsniper.png in Resources */,
-				6703E6873007A1EB000B3226 /* icon_cartoon-cat-invaders.png in Resources */,
 				67C5640A300CD0C200D2D146 /* scopa.html in Resources */,
 				67D823B32FFFBBEC00892511 /* icon_anagram-crosswords.png in Resources */,
 			);

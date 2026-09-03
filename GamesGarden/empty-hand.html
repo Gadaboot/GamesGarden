@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#141d2e">
+<title>Empty Hand</title>
+<style>
+  :root{
+    /* four suits — deliberately not the classic red/yellow/green/blue set */
+    --rose:#f0455f; --amber:#ffb02e; --teal:#17b890; --violet:#5b6ee1;
+    --bg1:#243352; --bg2:#111a2b; --panel:#26324e; --panel2:#31405f;
+    --text:#f4f7ff; --muted:#c2cce6; --accent:#ffb02e;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+    background:radial-gradient(ellipse at 50% 12%,var(--bg1),var(--bg2));
+    color:var(--text); min-height:100dvh; overflow-x:hidden;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .hidden{display:none !important;}
+  button{font-family:inherit;}
+
+  /* ---------- top bar ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;}
+  .menu-btn{
+    background:var(--panel2);color:var(--text);border:1px solid #4d5f85;border-radius:12px;
+    padding:8px 16px;font-size:15px;font-weight:600;cursor:pointer;
+  }
+  .menu-btn:active{transform:scale(.96);}
+  .logo{font-size:20px;font-weight:900;letter-spacing:1.5px;color:var(--accent);text-shadow:0 2px 0 rgba(0,0,0,.45);}
+  #dirBadge{font-size:22px;width:40px;text-align:center;color:var(--muted);}
+
+  /* ---------- setup ---------- */
+  #setupScreen{max-width:440px;margin:0 auto;padding:10px 18px 40px;}
+  #setupScreen h1{
+    text-align:center;font-size:clamp(34px,11vw,50px);margin:10px 0 2px;letter-spacing:1px;
+    background:linear-gradient(180deg,#fff3d6,#ffb02e 55%,#f0455f);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  #setupScreen .sub{text-align:center;color:var(--muted);margin:0 0 22px;font-size:15px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+  select,input[type=text]{
+    width:100%;padding:12px;border-radius:12px;border:1px solid #4d5f85;background:var(--panel);
+    color:var(--text);font-size:16px;outline:none;
+  }
+  .prow{
+    background:var(--panel);border:1px solid #435676;border-radius:14px;padding:12px;margin-bottom:10px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .prow .rowtop{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .prow .ptitle{font-weight:700;font-size:15px;}
+  .seg{display:flex;background:var(--bg2);border-radius:10px;padding:3px;}
+  .seg button{
+    border:none;background:transparent;color:var(--muted);padding:6px 12px;border-radius:8px;
+    font-size:13px;font-weight:700;cursor:pointer;
+  }
+  .seg button.on{background:var(--accent);color:#2a1c00;}
+  .botname{color:var(--muted);font-size:14px;font-style:italic;}
+  .big-btn{
+    display:block;width:100%;padding:16px;margin-top:20px;border:none;border-radius:16px;
+    background:linear-gradient(180deg,#ffc75c,#f5a012);color:#2a1c00;font-size:20px;font-weight:900;
+    letter-spacing:1px;cursor:pointer;box-shadow:0 4px 0 #a86f08;
+  }
+  .big-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #a86f08;}
+
+  /* ---------- game ---------- */
+  #gameScreen{display:flex;flex-direction:column;min-height:100dvh;}
+  #board{flex:1;min-height:0;display:grid;grid-template-areas:"left top right" "left center right";
+    grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr;}
+  #seatTop{grid-area:top;display:flex;justify-content:center;align-items:flex-start;gap:10px;flex-wrap:wrap;padding:4px 6px;}
+  #seatLeft{grid-area:left;} #seatRight{grid-area:right;}
+
+  @media (max-width:600px){
+    #board{display:flex;flex-direction:column;}
+    #seatTop{order:0;}
+    #seatLeft{order:1;} #seatRight{order:2;}
+    #centerArea{order:3;flex:1;}
+    .sidecol{flex-direction:row;justify-content:center;flex-wrap:wrap;gap:8px;padding:2px 6px;}
+    .sidecol:empty{display:none;}
+    .pod{padding:7px 10px;min-width:78px;max-width:130px;border-radius:12px;}
+    .pod .pname{font-size:12.5px;max-width:104px;}
+    .pod .pcount{font-size:11px;margin-top:1px;}
+    .pod .minis{height:18px;margin-top:4px;gap:2px;}
+    .pod .mini{width:12px;height:18px;border-radius:3px;}
+    #table{gap:16px;padding:8px 10px;}
+  }
+  .sidecol{display:flex;flex-direction:column;justify-content:center;gap:14px;padding:4px 6px;}
+  #centerArea{grid-area:center;display:flex;flex-direction:column;justify-content:center;position:relative;}
+  .pod{
+    background:var(--panel);border:2px solid transparent;border-radius:16px;padding:12px 16px;
+    text-align:center;min-width:100px;max-width:170px;transition:border-color .2s, box-shadow .2s;
+  }
+  .pod.turn{border-color:var(--accent);box-shadow:0 0 16px rgba(255,176,46,.5);}
+  .pod.lastcard{border-color:var(--rose);box-shadow:0 0 16px rgba(240,69,95,.55);}
+  .pod .pname{font-size:16px;font-weight:800;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pod .pcount{font-size:14px;color:var(--muted);margin-top:3px;}
+  .pod .minis{display:flex;justify-content:center;gap:3px;margin-top:7px;height:26px;}
+  .pod .mini{width:17px;height:26px;border-radius:4px;background:linear-gradient(160deg,#4d5f85,#1b2436);border:1px solid #6f83ad;}
+
+  #table{display:flex;align-items:center;justify-content:center;gap:26px;padding:14px 10px;}
+  .pilewrap{text-align:center;}
+  .pilelabel{font-size:11px;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:1px;}
+
+  #statusLine{text-align:center;min-height:24px;font-size:16px;font-weight:700;color:var(--accent);padding:2px 12px 8px;}
+  #colorDot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-left:6px;border:2px solid #fff;}
+
+  #handArea{margin-top:auto;background:rgba(0,0,0,.2);border-top:1px solid #435676;padding:10px 10px calc(14px + env(safe-area-inset-bottom));}
+  #handHeader{display:flex;align-items:center;justify-content:space-between;padding:0 6px 8px;}
+  #handName{font-weight:800;font-size:16px;}
+  .draw-btn{
+    background:linear-gradient(180deg,#7f93c4,#3b4b70);color:#fff;border:1px solid #5b6ee1;border-radius:12px;
+    padding:9px 18px;font-size:15px;font-weight:800;cursor:pointer;
+  }
+  .draw-btn:active{transform:scale(.96);}
+  #hand{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:34dvh;overflow-y:auto;padding:4px 2px;}
+  #handHint{text-align:center;color:var(--muted);font-size:14px;padding:14px 0;}
+
+  /* ---------- cards ----------
+     Flat colour face, one upright index in the top-left, a bold diagonal
+     sash across the lower half, and a large centred glyph. No centred
+     oval, no mirrored corner indices. Wilds use full-face diagonal bands. */
+  .card{
+    width:62px;height:92px;border-radius:10px;position:relative;flex:0 0 auto;overflow:hidden;
+    background:var(--c,#888);border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.5);
+    display:flex;align-items:center;justify-content:center;cursor:default;
+  }
+  .card.big{width:82px;height:122px;}
+  .card::before{                       /* diagonal sash, low on the card */
+    content:'';position:absolute;left:-30%;right:-30%;bottom:14%;height:26%;
+    background:rgba(0,0,0,.16);transform:rotate(-14deg);
+  }
+  .card::after{                        /* thin inner keyline following the card shape */
+    content:'';position:absolute;inset:5px;border-radius:6px;
+    border:1.5px solid rgba(255,255,255,.35);pointer-events:none;
+  }
+  .card .glyph{
+    font-size:30px;font-weight:900;color:#fff;z-index:2;
+    text-shadow:0 2px 3px rgba(0,0,0,.45);line-height:1;
+  }
+  .card.big .glyph{font-size:40px;}
+  .card .corner{
+    position:absolute;top:4px;left:6px;font-size:13px;font-weight:900;color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.45);z-index:2;
+  }
+  .card.rose{--c:var(--rose);} .card.amber{--c:var(--amber);}
+  .card.teal{--c:var(--teal);} .card.violet{--c:var(--violet);}
+  .card.black{
+    --c:#1b2436;
+    background:repeating-linear-gradient(48deg,
+      var(--rose) 0 14%, var(--amber) 14% 28%, var(--teal) 28% 42%, var(--violet) 42% 56%);
+  }
+  .card.black::before{background:rgba(0,0,0,.28);}
+  .card.back{
+    --c:#1b2436;
+    background:
+      repeating-linear-gradient(48deg, rgba(255,255,255,.07) 0 8px, transparent 8px 16px),
+      linear-gradient(160deg,#31405f,#141d2e);
+    border-color:#7f93c4;
+  }
+  .card.back::before{display:none;}
+  .card.back .glyph{font-size:26px;color:var(--accent);opacity:.85;}
+  .card.playable{outline:3px solid var(--accent);outline-offset:2px;cursor:pointer;}
+  .card.playable:active{transform:translateY(-6px);}
+  .card.dim{opacity:.5;}
+
+  /* ---------- modals ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(6,10,20,.85);display:flex;align-items:flex-start;
+    justify-content:center;z-index:50;padding:20px;overflow-y:auto;
+    padding-top:max(20px,8vh);
+  }
+  .panel{
+    background:var(--panel2);border:1px solid #6f83ad;border-radius:20px;padding:24px;max-width:360px;width:100%;
+    text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.65);
+  }
+  .panel h2{margin:0 0 8px;font-size:22px;}
+  .panel p{color:var(--muted);margin:0 0 18px;font-size:15px;line-height:1.45;}
+  .panel .btns{display:flex;flex-direction:column;gap:10px;}
+  .pbtn{
+    padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;
+    background:linear-gradient(180deg,#ffc75c,#f5a012);color:#2a1c00;box-shadow:0 3px 0 #a86f08;
+  }
+  .pbtn.alt{background:var(--panel);color:var(--text);border:1px solid #6f83ad;box-shadow:none;}
+  .pbtn:active{transform:translateY(2px);}
+  #colorChoices{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .cchoice{height:70px;border-radius:14px;border:3px solid #fff;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.45);}
+  .cchoice:active{transform:scale(.95);}
+  #drawnCardHolder{display:flex;justify-content:center;margin-bottom:16px;}
+
+  /* ---------- toast ---------- */
+  #toasts{
+    position:absolute;top:8px;left:0;right:0;z-index:60;pointer-events:none;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .toast{
+    background:rgba(12,18,32,.94);border:1px solid #6f83ad;color:#fff;padding:8px 18px;border-radius:20px;
+    font-size:14px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.55);max-width:90vw;text-align:center;
+    animation:toastIn .22s ease-out, toastOut .35s ease-in 2.6s forwards;
+  }
+  @keyframes toastIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:none;}}
+  @keyframes toastOut{to{opacity:0;transform:translateY(-8px);}}
+</style>
+</head>
+<body>
+
+<!-- ============ SETUP ============ -->
+<div id="setupScreen" class="hidden">
+  <div class="topbar">
+    <button class="menu-btn" onclick="goMenu()">‹ Menu</button>
+  </div>
+  <h1>EMPTY HAND</h1>
+  <p class="sub">Follow the colour or the number. First to get rid of every card wins.</p>
+  <div class="field">
+    <label for="countSel">Players (you + opponents)</label>
+    <select id="countSel" onchange="buildRows()">
+      <option value="2">2 players</option>
+      <option value="3">3 players</option>
+      <option value="4" selected>4 players</option>
+      <option value="5">5 players</option>
+      <option value="6">6 players</option>
+    </select>
+  </div>
+  <div id="playerRows"></div>
+  <button class="big-btn" onclick="startFromSetup()">Deal</button>
+</div>
+
+<!-- ============ GAME ============ -->
+<div id="gameScreen" class="hidden">
+  <div class="topbar">
+    <button class="menu-btn" onclick="goMenu()">‹ Menu</button>
+    <div class="logo">EMPTY HAND</div>
+    <div id="dirBadge">⟳</div>
+  </div>
+  <div id="board">
+    <div id="seatTop"></div>
+    <div id="seatLeft" class="sidecol"></div>
+    <div id="centerArea">
+      <div id="toasts"></div>
+      <div id="table">
+        <div class="pilewrap">
+          <div class="card big back" id="drawPileEl" onclick="onDrawPileTap()"><span class="glyph">▨</span></div>
+          <div class="pilelabel"><span id="drawCount">0</span> left</div>
+        </div>
+        <div class="pilewrap">
+          <div id="discardEl"></div>
+          <div class="pilelabel">Pile<span id="colorDot"></span></div>
+        </div>
+      </div>
+      <div id="statusLine"></div>
+    </div>
+    <div id="seatRight" class="sidecol"></div>
+  </div>
+  <div id="handArea">
+    <div id="handHeader">
+      <div id="handName"></div>
+      <button class="draw-btn" id="drawBtn" onclick="onDraw()">Pick Up</button>
+    </div>
+    <div id="hand"></div>
+    <div id="handHint" class="hidden"></div>
+  </div>
+</div>
+
+<!-- ============ MODALS ============ -->
+<div id="resumeModal" class="overlay hidden">
+  <div class="panel">
+    <h2>Game in progress</h2>
+    <p>You left a game unfinished. Pick up where you left off?</p>
+    <div class="btns">
+      <button class="pbtn" onclick="resumeGame()">Carry On</button>
+      <button class="pbtn alt" onclick="discardSaveAndSetup()">Start Fresh</button>
+    </div>
+  </div>
+</div>
+
+<div id="passModal" class="overlay hidden">
+  <div class="panel">
+    <h2 id="passName">Pass the device</h2>
+    <p>Hand it over, then tap below when you're ready to see your cards.</p>
+    <div class="btns">
+      <button class="pbtn" onclick="passContinue()">Show My Cards</button>
+    </div>
+  </div>
+</div>
+
+<div id="colorModal" class="overlay hidden">
+  <div class="panel">
+    <h2>Call a colour</h2>
+    <p>Your wild card sets the colour to follow.</p>
+    <div id="colorChoices">
+      <div class="cchoice" style="background:var(--rose)" onclick="colorPick('rose')"></div>
+      <div class="cchoice" style="background:var(--amber)" onclick="colorPick('amber')"></div>
+      <div class="cchoice" style="background:var(--teal)" onclick="colorPick('teal')"></div>
+      <div class="cchoice" style="background:var(--violet)" onclick="colorPick('violet')"></div>
+    </div>
+  </div>
+</div>
+
+<div id="drawnModal" class="overlay hidden">
+  <div class="panel">
+    <h2>You picked up…</h2>
+    <div id="drawnCardHolder"></div>
+    <p>You can play this one straight away, or hang on to it.</p>
+    <div class="btns">
+      <button class="pbtn" onclick="drawnPlay()">Play It</button>
+      <button class="pbtn alt" onclick="drawnKeep()">Keep It</button>
+    </div>
+  </div>
+</div>
+
+<div id="overModal" class="overlay hidden">
+  <div class="panel">
+    <h2 id="overTitle">Game Over</h2>
+    <p id="overText"></p>
+    <div class="btns">
+      <button class="pbtn" onclick="backToSetup()">New Game</button>
+      <button class="pbtn alt" onclick="goMenu()">Main Menu</button>
+    </div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+'use strict';
+/* ================= EMPTY HAND =================
+   Shedding card game. Saves after every turn so players can
+   leave and resume. Menu button returns to index.html.      */
+
+var SAVE_KEY = 'emptyhand_save_v1';
+var COLORS = ['rose','amber','teal','violet'];
+var COLOR_NAMES = { rose:'Rose', amber:'Amber', teal:'Teal', violet:'Violet' };
+var BOT_NAMES = ['Pip','Bo','Kit','Wren','Fox'];
+var G = null;
+var lock = false;
+var pendingWildIdx = -1;
+
+/* ---------- helpers ---------- */
+function $(id){ return document.getElementById(id); }
+function shuffle(a){
+  for (var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function toast(msg){
+  var d = document.createElement('div');
+  d.className = 'toast';
+  d.textContent = msg;
+  $('toasts').appendChild(d);
+  setTimeout(function(){ d.remove(); }, 3000);
+}
+function showScreen(name){
+  $('setupScreen').classList.toggle('hidden', name !== 'setup');
+  $('gameScreen').classList.toggle('hidden', name !== 'game');
+}
+function showModal(id, on){ $(id).classList.toggle('hidden', !on); }
+function goMenu(){ if (G && !G.over) save(); location.href = 'index.html'; }
+
+/* ---------- deck ---------- */
+function newDeck(){
+  var d = [], c, n, k, i;
+  for (i = 0; i < COLORS.length; i++){
+    c = COLORS[i];
+    d.push({ color:c, kind:'num', num:0 });
+    for (n = 1; n <= 9; n++){
+      d.push({ color:c, kind:'num', num:n });
+      d.push({ color:c, kind:'num', num:n });
+    }
+    var kinds = ['skip','rev','d2'];
+    for (k = 0; k < kinds.length; k++){
+      d.push({ color:c, kind:kinds[k] });
+      d.push({ color:c, kind:kinds[k] });
+    }
+  }
+  for (i = 0; i < 4; i++){
+    d.push({ color:'black', kind:'wild' });
+    d.push({ color:'black', kind:'w4' });
+  }
+  return shuffle(d);
+}
+function topCard(){ return G.discard[G.discard.length - 1]; }
+function cardLabel(c){
+  if (c.kind === 'num')  return COLOR_NAMES[c.color] + ' ' + c.num;
+  if (c.kind === 'skip') return COLOR_NAMES[c.color] + ' Miss a Go';
+  if (c.kind === 'rev')  return COLOR_NAMES[c.color] + ' Turnaround';
+  if (c.kind === 'd2')   return COLOR_NAMES[c.color] + ' Pick Up 2';
+  if (c.kind === 'wild') return 'a Wild';
+  return 'a Wild Pick Up 4';
+}
+function glyphFor(c){
+  if (c.kind === 'num')  return String(c.num);
+  if (c.kind === 'skip') return '✖';
+  if (c.kind === 'rev')  return '⟲';
+  if (c.kind === 'd2')   return '+2';
+  if (c.kind === 'w4')   return '+4';
+  return '★';
+}
+function cardHTML(c, big, extraCls){
+  var cls = 'card ' + c.color + (big ? ' big' : '') + (extraCls ? ' ' + extraCls : '');
+  var g = glyphFor(c);
+  return '<div class="' + cls + '">' +
+         '<span class="corner">' + g + '</span>' +
+         '<span class="glyph">' + g + '</span></div>';
+}
+function isPlayable(c){
+  var t = topCard();
+  if (c.color === 'black') return true;
+  if (c.color === G.color) return true;
+  if (c.kind !== 'num' && c.kind === t.kind) return true;
+  if (c.kind === 'num' && t.kind === 'num' && c.num === t.num) return true;
+  return false;
+}
+
+/* ---------- save / restore ---------- */
+function save(){
+  if (!G || G.over) return;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(G)); } catch(e){}
+}
+function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch(e){} }
+function loadSave(){
+  try {
+    var s = localStorage.getItem(SAVE_KEY);
+    if (!s) return null;
+    var g = JSON.parse(s);
+    if (g && g.players && g.players.length >= 2 && g.discard && g.discard.length && !g.over) return g;
+  } catch(e){}
+  return null;
+}
+
+/* ---------- setup screen ---------- */
+function buildRows(){
+  var n = parseInt($('countSel').value, 10);
+  var host = $('playerRows');
+  host.innerHTML = '';
+  for (var i = 0; i < n; i++){
+    var row = document.createElement('div');
+    row.className = 'prow';
+    row.dataset.idx = i;
+    if (i === 0){
+      row.dataset.type = 'human';
+      row.innerHTML =
+        '<div class="rowtop"><span class="ptitle">Player 1 (You)</span></div>' +
+        '<input type="text" maxlength="14" placeholder="Your name" value="Player 1" data-name>';
+    } else {
+      row.dataset.type = 'cpu';
+      row.innerHTML =
+        '<div class="rowtop"><span class="ptitle">Player ' + (i + 1) + '</span>' +
+        '<div class="seg">' +
+        '<button type="button" data-t="human" onclick="setType(this)">Human</button>' +
+        '<button type="button" data-t="cpu" class="on" onclick="setType(this)">Computer</button>' +
+        '</div></div>' +
+        '<input type="text" maxlength="14" class="hidden" placeholder="Name" value="Player ' + (i + 1) + '" data-name>' +
+        '<span class="botname">🤖 ' + BOT_NAMES[(i - 1) % BOT_NAMES.length] + '</span>';
+    }
+    host.appendChild(row);
+  }
+}
+function setType(btn){
+  var row = btn.closest('.prow');
+  row.dataset.type = btn.dataset.t;
+  var segBtns = row.querySelectorAll('.seg button');
+  for (var i = 0; i < segBtns.length; i++) segBtns[i].classList.toggle('on', segBtns[i] === btn);
+  row.querySelector('[data-name]').classList.toggle('hidden', btn.dataset.t !== 'human');
+  row.querySelector('.botname').classList.toggle('hidden', btn.dataset.t === 'human');
+}
+function startFromSetup(){
+  var rows = $('playerRows').children;
+  var players = [];
+  for (var i = 0; i < rows.length; i++){
+    var human = rows[i].dataset.type === 'human';
+    var name;
+    if (human){
+      name = rows[i].querySelector('[data-name]').value.trim() || ('Player ' + (i + 1));
+    } else {
+      name = BOT_NAMES[(i - 1 + BOT_NAMES.length) % BOT_NAMES.length];
+    }
+    players.push({ name:name, human:human });
+  }
+  startGame(players);
+}
+function backToSetup(){
+  showModal('overModal', false);
+  G = null;
+  clearSave();
+  showScreen('setup');
+  buildRows();
+}
+function discardSaveAndSetup(){
+  showModal('resumeModal', false);
+  clearSave();
+  showScreen('setup');
+  buildRows();
+}
+
+/* ---------- game lifecycle ---------- */
+function startGame(players){
+  var humans = 0;
+  for (var i = 0; i < players.length; i++) if (players[i].human) humans++;
+  G = {
+    players: players.map(function(p){ return { name:p.name, human:p.human, hand:[] }; }),
+    draw: newDeck(),
+    discard: [],
+    cur: 0, dir: 1, color: null,
+    viewIndex: -1, humans: humans, over: false
+  };
+  for (var r = 0; r < 7; r++)
+    for (var p = 0; p < G.players.length; p++)
+      G.players[p].hand.push(G.draw.pop());
+  var c = G.draw.pop();
+  while (c.kind !== 'num'){ G.draw.unshift(c); c = G.draw.pop(); }
+  G.discard.push(c);
+  G.color = c.color;
+  if (G.humans === 1){
+    for (var h = 0; h < G.players.length; h++) if (G.players[h].human) G.viewIndex = h;
+  }
+  showScreen('game');
+  toast('Turned over: ' + cardLabel(c));
+  beginTurn();
+}
+function resumeGame(){
+  showModal('resumeModal', false);
+  var g = loadSave();
+  if (!g){ showScreen('setup'); buildRows(); return; }
+  G = g;
+  showScreen('game');
+  toast('Welcome back!');
+  beginTurn();
+}
+function nextIdx(steps){
+  var n = G.players.length;
+  return ((G.cur + G.dir * steps) % n + n) % n;
+}
+function drawCards(pIdx, n){
+  var last = null;
+  for (var i = 0; i < n; i++){
+    if (!G.draw.length){
+      if (G.discard.length > 1){
+        var t = G.discard.pop();
+        G.draw = shuffle(G.discard);
+        G.discard = [t];
+        toast('Shuffling the pile back in…');
+      } else break;
+    }
+    last = G.draw.pop();
+    G.players[pIdx].hand.push(last);
+  }
+  return last;
+}
+function beginTurn(){
+  if (!G || G.over) return;
+  lock = false;
+  render();
+  save();
+  var p = G.players[G.cur];
+  if (!p.human){
+    setStatus(p.name + ' is thinking…');
+    lock = true;
+    setTimeout(aiTurn, 950);
+  } else if (G.humans > 1 && G.viewIndex !== G.cur){
+    lock = true;
+    $('passName').textContent = 'Pass the device to ' + p.name;
+    showModal('passModal', true);
+  } else {
+    G.viewIndex = G.cur;
+    setStatus('Your turn, ' + p.name + '!');
+    render();
+  }
+}
+function passContinue(){
+  showModal('passModal', false);
+  G.viewIndex = G.cur;
+  lock = false;
+  setStatus('Your turn, ' + G.players[G.cur].name + '!');
+  render();
+  save();
+}
+function applyPlay(pIdx, cardIdx, chosenColor){
+  lock = true;
+  var p = G.players[pIdx];
+  var c = p.hand.splice(cardIdx, 1)[0];
+  G.discard.push(c);
+  G.color = (c.color === 'black') ? (chosenColor || 'rose') : c.color;
+  toast(p.name + ' plays ' + cardLabel(c) + (c.color === 'black' ? ' → ' + COLOR_NAMES[G.color] : ''));
+  if (p.hand.length === 1) setTimeout(function(){ toast('🔔 ' + p.name + ' — last card!'); }, 500);
+  render();
+  if (p.hand.length === 0) return gameOver(p);
+  var step = 1;
+  var n = G.players.length;
+  if (c.kind === 'skip'){
+    step = 2;
+    toast(G.players[nextIdx(1)].name + ' misses a go');
+  } else if (c.kind === 'rev'){
+    if (n === 2){ step = 2; toast('Turnaround — with two players that means another go'); }
+    else { G.dir *= -1; toast('Play turns around'); }
+  } else if (c.kind === 'd2'){
+    var v2 = nextIdx(1);
+    drawCards(v2, 2);
+    toast(G.players[v2].name + ' picks up 2 and misses a go');
+    step = 2;
+  } else if (c.kind === 'w4'){
+    var v4 = nextIdx(1);
+    drawCards(v4, 4);
+    toast(G.players[v4].name + ' picks up 4 and misses a go');
+    step = 2;
+  }
+  G.cur = nextIdx(step);
+  save();
+  setTimeout(beginTurn, 750);
+}
+function gameOver(winner){
+  G.over = true;
+  clearSave();
+  render();
+  var human = winner.human;
+  if (window.GGA && human){ GGA.award('eh_win'); if (G.players.length >= 4) GGA.award('eh_big'); GGA.haptic('success'); }
+  $('overTitle').textContent = human ? '🎉 ' + winner.name + ' wins!' : winner.name + ' wins!';
+  $('overText').textContent = human
+    ? 'Nicely played — you cleared your hand first.'
+    : 'Cleared out before you could. Go again?';
+  setTimeout(function(){ showModal('overModal', true); }, 700);
+}
+
+/* ---------- human input ---------- */
+function isMyTurn(){
+  return G && !G.over && !lock &&
+         G.players[G.cur].human && G.viewIndex === G.cur;
+}
+function onCardClick(i){
+  if (!isMyTurn()) return;
+  var c = G.players[G.cur].hand[i];
+  if (!c) return;
+  if (!isPlayable(c)){ toast("That one doesn't follow"); return; }
+  if (c.color === 'black'){
+    pendingWildIdx = i;
+    showModal('colorModal', true);
+  } else {
+    applyPlay(G.cur, i, null);
+  }
+}
+function colorPick(col){
+  showModal('colorModal', false);
+  if (pendingWildIdx < 0) return;
+  var i = pendingWildIdx;
+  pendingWildIdx = -1;
+  applyPlay(G.cur, i, col);
+}
+function onDrawPileTap(){ onDraw(); }
+function onDraw(){
+  if (!isMyTurn()) return;
+  lock = true;
+  var c = drawCards(G.cur, 1);
+  render();
+  save();
+  if (!c){
+    toast('Nothing left to pick up');
+    G.cur = nextIdx(1);
+    setTimeout(beginTurn, 600);
+    return;
+  }
+  toast('You picked up ' + cardLabel(c));
+  if (isPlayable(c)){
+    $('drawnCardHolder').innerHTML = cardHTML(c, true);
+    showModal('drawnModal', true);
+  } else {
+    setTimeout(function(){
+      toast("Can't be played — turn passes");
+      G.cur = nextIdx(1);
+      beginTurn();
+    }, 900);
+  }
+}
+function drawnPlay(){
+  showModal('drawnModal', false);
+  var p = G.players[G.cur];
+  var i = p.hand.length - 1;
+  var c = p.hand[i];
+  if (c.color === 'black'){
+    pendingWildIdx = i;
+    showModal('colorModal', true);
+  } else {
+    applyPlay(G.cur, i, null);
+  }
+}
+function drawnKeep(){
+  showModal('drawnModal', false);
+  G.cur = nextIdx(1);
+  beginTurn();
+}
+
+/* ---------- AI ---------- */
+function bestColor(hand){
+  var counts = { rose:0, amber:0, teal:0, violet:0 };
+  for (var i = 0; i < hand.length; i++)
+    if (hand[i].color !== 'black') counts[hand[i].color]++;
+  var best = COLORS[Math.floor(Math.random() * 4)], bestN = -1;
+  for (var c in counts) if (counts[c] > bestN){ bestN = counts[c]; best = c; }
+  return best;
+}
+function aiTurn(){
+  if (!G || G.over) return;
+  var p = G.players[G.cur];
+  var playIdx = -1, wildIdx = -1;
+  for (var i = 0; i < p.hand.length; i++){
+    if (!isPlayable(p.hand[i])) continue;
+    if (p.hand[i].color !== 'black'){ playIdx = i; break; }
+    if (wildIdx < 0) wildIdx = i;
+  }
+  if (playIdx < 0) playIdx = wildIdx;
+  if (playIdx >= 0){
+    var c = p.hand[playIdx];
+    applyPlay(G.cur, playIdx, c.color === 'black' ? bestColor(p.hand) : null);
+    return;
+  }
+  var drawn = drawCards(G.cur, 1);
+  toast(p.name + ' picks up');
+  render();
+  save();
+  if (drawn && isPlayable(drawn)){
+    setTimeout(function(){
+      applyPlay(G.cur, p.hand.length - 1, drawn.color === 'black' ? bestColor(p.hand) : null);
+    }, 800);
+  } else {
+    setTimeout(function(){
+      G.cur = nextIdx(1);
+      beginTurn();
+    }, 800);
+  }
+}
+
+/* ---------- rendering ---------- */
+window.addEventListener('resize', function(){ if (typeof G !== 'undefined' && G) render(); });
+function seatPlan(n){
+  if (n <= 1) return ['top'];
+  if (n === 2) return ['left','right'];
+  if (n === 3) return ['left','top','right'];
+  if (n === 4) return ['left','top','top','right'];
+  if (n === 5) return ['left','left','top','right','right'];
+  return ['left','left','top','top','right','right'];
+}
+function setStatus(msg){ $('statusLine').textContent = msg; }
+function render(){
+  if (!G) return;
+  var i, p;
+  var seats = { top: $('seatTop'), left: $('seatLeft'), right: $('seatRight') };
+  seats.top.innerHTML = seats.left.innerHTML = seats.right.innerHTML = '';
+  var nP = G.players.length;
+  var base = (G.viewIndex >= 0) ? G.viewIndex : 0;
+  var opps = [];
+  for (i = 0; i < nP; i++){
+    var idx = (base + i) % nP;
+    if (idx !== G.viewIndex) opps.push(idx);
+  }
+  var phone = window.matchMedia && window.matchMedia('(max-width:600px)').matches;
+  var plan = phone ? opps.map(function(){ return 'top'; }) : seatPlan(opps.length);
+  for (i = 0; i < opps.length; i++){
+    p = G.players[opps[i]];
+    var pod = document.createElement('div');
+    pod.className = 'pod' + (opps[i] === G.cur ? ' turn' : '') + (p.hand.length === 1 ? ' lastcard' : '');
+    var minis = '';
+    var m = Math.min(p.hand.length, 7);
+    for (var k = 0; k < m; k++) minis += '<div class="mini"></div>';
+    pod.innerHTML = '<div class="pname">' + (p.human ? '👤 ' : '🤖 ') + p.name + '</div>' +
+                    '<div class="pcount">' + p.hand.length + ' card' + (p.hand.length === 1 ? ' — last!' : 's') + '</div>' +
+                    '<div class="minis">' + minis + '</div>';
+    seats[plan[i]].appendChild(pod);
+  }
+  $('drawCount').textContent = G.draw.length;
+  $('discardEl').innerHTML = cardHTML(topCard(), true);
+  var dotColors = { rose:'#f0455f', amber:'#ffb02e', teal:'#17b890', violet:'#5b6ee1' };
+  $('colorDot').style.background = dotColors[G.color] || '#888';
+  $('dirBadge').textContent = G.dir === 1 ? '⟳' : '⟲';
+  var handEl = $('hand'), hint = $('handHint');
+  var viewer = (G.viewIndex >= 0) ? G.players[G.viewIndex] : null;
+  if (viewer && viewer.human){
+    $('handName').textContent = viewer.name + ' — ' + viewer.hand.length + ' card' + (viewer.hand.length === 1 ? '' : 's');
+    hint.classList.add('hidden');
+    handEl.innerHTML = '';
+    var myTurn = (G.viewIndex === G.cur) && !G.over;
+    for (i = 0; i < viewer.hand.length; i++){
+      var c = viewer.hand[i];
+      var extra = '';
+      if (myTurn && !lock) extra = isPlayable(c) ? 'playable' : 'dim';
+      var wrap = document.createElement('div');
+      wrap.innerHTML = cardHTML(c, false, extra);
+      var el = wrap.firstChild;
+      (function(idx){ el.addEventListener('click', function(){ onCardClick(idx); }); })(i);
+      handEl.appendChild(el);
+    }
+    $('drawBtn').classList.toggle('hidden', !(myTurn && !lock));
+  } else {
+    $('handName').textContent = '';
+    handEl.innerHTML = '';
+    $('drawBtn').classList.add('hidden');
+    hint.textContent = 'Waiting for the next player…';
+    hint.classList.remove('hidden');
+  }
+}
+
+/* ---------- boot ---------- */
+window.addEventListener('load', function(){
+  buildRows();
+  var saved = loadSave();
+  if (saved){
+    showModal('resumeModal', true);
+  } else {
+    showScreen('setup');
+  }
+});
+document.addEventListener('visibilitychange', function(){
+  if (document.visibilityState === 'hidden') save();
+});
+</script>
+</body>
+</html>

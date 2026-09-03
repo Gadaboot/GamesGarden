@@ -316,7 +316,7 @@ body::after{
   <div class="topbar">
     <a class="btn ghost" href="index.html" aria-label="Back to menu">&#9776; Menu</a>
     <div class="spacer"></div>
-    <div class="pill jack" id="pillJack" hidden>Jackpot <b id="jackVal">£1,000</b></div>
+    <div class="pill jack" id="pillJack" hidden>Prize Pot <b id="jackVal">£1,500</b></div>
     <button class="btn ghost" id="sndBtn" title="Sound">&#128266;</button>
   </div>
 
@@ -325,9 +325,9 @@ body::after{
     <div class="hero">
       <h1 class="logo"><span>Null Points</span></h1>
       <div class="sub">2 Player</div>
-      <p class="tag">We asked <em>100 people</em> to name as many answers as they could.<br>
+      <p class="tag">Every answer carries a <em>fame score</em> — how widely known it is.<br>
         Two answers each per question — pick from the board, <em>type it in</em>, or crack an <em>anagram</em>.<br>
-        Lowest total takes the round. First to <em>5 points</em> plays the final.</p>
+        The <em>obscure</em> ones cost you least. First to <em>5 points</em> takes on the final.</p>
       <div class="menu">
         <button class="btn big lime" id="playBtn">▶  Play</button>
         <button class="btn big ghost" id="howBtn">How to play</button>
@@ -340,13 +340,13 @@ body::after{
     <div class="card">
       <h2>How to play</h2>
       <ul class="rules">
-        <li><span class="num">1</span><span>Every question was put to <b>100 people</b>. Each correct answer they gave scores a point — so <b>obscure is good</b>.</span></li>
+        <li><span class="num">1</span><span>Every answer is scored <b>0 to 100</b> for how well known it is. The more obscure your pick, the less it costs you — so <b>dig deep</b>.</span></li>
         <li><span class="num">2</span><span>Players take turns on the same question: two answers each, four in all. You can't take one that's already gone.</span></li>
         <li><span class="num">3</span><span>Rounds come in three flavours, at random: <b>pick from the board</b>, <b>type it in</b> with nothing to choose from, or an <b>anagram</b> round — claim a jumbled answer, then unscramble it.</span></li>
-        <li><span class="num">4</span><span>A wrong answer — or one that isn't on our board — stops dead on <b>100</b>.</span></li>
+        <li><span class="num">4</span><span>An answer we don't recognise <b>maxes you out at 100</b>.</span></li>
         <li><span class="num">5</span><span>Lowest combined total wins the round and takes <b>1 point</b>. Level scores: drawn, nobody scores.</span></li>
-        <li><span class="num">6</span><span>An answer nobody gave is a <b>NULL ANSWER</b> — £250 on the jackpot.</span></li>
-        <li><span class="num">7</span><span>First to <b>5 points</b> plays the <b>final</b>: three typed guesses to find a null answer and win the jackpot.</span></li>
+        <li><span class="num">6</span><span>An answer so obscure it scores <b>zero</b> is a <b>NULL</b> — that puts £400 on the prize pot.</span></li>
+        <li><span class="num">7</span><span>First to <b>5 points</b> goes through to the <b>final</b>: two typed guesses to land a null and take the pot.</span></li>
       </ul>
       <div class="center"><button class="btn lime" id="howBack">Got it</button></div>
     </div>
@@ -442,10 +442,10 @@ body::after{
     <div class="roundhead">
       <span class="roundtag type">The Final</span>
       <h2 class="q" id="finalTitle" style="margin-top:12px">Choose your category</h2>
-      <p class="hint" id="finalHint">One null answer wins the jackpot. You have three guesses.</p>
+      <p class="hint" id="finalHint">Land one null and the pot is yours. You get two guesses.</p>
     </div>
     <div class="finalpick" id="finalPick"></div>
-    <div class="lives" id="lives" hidden><i class="life"></i><i class="life"></i><i class="life"></i></div>
+    <div class="lives" id="lives" hidden><i class="life"></i><i class="life"></i></div>
 
     <div class="typebox" id="fTypeBox" hidden>
       <form class="typeform one" id="fTypeForm" autocomplete="off">
@@ -474,7 +474,7 @@ body::after{
       <div class="totlbl" id="matchTxt">5 – 3</div>
       <div class="totlbl" id="jackTxt" style="margin-top:14px"></div>
       <div id="fMissWrap" hidden>
-        <div class="misslbl">The null answers were</div>
+        <div class="misslbl">The nulls you missed</div>
         <div class="chips" id="fMissChips" style="justify-content:center"></div>
       </div>
       <div class="breakdown" id="breakdown"></div>
@@ -492,8 +492,8 @@ body::after{
 "use strict";
 /* ============================================================
    QUESTION BANK
-   [name, score, [aliases]]   score  0-100 = how many of 100 people said it
-                              score  -1    = not a valid answer (100 points)
+   [name, score, [aliases]]   score  0-100 = fame score: how widely known the answer is
+                              score  -1    = not one of ours (maxes out at 100)
    closed:true  = the listed correct answers are the COMPLETE set,
                   so the question is safe to use as a type-it-in round.
    ============================================================ */
@@ -929,7 +929,7 @@ function newMatch(n1, n2){
     p:[ {name:n1||"Player 1", pts:0, round:0},
         {name:n2||"Player 2", pts:0, round:0} ],
     roundNo:0, pickIdx:0, q:null, mode:"board", taken:[], used:new Set(),
-    jackpot:1000, finalist:null, guesses:0, wonJackpot:false,
+    jackpot:1500, finalist:null, guesses:0, wonJackpot:false,
     final:null, fTaken:[], history:[]
   };
   $("nm0").textContent = state.p[0].name;
@@ -1130,15 +1130,16 @@ function reveal(entry, wrong, tileBtn, typedText){
     }
     state.p[pi].round += score;
     state.history.push({r:state.roundNo, q:state.q.q, p:pi, a:label, s:score, wrong:wrong});
-    if(!wrong && score===0){ state.jackpot += 250; confetti(120); fanfare(); }
+    if(!wrong && score===0){ state.jackpot += 400; confetti(120); fanfare();
+      if(window.GGA && !state.p[pi].cpu) GGA.award('np_null'); }
     renderPips(); updateHUD();
 
     const v = $("verdict");
     if(wrong && state.mode==="anagram" && entry){
       v.textContent = "✗ It was " + entry[0] + " — 100 points!"; v.className = "verdict bad";
     }
-    else if(wrong){ v.textContent = "✗ Not a valid answer — 100 points!"; v.className = "verdict bad"; }
-    else if(score===0){ v.textContent = "★ NULL ANSWER! +£250 on the jackpot"; v.className = "verdict good"; }
+    else if(wrong){ v.textContent = "✗ Not one of ours — 100 points!"; v.className = "verdict bad"; }
+    else if(score===0){ v.textContent = "★ NULL! +£400 on the pot"; v.className = "verdict good"; }
     else if(score<=6){ v.textContent = state.mode==="anagram"
         ? "Superb — hardly anybody solved that one." : "Superb — barely anybody said that."; v.className = "verdict good"; }
     else if(score<=25){ v.textContent = "A good, low score."; v.className = "verdict good"; }
@@ -1289,7 +1290,7 @@ function startFinal(){
   state.fTaken = [];
   const name = state.p[state.finalist].name;
   $("finalTitle").textContent = name + ", choose your category";
-  $("finalHint").textContent = "Three guesses. One null answer wins £" + state.jackpot.toLocaleString("en-GB") + ".";
+  $("finalHint").textContent = "Two guesses. Land a null and you take £" + state.jackpot.toLocaleString("en-GB") + ".";
   $("finalBoard").hidden = true;
   $("fTypeBox").hidden = true;
   $("lives").hidden = true;
@@ -1361,7 +1362,7 @@ function finalGuess(entry, typedText){
     $("fNextBtn").disabled = false;
     const v = $("fVerdict");
     if(!wrong && score===0){
-      v.textContent = "★ NULL ANSWER! The jackpot is won!";
+      v.textContent = "★ NULL! The pot is yours!";
       v.className = "verdict good";
       confetti(220); fanfare();
       state.wonJackpot = true;
@@ -1369,9 +1370,9 @@ function finalGuess(entry, typedText){
       $("fNextBtn").onclick = endMatch;
     } else {
       v.textContent = wrong ? "✗ Not on our board." :
-        "Not a null answer — " + score + (score===1 ? " person" : " people") + " said that.";
+        "Not a null — that one scores " + score + ".";
       v.className = "verdict bad";
-      if(state.guesses >= 3){
+      if(state.guesses >= 2){
         $("fNextBtn").textContent = "See the result →";
         $("fNextBtn").onclick = endMatch;
       } else {
@@ -1394,14 +1395,19 @@ function finalGuess(entry, typedText){
    ============================================================ */
 function endMatch(){
   const w = state.finalist, l = 1 - w;
+  if(window.GGA && !state.p[w].cpu){
+    GGA.award('np_win');
+    if(state.wonJackpot) GGA.award('np_pot');
+    GGA.haptic('success');
+  }
   $("rankTxt").textContent = state.wonJackpot
-    ? state.p[w].name + " wins the jackpot!"
+    ? state.p[w].name + " takes the pot!"
     : state.p[w].name + " wins the match";
   $("matchTxt").textContent = "Match " + state.p[w].pts + " – " + state.p[l].pts +
                              "  ·  " + state.p[l].name + " runner-up";
   $("jackTxt").innerHTML = state.wonJackpot
-    ? "Jackpot won: <b style='color:var(--lime)'>£" + state.jackpot.toLocaleString("en-GB") + "</b>"
-    : "Jackpot not won — it rolls over to £" + (state.jackpot + 250).toLocaleString("en-GB");
+    ? "Pot won: <b style='color:var(--lime)'>£" + state.jackpot.toLocaleString("en-GB") + "</b>"
+    : "Pot not won — it rolls over to £" + (state.jackpot + 400).toLocaleString("en-GB");
 
   /* reveal the null answers they didn't find */
   const fw = $("fMissWrap");

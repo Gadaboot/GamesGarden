@@ -597,6 +597,7 @@
           tokens[p.color].forEach((r,j)=>{
             if(r>=0&&r<=50&&(START[p.color]+r)%52===g){
               tokens[p.color][j]=-1; extra=true;
+              if(window.GGA && players[cur] && players[cur].type==='human') GGA.award('ludo_bump');
               msg(`${NICE[color]} bumped ${NICE[p.color]}! 💥`);
             }
           });
@@ -611,6 +612,7 @@
   }
   function win(color){
     phase="over"; updateRollHint();
+    if(window.GGA && players.some(p=>p.color===color && p.type==='human')){ GGA.award('ludo_win'); GGA.haptic('success'); }
     document.getElementById("winText").textContent=`${EMO[color]} ${NICE[color]} wins!`;
     document.getElementById("winOverlay").classList.remove("hidden");
     confetti();

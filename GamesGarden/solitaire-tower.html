@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Solitaire Tower</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+  html,body { height:100%; overflow:hidden; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg,#4fa8e8 0%,#8ecdf5 40%,#c8e9fb 70%,#9fdd8f 100%);
+    color:#fff;
+    display:flex; flex-direction:column; align-items:center;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    position:relative;
+  }
+  /* drifting clouds */
+  .cloud { position:absolute; pointer-events:none; z-index:0; opacity:.9; animation: drift linear infinite; }
+  .cloud .puff { position:absolute; background:#fff; border-radius:50%; }
+  @keyframes drift { from{ transform:translateX(-160px);} to{ transform:translateX(110vw);} }
+  /* sun */
+  #sun { position:absolute; top:4%; right:6%; width:70px; height:70px; border-radius:50%;
+    background:radial-gradient(circle,#fff6c9 20%,#ffdf6b 60%,#ffc93c 100%);
+    box-shadow:0 0 45px 18px rgba(255,223,107,.55); z-index:0; pointer-events:none; }
+  /* castle */
+  .towers-bg { position:absolute; bottom:0; left:0; width:100%; height:34%; z-index:0; opacity:.9; pointer-events:none; }
+
+  #topbar {
+    width:100%; max-width:560px; display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px 4px; z-index:5;
+  }
+  .btn {
+    background: linear-gradient(180deg,#ffd76a,#e6a817);
+    color:#3a2200; border:none; border-radius:12px;
+    padding:9px 16px; font-size:15px; font-weight:700; cursor:pointer;
+    box-shadow: 0 3px 0 #9a6d00, 0 4px 10px rgba(0,0,0,.4);
+  }
+  .btn:active { transform:translateY(2px); box-shadow:0 1px 0 #9a6d00; }
+  .btn.secondary { background:linear-gradient(180deg,#6db9f0,#3d8fd4); color:#fff; box-shadow:0 3px 0 #256394,0 4px 10px rgba(0,0,0,.25); }
+  .btn.secondary:active { box-shadow:0 1px 0 #256394; }
+  h1 { font-size:17px; text-align:center; color:#fff; text-shadow:0 2px 6px rgba(41,100,160,.85); letter-spacing:.5px; }
+
+  #stats {
+    width:100%; max-width:560px; display:flex; justify-content:space-around;
+    padding:6px 12px; z-index:5; font-size:13px;
+  }
+  #stats .stat { background:rgba(255,255,255,.82); border:1px solid rgba(255,255,255,.95); border-radius:10px; padding:5px 10px; text-align:center; min-width:68px; box-shadow:0 2px 6px rgba(40,90,140,.2); }
+  #stats .label { color:#5a8ac2; font-size:10px; text-transform:uppercase; letter-spacing:1px; }
+  #stats .value { color:#e8615a; font-weight:800; font-size:16px; }
+
+  #board-wrap { flex:1; width:100%; max-width:560px; display:flex; flex-direction:column; justify-content:space-between; z-index:5; padding:4px 8px 10px; }
+  #board { position:relative; width:100%; }
+
+  .card {
+    position:absolute; border-radius:8%/6%; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-weight:800; transition: transform .18s, opacity .25s, box-shadow .18s;
+    z-index:1;
+  }
+  .card.face-up { background:linear-gradient(170deg,#ffffff,#e9e4f5); box-shadow:0 2px 5px rgba(0,0,0,.5); border:1px solid #b9a; }
+  .card.face-down {
+    background: repeating-linear-gradient(135deg,#5aa9e6,#5aa9e6 6px,#4a90d9 6px,#4a90d9 12px);
+    border:2px solid #fff; box-shadow:0 2px 5px rgba(30,70,110,.4);
+  }
+  .card.face-down::after { content:'✦'; color:#fff6c9; font-size:1.1em; opacity:.95; }
+  .card .rank { font-size:1em; line-height:1; }
+  .card .suit { font-size:.95em; line-height:1.1; }
+  .card.red { color:#c62839; } .card.black { color:#232333; }
+  .card.playable-glow { box-shadow:0 0 10px 3px rgba(255,215,106,.75), 0 2px 5px rgba(0,0,0,.5); }
+  .card.removing { transform:scale(.2) rotate(25deg); opacity:0; }
+
+  #bottom { display:flex; align-items:flex-end; justify-content:center; gap:12px; padding:6px 0 4px; width:100%; }
+  #waste { position:fixed; left:50%; transform:translateX(-50%); z-index:20; }
+  .pile { position:relative; border-radius:8%/6%; flex-shrink:0; }
+  .pile .base { position:absolute; inset:0; border:2px dashed rgba(255,255,255,.8); border-radius:inherit; }
+  .pile-card {
+    position:absolute; inset:0; border-radius:inherit;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:800;
+  }
+  #stock { position:relative; cursor:pointer; flex:1; min-width:0; }
+  .stock-card {
+    position:absolute; top:0; border-radius:8%/6%;
+    background: repeating-linear-gradient(135deg,#5aa9e6,#5aa9e6 6px,#4a90d9 6px,#4a90d9 12px);
+    border:2px solid #fff; box-shadow:-2px 2px 5px rgba(30,70,110,.35);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stock-card::after { content:'✦'; color:#fff6c9; font-size:1.1em; }
+  #stock-count {
+    position:absolute; top:-9px; left:-6px; background:#ffd76a; color:#3a2200;
+    border-radius:50%; min-width:22px; height:22px; font-size:12px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; z-index:30; box-shadow:0 2px 4px rgba(0,0,0,.4);
+  }
+  #waste .pile-card { background:linear-gradient(170deg,#ffffff,#e9e4f5); border:1px solid #b9a; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+  .side-btns { display:flex; flex-direction:column; gap:8px; }
+
+  #overlay, #resumeOverlay {
+    position:fixed; inset:0; background:rgba(45,90,130,.55); z-index:50;
+    display:none; align-items:center; justify-content:center; backdrop-filter:blur(3px);
+  }
+  #resumeOverlay { z-index:60; }
+  #overlay.show, #resumeOverlay.show { display:flex; }
+  #overlay .panel, #resumeOverlay .panel {
+    background:linear-gradient(180deg,#ffffff,#eaf4ff); border:3px solid #ffc93c; border-radius:20px;
+    padding:28px 32px; text-align:center; max-width:320px; width:86%;
+    box-shadow:0 10px 40px rgba(20,50,80,.45);
+  }
+  #overlay h2, #resumeOverlay h2 { color:#f08c00; font-size:26px; margin-bottom:10px; }
+  #overlay p, #resumeOverlay p { color:#45688a; font-size:15px; margin-bottom:6px; }
+  #resumeOverlay .btn { margin:4px; }
+  #overlay .big { font-size:22px; color:#2d3a4a; font-weight:800; margin:10px 0 16px; }
+  #overlay .btn { margin:4px; }
+  #toast {
+    position:fixed; bottom:130px; left:50%; transform:translateX(-50%); z-index:40;
+    background:rgba(0,0,0,.65); border:1px solid #ffd76a; color:#ffd76a;
+    padding:8px 18px; border-radius:20px; font-weight:700; font-size:15px;
+    opacity:0; transition:opacity .3s; pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<div id="sun"></div>
+<svg class="towers-bg" viewBox="0 0 400 140" preserveAspectRatio="xMidYMax slice">
+  <!-- rolling hills -->
+  <ellipse cx="80" cy="150" rx="180" ry="42" fill="#7ecf6f"/>
+  <ellipse cx="330" cy="155" rx="200" ry="48" fill="#69c25e"/>
+  <!-- castle wall -->
+  <rect x="90" y="95" width="220" height="45" fill="#f3e3c6"/>
+  <rect x="90" y="90" width="14" height="8" fill="#f3e3c6"/><rect x="118" y="90" width="14" height="8" fill="#f3e3c6"/>
+  <rect x="146" y="90" width="14" height="8" fill="#f3e3c6"/><rect x="174" y="90" width="14" height="8" fill="#f3e3c6"/>
+  <rect x="212" y="90" width="14" height="8" fill="#f3e3c6"/><rect x="240" y="90" width="14" height="8" fill="#f3e3c6"/>
+  <rect x="268" y="90" width="14" height="8" fill="#f3e3c6"/><rect x="296" y="90" width="14" height="8" fill="#f3e3c6"/>
+  <!-- gate -->
+  <path d="M185 140 v-24 a15 15 0 0 1 30 0 v24 z" fill="#8a5a33"/>
+  <!-- left tower -->
+  <rect x="40" y="52" width="36" height="88" fill="#f9efdd"/>
+  <polygon points="34,52 82,52 58,20" fill="#e8615a"/>
+  <rect x="53" y="66" width="10" height="14" rx="5" fill="#5aa9e6"/>
+  <line x1="58" y1="20" x2="58" y2="8" stroke="#8a5a33" stroke-width="2"/>
+  <polygon points="58,8 76,13 58,18" fill="#ffd76a"/>
+  <!-- centre tower -->
+  <rect x="178" y="28" width="44" height="112" fill="#f9efdd"/>
+  <polygon points="171,28 229,28 200,-8" fill="#e8615a"/>
+  <rect x="194" y="46" width="12" height="16" rx="6" fill="#5aa9e6"/>
+  <!-- right tower -->
+  <rect x="324" y="52" width="36" height="88" fill="#f9efdd"/>
+  <polygon points="318,52 366,52 342,20" fill="#e8615a"/>
+  <rect x="337" y="66" width="10" height="14" rx="5" fill="#5aa9e6"/>
+  <line x1="342" y1="20" x2="342" y2="8" stroke="#8a5a33" stroke-width="2"/>
+  <polygon points="342,8 360,13 342,18" fill="#ffd76a"/>
+</svg>
+
+<div id="topbar">
+  <button class="btn secondary" onclick="location.href='index.html'">☰ Menu</button>
+  <h1>✨ Solitaire Tower ✨</h1>
+  <button class="btn" onclick="newGame()">New</button>
+</div>
+
+<div id="stats">
+  <div class="stat"><div class="label">Round</div><div class="value" id="round">1</div></div>
+  <div class="stat"><div class="label">Score</div><div class="value" id="score">0</div></div>
+  <div class="stat"><div class="label">Streak</div><div class="value" id="streak">×0</div></div>
+  <div class="stat"><div class="label">Best</div><div class="value" id="best">0</div></div>
+</div>
+
+<div id="board-wrap">
+  <div id="board"></div>
+  <div id="bottom">
+    <div class="side-btns"><button class="btn secondary" id="undoBtn" onclick="undo()">↩ Undo</button></div>
+    <div id="stock" onclick="draw()"><div id="stock-count">23</div></div>
+    <div class="pile" id="waste"><div class="base"></div><div class="pile-card" id="waste-card"></div></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="overlay">
+  <div class="panel">
+    <h2 id="ov-title">Tower Cleared!</h2>
+    <p id="ov-msg"></p>
+    <div class="big" id="ov-score"></div>
+    <button class="btn" id="ov-primary">Play Again</button>
+    <button class="btn secondary" onclick="location.href='index.html'">Menu</button>
+  </div>
+</div>
+
+<div id="resumeOverlay">
+  <div class="panel">
+    <h2>Welcome back ✨</h2>
+    <p id="resumeInfo"></p>
+    <button class="btn" id="btnResume">Continue Game</button>
+    <button class="btn secondary" id="btnFresh">Start New</button>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+'use strict';
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+// Tri-peaks layout: x in column units (0..9), row 0 = peaks
+const LAYOUT = [
+  [1.5, 4.5, 7.5],
+  [1, 2, 4, 5, 7, 8],
+  [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5],
+  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+];
+
+let tableau = [], stock = [], waste = [], history = [];
+let score = 0, streak = 0, peaksCleared = 0, gameOver = false, round = 1;
+let best = 0;
+try { best = parseInt(localStorage.getItem('st-best') || '0', 10) || 0; } catch(e) {}
+/* carry a player's best score and any game in progress over from the old build */
+try {
+  if (localStorage.getItem('st-best') === null && localStorage.getItem('mts-best') !== null) {
+    localStorage.setItem('st-best', localStorage.getItem('mts-best'));
+    best = parseInt(localStorage.getItem('st-best') || '0', 10) || 0;
+  }
+  if (localStorage.getItem('gg-save-solitaire-tower') === null &&
+      localStorage.getItem('gg-save-magic-towers') !== null) {
+    localStorage.setItem('gg-save-solitaire-tower', localStorage.getItem('gg-save-magic-towers'));
+  }
+} catch(e) {}
+
+/* ---------- save / resume ---------- */
+const SAVE_KEY = 'gg-save-solitaire-tower';
+function saveGame() {
+  if (gameOver) return;
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      tab: tableau.map(c => ({ rank: c.rank, suit: c.suit, row: c.row, x: c.x, removed: c.removed })),
+      stock: stock.map(c => ({ rank: c.rank, suit: c.suit })),
+      waste: waste.map(c => ({ rank: c.rank, suit: c.suit })),
+      score: score, streak: streak, peaksCleared: peaksCleared, round: round
+    }));
+  } catch(e) {}
+}
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch(e) {} }
+function loadSave() {
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch(e) { return null; }
+}
+
+const boardEl = document.getElementById('board');
+let cardW = 40, cardH = 56;
+
+function makeClouds() {
+  for (let i = 0; i < 5; i++) {
+    const c = document.createElement('div');
+    c.className = 'cloud';
+    const scale = 0.6 + Math.random() * 0.8;
+    c.style.top = (3 + Math.random() * 30) + '%';
+    c.style.left = '0';
+    c.style.animationDuration = (40 + Math.random() * 40) + 's';
+    c.style.animationDelay = (-Math.random() * 60) + 's';
+    const puffs = [[0,10,26],[18,0,32],[42,8,28],[14,14,30]];
+    puffs.forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'puff';
+      d.style.left = (p[0] * scale) + 'px';
+      d.style.top = (p[1] * scale) + 'px';
+      d.style.width = d.style.height = (p[2] * scale) + 'px';
+      c.appendChild(d);
+    });
+    document.body.appendChild(c);
+  }
+}
+
+function shuffledDeck() {
+  const deck = [];
+  for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) deck.push({ rank: r, suit: s });
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+function newGame() {
+  score = 0; round = 1;
+  deal();
+}
+
+function nextRound() {
+  round++;
+  deal();
+}
+
+function deal() {
+  document.getElementById('overlay').classList.remove('show');
+  boardEl.querySelectorAll('.card').forEach(el => el.remove());
+  tableau = []; waste = []; history = [];
+  streak = 0; peaksCleared = 0; gameOver = false;
+
+  const deck = shuffledDeck();
+  LAYOUT.forEach((row, r) => {
+    row.forEach(x => {
+      const c = deck.pop();
+      c.row = r; c.x = x; c.removed = false;
+      c.el = document.createElement('div');
+      c.el.className = 'card';
+      c.el.addEventListener('click', () => tryPlay(c));
+      boardEl.appendChild(c.el);
+      tableau.push(c);
+    });
+  });
+  stock = deck; // 24 cards
+  waste.push(stock.pop()); // start waste
+  layout();
+  render();
+  saveGame();
+}
+
+function layout() {
+  const w = boardEl.clientWidth;
+  cardW = w / 10.4;
+  cardH = cardW * 1.42;
+  const rowStep = cardH * 0.55;
+  boardEl.style.height = (cardH + 3 * rowStep + 6) + 'px';
+  const fs = Math.round(cardW * 0.34);
+  tableau.forEach(c => {
+    c.el.style.width = cardW + 'px';
+    c.el.style.height = cardH + 'px';
+    c.el.style.left = (c.x * cardW * 1.02 + (w - cardW * 10.2) / 2) + 'px';
+    c.el.style.top = (c.row * rowStep) + 'px';
+    c.el.style.fontSize = fs + 'px';
+    c.el.style.zIndex = c.row + 1;
+  });
+  // piles: waste card is big and sits mid-screen so a right hand never covers it
+  PW = cardW * 1.9; PH = cardH * 1.9;
+  SW = cardW * 1.2; SH = cardH * 1.2;
+  const wp = document.getElementById('waste');
+  wp.style.width = PW + 'px'; wp.style.height = PH + 'px';
+  wp.querySelector('.pile-card').style.fontSize = Math.round(PW * 0.34) + 'px';
+  // vertical middle of the screen, but never overlapping the towers
+  const ih = window.innerHeight || 800;
+  const boardBottom = boardEl.getBoundingClientRect ? boardEl.getBoundingClientRect().bottom : 0;
+  wp.style.top = Math.round(Math.max(ih / 2 - PH / 2, boardBottom + 10)) + 'px';
+  const st = document.getElementById('stock');
+  st.style.height = SH + 'px';
+  st.style.maxWidth = (w * 0.55) + 'px';
+  // keep the streak toast clear of the stock row
+  document.getElementById('toast').style.bottom = 'calc(env(safe-area-inset-bottom) + ' + Math.round(SH + 44) + 'px)';
+  renderStock();
+}
+
+let PW = 54, PH = 76, SW = 46, SH = 64;
+const INITIAL_STOCK = 23;
+function renderStock() {
+  const st = document.getElementById('stock');
+  st.querySelectorAll('.stock-card').forEach(e => e.remove());
+  const rowW = st.clientWidth || 100;
+  const step = Math.min(SW * 0.38, (rowW - SW) / Math.max(1, INITIAL_STOCK - 1));
+  for (let i = 0; i < stock.length; i++) {
+    const d = document.createElement('div');
+    d.className = 'stock-card';
+    d.style.width = SW + 'px';
+    d.style.height = SH + 'px';
+    d.style.left = (i * step) + 'px';
+    d.style.fontSize = Math.round(SW * 0.34) + 'px';
+    d.style.zIndex = i + 1;
+    st.appendChild(d);
+  }
+}
+
+function isCovered(c) {
+  return tableau.some(o => !o.removed && o.row === c.row + 1 && Math.abs(o.x - c.x) < 0.75);
+}
+function isAdjacent(a, b) {
+  const d = Math.abs(a - b);
+  return d === 1 || d === 12; // wrap A<->K
+}
+function wasteTop() { return waste[waste.length - 1]; }
+
+function cardLabel(c) {
+  const red = (c.suit === 1 || c.suit === 2);
+  return { rank: RANKS[c.rank - 1], suit: SUITS[c.suit], cls: red ? 'red' : 'black' };
+}
+
+function render() {
+  const wt = wasteTop();
+  tableau.forEach(c => {
+    if (c.removed) { c.el.style.display = 'none'; return; }
+    c.el.style.display = 'flex';
+    const covered = isCovered(c);
+    if (!covered) {
+      const l = cardLabel(c);
+      c.el.className = 'card face-up ' + l.cls;
+      c.el.innerHTML = '<div class="rank">' + l.rank + '</div><div class="suit">' + l.suit + '</div>';
+      if (wt && isAdjacent(c.rank, wt.rank)) c.el.classList.add('playable-glow');
+    } else {
+      c.el.className = 'card face-down';
+      c.el.innerHTML = '';
+    }
+  });
+  // waste
+  const wc = document.getElementById('waste-card');
+  if (wt) {
+    const l = cardLabel(wt);
+    wc.style.display = 'flex';
+    wc.innerHTML = '<div class="rank">' + l.rank + '</div><div class="suit">' + l.suit + '</div>';
+    wc.style.color = l.cls === 'red' ? '#c62839' : '#232333';
+  } else wc.style.display = 'none';
+  // stock
+  const sc = document.getElementById('stock-count');
+  sc.textContent = stock.length;
+  sc.style.display = stock.length ? 'flex' : 'none';
+  renderStock();
+  // stats
+  document.getElementById('round').textContent = round;
+  document.getElementById('score').textContent = score;
+  document.getElementById('streak').textContent = '×' + streak;
+  document.getElementById('best').textContent = best;
+  document.getElementById('undoBtn').style.opacity = history.length ? 1 : 0.4;
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = 1;
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.style.opacity = 0, 1200);
+}
+
+function tryPlay(c) {
+  if (gameOver || c.removed || isCovered(c)) return;
+  const wt = wasteTop();
+  if (!wt || !isAdjacent(c.rank, wt.rank)) return;
+  streak++;
+  const pts = 50 * streak;
+  score += pts;
+  const move = { type: 'play', card: c, pts: pts, peakBonus: 0 };
+  c.removed = true;
+  waste.push(c);
+  // peak cleared? (a row-0 card removed)
+  if (c.row === 0) {
+    peaksCleared++;
+    const bonus = peaksCleared === 3 ? 0 : 500; // final peak handled in win bonus
+    move.peakBonus = bonus;
+    score += bonus;
+    if (bonus) toast('Tower cleared! +' + bonus);
+  } else if (streak > 1) {
+    toast('+' + pts + '  (streak ×' + streak + ')');
+  }
+  history.push(move);
+  // removal animation
+  c.el.classList.add('removing');
+  setTimeout(() => { render(); }, 180);
+  render();
+  checkEnd();
+  saveGame();
+}
+
+function draw() {
+  if (gameOver || !stock.length) return;
+  history.push({ type: 'draw', prevStreak: streak });
+  waste.push(stock.pop());
+  streak = 0;
+  render();
+  checkEnd();
+  saveGame();
+}
+
+function undo() {
+  if (gameOver || !history.length) return;
+  const m = history.pop();
+  if (m.type === 'play') {
+    waste.pop();
+    m.card.removed = false;
+    m.card.el.classList.remove('removing');
+    score -= m.pts + m.peakBonus;
+    if (m.card.row === 0) peaksCleared--;
+    streak = Math.max(0, streak - 1);
+  } else {
+    stock.push(waste.pop());
+    streak = m.prevStreak;
+  }
+  render();
+  saveGame();
+}
+
+function hasMoves() {
+  const wt = wasteTop();
+  if (!wt) return false;
+  return tableau.some(c => !c.removed && !isCovered(c) && isAdjacent(c.rank, wt.rank));
+}
+
+function checkEnd() {
+  if (tableau.every(c => c.removed)) {
+    gameOver = true;
+    const stockBonus = stock.length * 100;
+    score += 1500 + stockBonus;
+    saveBest();
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ next: true, score: score, round: round + 1 })); } catch(e) {}
+    if (window.GGA){ GGA.award('tower_r1'); if (round >= 3) GGA.award('tower_r3'); GGA.haptic('success'); }
+    showOverlay('Round ' + round + ' Cleared! 🏰',
+      'All three towers conquered!' + (stockBonus ? ' Stock bonus +' + stockBonus : '') + ' On to the next round…',
+      score, 'Next Round ➜', nextRound);
+    return;
+  }
+  if (!stock.length && !hasMoves()) {
+    gameOver = true;
+    saveBest();
+    clearSave();
+    const left = tableau.filter(c => !c.removed).length;
+    showOverlay('Game Over',
+      'You reached round ' + round + ' — ' + left + ' card' + (left > 1 ? 's' : '') + ' remaining.',
+      score, 'Play Again', newGame);
+  }
+}
+
+function saveBest() {
+  if (score > best) {
+    best = score;
+    try { localStorage.setItem('st-best', String(best)); } catch(e) {}
+  }
+}
+
+function showOverlay(title, msg, sc, btnText, btnFn) {
+  render();
+  document.getElementById('ov-title').textContent = title;
+  document.getElementById('ov-msg').textContent = msg;
+  document.getElementById('ov-score').textContent = 'Score: ' + sc;
+  const btn = document.getElementById('ov-primary');
+  btn.textContent = btnText;
+  btn.onclick = btnFn;
+  setTimeout(() => document.getElementById('overlay').classList.add('show'), 500);
+}
+
+window.addEventListener('resize', () => { layout(); render(); });
+
+function resumeGame(sv) {
+  document.getElementById('overlay').classList.remove('show');
+  boardEl.querySelectorAll('.card').forEach(el => el.remove());
+  tableau = []; history = []; gameOver = false;
+  score = sv.score; streak = sv.streak; peaksCleared = sv.peaksCleared; round = sv.round;
+  sv.tab.forEach(d => {
+    const c = { rank: d.rank, suit: d.suit, row: d.row, x: d.x, removed: d.removed };
+    c.el = document.createElement('div');
+    c.el.className = 'card';
+    if (c.removed) c.el.style.display = 'none';
+    c.el.addEventListener('click', () => tryPlay(c));
+    boardEl.appendChild(c.el);
+    tableau.push(c);
+  });
+  stock = sv.stock.map(d => ({ rank: d.rank, suit: d.suit }));
+  waste = sv.waste.map(d => ({ rank: d.rank, suit: d.suit }));
+  layout();
+  render();
+}
+function hideResume() { document.getElementById('resumeOverlay').classList.remove('show'); }
+document.getElementById('btnResume').onclick = hideResume;
+document.getElementById('btnFresh').onclick = () => { hideResume(); newGame(); };
+
+makeClouds();
+(function boot() {
+  let sv = loadSave();
+  if (sv && sv.next) {
+    score = sv.score; round = sv.round;
+    deal();
+    document.getElementById('resumeInfo').textContent = 'Round ' + round + ' ready · Score ' + score;
+    document.getElementById('resumeOverlay').classList.add('show');
+  } else if (sv && sv.tab) {
+    resumeGame(sv);
+    document.getElementById('resumeInfo').textContent = 'Round ' + round + ' · Score ' + score;
+    document.getElementById('resumeOverlay').classList.add('show');
+  } else {
+    newGame();
+  }
+})();
+</script>
+</body>
+</html>

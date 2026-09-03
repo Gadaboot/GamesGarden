@@ -477,6 +477,7 @@ function toast2(){ /* keep last message */ }
 
 function finish(winner, text){
   gameOver = true; shooting=false;
+  if(window.GGA && winner===0){ GGA.award('pool_win'); GGA.haptic('success'); }
   updateHUD();
   showOver(winner===0 ? "You win!" : "Computer wins", text);
   sfx(winner===0?660:180, 0.5, 0.2, "sine");

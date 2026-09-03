@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0d16">
+<title>One False Step</title>
+<style>
+:root{
+  --safe:#3ba9ff;      /* proven ground  — blue  */
+  --fail:#ff3b5c;      /* gives way      — red   */
+  --gold:#ffc93c;      /* live / bankable        */
+  --rest:#8b7bff;      /* resting stone          */
+  --ink:#fff;
+  --dim:rgba(255,255,255,.72);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  color:var(--ink);overflow-x:hidden;-webkit-user-select:none;user-select:none;
+  background:#0a0d16;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+body::before{
+  content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(34% 28% at 16% 6%, rgba(255,122,61,.30), transparent 70%),
+    radial-gradient(30% 26% at 86% 10%, rgba(59,169,255,.28), transparent 70%),
+    radial-gradient(42% 34% at 60% 96%, rgba(139,123,255,.26), transparent 70%);
+  animation:drift 28s ease-in-out infinite alternate;
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(115% 85% at 50% 42%, transparent 40%, rgba(0,0,0,.7) 100%);
+}
+@keyframes drift{from{transform:translate3d(-2%,-1%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.1)}}
+@media (prefers-reduced-motion:reduce){body::before{animation:none}}
+.wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:7px 10px 22px}
+
+/* ---------------- top ---------------- */
+.topbar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.menu-btn{
+  display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.26);
+  padding:7px 12px;border-radius:999px;font-size:13px;font-weight:700;
+  backdrop-filter:blur(8px);white-space:nowrap
+}
+.menu-btn:active{transform:scale(.95)}
+.title{
+  flex:1;text-align:center;font-weight:900;white-space:nowrap;line-height:1;
+  font-size:clamp(13px,4.2vw,22px);letter-spacing:.5px;
+  background:linear-gradient(180deg,#fff2e2,#ffb26b 52%,#ff7a3d);
+  -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.strip{display:flex;gap:5px;margin-bottom:7px}
+.chip{flex:1;text-align:center;padding:5px 2px;border-radius:10px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)}
+.chip .k{font-size:8.5px;letter-spacing:1.3px;opacity:.65;font-weight:800}
+.chip .v{font-size:clamp(12px,4vw,17px);font-weight:900;line-height:1.2}
+.v-gold{color:var(--gold)}.v-safe{color:var(--safe)}.v-bad{color:var(--fail)}.v-info{color:#c8b6ff}
+.v.tick{animation:tickpulse .9s ease-in-out infinite alternate}
+@keyframes tickpulse{from{opacity:.45}to{opacity:1}}
+
+.qcard{
+  background:linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.22);border-radius:13px;padding:7px 11px;text-align:center;
+  margin-bottom:6px
+}
+.qcard .lbl{font-size:8.5px;letter-spacing:2.2px;font-weight:800;color:#ffb26b}
+.qcard .q{font-size:clamp(13px,4.1vw,17px);font-weight:800;line-height:1.25}
+
+/* ---------------- board ---------------- */
+.boardwrap{display:flex;justify-content:center}
+.board{position:relative;width:100%}
+.tile{
+  position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  text-align:center;font-weight:800;line-height:1.05;overflow:hidden;padding:3px;
+  color:var(--ink);border:2px solid rgba(255,255,255,.14);
+  background:radial-gradient(circle at 34% 26%,#3a4166,#1c2036 72%,#141728);
+  box-shadow:0 3px 6px rgba(0,0,0,.6),inset 0 1px 2px rgba(255,255,255,.14);
+  transition:transform .15s, box-shadow .2s;
+  word-break:break-word;hyphens:auto
+}
+.tile span{display:block;width:100%}
+.tile.dormant{
+  background:radial-gradient(circle at 34% 26%,#4c5168,#2b2f44 70%,#20233a);
+  border-color:rgba(255,255,255,.07);
+  box-shadow:0 3px 6px rgba(0,0,0,.55),inset 0 1px 2px rgba(255,255,255,.08)
+}
+.tile.justopened span{animation:reveal .5s ease}
+@keyframes reveal{
+  0%{opacity:0;transform:scale(.6)}
+  60%{opacity:1;transform:scale(1.12)}
+  100%{opacity:1;transform:scale(1)}
+}
+.tile.can{
+  cursor:pointer;border-color:var(--gold);z-index:5;
+  background:radial-gradient(circle at 34% 26%,#4a4f7d,#1a1d38 72%,#0e1020);
+  box-shadow:0 0 8px rgba(255,201,60,.5),0 3px 6px rgba(0,0,0,.55)
+}
+.tile.can.near{animation:pulse 1.2s ease-in-out infinite alternate}
+@keyframes pulse{
+  from{box-shadow:0 0 7px rgba(255,201,60,.45),0 3px 6px rgba(0,0,0,.55)}
+  to{box-shadow:0 0 18px rgba(255,201,60,.95),0 3px 6px rgba(0,0,0,.55)}
+}
+.tile.can:active{transform:scale(.92)}
+.tile.truth{
+  background:radial-gradient(circle at 34% 26%,#bfe4ff,#3ba9ff 62%,#1272c4);
+  color:#04223a;border-color:rgba(205,235,255,.9);
+  box-shadow:0 0 13px rgba(59,169,255,.6),0 3px 6px rgba(0,0,0,.5)
+}
+.tile.lie{
+  background:var(--fail);color:#fff;border-color:#ff92a6;
+  box-shadow:0 0 16px rgba(255,59,92,.8),0 3px 6px rgba(0,0,0,.5)
+}
+.tile.lie.fresh{animation:shake .5s ease}
+@keyframes shake{
+  0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px)}
+  45%{transform:translate(4px,-2px)}70%{transform:translate(-3px,1px)}
+}
+.tile.safespot{
+  background:radial-gradient(circle at 34% 26%,#dcd4ff,#8b7bff 62%,#5b48d6);
+  color:#170f3d;border-color:rgba(220,212,255,.9);
+  box-shadow:0 0 13px rgba(139,123,255,.6),0 3px 6px rgba(0,0,0,.5)
+}
+.tile.endpt{
+  background:radial-gradient(circle at 34% 26%,#ffe9a8,#ffc93c 62%,#b07d0a);
+  color:#3a2600;border-color:rgba(255,230,160,.9);
+  box-shadow:0 0 14px rgba(255,201,60,.7),0 3px 6px rgba(0,0,0,.5)
+}
+.tile.here{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.85),0 0 20px rgba(255,255,255,.55);z-index:6}
+.walker{
+  position:absolute;z-index:8;pointer-events:none;
+  width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;
+  border-top:11px solid #fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9));
+  animation:bob .85s ease-in-out infinite alternate
+}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-4px)}}
+
+/* ---------------- controls ---------------- */
+.hint{text-align:center;font-size:12px;color:var(--dim);margin:9px 0 8px;min-height:32px;line-height:1.4}
+.hint b{color:var(--gold)}
+.btn{
+  width:100%;border:none;border-radius:13px;padding:11px 8px;font-weight:900;font-size:14px;
+  cursor:pointer;color:#131730;box-shadow:0 5px 0 rgba(0,0,0,.4);transition:transform .08s
+}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.btn:disabled{opacity:.32;cursor:default}
+.b-bank{background:linear-gradient(180deg,#ffe089,#ffb01f)}
+.b-go{background:linear-gradient(180deg,#a8d8ff,#3ba9ff)}
+.b-alt{background:linear-gradient(180deg,#c8bcff,#8b7bff)}
+.crow{display:flex;gap:8px}
+.crow .btn{flex:1}
+
+/* ---------------- end of game ---------------- */
+.endpanel{margin-top:7px;text-align:center;animation:rise .4s ease}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.endpanel .etitle{font-size:clamp(14px,4.4vw,19px);font-weight:900;color:#ffb26b;line-height:1.2;margin-bottom:3px}
+.endpanel .esub{font-size:11.5px;color:var(--dim);line-height:1.45;margin-bottom:8px}
+.endpanel .esub b{color:var(--gold)}
+.legend{display:flex;gap:14px;justify-content:center;font-size:10.5px;opacity:.75;margin-top:3px}
+.legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:-1px}
+
+/* ---------------- overlay / toast ---------------- */
+.ovl{position:fixed;inset:0;background:rgba(4,6,14,.9);backdrop-filter:blur(7px);
+  display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.ovl.on{display:flex}
+.card{
+  background:linear-gradient(160deg,#1f2547,#0a0d18);border:2px solid rgba(255,178,107,.3);
+  border-radius:22px;padding:22px 20px;max-width:410px;width:100%;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.75);max-height:88vh;overflow-y:auto
+}
+.card h2{font-size:21px;margin-bottom:10px;color:#ffb26b;line-height:1.2}
+.card p{font-size:13.5px;line-height:1.6;color:var(--dim);margin-bottom:14px;text-align:left}
+.card p.mid{text-align:center}
+.toast{
+  position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom));
+  transform:translate(-50%,24px) scale(.6);opacity:0;
+  padding:12px 20px;border-radius:15px;font-weight:900;font-size:16px;z-index:60;
+  pointer-events:none;text-align:center;max-width:88vw;box-shadow:0 10px 30px rgba(0,0,0,.6)
+}
+.toast.good{background:linear-gradient(135deg,#3ba9ff,#1263a8)}
+.toast.bad{background:linear-gradient(135deg,#ff3b5c,#b3102c)}
+.toast.info{background:linear-gradient(135deg,#8b7bff,#5540b8)}
+.toast.show{animation:tst 1.7s ease forwards}
+@keyframes tst{
+  0%{opacity:0;transform:translate(-50%,24px) scale(.6)}
+  14%{opacity:1;transform:translate(-50%,0) scale(1.07)}
+  24%,80%{opacity:1;transform:translate(-50%,0) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-16px) scale(.95)}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="menu-btn" href="index.html">&#9776; Menu</a>
+    <div class="title">ONE FALSE STEP</div>
+    <div style="width:62px"></div>
+  </div>
+
+  <div class="strip">
+    <div class="chip"><div class="k">SLIPS</div><div class="v v-bad" id="lieV">0/3</div></div>
+    <div class="chip"><div class="k">STEPS</div><div class="v v-safe" id="truthV">0</div></div>
+    <div class="chip"><div class="k">PURSE</div><div class="v v-gold" id="potV">&pound;0</div></div>
+    <div class="chip"><div class="k">TIME</div><div class="v" id="timeV">0:00</div></div>
+  </div>
+
+  <div class="qcard">
+    <div class="lbl">ONLY THE TRUE ONES HOLD</div>
+    <div class="q" id="question">&nbsp;</div>
+  </div>
+
+  <div class="boardwrap"><div class="board" id="board"></div></div>
+
+  <div class="hint" id="hint">Pick a stone.</div>
+  <button class="btn b-bank" id="bBank">TAKE THE MONEY</button>
+
+  <div class="endpanel" id="endpanel" hidden>
+    <div class="etitle" id="etitle"></div>
+    <div class="esub" id="esub"></div>
+    <button class="btn b-go" id="bAgain">GO AGAIN?</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+
+<script src="achievements.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ==========================================================
+   24 question sets — 24 true answers / 20 false ones each
+   ========================================================== */
+const CATS=[
+{q:"Which of these countries are completely landlocked?",
+ truths:["Afghanistan","Andorra","Armenia","Austria","Azerbaijan","Belarus","Bhutan","Bolivia",
+   "Botswana","Chad","Eswatini","Ethiopia","Hungary","Kazakhstan","Kyrgyzstan","Laos","Lesotho",
+   "Luxembourg","Malawi","Mali","Mongolia","Nepal","Niger","Paraguay"],
+ lies:["Iraq","Jordan","Slovenia","Bosnia","Montenegro","Croatia","Georgia","Albania","DR Congo",
+   "Lebanon","Syria","Benin","Togo","Guinea","Ivory Coast","Ghana","Namibia","Mozambique",
+   "Tanzania","Gambia"]},
+
+{q:"Which of these are US National Parks?",
+ truths:["Yellowstone","Yosemite","Grand Canyon","Zion","Glacier","Everglades","Denali","Acadia",
+   "Badlands","Big Bend","Biscayne","Bryce Canyon","Canyonlands","Capitol Reef","Congaree",
+   "Crater Lake","Death Valley","Dry Tortugas","Grand Teton","Great Basin","Haleakala",
+   "Hot Springs","Isle Royale","Joshua Tree"],
+ lies:["Monument Valley","Devils Tower","Muir Woods","Mount Rushmore","Liberty Island",
+   "Niagara Falls","Cape Cod","Lake Mead","Glen Canyon","Gettysburg","Blue Ridge","Mt St Helens",
+   "Craters of the Moon","Dinosaur","Cedar Breaks","Natural Bridges","Pictured Rocks",
+   "Apostle Islands","Devils Postpile","Chaco Culture"]},
+
+{q:"Which of these cities have hosted the Summer Olympic Games?",
+ truths:["Athens","Paris","St Louis","London","Stockholm","Antwerp","Amsterdam","Los Angeles",
+   "Berlin","Helsinki","Melbourne","Rome","Tokyo","Mexico City","Munich","Montreal","Moscow",
+   "Seoul","Barcelona","Atlanta","Sydney","Beijing","Rio de Janeiro"],
+ lies:["Chicago","Toronto","Detroit","Buenos Aires","Cape Town","Istanbul","Madrid","Doha",
+   "Vancouver","Calgary","Salt Lake City","Turin","Sochi","Innsbruck","Sapporo","Nagano",
+   "Manchester","Glasgow","Birmingham","Edinburgh"]},
+
+{q:"Which of these men ruled as Roman Emperors?",
+ truths:["Augustus","Tiberius","Caligula","Claudius","Nero","Galba","Otho","Vitellius","Vespasian",
+   "Titus","Domitian","Nerva","Trajan","Hadrian","Commodus","Caracalla","Elagabalus","Decius",
+   "Valerian","Gallienus","Aurelian","Diocletian","Constantine","Julian"],
+ lies:["Julius Caesar","Cicero","Pompey","Crassus","Brutus","Cato","Mark Antony","Sulla","Marius",
+   "Scipio","Spartacus","Seneca","Virgil","Ovid","Livy","Agrippa","Germanicus","Stilicho",
+   "Pontius Pilate","Lepidus"]},
+
+{q:"Which of these novels have won the Booker Prize for Fiction?",
+ truths:["Midnight's Children","Remains of the Day","The English Patient","Schindler's Ark",
+   "God of Small Things","The Blind Assassin","Vernon God Little","The Line of Beauty","The Sea",
+   "The White Tiger","Finkler Question","Bring Up the Bodies","The Luminaries","The Sellout",
+   "Lincoln in the Bardo","Milkman","The Testaments","Shuggie Bain","The Promise","Life of Pi",
+   "Wolf Hall","Possession","Disgrace","Amsterdam"],
+ lies:["Atonement","Never Let Me Go","Cloud Atlas","On Chesil Beach","A Fine Balance","Cat's Eye",
+   "The Handmaid's Tale","White Teeth","Notes on a Scandal","Brick Lane","London Fields","Beloved",
+   "The Kite Runner","Cold Mountain","The Corrections","Norwegian Wood","Mockingbird",
+   "American Psycho","Fingersmith","Middlesex"]},
+
+{q:"Which of these Agatha Christie novels feature Hercule Poirot?",
+ truths:["Murder on the Links","The Big Four","Peril at End House","Lord Edgware Dies",
+   "Orient Express","Three Act Tragedy","Death in the Clouds","The ABC Murders",
+   "Murder in Mesopotamia","Cards on the Table","Dumb Witness","Death on the Nile",
+   "Appointment with Death","Sad Cypress","Evil Under the Sun","Five Little Pigs","The Hollow",
+   "Taken at the Flood","After the Funeral","Hickory Dickory Dock","Dead Man's Folly","The Clocks",
+   "Third Girl","Curtain"],
+ lies:["Murder at the Vicarage","Body in the Library","A Murder Is Announced","4.50 from Paddington",
+   "The Mirror Crack'd","A Caribbean Mystery","At Bertram's Hotel","Nemesis","Sleeping Murder",
+   "The Secret Adversary","N or M?","Postern of Fate","And Then There Were None","Crooked House",
+   "Ordeal by Innocence","Endless Night","Towards Zero","The Pale Horse","Brown Suit",
+   "Sparkling Cyanide"]},
+
+{q:"Which of these people have won the Nobel Peace Prize?",
+ truths:["Nelson Mandela","Desmond Tutu","Dalai Lama","Aung San Suu Kyi","Mother Teresa",
+   "Martin Luther King","Barack Obama","Jimmy Carter","Malala Yousafzai","Wangari Maathai",
+   "Shirin Ebadi","Elie Wiesel","Kim Dae Jung","Willy Brandt","Mikhail Gorbachev","Al Gore",
+   "Lech Walesa","Rigoberta Menchu","Yasser Arafat","Henry Kissinger","Betty Williams",
+   "Muhammad Yunus","Liu Xiaobo","Norman Borlaug"],
+ lies:["Mahatma Gandhi","Winston Churchill","Eleanor Roosevelt","Pope John Paul II","Vaclav Havel",
+   "Greta Thunberg","Corazon Aquino","Raoul Wallenberg","Malcolm X","Emmeline Pankhurst",
+   "Angela Merkel","Bono","Florence Nightingale","Dietrich Bonhoeffer","John Lennon","Bill Gates",
+   "Hillary Clinton","Jane Goodall","Cesar Chavez","Susan B Anthony"]},
+
+{q:"Which of these characters are official Looney Tunes?",
+ truths:["Bugs Bunny","Daffy Duck","Elmer Fudd","Porky Pig","Tweety","Sylvester","Yosemite Sam",
+   "Foghorn Leghorn","Wile E Coyote","Road Runner","Speedy Gonzales","Pepe Le Pew",
+   "Marvin the Martian","Taz","Granny","Lola Bunny","Gossamer","Michigan J Frog",
+   "Penelope Pussycat","Henery Hawk","Witch Hazel","Beaky Buzzard","Charlie Dog","Pete Puma"],
+ lies:["Mickey Mouse","Donald Duck","Goofy","Tom and Jerry","Droopy","Yogi Bear","Scooby-Doo",
+   "Fred Flintstone","Huckleberry Hound","Top Cat","Snagglepuss","Popeye","Betty Boop",
+   "Mighty Mouse","Heckle and Jeckle","Woody Woodpecker","Chilly Willy","Quick Draw McGraw",
+   "Deputy Dawg","Barney Bear"]},
+
+{q:"Which of these are moons of Jupiter?",
+ truths:["Io","Europa","Ganymede","Callisto","Amalthea","Himalia","Elara","Pasiphae","Sinope",
+   "Lysithea","Carme","Ananke","Leda","Thebe","Adrastea","Metis","Callirrhoe","Themisto",
+   "Megaclite","Taygete","Chaldene","Harpalyke","Kalyke","Iocaste"],
+ lies:["Titan","Rhea","Iapetus","Dione","Tethys","Enceladus","Mimas","Hyperion","Phoebe","Titania",
+   "Oberon","Umbriel","Ariel","Miranda","Triton","Nereid","Proteus","Phobos","Deimos","Charon"]},
+
+{q:"Which of these animals are marsupials?",
+ truths:["Kangaroo","Koala","Wombat","Tasmanian Devil","Sugar Glider","Opossum","Wallaby",
+   "Bandicoot","Quokka","Numbat","Bilby","Quoll","Possum","Thylacine","Antechinus","Cuscus",
+   "Potoroo","Dunnart","Pademelon","Kowari","Wallaroo","Boodie","Woylie","Bettong"],
+ lies:["Platypus","Echidna","Flying Squirrel","Groundhog","Meerkat","Hedgehog","Armadillo",
+   "Raccoon","Mongoose","Prairie Dog","Shrew","Vole","Ferret","Otter","Badger","Weasel","Mole",
+   "Porcupine","Anteater","Tenrec"]},
+
+{q:"Which of these birds are completely flightless?",
+ truths:["Ostrich","Emu","Cassowary","Kiwi","Penguin","Rhea","Kakapo","Weka","Takahe","Dodo",
+   "Great Auk","Moa","Elephant Bird","Galapagos Cormorant","Steamer Duck","Titicaca Grebe",
+   "Guam Rail","Kagu","Aldabra Rail","Campbell Teal","Auckland Teal","Junin Grebe","Gough Moorhen",
+   "Zapata Rail"],
+ lies:["Peacock","Roadrunner","Corncrake","Great Bustard","Secretary Bird","Capercaillie",
+   "Sage Grouse","Seriema","Sunbittern","Nightjar","Killdeer","Common Moorhen","Coot","Ptarmigan",
+   "Partridge","Pheasant","Quail","Water Rail","Trumpeter","Grouse"]},
+
+{q:"Which of these are real chemical elements?",
+ truths:["Rhodium","Iridium","Osmium","Rhenium","Hafnium","Tantalum","Niobium","Yttrium","Terbium",
+   "Dysprosium","Holmium","Erbium","Thulium","Ytterbium","Lutetium","Gadolinium","Samarium",
+   "Europium","Neodymium","Promethium","Cerium","Lanthanum","Actinium","Scandium"],
+ lies:["Adamantium","Dilithium","Vibranium","Unobtainium","Orichalcum","Mithril","Kryptonite",
+   "Naquadah","Cavorite","Corbomite","Illudium","Upsidasium","Byzanium","Aetherium","Polybdenum",
+   "Phlebotinum","Rearden Metal","Scrith","Nth Metal","Verbium"]},
+
+{q:"Which of these people have served as British Prime Minister?",
+ truths:["Peel","Pitt","Canning","Perceval","Rosebery","Aberdeen","Goderich","Grafton","Bute",
+   "Shelburne","Addington","Liverpool","Grenville","Melbourne","Derby","Salisbury","Balfour",
+   "Asquith","Baldwin","Attlee","Eden","Macmillan","Heath","Callaghan"],
+ lies:["Butler","Curzon","Healey","Heseltine","Howe","Hague","Kinnock","Foot","Miliband","Davis",
+   "Gove","Straw","Prescott","Osborne","Clarke","Redwood","Portillo","Cable","Ashdown","Powell"]},
+
+{q:"Which of these plays were written by Shakespeare?",
+ truths:["Cymbeline","Pericles","Coriolanus","Timon of Athens","Titus Andronicus",
+   "Troilus and Cressida","Measure for Measure","Comedy of Errors","Merry Wives",
+   "Love's Labour's Lost","Taming of the Shrew","Winter's Tale","Twelfth Night",
+   "Merchant of Venice","As You Like It","Much Ado","King John","Richard II","Henry VIII",
+   "Henry V","Richard III","Julius Caesar","Antony and Cleopatra","Henry VI Part 1"],
+ lies:["Doctor Faustus","Tamburlaine","Jew of Malta","Edward II","The Alchemist",
+   "Bartholomew Fair","Sejanus","Duchess of Malfi","White Devil","The Changeling",
+   "Women Beware Women","Broken Heart","Spanish Tragedy","Shoemaker's Holiday","Maid's Tragedy",
+   "King and No King","Philaster","Dido of Carthage","Bussy D'Ambois","Volpone"]},
+
+{q:"Which of these places are in Tolkien's Middle-earth?",
+ truths:["Rivendell","Rohan","Gondor","Mordor","The Shire","Isengard","Moria","Lothlorien","Bree",
+   "Mirkwood","Erebor","Gondolin","Numenor","Valinor","Angband","Doriath","Minas Tirith",
+   "Minas Morgul","Osgiliath","Edoras","Helm's Deep","Weathertop","Fangorn","Barad-dur"],
+ lies:["Winterfell","King's Landing","Casterly Rock","Dragonstone","Braavos","Highgarden",
+   "Riverrun","Storm's End","Pentos","Narnia","Cair Paravel","Archenland","Calormen",
+   "Ankh-Morpork","Lancre","Uberwald","Hyrule","Skyrim","Morrowind","Gormenghast"]},
+
+{q:"Which of these cities are national capitals?",
+ truths:["Praia","Apia","Suva","Male","Thimphu","Vaduz","Bern","Canberra","Ottawa","Wellington",
+   "Abuja","Pretoria","Naypyidaw","Astana","Brasilia","Islamabad","Kuala Lumpur","Rabat","Ankara",
+   "Vientiane","Ulaanbaatar","Bishkek","Ashgabat","Tirana"],
+ lies:["Sydney","Istanbul","Casablanca","Auckland","Zurich","Rio de Janeiro","Toronto","Lagos",
+   "Karachi","New York","Shanghai","Mumbai","Frankfurt","Milan","Barcelona","Almaty","Yangon",
+   "St Petersburg","Melbourne","Alexandria"]},
+
+{q:"Which of these are ceremonial counties of England?",
+ truths:["Devon","Cornwall","Somerset","Dorset","Wiltshire","Hampshire","Surrey","Kent",
+   "East Sussex","Essex","Suffolk","Norfolk","Cambridgeshire","Bedfordshire","Hertfordshire",
+   "Berkshire","Oxfordshire","Gloucestershire","Warwickshire","Staffordshire","Shropshire",
+   "Cheshire","Lancashire","Cumbria"],
+ lies:["Powys","Gwynedd","Ceredigion","Monmouthshire","Fife","Angus","Moray","Ayrshire",
+   "Perthshire","Lanarkshire","Antrim","Armagh","Fermanagh","Donegal","Kerry","Galway","Mayo",
+   "Sligo","Tipperary","Wexford"]},
+
+{q:"Which of these are shapes of pasta?",
+ truths:["Penne","Fusilli","Rigatoni","Farfalle","Linguine","Tagliatelle","Orecchiette",
+   "Conchiglie","Cannelloni","Lasagne","Macaroni","Ravioli","Tortellini","Bucatini","Pappardelle",
+   "Vermicelli","Ditalini","Cavatappi","Radiatori","Campanelle","Trofie","Casarecce","Paccheri",
+   "Strozzapreti"],
+ lies:["Ciabatta","Focaccia","Risotto","Polenta","Bruschetta","Prosciutto","Pancetta","Mozzarella",
+   "Gorgonzola","Amaretto","Biscotti","Tiramisu","Panettone","Cannoli","Arancini","Caponata",
+   "Gremolata","Passata","Grappa","Limoncello"]},
+
+{q:"Which of these are breeds of dog?",
+ truths:["Beagle","Dalmatian","Rottweiler","Dachshund","Whippet","Greyhound","Pomeranian",
+   "Schnauzer","Weimaraner","Vizsla","Akita","Shiba Inu","Basenji","Papillon","Havanese","Samoyed",
+   "Keeshond","Leonberger","Newfoundland","Bloodhound","Foxhound","Otterhound","Pointer","Setter"],
+ lies:["Siamese","Persian","Ragdoll","Bengal","Sphynx","Maine Coon","Burmese","Abyssinian","Birman",
+   "Chartreux","Ocicat","Tonkinese","Manx","Bombay","Korat","Singapura","Cornish Rex","Devon Rex",
+   "Balinese","Turkish Van"]},
+
+{q:"Which of these countries are in Africa?",
+ truths:["Kenya","Uganda","Tanzania","Zambia","Zimbabwe","Botswana","Namibia","Angola",
+   "Mozambique","Malawi","Rwanda","Burundi","Senegal","Mali","Niger","Chad","Sudan","Ethiopia",
+   "Somalia","Ghana","Togo","Benin","Gabon","Cameroon"],
+ lies:["Nepal","Bhutan","Laos","Cambodia","Myanmar","Bolivia","Ecuador","Paraguay","Uruguay",
+   "Guyana","Suriname","Belarus","Moldova","Georgia","Armenia","Latvia","Estonia","Albania",
+   "Slovenia","Honduras"]},
+
+{q:"Which of these are US states?",
+ truths:["Vermont","Delaware","Nebraska","Wyoming","Montana","Idaho","Nevada","Utah","Kansas",
+   "Iowa","Missouri","Arkansas","Alabama","Georgia","Virginia","Maryland","Connecticut",
+   "Wisconsin","Minnesota","Oregon","Arizona","Oklahoma","Kentucky","Indiana"],
+ lies:["Dallas","Denver","Boston","Seattle","Phoenix","Atlanta","Chicago","Houston","Portland",
+   "Detroit","Ontario","Alberta","Manitoba","Quebec","Saskatchewan","Yukon","Nunavut","Labrador",
+   "Baja","Sonora"]},
+
+{q:"Which of these gods are Greek rather than Roman?",
+ truths:["Zeus","Hera","Poseidon","Demeter","Athena","Apollo","Artemis","Ares","Aphrodite",
+   "Hephaestus","Hermes","Hestia","Dionysus","Hades","Persephone","Eros","Pan","Nike","Iris",
+   "Hypnos","Nemesis","Helios","Selene","Gaia"],
+ lies:["Jupiter","Juno","Neptune","Ceres","Minerva","Mars","Venus","Vulcan","Mercury","Diana",
+   "Bacchus","Pluto","Proserpina","Cupid","Faunus","Victoria","Somnus","Sol","Luna","Terra"]},
+
+{q:"Which of these are bones in the human body?",
+ truths:["Femur","Tibia","Fibula","Humerus","Radius","Ulna","Clavicle","Scapula","Sternum",
+   "Patella","Mandible","Maxilla","Vertebra","Sacrum","Coccyx","Ilium","Ischium","Pubis","Talus",
+   "Calcaneus","Metatarsal","Phalanx","Stapes","Hyoid"],
+ lies:["Biceps","Triceps","Deltoid","Trapezius","Pectoral","Quadriceps","Hamstring","Gluteus",
+   "Achilles","Aorta","Trachea","Larynx","Pancreas","Spleen","Thyroid","Cartilage","Tendon",
+   "Ligament","Cornea","Diaphragm"]},
+
+{q:"Which of these are James Bond films?",
+ truths:["Dr No","From Russia with Love","Goldfinger","Thunderball","You Only Live Twice",
+   "Diamonds Are Forever","Live and Let Die","The Man with the Golden Gun","The Spy Who Loved Me",
+   "Moonraker","For Your Eyes Only","Octopussy","A View to a Kill","The Living Daylights",
+   "Licence to Kill","GoldenEye","Tomorrow Never Dies","The World Is Not Enough",
+   "Die Another Day","Casino Royale","Quantum of Solace","Skyfall","Spectre","No Time to Die"],
+ lies:["The Bourne Identity","Mission Impossible","North by Northwest","The Ipcress File",
+   "Tinker Tailor","The Third Man","Notorious","Ronin","Atomic Blonde","Kingsman","The Saint",
+   "Total Recall","Enemy of the State","Sneakers","Spy Game","Munich","Argo","Traffic","Heat",
+   "The Conversation"]}
+];
+
+/* ==========================================================
+   BOARD — a 6x6 grid turned 45° = rows of 1,2,3,4,5,6,5,4,3,2,1.
+   The four corners are landmarks, not questions:
+     (0,0) bottom = START            (5,5) top = EXIT
+     (5,0) left and (0,5) right = REST stones, each exposes a false one
+   That leaves 32 playing stones: 22 true and 10 false.
+   ========================================================== */
+const N=6, N_LIES=10, MAX_STRIKES=3, PER_TRUTH=500, CROSS_BONUS=5000, TIME_LIMIT=300;
+const START="0,0", EXIT="5,5", SAFE_L="5,0", SAFE_R="0,5";
+const CORNERS=[START,EXIT,SAFE_L,SAFE_R];
+
+let S={};
+let CAT_QUEUE=[];
+function pickCat(){
+  if(!CAT_QUEUE.length){
+    CAT_QUEUE=shuffle(CATS.slice());
+    if(S.cat && CAT_QUEUE.length>1 && CAT_QUEUE[CAT_QUEUE.length-1]===S.cat){
+      CAT_QUEUE.splice(Math.floor(CAT_QUEUE.length/2),0,CAT_QUEUE.pop());
+    }
+  }
+  return CAT_QUEUE.pop();
+}
+const $=id=>document.getElementById(id);
+const K=(r,c)=>r+","+c;
+const money=n=>"£"+Math.round(n).toLocaleString();
+const clock=s=>Math.floor(s/60)+":"+String(Math.max(0,s)%60).padStart(2,"0");
+function tick(){
+  if(S.over || S.paused) return;
+  if($("ovl").classList.contains("on")) return;
+  S.left--; updateClock();
+  if(S.left<=0){ S.left=0; updateClock(); timeUp(); }
+}
+function updateClock(){
+  const el=$("timeV");
+  el.textContent=(S.paused?"❚❚ ":"")+clock(S.left);
+  el.className="v "+(S.paused?"v-info":(S.left<=30?"v-bad tick":(S.left<=60?"v-gold":"v-safe")));
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function esc(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+
+function neighbours(r,c){
+  const o=[];
+  if(r+1<N)o.push([r+1,c]); if(c+1<N)o.push([r,c+1]);
+  if(r-1>=0)o.push([r-1,c]); if(c-1>=0)o.push([r,c-1]);
+  return o;
+}
+function openAround(r,c){
+  const opened=[];
+  neighbours(r,c).forEach(([nr,nc])=>{
+    const cell=S.cells[K(nr,nc)];
+    if(!cell.open){ cell.open=true; opened.push(K(nr,nc)); }
+  });
+  return opened;
+}
+/* lean the guaranteed route to one side so it isn't always up the middle */
+function buildPath(){
+  const bias=[0.18,0.3,0.42,0.5,0.58,0.7,0.82][Math.floor(Math.random()*7)];
+  let d=5,r0=5; const mv=[];
+  while(d+r0>0){
+    let pD;
+    if(!r0) pD=1; else if(!d) pD=0;
+    else pD=(d*bias)/(d*bias + r0*(1-bias));
+    if(Math.random()<pD){mv.push("D");d--;} else {mv.push("R");r0--;}
+  }
+  const path=[[0,0]]; let r=0,c=0;
+  mv.forEach(m=>{ m==="D"?r++:c++; path.push([r,c]); });
+  return path;
+}
+
+function newGame(){
+  const cat=pickCat();
+  const path=buildPath();
+  const onPath={}; path.forEach(p=>onPath[K(p[0],p[1])]=true);
+
+  const cells={};
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const k=K(r,c);
+    cells[k]={r:r,c:c,corner:CORNERS.indexOf(k)>=0,lie:false,label:"",state:"hidden",
+              open:CORNERS.indexOf(k)>=0};
+  }
+  const spare=Object.values(cells).filter(x=>!x.corner && !onPath[K(x.r,x.c)]);
+  shuffle(spare);
+  for(let i=0;i<N_LIES;i++) spare[i].lie=true;
+
+  const T=shuffle(cat.truths.slice()), L=shuffle(cat.lies.slice());
+  Object.values(cells).forEach(x=>{ if(!x.corner) x.label = x.lie ? L.pop() : T.pop(); });
+
+  cells[START].state="truth";
+
+  S={cat:cat, cells:cells, pos:[0,0], strikes:0, truths:0, pot:0,
+     busy:false, over:false, left:TIME_LIMIT, paused:false,
+     lastLie:null, justOpened:[], timer:S.timer};
+  S.justOpened=openAround(0,0);
+
+  $("question").textContent=cat.q;
+  if(S.timer) clearInterval(S.timer);
+  S.timer=setInterval(tick,1000);
+  updateClock();
+
+  layout(); render();
+  setHint("Only the two stones ahead are lit. <b>5:00</b> on the clock — step on the one you believe is <b>true</b>.");
+}
+
+/* ---------------- layout ---------------- */
+let DIM={d:34,dx:24,dy:24,w:320};
+function layout(){
+  const board=$("board");
+  const W=board.clientWidth||320;
+  const top=board.getBoundingClientRect().top;
+  let avail=window.innerHeight - top - (S.over?162:132);
+  avail=Math.max(250,Math.min(avail, W*1.75, 660));
+  const g=4;
+  let best=null;
+  for(let d=Math.floor((W-5*g)/6); d>=16; d--){
+    const dx=(W-d)/10, dy=(avail-d)/10;
+    if(dy<dx) continue;
+    if(2*dx < d+g) continue;
+    if(dx*dx+dy*dy < (d+g)*(d+g)) continue;
+    best={d:d,dx:dx,dy:dy}; break;
+  }
+  if(!best){ const d=Math.min(38,(W-5*g)/6); best={d:d,dx:(W-d)/10,dy:(W-d)/10}; }
+  DIM={d:best.d,dx:best.dx,dy:best.dy,w:W};
+  board.style.height=(10*best.dy+best.d)+"px";
+}
+const MC=document.createElement("canvas").getContext("2d");
+const FCACHE={};
+function fontFor(text,d,max){
+  const cap=max||11.5, ck=text+"|"+d+"|"+cap;
+  if(FCACHE[ck]!==undefined) return FCACHE[ck];
+  const inner=d-11;
+  const words=String(text).split(" ");
+  let out=5;
+  for(let f=cap; f>=5; f-=0.25){
+    MC.font="800 "+f+"px -apple-system,system-ui,sans-serif";
+    const sp=MC.measureText(" ").width;
+    const w=words.map(x=>MC.measureText(x).width);
+    if(Math.max.apply(null,w)>inner) continue;
+    let lines=1,cur=0;
+    for(let i=0;i<w.length;i++){
+      if(i===0){cur=w[i];}
+      else if(cur+sp+w[i]<=inner){cur+=sp+w[i];}
+      else{lines++;cur=w[i];}
+    }
+    if(lines*f*1.10<=inner+3){ out=f; break; }
+  }
+  FCACHE[ck]=out; return out;
+}
+
+/* ---------------- render ---------------- */
+function moves(){
+  if(S.busy||S.over) return [];
+  const seen={}, out=[];
+  Object.values(S.cells).forEach(x=>{
+    if(x.state!=="truth") return;
+    neighbours(x.r,x.c).forEach(([nr,nc])=>{
+      const k=K(nr,nc), n=S.cells[k];
+      if(seen[k] || n.state==="lie" || n.state==="truth") return;
+      seen[k]=1; out.push([nr,nc]);
+    });
+  });
+  return out;
+}
+function render(){
+  $("lieV").textContent=S.strikes+"/"+MAX_STRIKES;
+  $("truthV").textContent=S.truths;
+  $("potV").textContent=money(S.pot);
+
+  const board=$("board"); board.innerHTML="";
+  const can={}; moves().forEach(([r,c])=>{ can[K(r,c)]=true; S.cells[K(r,c)].open=true; });
+  const near={}; neighbours(S.pos[0],S.pos[1]).forEach(([r,c])=>{ if(can[K(r,c)]) near[K(r,c)]=true; });
+  const hereK=K(S.pos[0],S.pos[1]);
+
+  Object.values(S.cells).forEach(x=>{
+    const k=K(x.r,x.c), el=document.createElement("div");
+    el.className="tile";
+    let text="", big=false;
+
+    if(k===START){ el.classList.add("endpt"); text="START"; big=true; }
+    else if(k===EXIT){ el.classList.add("endpt"); text="EXIT"; big=true; }
+    else if(k===SAFE_L||k===SAFE_R){ el.classList.add("safespot"); text="REST"; big=true; }
+    else if(x.state==="lie"){
+      el.classList.add("lie");
+      if(k===S.lastLie) el.classList.add("fresh");
+      if(S.finished){ text=x.label; }
+      else { text="FALSE"; big=true; }
+    }
+    else if(x.state==="truth"){ el.classList.add("truth"); text=x.label; }
+    else if(x.open){ text=x.label; }
+    else { el.classList.add("dormant"); text=""; }
+
+    if(S.justOpened && S.justOpened.indexOf(k)>=0) el.classList.add("justopened");
+
+    if(k===hereK) el.classList.add("here");
+    if(can[k]){
+      el.classList.add("can");
+      if(near[k]) el.classList.add("near");
+      el.addEventListener("click",()=>step(x.r,x.c));
+    }
+
+    if(text){
+      const fs = fontFor(text, DIM.d, big ? Math.max(8,DIM.d*0.26) : 11.5);
+      el.style.fontSize=fs.toFixed(1)+"px";
+      el.innerHTML="<span>"+esc(text)+"</span>";
+    }
+
+    el.style.width=el.style.height=DIM.d+"px";
+    el.style.left=(DIM.w/2 + (x.c-x.r)*DIM.dx - DIM.d/2)+"px";
+    el.style.top =((10-(x.r+x.c))*DIM.dy)+"px";
+    board.appendChild(el);
+  });
+
+  const w=document.createElement("div");
+  w.className="walker";
+  w.style.left=(DIM.w/2 + (S.pos[1]-S.pos[0])*DIM.dx - 8)+"px";
+  w.style.top =((10-(S.pos[0]+S.pos[1]))*DIM.dy - 15)+"px";
+  board.appendChild(w);
+
+  $("bBank").disabled=S.busy||S.over||S.pot<=0;
+  $("bBank").textContent=S.pot>0 ? ("TAKE "+money(S.pot)+" AND GO") : "TAKE THE MONEY";
+}
+
+function setHint(html){$("hint").innerHTML=html;}
+function listMoves(){
+  const names=moves().map(([r,c])=>{
+    const k=K(r,c), x=S.cells[k];
+    if(k===EXIT) return "the exit";
+    if(k===START) return "the start";
+    if(x.corner) return "a rest stone";
+    return x.state==="truth" ? "✔ "+x.label : x.label;
+  });
+  if(!names.length) return "";
+  if(names.length>3) return "<b>"+names.length+" stones</b> are lit — take any of them.";
+  return "Lit: <b>"+names.join("</b> · <b>")+"</b>";
+}
+function toast(msg,kind){
+  const el=$("toast"); el.textContent=msg;
+  el.className="toast "+(kind||"good"); void el.offsetWidth; el.classList.add("show");
+}
+
+/* ---------------- play ---------------- */
+function step(r,c){
+  if(S.busy||S.over) return;
+  if(!moves().some(m=>m[0]===r&&m[1]===c)) return;
+  const k=K(r,c), x=S.cells[k];
+  if(S.paused){ S.paused=false; updateClock(); }
+
+  if(k===EXIT){ S.pos=[r,c]; win(); return; }
+
+  if(k===SAFE_L||k===SAFE_R){
+    S.pos=[r,c]; S.busy=true; x.state="truth";
+    S.justOpened=openAround(r,c);
+    S.paused=true; updateClock();
+    render();
+    const found=exposeALie();
+    toast(found?"REST — clock stopped, one false one shown!":"REST — the clock stops","info");
+    setTimeout(()=>{ S.busy=false; render();
+      setHint("❚❚ <b>Clock stopped</b> — it starts again the moment you choose."+
+              (found?"<br>The board has given one away.":"")); },1000);
+    return;
+  }
+
+  S.busy=true;
+  if(x.lie){
+    x.state="lie"; x.open=true; S.lastLie=k; S.strikes++; S.justOpened=[];
+    S.pot=Math.floor(S.pot/2/50)*50;
+    render();
+    toast(S.strikes>=MAX_STRIKES?"THREE SLIPS — YOU'RE DOWN!":"IT GIVES WAY!","bad");
+    setTimeout(()=>{
+      if(S.strikes>=MAX_STRIKES){ lose(); return; }
+      S.busy=false; render();
+      const left=MAX_STRIKES-S.strikes;
+      setHint("The stone crumbles — purse cut to <b>"+money(S.pot)+"</b>. "+
+              left+" "+(left===1?"slip":"slips")+" left. "+listMoves());
+    },1400);
+  }else{
+    x.state="truth"; S.pos=[r,c]; S.truths++; S.pot+=PER_TRUTH;
+    S.justOpened=openAround(r,c);
+    render();
+    toast("IT HOLDS — +"+money(PER_TRUTH),"good");
+    setTimeout(()=>{ S.busy=false; render(); setHint(listMoves()); },700);
+  }
+}
+
+function exposeALie(){
+  const hidden=Object.values(S.cells).filter(x=>x.lie && x.state==="hidden");
+  if(!hidden.length) return false;
+  const pick=hidden[Math.floor(Math.random()*hidden.length)];
+  pick.state="lie"; pick.open=true; S.lastLie=K(pick.r,pick.c);
+  render();
+  return true;
+}
+function revealAll(){
+  Object.values(S.cells).forEach(x=>{ x.open=true; if(!x.corner) x.state = x.lie ? "lie" : "truth"; });
+  S.lastLie=null; S.justOpened=[]; S.finished=true;
+}
+
+function endGame(title,sub){
+  S.over=true; revealAll();
+  $("hint").hidden=true; $("bBank").hidden=true;
+  $("etitle").innerHTML=title;
+  $("esub").innerHTML=sub+
+    '<div class="legend">'+
+      '<span><i style="background:#3ba9ff"></i>true</span>'+
+      '<span><i style="background:#ff3b5c"></i>false</span></div>';
+  $("endpanel").hidden=false;
+  layout(); render();
+}
+
+function bank(){
+  if(S.busy||S.over||S.pot<=0) return;
+  if(window.GGA && S.pot>=5000) GGA.award('ofs_bank');
+  if(window.GGA) GGA.haptic("success");
+  endGame("💰 YOU TOOK "+money(S.pot),
+    "You walked off with <b>"+money(S.pot)+"</b> from "+S.truths+" good steps"+
+    (S.strikes?" and "+S.strikes+" "+(S.strikes===1?"slip":"slips"):"")+
+    ". Here's the whole board.");
+}
+function win(){
+  S.pot+=CROSS_BONUS;
+  if(window.GGA){ GGA.award('ofs_cross');
+    if(S.strikes===0) GGA.award('ofs_clean');
+    if(S.pot>=5000) GGA.award('ofs_bank'); }
+  if(window.GGA) GGA.haptic("success");
+  endGame("🏆 YOU MADE IT ACROSS!",
+    "Safe on the far side with <b>"+money(S.pot)+"</b> — "+S.truths+" good steps plus a "+
+    money(CROSS_BONUS)+" bonus.<br>Slips: <b>"+S.strikes+
+    "</b> · Time left: <b>"+clock(S.left)+"</b>");
+}
+function timeUp(){
+  if(S.over) return;
+  endGame("⏰ TIME'S UP",
+    "Five minutes gone with you still out there, so the "+money(S.pot)+" goes with it. "+
+    "You'd found <b>"+S.truths+"</b> good steps — next time, take the money before the clock beats you.");
+}
+function lose(){
+  endGame("💥 THREE SLIPS — DOWN YOU GO",
+    "Off the edge with nothing after <b>"+S.truths+"</b> good steps. "+
+    "Every answer is showing now — the blue stones were the way across.");
+}
+
+/* ---------------- overlay ---------------- */
+function overlay(title,body,buttons){
+  const c=$("card");
+  c.innerHTML="<h2>"+title+"</h2>"+body;
+  const row=document.createElement("div"); row.className="crow";
+  buttons.forEach(b=>{
+    const el=document.createElement("button");
+    el.className="btn "+(b.c||"b-go"); el.textContent=b.l;
+    el.addEventListener("click",b.f); row.appendChild(el);
+  });
+  c.appendChild(row);
+  $("ovl").classList.add("on");
+}
+function closeOverlay(){$("ovl").classList.remove("on");}
+
+/* ---------------- events ---------------- */
+$("bBank").addEventListener("click",bank);
+$("bAgain").addEventListener("click",()=>{
+  $("endpanel").hidden=true; $("hint").hidden=false; $("bBank").hidden=false;
+  newGame();
+});
+let rt=null;
+window.addEventListener("resize",()=>{
+  clearTimeout(rt); rt=setTimeout(()=>{ if(S.cells){layout();render();} },120);
+});
+
+/* ---------------- start ---------------- */
+newGame();
+overlay("ONE FALSE STEP",
+  "<p>The board hides <b>22 true answers and 10 false ones</b>, and there is always a safe way "+
+  "across. Only the <b>two stones ahead of you</b> show what they say — the rest stay dark until "+
+  "you get near. Every good step lights up the stones it touches.</p>"+
+  "<p>Work your way up to the exit at the top. <b>Every stone touching ground you've already "+
+  "proven stays lit</b>, so you can always drop back and branch off somewhere else.</p>"+
+  "<p>✅ Each good step is worth <b>"+money(PER_TRUTH)+"</b><br>"+
+  "💀 A false one crumbles and <b>halves your purse</b><br>"+
+  "🛑 <b>Three slips and you're done</b><br>"+
+  "🟣 The <b>REST</b> stones left and right give away a false one <i>and stop the clock</i><br>"+
+  "⏰ You have <b>5 minutes</b><br>"+
+  "🏁 Reach <b>EXIT</b> at the top for a "+money(CROSS_BONUS)+" bonus</p>",
+  [{l:"STEP OUT",c:"b-go",f:closeOverlay}]);
+})();
+</script>
+</body>
+</html>

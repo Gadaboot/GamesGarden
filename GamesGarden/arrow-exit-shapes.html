@@ -1084,6 +1084,11 @@ function winLevel(){
   beep(880, 0.12, "triangle", 0.06);
   setTimeout(function(){ beep(1170, 0.18, "triangle", 0.06); }, 110);
   MEM.done[state.level] = true;
+  if(window.GGA){
+    if(state.level >= 10) GGA.award('aes_l10');
+    if(state.level >= 50) GGA.award('aes_l50');
+    GGA.haptic('success');
+  }
   if(state.level + 1 > MEM.unlocked) MEM.unlocked = Math.min(TOTAL_LEVELS, state.level + 1);
   saveProgress();
   var last = state.level >= TOTAL_LEVELS;
