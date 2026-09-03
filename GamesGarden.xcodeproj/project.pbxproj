@@ -35,8 +35,8 @@
 		675D4CB730486E08005C8C19 /* icon_wheeloffortune.png in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CB630486E08005C8C19 /* icon_wheeloffortune.png */; };
 		675D4CB930486E16005C8C19 /* icon_bridgeoflies.png in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CB830486E16005C8C19 /* icon_bridgeoflies.png */; };
 		675D4CBB30486E25005C8C19 /* bridgeoflies.html in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CBA30486E25005C8C19 /* bridgeoflies.html */; };
-		675D4CBD304889D3005C8C19 /* pointless.html in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CBC304889D3005C8C19 /* pointless.html */; };
-		675D4CBF304889E0005C8C19 /* icon_pointless.png in Resources */ = {isa = PBXBuildFile; fileRef = 675D4CBE304889E0005C8C19 /* icon_pointless.png */; };
+		6761C90E30495EB70050EC58 /* nullpoints.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90D30495EB70050EC58 /* nullpoints.html */; };
+		6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90F30495EC50050EC58 /* icon_nullpoints.png */; };
 		67C56400300CD09500D2D146 /* battleships.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C563FF300CD09500D2D146 /* battleships.html */; };
 		67C56402300CD09C00D2D146 /* icon_battleships.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56401300CD09C00D2D146 /* icon_battleships.png */; };
 		67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56403300CD0A600D2D146 /* icon_Ludo.png */; };
@@ -104,8 +104,8 @@
 		675D4CB630486E08005C8C19 /* icon_wheeloffortune.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wheeloffortune.png; sourceTree = "<group>"; };
 		675D4CB830486E16005C8C19 /* icon_bridgeoflies.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_bridgeoflies.png; sourceTree = "<group>"; };
 		675D4CBA30486E25005C8C19 /* bridgeoflies.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = bridgeoflies.html; sourceTree = "<group>"; };
-		675D4CBC304889D3005C8C19 /* pointless.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = pointless.html; sourceTree = "<group>"; };
-		675D4CBE304889E0005C8C19 /* icon_pointless.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_pointless.png; sourceTree = "<group>"; };
+		6761C90D30495EB70050EC58 /* nullpoints.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = nullpoints.html; sourceTree = "<group>"; };
+		6761C90F30495EC50050EC58 /* icon_nullpoints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_nullpoints.png; sourceTree = "<group>"; };
 		67C563FF300CD09500D2D146 /* battleships.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = battleships.html; sourceTree = "<group>"; };
 		67C56401300CD09C00D2D146 /* icon_battleships.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_battleships.png; sourceTree = "<group>"; };
 		67C56403300CD0A600D2D146 /* icon_Ludo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_Ludo.png; sourceTree = "<group>"; };
@@ -199,10 +199,10 @@
 				67D823A42FFFB4A700892511 /* frogger.html */,
 				67C56407300CD0BA00D2D146 /* ludo.html */,
 				6731DF21300FCF8E0070AC8B /* magic-towers-solitaire.html */,
+				6761C90D30495EB70050EC58 /* nullpoints.html */,
 				67D8238A2FFF955C00892511 /* octo.html */,
 				6731DF27300FD9510070AC8B /* privacy.html */,
 				67C5640D300CECEC00D2D146 /* paint-the-flag.html */,
-				675D4CBC304889D3005C8C19 /* pointless.html */,
 				67E1D1F230261ACB002AEE31 /* premier-glory.html */,
 				67C56409300CD0C200D2D146 /* scopa.html */,
 				67D8239C2FFFA7ED00892511 /* solitaire.html */,
@@ -231,9 +231,9 @@
 				67D823A82FFFB4E000892511 /* icon_frogger.png */,
 				67C56403300CD0A600D2D146 /* icon_Ludo.png */,
 				6731DF1E300FCF7B0070AC8B /* icon_magic-towers.png */,
+				6761C90F30495EC50050EC58 /* icon_nullpoints.png */,
 				67D823862FFEDC9900892511 /* icon_octo.png */,
 				67C5640F300CEDDB00D2D146 /* icon_paint-the-flag.png */,
-				675D4CBE304889E0005C8C19 /* icon_pointless.png */,
 				67C56405300CD0AF00D2D146 /* icon_scopa.png */,
 				67D8239E2FFFA7F800892511 /* icon_solitaire.png */,
 				AA000000000000000000000D /* icon_yahtzee.png */,
@@ -309,7 +309,6 @@
 				6703E6853007A1E3000B3226 /* cartoon-cat-invaders.html in Resources */,
 				6731DF30300FDF040070AC8B /* achievements.js in Resources */,
 				67C56410300CEDDB00D2D146 /* icon_paint-the-flag.png in Resources */,
-				675D4CBD304889D3005C8C19 /* pointless.html in Resources */,
 				6731DF2E300FDEF70070AC8B /* trophies.html in Resources */,
 				6731DF2C300FDCA90070AC8B /* support.html in Resources */,
 				67D8239F2FFFA7F800892511 /* icon_solitaire.png in Resources */,
@@ -326,6 +325,7 @@
 				67C56400300CD09500D2D146 /* battleships.html in Resources */,
 				67D823922FFFA1EB00892511 /* icon_checkers.png in Resources */,
 				67050092303DDCB10096E2BC /* billiards.html in Resources */,
+				6761C90E30495EB70050EC58 /* nullpoints.html in Resources */,
 				67D823932FFFA1EB00892511 /* icon_chess.png in Resources */,
 				6705008A303DD9F60096E2BC /* 3d-sniper.html in Resources */,
 				6703E6813007A182000B3226 /* cat-invaders.html in Resources */,
@@ -341,6 +341,7 @@
 				67D823A72FFFB4AF00892511 /* wordle.html in Resources */,
 				675D4CB730486E08005C8C19 /* icon_wheeloffortune.png in Resources */,
 				67D8238F2FFFA18C00892511 /* checkers.html in Resources */,
+				6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */,
 				67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */,
 				67E1D1F730261BB3002AEE31 /* england-football-coach.html in Resources */,
 				67050098303DDFC80096E2BC /* arrow-exit-shapes.html in Resources */,
@@ -349,7 +350,6 @@
 				67D8239D2FFFA7ED00892511 /* solitaire.html in Resources */,
 				67D823A52FFFB4A700892511 /* frogger.html in Resources */,
 				67D8238B2FFF955C00892511 /* octo.html in Resources */,
-				675D4CBF304889E0005C8C19 /* icon_pointless.png in Resources */,
 				67E1D1F330261ACB002AEE31 /* premier-glory.html in Resources */,
 				AA000000000000000000000F /* welcome.png in Resources */,
 				67C56402300CD09C00D2D146 /* icon_battleships.png in Resources */,

@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#160a36">
+<title>Null Points — 2 Player</title>
+<style>
+/* ============================================================
+   NULL POINTS — colourful 2-player quiz game
+   Single self-contained file. No external assets.
+   ============================================================ */
+:root{
+  --bg1:#1b0b3d; --bg2:#3a0f5e; --bg3:#0b1240;
+  --ink:#ffffff;
+  --cyan:#25e6ff; --pink:#ff3ea5; --lime:#a8ff3e;
+  --amber:#ffc93c; --violet:#a06bff; --coral:#ff6b5e;
+  --p1:#25e6ff; --p2:#ff5fbf;
+  --panel:rgba(255,255,255,.09);
+  --panel-b:rgba(255,255,255,.18);
+  --shadow:0 14px 34px rgba(0,0,0,.42);
+  --r:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none !important}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Avenir,"Helvetica Neue",Arial,sans-serif;
+  color:var(--ink);
+  background:var(--bg1);
+  overflow-x:hidden;
+  -webkit-user-select:none;user-select:none;
+  -webkit-text-size-adjust:100%;
+}
+/* fixed backdrop layers (avoids background-attachment:fixed, unreliable in iOS web views) */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(1100px 700px at 12% -8%, #6a1fb0 0%, transparent 60%),
+    radial-gradient(900px 640px at 96% 6%, #0f4fd8 0%, transparent 58%),
+    radial-gradient(900px 700px at 50% 108%, #ff2e88 0%, transparent 55%),
+    linear-gradient(165deg,var(--bg1),var(--bg3) 55%,#12073a);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:
+    radial-gradient(2px 2px at 18% 22%, rgba(255,255,255,.7), transparent),
+    radial-gradient(2px 2px at 74% 14%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1.5px 1.5px at 42% 66%, rgba(255,255,255,.5), transparent),
+    radial-gradient(2px 2px at 88% 74%, rgba(255,255,255,.45), transparent),
+    radial-gradient(1.5px 1.5px at 8% 82%, rgba(255,255,255,.45), transparent);
+}
+.wrap{
+  position:relative;z-index:1;
+  max-width:760px;margin:0 auto;
+  padding:calc(10px + env(safe-area-inset-top)) 16px calc(26px + env(safe-area-inset-bottom));
+  min-height:100%;
+  display:flex;flex-direction:column;
+}
+
+/* ---------------- buttons / bar ---------------- */
+.topbar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.btn{
+  border:0;cursor:pointer;font:inherit;font-weight:800;color:#fff;text-decoration:none;
+  border-radius:999px;padding:11px 16px;
+  background:linear-gradient(135deg,var(--violet),var(--pink));
+  box-shadow:0 8px 20px rgba(255,62,165,.34);
+  transition:transform .12s ease, filter .12s ease;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn:active{transform:scale(.95)}
+.btn.ghost{background:var(--panel);border:1px solid var(--panel-b);box-shadow:none;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.btn.big{padding:16px 30px;font-size:1.1rem;border-radius:22px}
+.btn.lime{background:linear-gradient(135deg,#5ddb2f,var(--lime));color:#10240a;box-shadow:0 8px 20px rgba(168,255,62,.3)}
+.btn.cyan{background:linear-gradient(135deg,#1aa9ff,var(--cyan));color:#04202b;box-shadow:0 8px 20px rgba(37,230,255,.3)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.spacer{flex:1}
+.pill{
+  background:var(--panel);border:1px solid var(--panel-b);border-radius:999px;
+  padding:7px 11px;font-size:.62rem;font-weight:800;letter-spacing:.05em;
+  text-transform:uppercase;white-space:nowrap;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.pill b{font-size:.85rem;letter-spacing:0}
+.pill.jack b{color:var(--lime)}
+#sndBtn{padding:10px 12px;font-size:.95rem;line-height:1}
+.topbar .btn{font-size:.85rem}
+
+/* ---------------- screens ---------------- */
+.screen{display:none;flex:1;flex-direction:column;animation:fade .35s ease both}
+.screen.on{display:flex}
+@keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ---------------- home ---------------- */
+.hero{text-align:center;margin:auto 0;padding:10px 0}
+.logo{font-size:clamp(3rem,15vw,5.4rem);font-weight:900;letter-spacing:-.04em;line-height:.92;margin:0;
+  animation:bob 3.4s ease-in-out infinite}
+.logo span{
+  display:inline-block;
+  background-image:linear-gradient(100deg,var(--amber),var(--pink) 38%,var(--violet) 66%,var(--cyan));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-10px) rotate(-2deg)}}
+.sub{margin:6px 0 0;font-size:.8rem;letter-spacing:.28em;text-transform:uppercase;font-weight:900;color:var(--lime)}
+.tag{margin:14px auto 0;max-width:440px;font-size:1rem;line-height:1.5;color:rgba(255,255,255,.82)}
+.tag em{color:var(--lime);font-style:normal;font-weight:800}
+.menu{display:flex;flex-direction:column;gap:12px;max-width:330px;margin:28px auto 0}
+
+/* ---------------- cards / rules ---------------- */
+.card{
+  background:var(--panel);border:1px solid var(--panel-b);border-radius:var(--r);
+  padding:20px;box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.card h2{margin:0 0 12px;font-size:1.35rem}
+.rules{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+.rules li{display:flex;gap:12px;align-items:flex-start;font-size:.95rem;line-height:1.5;color:rgba(255,255,255,.88)}
+.num{flex:0 0 30px;height:30px;border-radius:10px;display:grid;place-items:center;
+  font-weight:900;font-size:.9rem;color:#1a0733;background:linear-gradient(135deg,var(--amber),var(--lime))}
+
+/* ---------------- setup ---------------- */
+.setup{margin:auto 0}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;font-weight:900;margin-bottom:8px}
+.field.one label{color:var(--p1)} .field.two label{color:var(--p2)}
+.field input{
+  width:100%;font:inherit;font-weight:800;font-size:1.05rem;color:#fff;
+  background:rgba(0,0,0,.28);border:2px solid var(--panel-b);border-radius:16px;
+  padding:14px 16px;outline:none;-webkit-user-select:text;user-select:text;
+}
+.field.one input:focus{border-color:var(--p1)} .field.two input:focus{border-color:var(--p2)}
+.field input::placeholder{color:rgba(255,255,255,.35)}
+
+/* ---------------- scoreboard ---------------- */
+.sboard{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pcard{position:relative;border-radius:16px;padding:10px 12px;
+  background:var(--panel);border:1px solid var(--panel-b);
+  transition:box-shadow .2s, border-color .2s, transform .2s}
+.pcard.active{transform:translateY(-2px)}
+.pcard.one.active{border-color:var(--p1);box-shadow:0 0 0 2px rgba(37,230,255,.5), 0 10px 22px rgba(37,230,255,.28)}
+.pcard.two.active{border-color:var(--p2);box-shadow:0 0 0 2px rgba(255,95,191,.5), 0 10px 22px rgba(255,95,191,.28)}
+.pname{font-weight:900;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard.one .pname{color:var(--p1)} .pcard.two .pname{color:var(--p2)}
+.pips{display:flex;gap:5px;margin:7px 0 6px}
+.pip{width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.16)}
+.pcard.one .pip.on{background:var(--p1);box-shadow:0 0 10px rgba(37,230,255,.8)}
+.pcard.two .pip.on{background:var(--p2);box-shadow:0 0 10px rgba(255,95,191,.8)}
+.prow{font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.62);font-weight:800}
+.prow b{font-size:.95rem;color:#fff;letter-spacing:0}
+
+/* ---------------- question head ---------------- */
+.roundhead{text-align:center;margin-bottom:10px}
+.roundtag{display:inline-block;font-size:.7rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
+  padding:6px 14px;border-radius:999px;color:#1a0733;background:linear-gradient(135deg,var(--amber),var(--coral))}
+.roundtag.type{background:linear-gradient(135deg,var(--lime),var(--cyan))}
+.cat{margin:10px 0 4px;font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);font-weight:800}
+.q{margin:0;font-size:clamp(1.1rem,4.4vw,1.5rem);font-weight:800;line-height:1.28}
+.hint{margin:8px 0 0;font-size:.82rem;color:rgba(255,255,255,.6)}
+
+.turn{margin:12px 0 4px;padding:12px 14px;border-radius:16px;text-align:center;
+  font-weight:900;font-size:1rem;
+  background:rgba(255,255,255,.07);border:1px solid var(--panel-b);
+  animation:pulse 2s ease-in-out infinite}
+.turn small{display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:800;color:rgba(255,255,255,.6);margin-top:4px}
+.turn.one{border-color:rgba(37,230,255,.55);color:var(--p1)}
+.turn.two{border-color:rgba(255,95,191,.55);color:var(--p2)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.72}}
+
+/* ---------------- tile board ---------------- */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:12px 0 4px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+.tile{
+  position:relative;border:0;cursor:pointer;font:inherit;color:#fff;
+  min-height:64px;padding:12px 10px;border-radius:16px;
+  font-weight:800;font-size:.92rem;line-height:1.2;text-align:center;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 18px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .14s ease, opacity .25s ease;
+  animation:pop .3s ease both;
+}
+@keyframes pop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
+.tile:active{transform:scale(.94)}
+.tile.taken{cursor:default;box-shadow:inset 0 0 0 999px rgba(9,4,28,.66), 0 6px 14px rgba(0,0,0,.28);
+  outline:3px solid rgba(255,255,255,.28);outline-offset:-3px}
+.tile.taken > span{opacity:.5}
+.tile.taken.one{outline-color:var(--p1)} .tile.taken.two{outline-color:var(--p2)}
+.tile .badge{
+  position:absolute;top:-8px;right:-6px;min-width:30px;height:30px;padding:0 6px;
+  border-radius:999px;display:grid;place-items:center;
+  font-size:.82rem;font-weight:900;color:#10102a;
+  box-shadow:0 4px 12px rgba(0,0,0,.45);background:var(--amber);
+}
+.tile.one .badge{background:var(--p1)} .tile.two .badge{background:var(--p2)}
+.tile .badge.zero{background:var(--lime)}
+.tile .badge.wrong{background:var(--coral);color:#2a0505}
+
+/* ---------------- type-it-in ---------------- */
+.typebox{margin:12px 0 4px}
+.typeform{display:flex;gap:9px;align-items:stretch}
+.typeform input{
+  flex:1;min-width:0;font:inherit;font-weight:800;font-size:1.05rem;color:#fff;
+  background:rgba(0,0,0,.32);border:2px solid var(--panel-b);border-radius:16px;
+  padding:15px 16px;outline:none;-webkit-user-select:text;user-select:text;
+}
+.typeform input::placeholder{color:rgba(255,255,255,.32)}
+.typeform.one input:focus{border-color:var(--p1)}
+.typeform.two input:focus{border-color:var(--p2)}
+.typeform.shake{animation:shake .4s}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}
+  30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+.typenote{margin:9px 2px 0;font-size:.82rem;font-weight:700;color:var(--amber);min-height:1.2em}
+.anaprompt{
+  margin:0 0 12px;padding:16px 14px;border-radius:18px;text-align:center;
+  background:rgba(0,0,0,.3);border:1px dashed var(--panel-b);
+}
+.anaprompt .scr{
+  font-size:clamp(1.4rem,7vw,2.1rem);font-weight:900;letter-spacing:.28em;
+  color:var(--amber);word-break:break-word;line-height:1.3;
+}
+.anaprompt .len{margin-top:6px;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  font-weight:800;color:rgba(255,255,255,.55)}
+.tile .scr{letter-spacing:.16em;font-size:.86rem}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 0}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 8px 7px 12px;border-radius:999px;
+  background:rgba(255,255,255,.08);border:1px solid var(--panel-b);
+  font-size:.82rem;font-weight:800;
+}
+.chip.one{border-color:rgba(37,230,255,.6);color:var(--p1)}
+.chip.two{border-color:rgba(255,95,191,.6);color:var(--p2)}
+.chip b{
+  min-width:26px;height:24px;padding:0 6px;border-radius:999px;
+  display:grid;place-items:center;font-size:.78rem;color:#10102a;background:var(--amber);
+}
+.chip.one b{background:var(--p1)} .chip.two b{background:var(--p2)}
+.chip b.zero{background:var(--lime)} .chip b.wrong{background:var(--coral);color:#2a0505}
+.chip.miss{border-style:dashed;color:rgba(255,255,255,.8)}
+.chip.miss b{background:rgba(255,255,255,.35);color:#12082c}
+.chip.miss b.zero{background:var(--lime);color:#10240a}
+.misslbl{margin:16px 0 0;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  font-weight:800;color:rgba(255,255,255,.55)}
+
+/* ---------------- countdown board ---------------- */
+.board{
+  margin:8px 0 0;padding:16px 18px 18px;border-radius:24px;text-align:center;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.05));
+  border:1px solid var(--panel-b);box-shadow:var(--shadow);
+}
+.board .lbl{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:800}
+.answered{margin:6px 0 2px;font-size:1.1rem;font-weight:900;color:var(--amber)}
+.bignum{font-size:clamp(3.6rem,18vw,6.4rem);font-weight:900;line-height:1;letter-spacing:-.05em;
+  font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 6px 26px rgba(37,230,255,.55)}
+.bignum.zero{color:var(--lime);text-shadow:0 0 34px rgba(168,255,62,.95);animation:zoom .5s ease}
+.bignum.wrong{color:var(--coral);text-shadow:0 0 26px rgba(255,107,94,.8)}
+@keyframes zoom{0%{transform:scale(.6)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.bar{height:13px;border-radius:999px;background:rgba(0,0,0,.35);overflow:hidden;margin:10px 0 12px}
+.bar i{display:block;height:100%;width:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--lime),var(--cyan) 45%,var(--violet) 75%,var(--pink))}
+.verdict{font-size:.98rem;font-weight:800;min-height:1.4em;color:rgba(255,255,255,.9)}
+.verdict.good{color:var(--lime)} .verdict.bad{color:var(--coral)}
+.center{display:flex;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+
+/* ---------------- round result ---------------- */
+.vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:16px 0 6px}
+.vs .side{text-align:center;padding:14px 8px;border-radius:18px;background:var(--panel);border:1px solid var(--panel-b)}
+.vs .side.win{border-color:var(--lime);box-shadow:0 0 0 2px rgba(168,255,62,.35)}
+.vs .side .n{font-size:.8rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vs .side.one .n{color:var(--p1)} .vs .side.two .n{color:var(--p2)}
+.vs .side .t{font-size:2.3rem;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.vs .side .d{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:800}
+.vs .mid{font-size:.85rem;font-weight:900;color:rgba(255,255,255,.5)}
+.headline{text-align:center;font-size:1.15rem;font-weight:900;margin:12px 0 0}
+.headline.good{color:var(--lime)}
+
+/* ---------------- final ---------------- */
+.finalpick{display:flex;flex-direction:column;gap:12px;margin:18px 0}
+.catbtn{border:0;cursor:pointer;font:inherit;color:#fff;text-align:left;
+  padding:16px 18px;border-radius:18px;font-weight:800;font-size:1rem;line-height:1.3;
+  box-shadow:0 8px 18px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .12s ease}
+.catbtn:active{transform:scale(.97)}
+.lives{display:flex;gap:8px;justify-content:center;margin:12px 0 2px}
+.life{width:16px;height:16px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px rgba(168,255,62,.7)}
+.life.used{background:rgba(255,255,255,.2);box-shadow:none}
+
+/* ---------------- results ---------------- */
+.result{text-align:center;margin:auto 0}
+.rank{font-size:clamp(1.9rem,8.4vw,3rem);font-weight:900;line-height:1.05;margin:0 0 10px;
+  background-image:linear-gradient(100deg,var(--lime),var(--cyan) 50%,var(--pink));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent}
+.totlbl{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);font-weight:800}
+.breakdown{margin:20px auto 0;max-width:440px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;
+  background:var(--panel);border:1px solid var(--panel-b);font-size:.84rem;text-align:left}
+.row .r-q{flex:1;color:rgba(255,255,255,.82);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .r-a{font-weight:900;font-variant-numeric:tabular-nums}
+.row .r-a.one{color:var(--p1)} .row .r-a.two{color:var(--p2)}
+
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+.footer{margin-top:18px;text-align:center;font-size:.7rem;color:rgba(255,255,255,.35);letter-spacing:.08em}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="wrap">
+
+  <!-- ============ TOP BAR ============ -->
+  <div class="topbar">
+    <a class="btn ghost" href="index.html" aria-label="Back to menu">&#9776; Menu</a>
+    <div class="spacer"></div>
+    <div class="pill jack" id="pillJack" hidden>Jackpot <b id="jackVal">£1,000</b></div>
+    <button class="btn ghost" id="sndBtn" title="Sound">&#128266;</button>
+  </div>
+
+  <!-- ============ HOME ============ -->
+  <section class="screen on" id="scHome">
+    <div class="hero">
+      <h1 class="logo"><span>Null Points</span></h1>
+      <div class="sub">2 Player</div>
+      <p class="tag">We asked <em>100 people</em> to name as many answers as they could.<br>
+        Two answers each per question — pick from the board, <em>type it in</em>, or crack an <em>anagram</em>.<br>
+        Lowest total takes the round. First to <em>5 points</em> plays the final.</p>
+      <div class="menu">
+        <button class="btn big lime" id="playBtn">▶  Play</button>
+        <button class="btn big ghost" id="howBtn">How to play</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW TO ============ -->
+  <section class="screen" id="scHow">
+    <div class="card">
+      <h2>How to play</h2>
+      <ul class="rules">
+        <li><span class="num">1</span><span>Every question was put to <b>100 people</b>. Each correct answer they gave scores a point — so <b>obscure is good</b>.</span></li>
+        <li><span class="num">2</span><span>Players take turns on the same question: two answers each, four in all. You can't take one that's already gone.</span></li>
+        <li><span class="num">3</span><span>Rounds come in three flavours, at random: <b>pick from the board</b>, <b>type it in</b> with nothing to choose from, or an <b>anagram</b> round — claim a jumbled answer, then unscramble it.</span></li>
+        <li><span class="num">4</span><span>A wrong answer — or one that isn't on our board — stops dead on <b>100</b>.</span></li>
+        <li><span class="num">5</span><span>Lowest combined total wins the round and takes <b>1 point</b>. Level scores: drawn, nobody scores.</span></li>
+        <li><span class="num">6</span><span>An answer nobody gave is a <b>NULL ANSWER</b> — £250 on the jackpot.</span></li>
+        <li><span class="num">7</span><span>First to <b>5 points</b> plays the <b>final</b>: three typed guesses to find a null answer and win the jackpot.</span></li>
+      </ul>
+      <div class="center"><button class="btn lime" id="howBack">Got it</button></div>
+    </div>
+  </section>
+
+  <!-- ============ SETUP ============ -->
+  <section class="screen" id="scSetup">
+    <div class="setup">
+      <div class="card">
+        <h2>Who's playing?</h2>
+        <div class="field one">
+          <label for="n1">Player 1</label>
+          <input id="n1" type="text" maxlength="14" placeholder="Player 1" autocomplete="off" autocapitalize="words" spellcheck="false">
+        </div>
+        <div class="field two">
+          <label for="n2">Player 2</label>
+          <input id="n2" type="text" maxlength="14" placeholder="Player 2" autocomplete="off" autocapitalize="words" spellcheck="false">
+        </div>
+        <div class="center">
+          <button class="btn big lime" id="startBtn">Start the match</button>
+          <button class="btn ghost" id="setupBack">Back</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section class="screen" id="scGame">
+    <div class="sboard">
+      <div class="pcard one" id="pc0">
+        <div class="pname" id="nm0">Player 1</div>
+        <div class="pips" id="pip0"></div>
+        <div class="prow">This round <b id="rt0">0</b></div>
+      </div>
+      <div class="pcard two" id="pc1">
+        <div class="pname" id="nm1">Player 2</div>
+        <div class="pips" id="pip1"></div>
+        <div class="prow">This round <b id="rt1">0</b></div>
+      </div>
+    </div>
+
+    <div class="roundhead">
+      <span class="roundtag" id="roundTag">Round 1</span>
+      <div class="cat" id="catTxt">Geography</div>
+      <h2 class="q" id="qTxt">Question</h2>
+      <p class="hint" id="qHint" hidden></p>
+    </div>
+
+    <div class="turn one" id="turnBox">Player 1 to answer<small>Pick 1 of 2</small></div>
+
+    <!-- pick-a-tile board -->
+    <div class="grid" id="grid"></div>
+
+    <!-- type-it-in -->
+    <div class="typebox" id="typeBox" hidden>
+      <div class="anaprompt" id="anaPrompt" hidden></div>
+      <form class="typeform one" id="typeForm" autocomplete="off">
+        <input id="typeInput" type="text" maxlength="40" placeholder="Type an answer…"
+               autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="go">
+        <button class="btn lime" type="submit" id="typeGo">Lock in</button>
+      </form>
+      <div class="typenote" id="typeNote"></div>
+      <div class="chips" id="typeChips"></div>
+    </div>
+
+    <div class="board" id="board" hidden>
+      <div class="lbl" id="boardWho">Player 1 answered</div>
+      <div class="answered" id="ansTxt">—</div>
+      <div class="bignum" id="bigNum">100</div>
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="center"><button class="btn cyan" id="nextBtn">Continue →</button></div>
+    </div>
+
+    <div class="board" id="roundEnd" hidden>
+      <div class="lbl">Round result</div>
+      <div class="vs">
+        <div class="side one" id="vs0"><div class="n" id="vn0">Player 1</div><div class="t" id="vt0">0</div><div class="d">total</div></div>
+        <div class="mid">v</div>
+        <div class="side two" id="vs1"><div class="n" id="vn1">Player 2</div><div class="t" id="vt1">0</div><div class="d">total</div></div>
+      </div>
+      <div class="headline" id="roundHead">Winner</div>
+      <div id="missWrap" hidden>
+        <div class="misslbl">Answers you both missed</div>
+        <div class="chips" id="missChips"></div>
+      </div>
+      <div class="center"><button class="btn cyan" id="roundNextBtn">Next round →</button></div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL ============ -->
+  <section class="screen" id="scFinal">
+    <div class="roundhead">
+      <span class="roundtag type">The Final</span>
+      <h2 class="q" id="finalTitle" style="margin-top:12px">Choose your category</h2>
+      <p class="hint" id="finalHint">One null answer wins the jackpot. You have three guesses.</p>
+    </div>
+    <div class="finalpick" id="finalPick"></div>
+    <div class="lives" id="lives" hidden><i class="life"></i><i class="life"></i><i class="life"></i></div>
+
+    <div class="typebox" id="fTypeBox" hidden>
+      <form class="typeform one" id="fTypeForm" autocomplete="off">
+        <input id="fTypeInput" type="text" maxlength="40" placeholder="Name a null answer…"
+               autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="go">
+        <button class="btn lime" type="submit" id="fTypeGo">Lock in</button>
+      </form>
+      <div class="typenote" id="fTypeNote"></div>
+      <div class="chips" id="fChips"></div>
+    </div>
+
+    <div class="board" id="finalBoard" hidden>
+      <div class="lbl">Your answer</div>
+      <div class="answered" id="fAnsTxt">—</div>
+      <div class="bignum" id="fBigNum">100</div>
+      <div class="bar"><i id="fBarFill"></i></div>
+      <div class="verdict" id="fVerdict"></div>
+      <div class="center"><button class="btn cyan" id="fNextBtn">Continue</button></div>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="screen" id="scEnd">
+    <div class="result">
+      <h2 class="rank" id="rankTxt">Winner</h2>
+      <div class="totlbl" id="matchTxt">5 – 3</div>
+      <div class="totlbl" id="jackTxt" style="margin-top:14px"></div>
+      <div id="fMissWrap" hidden>
+        <div class="misslbl">The null answers were</div>
+        <div class="chips" id="fMissChips" style="justify-content:center"></div>
+      </div>
+      <div class="breakdown" id="breakdown"></div>
+      <div class="center">
+        <button class="btn big lime" id="againBtn">Play again</button>
+        <a class="btn big ghost" href="index.html">Menu</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">Null Points — a colourful quiz of obscure answers.</div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   QUESTION BANK
+   [name, score, [aliases]]   score  0-100 = how many of 100 people said it
+                              score  -1    = not a valid answer (100 points)
+   closed:true  = the listed correct answers are the COMPLETE set,
+                  so the question is safe to use as a type-it-in round.
+   ============================================================ */
+const QUESTIONS = [
+ {"cat":"Geography","q":"Countries that share a land border with mainland France","closed":true,"a":[["Spain",71],["Germany",63],["Italy",57],["Belgium",44],["Switzerland",35],["Luxembourg",14],["Andorra",6],["Monaco",0],["Portugal",-1],["Austria",-1],["Netherlands",-1],["Denmark",-1]]},
+ {"cat":"Science","q":"Chemical elements with a one-letter symbol","closed":true,"a":[["Hydrogen",46],["Oxygen",39],["Carbon",31],["Nitrogen",24],["Potassium",12],["Sulfur",9,["sulphur"]],["Uranium",7],["Fluorine",5],["Phosphorus",3],["Boron",1],["Iodine",1],["Yttrium",0],["Tungsten",0],["Vanadium",0],["Helium",-1],["Sodium",-1],["Zinc",-1]]},
+ {"cat":"USA","q":"US states beginning with the letter M","closed":true,"a":[["Michigan",44],["Missouri",37],["Mississippi",35],["Massachusetts",30],["Minnesota",26],["Maryland",19],["Maine",15],["Montana",7],["Nebraska",-1],["Idaho",-1],["Delaware",-1],["Wyoming",-1]]},
+ {"cat":"Africa","q":"African countries beginning with a vowel","closed":true,"a":[["Egypt",58],["Ethiopia",42],["Algeria",36],["Uganda",30],["Angola",22],["Eritrea",8],["Ivory Coast",6,["cote divoire","cote d ivoire","cotedivoire"]],["Equatorial Guinea",3],["Eswatini",0,["swaziland"]],["Zambia",-1],["Oman",-1],["Namibia",-1]]},
+ {"cat":"Film","q":"Actors who have played James Bond in an official film","closed":true,"a":[["Sean Connery",76],["Daniel Craig",71],["Roger Moore",63],["Pierce Brosnan",57],["Timothy Dalton",31],["George Lazenby",18],["Michael Caine",-1],["Jason Statham",-1],["David Niven",-1],["Idris Elba",-1],["Hugh Grant",-1],["Clive Owen",-1]]},
+ {"cat":"Capitals","q":"Capital cities of South American countries","closed":true,"a":[["Buenos Aires",54],["Lima",41],["Santiago",36],["Brasília",33,["brasilia"]],["Bogotá",28,["bogota"]],["Quito",21],["Caracas",18],["La Paz",14],["Montevideo",11],["Asunción",5,["asuncion"]],["Sucre",2],["Georgetown",1],["Paramaribo",0],["Rio de Janeiro",-1],["Medellín",-1,["medellin"]]]},
+ {"cat":"Tradition","q":"Animals of the Chinese zodiac","closed":true,"a":[["Dragon",44],["Rat",38],["Tiger",36],["Snake",30],["Horse",28],["Monkey",25],["Rabbit",24],["Dog",22],["Ox",19,["bull","cow"]],["Pig",17,["boar"]],["Rooster",15,["cockerel","chicken"]],["Goat",9,["sheep","ram"]],["Cat",-1],["Bear",-1],["Fox",-1]]},
+ {"cat":"Politics","q":"People who have served as UK Prime Minister since 1900","closed":true,"a":[["Winston Churchill",74],["Margaret Thatcher",71],["Tony Blair",66],["Boris Johnson",60],["David Cameron",50],["Theresa May",46],["Gordon Brown",42],["Rishi Sunak",40],["John Major",38],["Liz Truss",34],["Keir Starmer",30],["Neville Chamberlain",26],["Clement Attlee",22],["Harold Wilson",20],["Edward Heath",17],["James Callaghan",16],["David Lloyd George",15,["lloyd george"]],["Harold Macmillan",13],["Anthony Eden",12],["Stanley Baldwin",11],["Ramsay MacDonald",9],["H. H. Asquith",8,["asquith","herbert asquith"]],["Alec Douglas-Home",5,["douglas home","alec home"]],["Arthur Balfour",3],["Bonar Law",1,["andrew bonar law"]],["Henry Campbell-Bannerman",0,["campbell bannerman"]],["Lord Salisbury",0,["salisbury","robert cecil"]],["Neil Kinnock",-1],["Nick Clegg",-1],["Michael Foot",-1]]},
+ {"cat":"Language","q":"Countries where Spanish is the main or official language","closed":true,"a":[["Spain",74],["Mexico",62],["Argentina",47],["Colombia",35],["Peru",31],["Chile",29],["Venezuela",26],["Cuba",24],["Ecuador",20],["Bolivia",18],["Uruguay",14],["Costa Rica",12],["Panama",11],["Guatemala",10],["Dominican Republic",9],["Nicaragua",8],["Honduras",7],["Paraguay",6],["El Salvador",5],["Equatorial Guinea",0],["Brazil",-1],["Portugal",-1],["Philippines",-1]]},
+ {"cat":"Literature","q":"Novels written by Charles Dickens","closed":true,"a":[["Oliver Twist",64],["Great Expectations",46],["David Copperfield",33],["A Tale of Two Cities",27],["Nicholas Nickleby",22],["The Pickwick Papers",18,["pickwick papers","pickwick"]],["Bleak House",14],["Hard Times",9],["The Old Curiosity Shop",6],["Little Dorrit",5],["Our Mutual Friend",4],["Dombey and Son",3],["Martin Chuzzlewit",3],["Barnaby Rudge",0],["The Mystery of Edwin Drood",1,["edwin drood"]],["Jane Eyre",-1],["Wuthering Heights",-1],["Middlemarch",-1]]},
+ {"cat":"Space","q":"The planets of our solar system","closed":true,"a":[["Earth",68],["Mars",62],["Jupiter",58],["Saturn",55],["Venus",48],["Mercury",40],["Uranus",36],["Neptune",34],["Pluto",-1],["Ceres",-1],["The Sun",-1],["The Moon",-1]]},
+ {"cat":"Sport","q":"Countries that have won the FIFA World Cup","closed":true,"a":[["Brazil",66],["Germany",54,["west germany"]],["Argentina",50],["France",44],["Italy",40],["England",32],["Spain",28],["Uruguay",12],["Netherlands",-1],["Portugal",-1],["Belgium",-1],["Hungary",-1]]},
+ {"cat":"Geography","q":"Countries that share a land border with Germany","closed":true,"a":[["France",58],["Netherlands",46],["Belgium",40],["Poland",38],["Austria",36],["Denmark",30],["Switzerland",28],["Czech Republic",22,["czechia","czech"]],["Luxembourg",14],["Italy",-1],["Hungary",-1],["Sweden",-1],["Slovakia",-1]]},
+ {"cat":"Geography","q":"Countries that share a land border with Italy","closed":true,"a":[["France",56],["Switzerland",50],["Austria",44],["Slovenia",26],["Vatican City",14,["the vatican","holy see"]],["San Marino",0],["Croatia",-1],["Germany",-1],["Spain",-1],["Greece",-1]]},
+ {"cat":"Geography","q":"The countries of South America","closed":true,"a":[["Brazil",72],["Argentina",64],["Chile",55],["Peru",48],["Colombia",44],["Venezuela",40],["Ecuador",30],["Bolivia",28],["Uruguay",24],["Paraguay",20],["Guyana",8],["Suriname",0],["Panama",-1],["Mexico",-1],["Costa Rica",-1],["Cuba",-1]]},
+ {"cat":"Science","q":"The noble gases","closed":true,"a":[["Helium",52],["Neon",40],["Argon",30],["Krypton",20],["Xenon",18],["Radon",0],["Hydrogen",-1],["Nitrogen",-1],["Oxygen",-1],["Chlorine",-1]]},
+ {"cat":"Comedy","q":"Members of the Monty Python team","closed":true,"a":[["John Cleese",62],["Michael Palin",48],["Eric Idle",34],["Terry Gilliam",28],["Terry Jones",26],["Graham Chapman",22],["Rowan Atkinson",-1],["Peter Sellers",-1],["Spike Milligan",-1],["Ronnie Barker",-1]]},
+ {"cat":"Animation","q":"The seven dwarfs in Snow White","closed":true,"a":[["Grumpy",54],["Sleepy",48],["Dopey",46],["Happy",44],["Doc",34],["Sneezy",30],["Bashful",24],["Smiley",-1],["Stumpy",-1],["Snoozy",-1],["Cheerful",-1]]},
+ {"cat":"Tradition","q":"The signs of the zodiac","closed":true,"a":[["Leo",44],["Scorpio",40],["Aries",38],["Gemini",36],["Taurus",34],["Cancer",32],["Virgo",30],["Libra",28],["Sagittarius",26],["Pisces",25],["Capricorn",24],["Aquarius",22],["Ophiuchus",-1],["Orion",-1],["Draco",-1],["Phoenix",-1]]},
+ {"cat":"Cinema","q":"Films starring Tom Hanks","a":[["Forrest Gump",82],["Toy Story",56],["Cast Away",45],["Saving Private Ryan",38],["Big",22],["The Green Mile",17],["Philadelphia",9],["Road to Perdition",2],["Cloud Atlas",0],["Rain Man",-1],["Jerry Maguire",-1],["Gladiator",-1]]},
+ {"cat":"Music","q":"Songs recorded by The Beatles","a":[["Yesterday",66],["Hey Jude",58],["Let It Be",52],["Help!",37],["Something",15],["Blackbird",8],["Taxman",3],["Rain",0],["Imagine",-1],["Mull of Kintyre",-1],["My Sweet Lord",-1]]},
+ {"cat":"Theatre","q":"Plays written by William Shakespeare","a":[["Romeo and Juliet",79],["Hamlet",74],["Macbeth",68],["A Midsummer Night's Dream",41],["The Tempest",29],["King Lear",26],["Titus Andronicus",4],["Coriolanus",2],["Cymbeline",1],["Pericles",0],["Doctor Faustus",-1],["The Duchess of Malfi",-1]]},
+ {"cat":"Anatomy","q":"Named bones of the human body","a":[["Femur",52],["Tibia",34],["Humerus",30],["Fibula",22],["Radius",20],["Ulna",17],["Sternum",15],["Clavicle",13],["Scapula",11],["Patella",9],["Coccyx",8],["Mandible",6],["Hyoid",1],["Stapes",0],["Cartilage",-1],["Tendon",-1]]},
+ {"cat":"Animation","q":"Walt Disney Animation Studios feature films","a":[["Frozen",71],["The Lion King",68],["Aladdin",45],["Moana",40],["Bambi",25],["Dumbo",21],["Hercules",12],["Atlantis: The Lost Empire",3],["The Black Cauldron",0],["Shrek",-1],["Despicable Me",-1],["Toy Story",-1]]},
+ {"cat":"Games","q":"Games played with playing cards","a":[["Poker",74],["Blackjack",51],["Bridge",40],["Snap",34],["Rummy",30],["Whist",15],["Cribbage",12],["Canasta",8],["Piquet",0],["Backgammon",-1],["Yahtzee",-1],["Dominoes",-1]]},
+ {"cat":"Fiction","q":"Fictional detectives","a":[["Sherlock Holmes",81],["Hercule Poirot",58],["Miss Marple",44],["Inspector Morse",33],["Columbo",30],["Jessica Fletcher",12],["Sam Spade",7],["Philip Marlowe",6],["Cormoran Strike",0],["Professor Moriarty",-1],["Fagin",-1],["Ebenezer Scrooge",-1]]},
+ {"cat":"Music","q":"Instruments in a symphony orchestra","a":[["Violin",72],["Cello",55],["Flute",48],["Trumpet",44],["Oboe",26],["Bassoon",19],["Timpani",12],["Cor anglais",3],["Celesta",1],["Electric guitar",-1],["Accordion",-1],["Bagpipes",-1]]},
+ {"cat":"Sport","q":"Sports on the programme at the Paris 2024 Olympics","a":[["Athletics",70],["Swimming",66],["Gymnastics",52],["Cycling",44],["Boxing",34],["Fencing",21],["Archery",18],["Skateboarding",12],["Handball",9],["Breaking",6],["Sport climbing",5],["Modern pentathlon",4],["Curling",-1],["Luge",-1],["Biathlon",-1],["Bobsleigh",-1]]},
+ {"cat":"Space","q":"Moons of planets in our solar system","a":[["The Moon",61],["Europa",30],["Titan",28],["Io",22],["Ganymede",19],["Phobos",13],["Callisto",10],["Deimos",8],["Enceladus",6],["Triton",4],["Miranda",1],["Ariel",0],["Pluto",-1],["Ceres",-1],["Halley",-1]]},
+ {"cat":"Food","q":"Fruits that grow on trees","a":[["Apple",78],["Orange",64],["Pear",49],["Cherry",41],["Peach",36],["Mango",30],["Plum",26],["Fig",12],["Quince",4],["Persimmon",2],["Medlar",0],["Strawberry",-1],["Blueberry",-1],["Rhubarb",-1]]},
+ {"cat":"Britain","q":"Cities in the United Kingdom with a cathedral","a":[["London",67],["York",44],["Canterbury",38],["Durham",26],["Salisbury",24],["Winchester",18],["Exeter",14],["Lichfield",5],["Truro",3],["Ripon",2],["St Davids",1],["Milton Keynes",-1],["Slough",-1],["Blackpool",-1]]},
+ {"cat":"Anagrams","q":"Anagrams of European countries","mode":"anagram","a":[["Spain",62],["France",58],["Italy",56],["Greece",44],["Poland",40],["Sweden",34],["Belgium",26],["Croatia",20],["Portugal",18],["Iceland",14],["Slovakia",8],["Latvia",9],["Moldova",4],["Andorra",3],["Liechtenstein",0]]},
+ {"cat":"Anagrams","q":"Anagrams of capital cities","mode":"anagram","a":[["Paris",64],["Rome",60],["Madrid",50],["Dublin",44],["Athens",40],["Lisbon",30],["Ottawa",26],["Havana",22],["Nairobi",12],["Helsinki",10],["Tashkent",3],["Ljubljana",1],["Ulaanbaatar",0],["Bratislava",2]]},
+ {"cat":"Anagrams","q":"Anagrams of animals","mode":"anagram","a":[["Horse",66],["Tiger",60],["Panda",54],["Badger",42],["Otter",38],["Leopard",30],["Gazelle",22],["Walrus",26],["Meerkat",16],["Aardvark",8],["Wolverine",6],["Capybara",2],["Pangolin",1],["Numbat",0]]},
+ {"cat":"Anagrams","q":"Anagrams of musical instruments","mode":"anagram","a":[["Piano",68],["Guitar",62],["Violin",52],["Trumpet",44],["Clarinet",32],["Trombone",28],["Harmonica",20],["Bassoon",16],["Ukulele",22],["Mandolin",10],["Glockenspiel",4],["Harpsichord",3],["Balalaika",1],["Theremin",0]]},
+ {"cat":"Anagrams","q":"Anagrams of chemical elements","mode":"anagram","a":[["Iron",64],["Gold",62],["Carbon",50],["Copper",46],["Silver",48],["Nickel",34],["Calcium",28],["Krypton",20],["Bismuth",12],["Tungsten",8],["Rhodium",5],["Yttrium",2],["Praseodymium",0],["Molybdenum",1]]},
+ {"cat":"Anagrams","q":"Anagrams of English football clubs","mode":"anagram","a":[["Arsenal",56],["Chelsea",54],["Everton",46],["Liverpool",50],["Fulham",34],["Burnley",26],["Watford",24],["Brentford",16],["Sunderland",14],["Blackburn",10],["Bournemouth",6],["Huddersfield",3],["Wolverhampton",1],["Peterborough",0]]},
+ {"cat":"Anagrams","q":"Anagrams of Italian cities","mode":"anagram","a":[["Rome",62],["Milan",54],["Venice",50],["Naples",42],["Turin",38],["Florence",34],["Verona",24],["Bologna",20],["Genoa",22],["Palermo",14],["Perugia",6],["Ravenna",4],["Bergamo",2],["Siracusa",0]]},
+ {"cat":"Anagrams","q":"Anagrams of things you find in a kitchen","mode":"anagram","a":[["Kettle",60],["Toaster",56],["Fridge",52],["Spatula",34],["Colander",26],["Whisk",40],["Saucepan",30],["Corkscrew",18],["Ladle",22],["Sieve",16],["Mandoline",4],["Ramekin",6],["Tureen",2],["Trivet",0]]},
+ {"cat":"Anagrams","q":"Anagrams of US states","mode":"anagram","a":[["Texas",62],["Florida",58],["Alaska",50],["Nevada",42],["Montana",36],["Oregon",34],["Georgia",40],["Kentucky",26],["Michigan",24],["Nebraska",16],["Wisconsin",12],["Delaware",8],["Connecticut",4],["Mississippi",1],["Wyoming",0]]},
+ {"cat":"Anagrams","q":"Anagrams of Shakespeare characters","mode":"anagram","a":[["Hamlet",60],["Romeo",58],["Juliet",56],["Macbeth",52],["Othello",44],["Puck",30],["Ophelia",26],["Iago",24],["Falstaff",18],["Shylock",16],["Caliban",10],["Malvolio",6],["Mercutio",8],["Banquo",12],["Cordelia",4],["Coriolanus",0]]},
+ {"cat":"Anagrams","q":"Anagrams of planets and moons","mode":"anagram","a":[["Mars",64],["Venus",60],["Jupiter",56],["Saturn",54],["Neptune",44],["Mercury",42],["Uranus",40],["Europa",18],["Titan",22],["Ganymede",10],["Callisto",6],["Enceladus",3],["Miranda",4],["Triton",8],["Umbriel",0]]},
+ {"cat":"Anagrams","q":"Anagrams of sports","mode":"anagram","a":[["Tennis",62],["Cricket",58],["Football",60],["Boxing",50],["Rugby",48],["Netball",34],["Snooker",30],["Archery",26],["Fencing",22],["Curling",18],["Badminton",20],["Lacrosse",10],["Korfball",2],["Pelota",0],["Shinty",4]]},
+ {"cat":"Canada","q":"The provinces and territories of Canada","closed":true,"a":[["Ontario",64],["Quebec",60],["British Columbia",52],["Alberta",46],["Nova Scotia",30],["Manitoba",26],["Saskatchewan",24],["New Brunswick",18],["Newfoundland and Labrador",14,["newfoundland"]],["Prince Edward Island",12,["pei"]],["Yukon",8],["Northwest Territories",6],["Nunavut",0],["Labrador",-1],["Vancouver Island",-1],["Toronto",-1]]},
+ {"cat":"Capitals","q":"The capital cities of the Canadian provinces and territories","closed":true,"a":[["Toronto",62],["Quebec City",44],["Victoria",40],["Edmonton",38],["Winnipeg",34],["Halifax",30],["Regina",24],["St John's",20,["st johns","saint john's"]],["Charlottetown",14],["Whitehorse",6],["Yellowknife",5],["Iqaluit",3],["Fredericton",0],["Ottawa",-1],["Montreal",-1],["Vancouver",-1],["Calgary",-1]]},
+ {"cat":"Cities","q":"The largest cities in Canada by population","a":[["Toronto",80],["Montreal",70],["Vancouver",64],["Calgary",48],["Ottawa",42],["Edmonton",36],["Winnipeg",26],["Quebec City",22],["Hamilton",16],["Mississauga",12],["Halifax",10],["Brampton",6],["Surrey",4],["Laval",2],["Markham",0],["Banff",-1],["Whitehorse",-1],["Yellowknife",-1]]},
+ {"cat":"Canada","q":"People who have served as Prime Minister of Canada","a":[["Justin Trudeau",66],["Pierre Trudeau",44],["Mark Carney",36],["Stephen Harper",32],["Jean Chretien",30,["jean chrétien","chretien"]],["Brian Mulroney",26],["John A. Macdonald",24,["john a macdonald","macdonald"]],["Paul Martin",18],["Lester B. Pearson",14,["lester pearson"]],["Kim Campbell",12],["John Diefenbaker",10],["Wilfrid Laurier",8],["William Lyon Mackenzie King",5,["mackenzie king"]],["John Turner",3],["Charles Tupper",0],["Tommy Douglas",-1],["Jack Layton",-1],["Rene Levesque",-1,["rené lévesque"]]]},
+ {"cat":"Parks","q":"National parks of Canada","a":[["Banff",66],["Jasper",50],["Yoho",18],["Kootenay",14],["Waterton Lakes",12],["Gros Morne",10],["Cape Breton Highlands",9],["Pacific Rim",8],["Wood Buffalo",7],["Fundy",6],["Point Pelee",4],["Prince Albert",3],["Riding Mountain",2],["Kluane",1],["Elk Island",0],["Algonquin",-1],["Stanley Park",-1],["Yellowstone",-1]]},
+ {"cat":"Food","q":"Foods and dishes associated with Canada","a":[["Poutine",62],["Maple syrup",58],["Nanaimo bars",20],["Butter tarts",18],["Montreal smoked meat",16],["Tourtiere",14,["tourtière"]],["BeaverTails",12,["beaver tails"]],["Ketchup crisps",10,["ketchup chips"]],["Montreal bagels",8,["montreal-style bagels"]],["Peameal bacon",6,["back bacon"]],["Bannock",5],["Donair",4],["Sugar pie",3,["tarte au sucre"]],["Saskatoon berry pie",2],["Jiggs dinner",0],["Vegemite",-1],["Key lime pie",-1],["Biltong",-1]]},
+ {"cat":"Music","q":"Musicians and bands from Canada","a":[["Celine Dion",66,["céline dion"]],["Justin Bieber",62],["Drake",56],["Shania Twain",46],["Bryan Adams",42],["Neil Young",32],["The Weeknd",30],["Leonard Cohen",26],["Joni Mitchell",24],["Alanis Morissette",22],["Avril Lavigne",20],["Rush",10],["Gordon Lightfoot",5],["k.d. lang",3,["kd lang"]],["Feist",0],["Ryan Adams",-1],["Sheryl Crow",-1],["Ed Sheeran",-1]]},
+ {"cat":"England","q":"Ceremonial counties of England","a":[["Kent",52],["Devon",46],["Cornwall",44],["Essex",40],["Lancashire",34],["Hampshire",32],["Norfolk",30],["Somerset",26],["Dorset",22],["Cumbria",20],["Northumberland",16],["Greater Manchester",12],["Herefordshire",8],["Tyne and Wear",5],["Rutland",3],["East Riding of Yorkshire",0],["Powys",-1],["Fife",-1]]},
+ {"cat":"Cities","q":"The largest cities in the United Kingdom by population","a":[["London",84],["Birmingham",70],["Manchester",60],["Glasgow",54],["Liverpool",50],["Leeds",44],["Edinburgh",42],["Bristol",36],["Sheffield",32],["Cardiff",30],["Belfast",26],["Bradford",14],["Kingston upon Hull",6,["hull"]],["Stoke-on-Trent",4],["Dundee",0],["Dublin",-1],["Douglas",-1],["Cork",-1]]},
+ {"cat":"Rivers","q":"The longest rivers in Great Britain","a":[["Thames",76],["Severn",52],["Clyde",30],["Trent",28],["Mersey",26],["Tyne",24],["Tay",20],["Wye",18],["Tweed",16],["Avon",14],["Spey",12],["Great Ouse",10],["Tees",8],["Nene",4],["Witham",0],["Shannon",-1],["Liffey",-1],["Bann",-1]]},
+ {"cat":"Mountains","q":"Mountains in Great Britain higher than 1,000 metres","a":[["Ben Nevis",74],["Snowdon",46,["yr wyddfa"]],["Cairn Gorm",20],["Ben Macdui",18],["Schiehallion",9],["Braeriach",8],["Ben Lawers",7],["Lochnagar",6],["Cairn Toul",5],["Ben Cruachan",4],["Carnedd Llewelyn",3],["Aonach Beag",3],["Bidean nam Bian",2],["Carn Mor Dearg",1,["càrn mòr dearg"]],["Ben Alder",0],["Scafell Pike",-1],["Helvellyn",-1],["Slieve Donard",-1]]},
+ {"cat":"Monarchy","q":"Kings and queens who have reigned in England or Britain since 1485","a":[["Henry VIII",84],["Elizabeth I",72],["Victoria",70,["queen victoria"]],["Elizabeth II",66,["queen elizabeth ii"]],["Charles III",58,["king charles iii"]],["George III",44],["Charles I",38],["Henry VII",30],["Mary I",28,["bloody mary"]],["James I",24,["james vi and i"]],["Edward VI",20],["Anne",14,["queen anne"]],["William IV",5],["Mary II",3],["George II",0],["Oliver Cromwell",-1],["Richard III",-1],["Henry V",-1]]},
+ {"cat":"Parks","q":"The national parks of the United Kingdom","closed":true,"a":[["Lake District",62],["Peak District",44],["Snowdonia",40,["eryri"]],["Yorkshire Dales",34],["Dartmoor",32],["New Forest",28],["Brecon Beacons",26,["bannau brycheiniog"]],["Exmoor",24],["North York Moors",22],["Cairngorms",18],["South Downs",14],["Loch Lomond and The Trossachs",12,["loch lomond"]],["Pembrokeshire Coast",8],["The Broads",4,["norfolk broads","broads"]],["Northumberland",0],["Cotswolds",-1],["Chilterns",-1],["Mourne Mountains",-1]]},
+ {"cat":"Scotland","q":"Scottish islands and island groups","a":[["Skye",58],["Orkney",40],["Shetland",38],["Mull",34],["Arran",32],["Islay",30],["Lewis",28],["Harris",26],["Jura",20],["Iona",18],["Tiree",8],["Staffa",6],["Eigg",4],["Colonsay",2],["Foula",0],["Isle of Man",-1],["Anglesey",-1],["Lundy",-1]]},
+ {"cat":"Chemistry","q":"Elements whose chemical symbol begins with the letter S","closed":true,"a":[["Sulfur",48,["sulphur"]],["Silicon",42,["si"]],["Scandium",22],["Selenium",18],["Strontium",14],["Tin",6,["sn"]],["Antimony",3,["sb"]],["Samarium",1],["Seaborgium",0],["Sodium",-1],["Silver",-1],["Caesium",-1,["cesium"]],["Zinc",-1]]},
+ {"cat":"Chemistry","q":"Elements whose chemical symbol is two letters beginning with C","closed":true,"a":[["Calcium",46],["Copper",40],["Chlorine",34],["Chromium",24],["Cobalt",20],["Caesium",12,["cesium"]],["Cadmium",10],["Cerium",4],["Curium",3],["Californium",2],["Copernicium",0],["Carbon",-1],["Krypton",-1],["Nickel",-1],["Zirconium",-1]]},
+ {"cat":"Chemistry","q":"Elements whose chemical symbol comes from a name other than the English one","a":[["Gold",58,["au"]],["Iron",46,["fe"]],["Lead",40,["pb"]],["Silver",34,["ag"]],["Sodium",30,["na"]],["Potassium",22,["k"]],["Mercury",16,["hg"]],["Copper",9,["cu"]],["Tin",6,["sn"]],["Tungsten",2,["w","wolfram"]],["Antimony",0,["sb"]],["Zinc",-1],["Magnesium",-1],["Aluminium",-1,["aluminum"]],["Chlorine",-1]]},
+ {"cat":"Chemistry","q":"Chemical elements named after a person","a":[["Einsteinium",46],["Curium",34],["Mendelevium",26],["Nobelium",20],["Fermium",15],["Rutherfordium",11],["Bohrium",7],["Copernicium",5],["Seaborgium",4],["Lawrencium",3],["Meitnerium",2],["Roentgenium",1,["rontgenium","roentgenium"]],["Gadolinium",0],["Californium",-1],["Americium",-1],["Berkelium",-1],["Titanium",-1]]},
+ {"cat":"Chemistry","q":"Chemical elements named after a country, a region or a place on Earth","a":[["Germanium",42],["Francium",34],["Polonium",30],["Americium",26],["Californium",22],["Europium",12],["Scandium",10],["Berkelium",6],["Ruthenium",4],["Yttrium",3],["Strontium",1],["Hafnium",0],["Nihonium",0],["Indium",-1],["Uranium",-1],["Iridium",-1],["Neptunium",-1]]},
+ {"cat":"Chemistry","q":"Chemical elements named after a planet or another body in space","a":[["Uranium",52],["Plutonium",44],["Neptunium",30],["Mercury",24],["Helium",10],["Selenium",4],["Cerium",2],["Tellurium",1],["Palladium",0],["Titanium",-1],["Thorium",-1],["Vanadium",-1],["Cobalt",-1]]},
+ {"cat":"Chemistry","q":"The alkali metals and the alkaline earth metals","closed":true,"a":[["Sodium",56],["Potassium",46],["Calcium",42],["Lithium",38],["Magnesium",32],["Caesium",18,["cesium"]],["Barium",12],["Rubidium",10],["Beryllium",8],["Strontium",6],["Radium",4],["Francium",0],["Hydrogen",-1],["Aluminium",-1,["aluminum"]],["Zinc",-1],["Scandium",-1]]},
+ {"cat":"Chemistry","q":"Elements in the same group of the periodic table as either oxygen or fluorine","closed":true,"a":[["Oxygen",54],["Chlorine",44],["Sulfur",38,["sulphur"]],["Iodine",30],["Fluorine",26],["Bromine",22],["Selenium",8],["Tellurium",5],["Astatine",4],["Polonium",2],["Tennessine",0],["Livermorium",0],["Nitrogen",-1],["Phosphorus",-1],["Argon",-1],["Hydrogen",-1]]},
+ {"cat":"Chemistry","q":"Transition metals","a":[["Iron",56],["Gold",44],["Copper",40],["Silver",36],["Nickel",28],["Chromium",22],["Titanium",18],["Cobalt",14],["Manganese",11],["Platinum",9],["Tungsten",6],["Molybdenum",2],["Osmium",0],["Aluminium",-1,["aluminum"]],["Tin",-1],["Lead",-1],["Magnesium",-1]]},
+ {"cat":"Chemistry","q":"Chemical elements that have no stable isotope, so every form of them is radioactive","a":[["Uranium",62],["Plutonium",48],["Radium",34],["Radon",20],["Polonium",16],["Thorium",12],["Americium",8],["Neptunium",5],["Actinium",3],["Francium",2],["Technetium",1],["Protactinium",0],["Promethium",0],["Lead",-1],["Tin",-1],["Barium",-1],["Tungsten",-1]]},
+ {"cat":"Chemistry","q":"The eleven most abundant elements in the human body by mass","closed":true,"a":[["Oxygen",62],["Carbon",56],["Hydrogen",48],["Nitrogen",40],["Calcium",34],["Phosphorus",18],["Potassium",12],["Sodium",10],["Sulfur",5,["sulphur"]],["Chlorine",3],["Magnesium",0],["Iron",-1],["Zinc",-1],["Iodine",-1],["Copper",-1]]},
+ {"cat":"Chemistry","q":"Alloys that contain copper","a":[["Brass",58],["Bronze",54],["Sterling silver",12],["Cupronickel",10],["Rose gold",8],["Gunmetal",6],["Nickel silver",4,["german silver"]],["Bell metal",2],["Duralumin",1],["Beryllium copper",0],["Constantan",0],["Steel",-1],["Cast iron",-1],["Nichrome",-1],["Magnalium",-1]]},
+ {"cat":"Chemistry","q":"Acids found in food and drink","a":[["Citric acid",64,["citric"]],["Acetic acid",40,["ethanoic acid","acetic","ethanoic"]],["Lactic acid",34,["lactic"]],["Ascorbic acid",26,["vitamin c","ascorbic"]],["Carbonic acid",16,["carbonic"]],["Malic acid",10,["malic"]],["Tartaric acid",8,["tartaric"]],["Phosphoric acid",6,["phosphoric"]],["Oxalic acid",4,["oxalic"]],["Benzoic acid",2,["benzoic"]],["Butyric acid",1,["butyric"]],["Folic acid",0,["folic"]],["Fumaric acid",0,["fumaric"]],["Sulfuric acid",-1,["sulphuric acid"]],["Nitric acid",-1],["Hydrofluoric acid",-1],["Perchloric acid",-1]]},
+ {"cat":"Chemistry","q":"Pieces of equipment found in a school chemistry laboratory","a":[["Bunsen burner",72,["bunsen"]],["Test tube",60],["Beaker",44],["Pipette",26],["Conical flask",20,["erlenmeyer flask","erlenmeyer"]],["Measuring cylinder",16,["graduated cylinder"]],["Funnel",12],["Burette",9],["Tripod",6],["Crucible",4],["Evaporating basin",2,["evaporating dish"]],["Wire gauze",1,["gauze","gauze mat"]],["Desiccator",0],["Theodolite",-1],["Astrolabe",-1],["Sextant",-1],["Metronome",-1]]},
+ {"cat":"Countries","q":"Sovereign countries whose name begins with the letter B","a":[["Brazil",76],["Belgium",58],["Bangladesh",34],["Bulgaria",28],["Bolivia",24],["Belarus",22],["Bahamas",18,["the bahamas"]],["Barbados",16],["Botswana",12],["Bhutan",8],["Belize",5],["Brunei",4],["Burkina Faso",2],["Burundi",0],["Bermuda",-1],["Bavaria",-1],["Borneo",-1],["Bengal",-1]]},
+ {"cat":"Countries","q":"Sovereign countries whose name begins with the letter M","a":[["Mexico",70],["Morocco",46],["Malaysia",38],["Monaco",32],["Malta",28],["Mongolia",24],["Madagascar",22],["Maldives",18],["Mali",14],["Myanmar",12,["burma"]],["Montenegro",9],["Moldova",7],["Mauritania",4],["Malawi",2],["Micronesia",0,["federated states of micronesia"]],["Madeira",-1],["Martinique",-1],["Majorca",-1]]},
+ {"cat":"Countries","q":"Sovereign countries whose name begins with the letter S","a":[["Spain",72],["Sweden",56],["Switzerland",50],["South Africa",42],["Singapore",36],["Saudi Arabia",32],["Syria",24],["Sri Lanka",22],["Serbia",20],["Slovakia",16],["Senegal",10],["San Marino",8],["Suriname",4],["Samoa",3],["São Tomé and Príncipe",0,["sao tome and principe","sao tome"]],["Sardinia",-1],["Sicily",-1],["Siberia",-1]]},
+ {"cat":"Countries","q":"Sovereign countries whose name begins with the letter T","a":[["Thailand",58],["Turkey",56,["turkiye","türkiye"]],["Tunisia",30],["Tanzania",26],["Trinidad and Tobago",14,["trinidad"]],["Turkmenistan",12],["Togo",10],["Tonga",6],["Tajikistan",5],["Tuvalu",3],["Timor-Leste",0,["east timor"]],["Tibet",-1],["Tasmania",-1],["Transylvania",-1],["Tuscany",-1]]},
+ {"cat":"Geography","q":"Landlocked countries in Africa","a":[["Ethiopia",44],["Zimbabwe",38],["Zambia",34],["Uganda",30],["Botswana",28],["Mali",22],["Chad",20],["Niger",18],["Rwanda",16],["Malawi",12],["Burkina Faso",8],["Lesotho",6],["South Sudan",5],["Eswatini",2,["swaziland"]],["Burundi",0],["Kenya",-1],["Namibia",-1],["Democratic Republic of the Congo",-1,["drc","congo-kinshasa"]]]},
+ {"cat":"Geography","q":"Independent countries in Oceania","a":[["Australia",70],["New Zealand",62],["Fiji",48],["Papua New Guinea",34],["Samoa",28],["Tonga",24],["Vanuatu",16],["Solomon Islands",14],["Kiribati",8],["Tuvalu",6],["Nauru",5],["Palau",4],["Marshall Islands",3],["Micronesia",0,["federated states of micronesia"]],["Hawaii",-1],["New Caledonia",-1],["Tahiti",-1]]},
+ {"cat":"Geography","q":"Countries crossed by the Equator","a":[["Ecuador",62],["Brazil",50],["Kenya",44],["Colombia",30],["Indonesia",28],["Democratic Republic of the Congo",22,["drc","congo-kinshasa","zaire"]],["Uganda",20],["Somalia",12],["Gabon",8],["Republic of the Congo",6,["congo-brazzaville"]],["Maldives",4],["São Tomé and Príncipe",2,["sao tome and principe","sao tome"]],["Kiribati",0],["Peru",-1],["Tanzania",-1],["Nigeria",-1]]},
+ {"cat":"Borders","q":"Countries that share a land border with Brazil","closed":true,"a":[["Argentina",56],["Uruguay",44],["Peru",40],["Bolivia",36],["Venezuela",34],["Paraguay",32],["Colombia",30],["Guyana",6],["Suriname",4],["France",0,["french guiana"]],["Chile",-1],["Ecuador",-1],["Panama",-1],["Costa Rica",-1]]},
+ {"cat":"Flags","q":"Countries whose national flag features an animal","a":[["Mexico",52],["Sri Lanka",46],["Albania",34],["Egypt",24],["Kazakhstan",20],["Papua New Guinea",14],["Zambia",12],["Uganda",10],["Dominica",8],["Zimbabwe",7],["Kiribati",6],["Montenegro",5],["Guatemala",2],["Spain",1],["Moldova",0],["Portugal",-1],["Turkey",-1],["Brazil",-1]]},
+ {"cat":"Europe","q":"Countries that use the euro as their official currency","a":[["Germany",66],["France",60],["Spain",54],["Italy",52],["Greece",44],["Ireland",40],["Portugal",36],["Netherlands",32,["holland"]],["Austria",26],["Belgium",24],["Slovakia",10],["Malta",6],["Estonia",5],["Monaco",3],["Andorra",0],["Sweden",-1],["Denmark",-1],["Poland",-1]]},
+ {"cat":"Europe","q":"Member states of the European Union","a":[["Germany",62],["France",60],["Spain",54],["Italy",52],["Ireland",40],["Greece",38],["Netherlands",32,["holland"]],["Poland",30],["Belgium",26],["Denmark",22],["Hungary",12],["Croatia",8],["Malta",5],["Slovenia",3],["Latvia",0],["Norway",-1],["Switzerland",-1],["Serbia",-1]]},
+ {"cat":"Countries","q":"The ten smallest countries in the world by area","closed":true,"a":[["Vatican City",72,["the vatican","holy see"]],["Monaco",54],["San Marino",32],["Liechtenstein",30],["Malta",22],["Maldives",16],["Nauru",8],["Tuvalu",6],["Marshall Islands",2],["Saint Kitts and Nevis",0,["st kitts and nevis","st kitts"]],["Andorra",-1],["Singapore",-1],["Barbados",-1],["Seychelles",-1]]},
+ {"cat":"Wordplay","q":"Countries that begin and end with the same letter","a":[["Australia",46],["Austria",40],["Argentina",36],["Albania",30],["Algeria",26],["Angola",22],["Andorra",18],["Armenia",14],["Antigua and Barbuda",8,["antigua"]],["Central African Republic",6],["Seychelles",4],["Solomon Islands",3],["Saint Kitts and Nevis",1,["st kitts and nevis","st kitts"]],["Saint Vincent and the Grenadines",0,["st vincent and the grenadines","st vincent"]],["Afghanistan",-1],["Azerbaijan",-1],["Cyprus",-1]]},
+ {"cat":"Islands","q":"Independent island countries in the Caribbean","a":[["Jamaica",62],["Cuba",58],["Bahamas",42,["the bahamas"]],["Barbados",40],["Dominican Republic",34],["Haiti",30],["Trinidad and Tobago",24,["trinidad"]],["Saint Lucia",18,["st lucia"]],["Grenada",16],["Antigua and Barbuda",12,["antigua"]],["Dominica",6],["Saint Kitts and Nevis",4,["st kitts and nevis","st kitts"]],["Saint Vincent and the Grenadines",0,["st vincent and the grenadines","st vincent"]],["Puerto Rico",-1],["Belize",-1],["Bermuda",-1],["Martinique",-1]]},
+ {"cat":"London","q":"The Royal Parks of London","closed":true,"a":[["Hyde Park",76],["Regent's Park",52,["regents park"]],["St James's Park",44,["st james park","st jamess park"]],["Green Park",38],["Richmond Park",22],["Kensington Gardens",6],["Greenwich Park",4],["Bushy Park",0],["Battersea Park",-1],["Holland Park",-1],["Victoria Park",-1],["Hampstead Heath",-1]]},
+ {"cat":"London","q":"London railway terminus stations","a":[["Waterloo",62],["Victoria",56],["King's Cross",54,["kings cross"]],["Paddington",46],["Euston",42],["Liverpool Street",34],["London Bridge",30],["St Pancras",28,["st pancras international"]],["Charing Cross",22],["Marylebone",10],["Fenchurch Street",5],["Cannon Street",4],["Moorgate",0],["Clapham Junction",-1],["Waterloo East",-1],["Vauxhall",-1],["Stratford",-1]]},
+ {"cat":"Thames","q":"Bridges over the River Thames in central London","a":[["Tower Bridge",72],["London Bridge",60],["Westminster Bridge",44],["Millennium Bridge",30],["Waterloo Bridge",26],["Blackfriars Bridge",18],["Albert Bridge",12],["Chelsea Bridge",9],["Vauxhall Bridge",8],["Lambeth Bridge",6],["Battersea Bridge",4],["Southwark Bridge",3],["Hungerford Bridge",0,["golden jubilee bridge","golden jubilee bridges"]],["Greenwich Foot Tunnel",-1],["Blackwall Tunnel",-1],["Rotherhithe Tunnel",-1],["Thames Barrier",-1]]},
+ {"cat":"Paris","q":"Famous landmarks of Paris","a":[["Eiffel Tower",84,["la tour eiffel"]],["The Louvre",68,["louvre","musee du louvre"]],["Notre-Dame",60,["notre dame"]],["Arc de Triomphe",56],["Sacré-Cœur",38,["sacre coeur","sacre-coeur"]],["Champs-Élysées",34,["champs elysees"]],["Moulin Rouge",24],["Musée d'Orsay",18,["orsay","musee dorsay"]],["Centre Pompidou",12,["pompidou"]],["Les Invalides",8,["invalides"]],["Panthéon",6,["pantheon"]],["Sainte-Chapelle",5,["sainte chapelle"]],["Opéra Garnier",3,["opera garnier","palais garnier"]],["Père Lachaise",0,["pere lachaise"]],["Palais des Papes",-1],["Château de Chambord",-1],["Pont du Gard",-1]]},
+ {"cat":"Rome","q":"Ancient Roman sites in the city of Rome","a":[["Colosseum",80,["coliseum"]],["Roman Forum",52,["the forum","foro romano"]],["Pantheon",44],["Circus Maximus",24],["Palatine Hill",18],["Castel Sant'Angelo",14,["castel sant angelo"]],["Trajan's Column",10,["trajans column"]],["Baths of Caracalla",7],["Arch of Constantine",6],["Appian Way",5,["via appia"]],["Trajan's Market",3,["trajans market"]],["Theatre of Marcellus",2],["Mausoleum of Augustus",1],["Domus Aurea",0,["golden house of nero"]],["Pompeii",-1],["Herculaneum",-1],["Hadrian's Villa",-1],["Paestum",-1]]},
+ {"cat":"Rome","q":"Famous fountains and squares of Rome","a":[["Trevi Fountain",74,["fontana di trevi"]],["Piazza Navona",40],["Piazza di Spagna",36,["spanish steps"]],["St Peter's Square",30,["piazza san pietro","st peters square"]],["Piazza Venezia",18],["Piazza del Popolo",14],["Campo de' Fiori",10,["campo dei fiori"]],["Fountain of the Four Rivers",6,["fontana dei quattro fiumi"]],["Piazza della Rotonda",5],["Fontana della Barcaccia",4,["barcaccia"]],["Fontana del Tritone",2],["Piazza Farnese",1],["Fontana dell'Acqua Paola",0,["acqua paola","fontanone"]],["Piazza San Marco",-1],["Piazza della Signoria",-1],["Piazza del Plebiscito",-1]]},
+ {"cat":"Italy","q":"Things Milan and Turin are famous for","a":[["Milan Cathedral",48,["duomo","duomo di milano"]],["Juventus",44,["juve"]],["AC Milan",42],["Inter Milan",34,["internazionale"]],["La Scala",30,["teatro alla scala"]],["The Last Supper",26,["cenacolo"]],["Fashion",24,["fashion week"]],["San Siro",20],["Fiat",16],["The Turin Shroud",14,["shroud of turin"]],["Galleria Vittorio Emanuele II",8,["the galleria"]],["Mole Antonelliana",5],["Torino FC",4,["torino"]],["The Egyptian Museum",2,["museo egizio"]],["Vermouth",0],["Ferrari",-1],["Ponte Vecchio",-1],["The Leaning Tower",-1,["leaning tower of pisa"]]]},
+ {"cat":"Berlin","q":"Landmarks and famous sights of Berlin","a":[["Brandenburg Gate",70,["brandenburger tor"]],["The Berlin Wall",56,["the wall"]],["The Reichstag",44,["reichstag"]],["Checkpoint Charlie",34],["Alexanderplatz",24],["The TV Tower",20,["fernsehturm","tv tower"]],["East Side Gallery",14],["Museum Island",12,["museumsinsel"]],["Potsdamer Platz",10],["Holocaust Memorial",8],["Charlottenburg Palace",5,["schloss charlottenburg"]],["Pergamon Museum",4],["Tempelhof Airport",2,["tempelhof"]],["Nikolaiviertel",0],["Cologne Cathedral",-1],["Frauenkirche",-1],["Hofbräuhaus",-1,["hofbrauhaus"]],["Speicherstadt",-1]]},
+ {"cat":"Spain","q":"Landmarks of Madrid and Barcelona","a":[["Sagrada Família",66,["sagrada familia"]],["Camp Nou",42,["nou camp"]],["La Rambla",38,["las ramblas"]],["Park Güell",36,["park guell"]],["The Prado",30,["prado","museo del prado"]],["Santiago Bernabéu",28,["bernabeu"]],["Puerta del Sol",20],["Plaza Mayor",18],["Casa Batlló",14,["casa batllo"]],["The Royal Palace",12,["palacio real"]],["Retiro Park",10,["parque del retiro"]],["Gothic Quarter",8,["barri gotic"]],["Reina Sofía",5,["reina sofia"]],["Montjuïc",4,["montjuic"]],["Temple of Debod",0],["The Alhambra",-1,["alhambra"]],["The Mezquita",-1,["mezquita"]],["Guggenheim Museum",-1,["guggenheim bilbao"]]]},
+ {"cat":"Amsterdam","q":"Landmarks and attractions of Amsterdam","a":[["Anne Frank House",54],["Rijksmuseum",44],["Van Gogh Museum",42],["The Red Light District",34,["red light district","de wallen"]],["The Canals",30,["canals","grachten"]],["Dam Square",24],["Vondelpark",14],["Heineken Experience",10,["heineken brewery"]],["The Royal Palace",8,["koninklijk paleis"]],["Rembrandt House",6,["rembrandthuis"]],["The Jordaan",4,["jordaan"]],["Oude Kerk",2],["Begijnhof",0],["The Peace Palace",-1],["Mauritshuis",-1],["The Euromast",-1],["Kinderdijk",-1]]},
+ {"cat":"Vienna","q":"Things Vienna is famous for","a":[["Schönbrunn Palace",42,["schonbrunn"]],["St Stephen's Cathedral",38,["stephansdom","st stephens cathedral"]],["The Vienna State Opera",34,["state opera","staatsoper"]],["Coffee houses",30,["cafes","coffee"]],["Sachertorte",26,["sacher torte"]],["The Prater ferris wheel",22,["the prater","riesenrad"]],["Johann Strauss and the waltz",20,["the waltz","johann strauss"]],["The Hofburg",18,["hofburg"]],["Sigmund Freud",14,["freud"]],["The Spanish Riding School",10,["lipizzaner horses"]],["The Belvedere",8,["belvedere"]],["The Vienna Boys' Choir",6,["vienna boys choir"]],["Kunsthistorisches Museum",4],["Naschmarkt",2],["Hundertwasserhaus",0],["The Golden Roof",-1],["Mirabell Gardens",-1],["The Salzburg Festival",-1]]},
+ {"cat":"Venice","q":"Landmarks and famous sights of Venice","a":[["St Mark's Square",56,["piazza san marco","st marks square"]],["The Grand Canal",50,["canal grande"]],["Rialto Bridge",46,["ponte di rialto"]],["Gondolas",44,["gondola"]],["St Mark's Basilica",40,["basilica di san marco","st marks basilica"]],["The Doge's Palace",30,["palazzo ducale","doges palace"]],["Bridge of Sighs",24,["ponte dei sospiri"]],["The Venice Carnival",18,["carnival","carnevale"]],["Murano",12],["Burano",8],["The Lido",6,["lido"]],["The Venice Biennale",5,["biennale"]],["Santa Maria della Salute",4,["the salute"]],["Peggy Guggenheim Collection",2],["The Arsenale",0,["arsenale"]],["Ponte Vecchio",-1],["Juliet's balcony",-1,["juliets balcony"]],["The Leaning Tower",-1,["leaning tower of pisa"]]]},
+ {"cat":"Athens","q":"Ancient sites and landmarks of Athens","a":[["The Acropolis",74,["acropolis"]],["The Parthenon",62,["parthenon"]],["The Plaka",20,["plaka"]],["Syntagma Square",18],["The Ancient Agora",16,["agora"]],["Temple of Olympian Zeus",12],["Panathenaic Stadium",10,["kallimarmaro"]],["The Erechtheion",8,["erechtheion"]],["Mount Lycabettus",6,["lycabettus"]],["National Archaeological Museum",5],["Odeon of Herodes Atticus",4,["herodeion"]],["Temple of Hephaestus",3],["Monastiraki",2],["Hadrian's Arch",1,["arch of hadrian"]],["Kerameikos",0],["Knossos",-1],["Delphi",-1],["Meteora",-1]]},
+ {"cat":"Capitals","q":"Capital cities of European Union member states","a":[["Paris",62],["Berlin",58],["Rome",54],["Madrid",48],["Brussels",40],["Amsterdam",36],["Dublin",28],["Vienna",24],["Athens",22],["Lisbon",20],["Prague",16],["Bucharest",6],["Valletta",3],["Ljubljana",2],["Nicosia",0],["Oslo",-1],["Bern",-1],["London",-1]]},
+ {"cat":"Football","q":"Clubs that have won the Premier League","closed":true,"a":[["Manchester United",78,["man utd","man united","manchester utd"]],["Manchester City",62,["man city","city"]],["Chelsea",55],["Arsenal",51],["Liverpool",46],["Leicester City",5,["leicester"]],["Blackburn Rovers",0,["blackburn"]],["Everton",-1],["Tottenham Hotspur",-1,["spurs","tottenham"]],["Newcastle United",-1,["newcastle"]],["Leeds United",-1,["leeds"]],["Aston Villa",-1,["villa"]],["Nottingham Forest",-1,["forest"]]]},
+ {"cat":"Football","q":"Clubs that won the old English First Division but never the Premier League","a":[["Tottenham Hotspur",52,["spurs","tottenham"]],["Everton",44],["Leeds United",38,["leeds"]],["Newcastle United",33,["newcastle"]],["Aston Villa",29,["villa"]],["Nottingham Forest",26,["forest"]],["Derby County",17,["derby"]],["Wolverhampton Wanderers",13,["wolves"]],["Sunderland",9],["Burnley",6],["Ipswich Town",5,["ipswich"]],["Preston North End",3,["preston"]],["Huddersfield Town",1,["huddersfield"]],["Portsmouth",0,["pompey"]],["Bolton Wanderers",-1,["bolton"]],["Southampton",-1,["saints"]],["Norwich City",-1,["norwich"]]]},
+ {"cat":"Football","q":"English clubs that have won the European Cup, the Champions League or the Cup Winners' Cup","a":[["Liverpool",64],["Manchester United",58,["man utd","man united"]],["Chelsea",44],["Manchester City",36,["man city"]],["Arsenal",30],["Nottingham Forest",24,["forest"]],["Aston Villa",19,["villa"]],["Tottenham Hotspur",12,["spurs","tottenham"]],["Everton",5],["West Ham United",0,["west ham"]],["Leeds United",-1,["leeds"]],["Newcastle United",-1,["newcastle"]],["Ipswich Town",-1,["ipswich"]],["Wolverhampton Wanderers",-1,["wolves"]]]},
+ {"cat":"Football","q":"Clubs that won the European Cup before 1993","a":[["Real Madrid",68,["madrid"]],["Liverpool",54],["AC Milan",46,["milan"]],["Bayern Munich",40,["bayern","fc bayern"]],["Manchester United",37,["man utd","man united"]],["Ajax",33],["Barcelona",28,["barca","fc barcelona"]],["Celtic",21],["Benfica",16],["Nottingham Forest",11,["forest"]],["Aston Villa",6,["villa"]],["Porto",3,["fc porto"]],["Red Star Belgrade",1,["red star","crvena zvezda"]],["Feyenoord",0],["Marseille",-1,["olympique marseille"]],["Borussia Dortmund",-1,["dortmund"]],["Chelsea",-1],["Atletico Madrid",-1,["atletico"]]]},
+ {"cat":"Football","q":"Countries that hosted the men's World Cup in the 20th century","closed":true,"a":[["Brazil",56],["Italy",48],["England",46],["Mexico",40],["France",36],["Argentina",31],["Spain",27],["United States",22,["usa","america","united states of america"]],["West Germany",18,["germany","west germany"]],["Uruguay",14],["Sweden",7],["Chile",4],["Switzerland",0],["Japan",-1],["South Korea",-1,["korea"]],["Portugal",-1]]},
+ {"cat":"Football","q":"Men who have managed the England men's national football team","a":[["Gareth Southgate",66,["southgate"]],["Sven-Goran Eriksson",47,["eriksson","sven","sven goran eriksson"]],["Fabio Capello",39,["capello"]],["Bobby Robson",34,["robson","sir bobby robson"]],["Roy Hodgson",30,["hodgson"]],["Alf Ramsey",26,["ramsey","sir alf ramsey"]],["Kevin Keegan",22,["keegan"]],["Glenn Hoddle",18,["hoddle"]],["Terry Venables",15,["venables"]],["Graham Taylor",11,["taylor"]],["Steve McClaren",9,["mcclaren"]],["Sam Allardyce",6,["big sam","allardyce"]],["Don Revie",3,["revie"]],["Ron Greenwood",1,["greenwood"]],["Walter Winterbottom",0,["winterbottom"]],["Brian Clough",-1,["clough"]],["Harry Redknapp",-1,["redknapp"]],["Martin O'Neill",-1,["o neill"]]]},
+ {"cat":"Football","q":"Football clubs that play their home matches in London","a":[["Arsenal",60,["gunners"]],["Chelsea",57],["Tottenham Hotspur",54,["spurs","tottenham"]],["West Ham United",45,["west ham"]],["Crystal Palace",34,["palace"]],["Fulham",28],["Brentford",21],["Queens Park Rangers",17,["qpr"]],["Millwall",12],["Charlton Athletic",9,["charlton"]],["Leyton Orient",5,["orient"]],["AFC Wimbledon",4,["wimbledon"]],["Barnet",1],["Bromley",0],["Watford",-1],["Luton Town",-1,["luton"]],["Wycombe Wanderers",-1,["wycombe"]],["Reading",-1]]},
+ {"cat":"Football","q":"Players who won the men's Ballon d'Or before 2020","a":[["Lionel Messi",76,["messi"]],["Cristiano Ronaldo",70,["ronaldo","cr7","cristiano"]],["Zinedine Zidane",43,["zidane","zizou"]],["Ronaldinho",37],["Luka Modric",27,["modric"]],["Kaka",23],["Johan Cruyff",20,["cruyff"]],["Michel Platini",15,["platini"]],["George Best",13,["best"]],["Michael Owen",11,["owen"]],["Andriy Shevchenko",5,["shevchenko"]],["George Weah",3,["weah"]],["Lev Yashin",1,["yashin"]],["Stanley Matthews",0,["matthews"]],["Thierry Henry",-1,["henry"]],["Xavi",-1],["Raul",-1],["Neymar",-1]]},
+ {"cat":"Football","q":"Players who have scored 150 or more Premier League goals","a":[["Alan Shearer",72,["shearer"]],["Wayne Rooney",58,["rooney"]],["Harry Kane",52,["kane"]],["Thierry Henry",44,["henry"]],["Mohamed Salah",38,["salah","mo salah"]],["Sergio Aguero",26,["aguero"]],["Frank Lampard",16,["lampard"]],["Andy Cole",10,["cole"]],["Robbie Fowler",7,["fowler"]],["Michael Owen",5,["owen"]],["Jermain Defoe",0,["defoe"]],["Teddy Sheringham",-1,["sheringham"]],["Les Ferdinand",-1],["Robin van Persie",-1,["van persie","rvp"]],["Ian Wright",-1,["wright"]]]},
+ {"cat":"Football","q":"Clubs that won the FA Cup in the 20th century","a":[["Manchester United",58,["man utd","man united"]],["Arsenal",53],["Tottenham Hotspur",45,["spurs","tottenham"]],["Liverpool",40],["Chelsea",33],["Everton",26],["Manchester City",22,["man city"]],["Newcastle United",19,["newcastle"]],["Aston Villa",16,["villa"]],["West Ham United",13,["west ham"]],["Wimbledon",8],["Coventry City",6,["coventry"]],["Blackpool",3],["Barnsley",0],["Leicester City",-1,["leicester"]],["Wigan Athletic",-1,["wigan"]],["Crystal Palace",-1,["palace"]],["Middlesbrough",-1,["boro"]]]},
+ {"cat":"Football","q":"Grounds that have been home to an English top-flight club","a":[["Old Trafford",68],["Anfield",62],["Stamford Bridge",48],["Villa Park",38],["Goodison Park",35],["White Hart Lane",32],["Highbury",27],["St James' Park",24,["st james park"]],["Elland Road",17],["Maine Road",10],["The Dell",4],["Ayresome Park",1],["Roker Park",0],["Vale Park",-1],["Home Park",-1],["Priestfield Stadium",-1,["priestfield"]],["Adams Park",-1]]},
+ {"cat":"Football","q":"Countries that reached a men's World Cup final in the 20th century","closed":true,"a":[["Brazil",74],["Argentina",56],["Italy",52],["West Germany",49,["germany","west germany"]],["England",47],["France",41],["Netherlands",33,["holland"]],["Uruguay",19],["Sweden",6],["Hungary",3],["Czechoslovakia",0],["Spain",-1],["Croatia",-1],["Portugal",-1],["Belgium",-1]]},
+ {"cat":"Football","q":"Clubs that won the European Cup Winners' Cup","a":[["Barcelona",34,["barca","fc barcelona"]],["Manchester United",30,["man utd","man united"]],["Arsenal",27],["Chelsea",24],["AC Milan",21,["milan"]],["Bayern Munich",18,["bayern"]],["Everton",15],["Tottenham Hotspur",13,["spurs","tottenham"]],["Paris Saint-Germain",11,["psg","paris st germain"]],["West Ham United",8,["west ham"]],["Rangers",5],["Aberdeen",3],["Dinamo Tbilisi",0,["dynamo tbilisi"]],["Magdeburg",0,["1 fc magdeburg"]],["Real Madrid",-1,["madrid"]],["Liverpool",-1],["Celtic",-1],["Internazionale",-1,["inter milan","inter"]]]},
+ {"cat":"Football","q":"Formations used in association football","a":[["4-4-2",84],["4-3-3",60],["3-5-2",44],["4-2-3-1",37],["3-4-3",29],["5-3-2",23],["4-5-1",18],["5-4-1",12],["4-1-4-1",8],["4-4-1-1",6],["4-2-4",4],["2-3-5",3],["4-3-1-2",1],["4-1-2-1-2",0],["4-4-3",-1],["3-5-3",-1],["2-4-5",-1],["5-4-2",-1]]},
+ {"cat":"History","q":"US Presidents who have appeared on a United States banknote","a":[["George Washington",74,["washington"]],["Abraham Lincoln",62,["lincoln"]],["Thomas Jefferson",48,["jefferson"]],["Andrew Jackson",40,["jackson"]],["Ulysses S Grant",22,["ulysses grant","grant"]],["James Madison",6,["madison"]],["Grover Cleveland",3,["cleveland"]],["Woodrow Wilson",1,["wilson"]],["William McKinley",0,["mckinley"]],["Alexander Hamilton",-1],["Benjamin Franklin",-1],["Theodore Roosevelt",-1],["John F Kennedy",-1]]},
+ {"cat":"History","q":"US Presidents who have served at least two complete terms in office","a":[["Barack Obama",56,["obama"]],["Bill Clinton",48,["william clinton","clinton"]],["Ronald Reagan",44,["reagan"]],["George Washington",42,["washington"]],["Franklin D Roosevelt",34,["fdr","franklin roosevelt"]],["Thomas Jefferson",26,["jefferson"]],["George W Bush",24,["gw bush","bush junior"]],["Dwight D Eisenhower",18,["eisenhower","dwight eisenhower"]],["Andrew Jackson",12,["jackson"]],["Ulysses S Grant",8,["ulysses grant","grant"]],["Woodrow Wilson",6,["wilson"]],["James Madison",4,["madison"]],["James Monroe",2,["monroe"]],["Grover Cleveland",0,["cleveland"]],["John Adams",-1],["Theodore Roosevelt",-1],["Richard Nixon",-1],["Lyndon B Johnson",-1]]},
+ {"cat":"History","q":"US Presidents whose first name was James, John or William","a":[["John F Kennedy",60,["jfk","kennedy"]],["Bill Clinton",34,["william clinton","clinton"]],["John Adams",30],["Jimmy Carter",26,["james carter","carter"]],["James Madison",22,["madison"]],["John Quincy Adams",20],["James Monroe",18,["monroe"]],["William Howard Taft",14,["taft","william taft"]],["James K Polk",12,["james polk","polk"]],["William McKinley",9,["mckinley"]],["John Tyler",3,["tyler"]],["James Garfield",2,["garfield"]],["William Henry Harrison",1],["James Buchanan",0,["buchanan"]],["Woodrow Wilson",-1],["Andrew Johnson",-1],["George Washington",-1],["Benjamin Harrison",-1]]},
+ {"cat":"Monarchs","q":"English and British monarchs of the House of Tudor or the House of Stuart","a":[["Henry VIII",74,["henry 8","henry the eighth"]],["Elizabeth I",62,["elizabeth 1","elizabeth the first"]],["Charles I",40,["charles 1","charles the first"]],["Charles II",34,["charles 2","charles the second"]],["Henry VII",26,["henry 7","henry the seventh"]],["James I",24,["james 1","james vi"]],["Mary I",14,["bloody mary","mary tudor"]],["Edward VI",10,["edward 6","edward the sixth"]],["James II",4,["james 2","james the second"]],["Anne",3,["queen anne"]],["Mary II",0,["mary 2"]],["Richard III",-1],["Henry V",-1],["Edward IV",-1],["George I",-1]]},
+ {"cat":"History","q":"Battles fought during the Napoleonic Wars","a":[["Waterloo",78],["Trafalgar",60],["Austerlitz",34],["Borodino",22],["Leipzig",14,["battle of the nations"]],["Jena",8,["jena-auerstedt","jena auerstedt"]],["Wagram",6],["Salamanca",5],["Vitoria",4],["Friedland",3],["Eylau",2],["Aspern-Essling",1,["aspern","aspern essling"]],["Quatre Bras",1],["Ligny",0],["Agincourt",-1],["Balaclava",-1],["Gettysburg",-1],["Blenheim",-1]]},
+ {"cat":"Wonders","q":"The Seven Wonders of the Ancient World and the New Seven Wonders of the World","a":[["Great Pyramid of Giza",66,["great pyramid","pyramids of giza"]],["Hanging Gardens of Babylon",46,["hanging gardens"]],["Great Wall of China",44,["great wall"]],["Taj Mahal",40],["Colossus of Rhodes",30,["colossus"]],["Colosseum",26,["the colosseum","roman colosseum"]],["Machu Picchu",24],["Lighthouse of Alexandria",20,["pharos of alexandria","pharos"]],["Christ the Redeemer",18],["Petra",8],["Statue of Zeus at Olympia",7,["statue of zeus"]],["Temple of Artemis at Ephesus",5,["temple of artemis"]],["Chichen Itza",3],["Mausoleum at Halicarnassus",0,["mausoleum of halicarnassus","mausoleum"]],["Stonehenge",-1],["Angkor Wat",-1],["Parthenon",-1],["Statue of Liberty",-1]]},
+ {"cat":"Cheese","q":"Cheeses that come from France","a":[["Brie",68],["Camembert",62],["Roquefort",44],["Comté",24,["comte"]],["Reblochon",14],["Munster",10],["Cantal",8],["Époisses",6,["epoisses"]],["Saint-Nectaire",5,["saint nectaire"]],["Pont-l'Évêque",4,["pont l'eveque","pont leveque"]],["Morbier",3],["Beaufort",2],["Livarot",1],["Bleu d'Auvergne",0,["bleu d auvergne"]],["Gorgonzola",-1],["Manchego",-1],["Gouda",-1],["Wensleydale",-1]]},
+ {"cat":"Cocktails","q":"Classic cocktails whose main spirit is gin","a":[["Martini",66,["dry martini"]],["Gin and Tonic",58,["gin & tonic","g and t"]],["Negroni",46],["Tom Collins",30,["collins"]],["Singapore Sling",24],["Gimlet",18],["French 75",14],["Aviation",10],["Bramble",8],["White Lady",6],["Clover Club",3],["Ramos Gin Fizz",2,["ramos fizz"]],["Last Word",1],["Corpse Reviver No 2",0,["corpse reviver"]],["Mojito",-1],["Margarita",-1],["Cosmopolitan",-1],["Old Fashioned",-1]]},
+ {"cat":"Wine","q":"Wine regions of France","a":[["Bordeaux",72],["Champagne",66],["Burgundy",54,["bourgogne"]],["Beaujolais",30],["Alsace",24],["Loire Valley",22,["loire"]],["Rhône Valley",20,["rhone","cotes du rhone"]],["Provence",16],["Chablis",12],["Languedoc",8,["languedoc-roussillon","roussillon"]],["Sancerre",6],["Cahors",4],["Jura",2],["Bergerac",0],["Rioja",-1],["Tuscany",-1],["Napa Valley",-1],["Douro",-1]]},
+ {"cat":"Cooking","q":"Culinary herbs, as opposed to spices","a":[["Basil",62],["Parsley",58],["Rosemary",50],["Thyme",46],["Mint",42],["Sage",32],["Oregano",26],["Chives",18],["Dill",14],["Bay leaf",10,["bay leaves","bay"]],["Tarragon",8],["Marjoram",5],["Chervil",2],["Lovage",0],["Cinnamon",-1],["Cumin",-1],["Nutmeg",-1],["Turmeric",-1]]},
+ {"cat":"Currencies","q":"Countries whose currency is called the dollar","a":[["United States",76,["usa","america","united states of america"]],["Australia",62],["Canada",58],["New Zealand",44],["Singapore",30],["Jamaica",22],["Bahamas",14,["the bahamas"]],["Fiji",10],["Barbados",8],["Belize",6],["Brunei",4],["Guyana",3],["Liberia",1],["Suriname",0],["South Africa",-1],["Philippines",-1],["India",-1],["Ireland",-1]]},
+ {"cat":"Mythology","q":"Gods and goddesses of Greek mythology","a":[["Zeus",72],["Poseidon",56],["Athena",48],["Apollo",46],["Hades",42],["Aphrodite",38],["Ares",30],["Artemis",26],["Hermes",22],["Hera",20],["Dionysus",16],["Hephaestus",10,["hephaistos"]],["Demeter",6],["Hestia",2],["Hecate",0,["hekate"]],["Jupiter",-1],["Neptune",-1],["Venus",-1]]},
+ {"cat":"Alphabet","q":"Code words of the NATO phonetic alphabet","a":[["Alpha",66,["alfa"]],["Bravo",62],["Charlie",60],["Delta",54],["Echo",48],["Foxtrot",42],["Tango",38],["Whiskey",34,["whisky"]],["Zulu",26],["Golf",20],["Romeo",16],["Quebec",6],["Juliett",4,["juliet"]],["Uniform",0],["Zebra",-1],["Edward",-1],["Nectar",-1],["Apple",-1]]},
+ {"cat":"Mythology","q":"The Twelve Labours of Hercules","a":[["Slaying the Nemean Lion",46,["nemean lion"]],["Slaying the Lernaean Hydra",38,["hydra","lernaean hydra"]],["Cleaning the Augean Stables",30,["augean stables"]],["Capturing Cerberus",22,["cerberus"]],["Capturing the Cretan Bull",14,["cretan bull"]],["Capturing the Erymanthian Boar",10,["erymanthian boar"]],["Stealing the Mares of Diomedes",7,["mares of diomedes"]],["Slaying the Stymphalian Birds",6,["stymphalian birds"]],["Obtaining the Girdle of Hippolyta",5,["girdle of hippolyta","belt of hippolyta"]],["Stealing the Apples of the Hesperides",4,["apples of the hesperides","golden apples"]],["Capturing the Ceryneian Hind",3,["ceryneian hind"]],["Obtaining the Cattle of Geryon",0,["cattle of geryon"]],["Slaying the Minotaur",-1],["Slaying Medusa",-1],["Fetching the Golden Fleece",-1],["Slaying the Chimera",-1]]},
+ {"cat":"Italy","q":"The regions of Italy","closed":true,"a":[["Tuscany",48,["toscana"]],["Sicily",46,["sicilia"]],["Lombardy",34,["lombardia"]],["Lazio",30],["Sardinia",28,["sardegna"]],["Veneto",26],["Campania",22],["Piedmont",20,["piemonte"]],["Emilia-Romagna",18,["emilia romagna"]],["Puglia",16,["apulia"]],["Calabria",14],["Liguria",12],["Umbria",10],["Abruzzo",8],["Trentino-Alto Adige",7,["trentino alto adige","south tyrol","alto adige"]],["Marche",6],["Friuli-Venezia Giulia",5,["friuli venezia giulia","friuli"]],["Basilicata",4],["Valle d'Aosta",2,["aosta valley"]],["Molise",0],["Ticino",-1],["Istria",-1],["Corsica",-1]]},
+ {"cat":"Italy","q":"The most populous cities in Italy","a":[["Rome",88,["roma"]],["Milan",80,["milano"]],["Naples",66,["napoli"]],["Venice",46,["venezia"]],["Florence",44,["firenze"]],["Turin",40,["torino"]],["Genoa",28,["genova"]],["Bologna",24],["Palermo",22],["Verona",14],["Bari",10],["Catania",8],["Messina",5],["Padua",3,["padova"]],["Trieste",0],["San Marino",-1],["Lugano",-1],["Nice",-1]]},
+ {"cat":"Pasta","q":"Shapes of Italian pasta","a":[["Spaghetti",86],["Penne",70],["Fusilli",54],["Lasagne",46,["lasagna"]],["Tagliatelle",42],["Ravioli",40],["Macaroni",38,["maccheroni"]],["Farfalle",34],["Rigatoni",28],["Linguine",24],["Tortellini",20],["Orecchiette",8],["Conchiglie",5],["Bucatini",3],["Paccheri",1],["Trofie",0],["Spatzle",-1,["spaetzle"]],["Udon",-1],["Pierogi",-1]]},
+ {"cat":"Art","q":"Artists of the Italian Renaissance","a":[["Leonardo da Vinci",82,["leonardo","da vinci"]],["Michelangelo",78,["michelangelo buonarroti"]],["Raphael",56,["raffaello"]],["Botticelli",44,["sandro botticelli"]],["Donatello",40],["Titian",24,["tiziano"]],["Brunelleschi",12,["filippo brunelleschi"]],["Tintoretto",10],["Giovanni Bellini",8,["bellini"]],["Veronese",6,["paolo veronese"]],["Fra Angelico",5],["Piero della Francesca",4],["Mantegna",2,["andrea mantegna"]],["Verrocchio",0,["andrea del verrocchio"]],["Rembrandt",-1],["Rubens",-1],["Durer",-1,["albrecht durer"]],["Velazquez",-1]]},
+ {"cat":"Opera","q":"Italian composers of opera","a":[["Verdi",74,["giuseppe verdi"]],["Puccini",62,["giacomo puccini"]],["Rossini",56,["gioachino rossini"]],["Vivaldi",30,["antonio vivaldi"]],["Donizetti",22,["gaetano donizetti"]],["Bellini",20,["vincenzo bellini"]],["Monteverdi",14,["claudio monteverdi"]],["Leoncavallo",8],["Mascagni",6,["pietro mascagni"]],["Cherubini",4,["luigi cherubini"]],["Ponchielli",3],["Boito",2,["arrigo boito"]],["Cilea",1,["francesco cilea"]],["Cimarosa",0,["domenico cimarosa"]],["Mozart",-1],["Wagner",-1],["Bizet",-1],["Offenbach",-1]]},
+ {"cat":"Motors","q":"Italian car manufacturers","a":[["Ferrari",84],["Fiat",76],["Lamborghini",70],["Alfa Romeo",58],["Maserati",52],["Lancia",30],["Abarth",12],["Pagani",10],["De Tomaso",4,["detomaso"]],["Autobianchi",3],["Innocenti",2],["Isotta Fraschini",1],["Cisitalia",1],["Bizzarrini",0],["Bugatti",-1],["SEAT",-1],["Ducati",-1],["Bentley",-1]]},
+ {"cat":"Islands","q":"Islands of Italy","a":[["Sicily",74,["sicilia"]],["Sardinia",68,["sardegna"]],["Capri",44],["Elba",26,["isola d'elba"]],["Ischia",18],["Stromboli",12],["Lampedusa",10],["Murano",8],["Lipari",6],["Procida",5],["Pantelleria",4],["Burano",3],["Favignana",1],["Ustica",0],["Corsica",-1],["Malta",-1],["Corfu",-1],["Krk",-1]]},
+ {"cat":"Spain","q":"The autonomous communities of Spain","closed":true,"a":[["Catalonia",58,["cataluna","catalunya","cataluña"]],["Madrid",56,["comunidad de madrid"]],["Andalusia",52,["andalucia","andalucía"]],["Basque Country",44,["pais vasco","euskadi","país vasco"]],["Galicia",40],["Valencian Community",34,["comunidad valenciana","valencia"]],["Canary Islands",30,["canarias","islas canarias"]],["Balearic Islands",28,["baleares","islas baleares"]],["Aragon",24,["aragón"]],["Asturias",20],["Castile and Leon",16,["castilla y leon","castilla y león","castile and león"]],["Castilla-La Mancha",14,["castilla la mancha"]],["Murcia",12],["Extremadura",8],["Navarre",5,["navarra"]],["Cantabria",4],["La Rioja",0],["Ceuta",-1],["Melilla",-1],["Leon",-1]]},
+ {"cat":"Spain","q":"The most populous cities in Spain","a":[["Madrid",90],["Barcelona",84],["Valencia",52],["Seville",46,["sevilla"]],["Malaga",30,["málaga"]],["Bilbao",26],["Zaragoza",22,["saragossa"]],["Cordoba",16,["córdoba"]],["Palma",14,["palma de mallorca"]],["Murcia",12],["Alicante",10],["Las Palmas",8,["las palmas de gran canaria"]],["Valladolid",5],["Vitoria",3,["vitoria-gasteiz","vitoria gasteiz"]],["Elche",0],["Lisbon",-1],["Porto",-1],["Andorra la Vella",-1]]},
+ {"cat":"La Liga","q":"Clubs that have won the Spanish league title","closed":true,"a":[["Real Madrid",88],["Barcelona",84,["fc barcelona","barca","barça"]],["Atletico Madrid",48,["atletico","atleti","atlético madrid"]],["Valencia",26,["valencia cf"]],["Athletic Bilbao",22,["athletic club","athletic"]],["Sevilla",12,["seville"]],["Real Sociedad",6],["Deportivo La Coruna",4,["deportivo","depor","deportivo la coruña"]],["Real Betis",0,["betis"]],["Villarreal",-1],["Espanyol",-1],["Celta Vigo",-1],["Real Zaragoza",-1]]},
+ {"cat":"Art","q":"Spanish painters","a":[["Picasso",82,["pablo picasso"]],["Dali",74,["salvador dali","dalí"]],["Goya",46,["francisco goya"]],["Velazquez",40,["velázquez","diego velazquez"]],["Miro",26,["joan miro","miró"]],["El Greco",24],["Murillo",8,["bartolome murillo"]],["Sorolla",6,["joaquin sorolla"]],["Zurbaran",5,["zurbarán","francisco de zurbaran"]],["Juan Gris",4],["Ribera",3,["jose de ribera"]],["Tapies",2,["tàpies","antoni tapies"]],["Fortuny",1,["mariano fortuny"]],["Zuloaga",0,["ignacio zuloaga"]],["Frida Kahlo",-1],["Diego Rivera",-1],["Modigliani",-1],["Botero",-1]]},
+ {"cat":"Food","q":"Spanish dishes and foods","a":[["Paella",82],["Tortilla espanola",46,["tortilla","spanish omelette","tortilla española"]],["Gazpacho",44],["Churros",40],["Chorizo",34],["Patatas bravas",30],["Jamon iberico",26,["jamon","jamón ibérico","serrano ham"]],["Croquetas",18,["croquettes"]],["Calamares",12,["squid"]],["Pulpo a la gallega",6,["pulpo"]],["Fabada",5,["fabada asturiana"]],["Cocido madrileno",4,["cocido","cocido madrileño"]],["Salmorejo",3],["Migas",1],["Pisto",0],["Burrito",-1],["Ceviche",-1],["Feijoada",-1]]},
+ {"cat":"Islands","q":"Islands of Spain","a":[["Ibiza",66,["eivissa"]],["Mallorca",62,["majorca"]],["Tenerife",58],["Gran Canaria",46],["Menorca",40,["minorca"]],["Lanzarote",38],["Fuerteventura",26],["La Palma",14],["Formentera",12],["La Gomera",8],["El Hierro",5],["La Graciosa",2],["Cabrera",1],["Sa Dragonera",0,["dragonera"]],["Madeira",-1],["Azores",-1],["Corsica",-1],["Sardinia",-1]]},
+ {"cat":"Fiestas","q":"Spanish festivals and fiestas","a":[["San Fermin",54,["running of the bulls","pamplona bull run","san fermín"]],["La Tomatina",46],["Semana Santa",30,["holy week"]],["Las Fallas",24,["fallas"]],["Feria de Abril",16,["seville fair"]],["Carnival of Santa Cruz de Tenerife",12,["tenerife carnival"]],["Moros y Cristianos",8,["moors and christians"]],["El Rocio",6,["romeria del rocio","el rocío"]],["Batalla del Vino",3,["haro wine festival","wine fight"]],["San Isidro",4,["fiesta de san isidro"]],["La Patum de Berga",2,["la patum","patum"]],["Cascamorras",1],["Rapa das Bestas",1],["Els Enfarinats",0],["Oktoberfest",-1],["Rio Carnival",-1],["Palio di Siena",-1],["Holi",-1]]},
+ {"cat":"Literature","q":"Children's books written by Roald Dahl","a":[["Charlie and the Chocolate Factory",78,["charlie and the chocolate factory"]],["Matilda",66],["The BFG",58,["bfg"]],["James and the Giant Peach",47],["Fantastic Mr Fox",38,["fantastic mister fox"]],["The Twits",26],["The Witches",24],["George's Marvellous Medicine",18],["Danny the Champion of the World",12],["Charlie and the Great Glass Elevator",6],["Esio Trot",5],["The Magic Finger",3],["The Enormous Crocodile",2],["The Giraffe and the Pelly and Me",0],["The Iron Man",-1],["The Gruffalo",-1],["Stig of the Dump",-1],["The Borrowers",-1]]},
+ {"cat":"Harry Potter","q":"Teachers at Hogwarts in the Harry Potter books","a":[["Albus Dumbledore",74,["dumbledore"]],["Severus Snape",66,["snape"]],["Minerva McGonagall",62,["mcgonagall"]],["Rubeus Hagrid",50,["hagrid"]],["Remus Lupin",30,["lupin"]],["Dolores Umbridge",28,["umbridge"]],["Filius Flitwick",24,["flitwick"]],["Sybill Trelawney",22,["trelawney"]],["Gilderoy Lockhart",20,["lockhart"]],["Pomona Sprout",18,["sprout"]],["Quirinus Quirrell",16,["quirrell"]],["Horace Slughorn",14,["slughorn"]],["Cuthbert Binns",4,["professor binns"]],["Aurora Sinistra",1,["sinistra"]],["Firenze",0],["Argus Filch",-1],["Madam Pomfrey",-1],["Madam Pince",-1]]},
+ {"cat":"Book Prizes","q":"Writers who have won the Booker Prize","a":[["Salman Rushdie",40],["Hilary Mantel",28],["Margaret Atwood",26],["Kazuo Ishiguro",22],["Ian McEwan",20],["Yann Martel",16],["William Golding",14],["Arundhati Roy",12],["Julian Barnes",10],["Bernardine Evaristo",8],["Douglas Stuart",6],["Anne Enright",3],["Penelope Fitzgerald",1],["Anna Burns",0],["Martin Amis",-1],["Zadie Smith",-1],["Ali Smith",-1],["Colm Toibin",-1]]},
+ {"cat":"Poetry","q":"Poets who have held the post of Poet Laureate","a":[["Ted Hughes",34],["Carol Ann Duffy",28],["Alfred Lord Tennyson",26,["tennyson"]],["William Wordsworth",24,["wordsworth"]],["Simon Armitage",20],["John Betjeman",18,["betjeman"]],["Andrew Motion",12],["John Dryden",8,["dryden"]],["Robert Southey",6,["southey"]],["John Masefield",5,["masefield"]],["Cecil Day-Lewis",3,["day lewis"]],["Colley Cibber",1],["Nahum Tate",0],["Henry James Pye",0],["Philip Larkin",-1],["Seamus Heaney",-1],["Lord Byron",-1],["Samuel Taylor Coleridge",-1]]},
+ {"cat":"Shakespeare","q":"Plays grouped as comedies in Shakespeare's First Folio","closed":true,"a":[["A Midsummer Night's Dream",62],["Twelfth Night",44],["Much Ado About Nothing",40],["The Merchant of Venice",38],["The Taming of the Shrew",30],["As You Like It",28],["The Tempest",26],["The Comedy of Errors",22],["The Merry Wives of Windsor",12],["Love's Labour's Lost",10],["Measure for Measure",8],["The Winter's Tale",4],["The Two Gentlemen of Verona",2],["All's Well That Ends Well",0],["Coriolanus",-1],["Titus Andronicus",-1],["Timon of Athens",-1],["Richard III",-1]]},
+ {"cat":"Greek Myth","q":"The twelve labours of Heracles","closed":true,"a":[["The Nemean Lion",40,["nemean lion"]],["The Lernaean Hydra",34,["hydra"]],["Cerberus",26],["The Augean Stables",24,["augean stables"]],["The Apples of the Hesperides",14,["golden apples"]],["The Cretan Bull",12],["The Erymanthian Boar",10],["The Mares of Diomedes",8],["The Stymphalian Birds",6],["The Girdle of Hippolyta",5,["belt of hippolyta"]],["The Cattle of Geryon",3],["The Ceryneian Hind",0],["The Minotaur",-1],["Medusa",-1],["The Golden Fleece",-1],["The Chimera",-1]]},
+ {"cat":"Narnia","q":"Characters in the Chronicles of Narnia","a":[["Aslan",72],["The White Witch",44,["white witch","jadis"]],["Lucy Pevensie",38,["lucy"]],["Edmund Pevensie",30,["edmund"]],["Peter Pevensie",28,["peter"]],["Susan Pevensie",26,["susan"]],["Mr Tumnus",24,["tumnus"]],["Prince Caspian",20,["caspian"]],["Reepicheep",12],["Puddleglum",8],["Eustace Scrubb",6,["eustace"]],["Digory Kirke",4,["digory"]],["Jill Pole",3,["jill"]],["Polly Plummer",1,["polly"]],["Shasta",0],["Lyra Belacqua",-1],["Will Stanton",-1],["Bastian Balthazar Bux",-1]]},
+ {"cat":"Dystopia","q":"Dystopian novels","a":[["Nineteen Eighty-Four",72,["1984"]],["Brave New World",56],["The Handmaid's Tale",48],["The Hunger Games",40],["Fahrenheit 451",30],["A Clockwork Orange",26],["The Road",16],["Divergent",14],["Never Let Me Go",12],["Do Androids Dream of Electric Sheep?",8,["do androids dream of electric sheep"]],["The Children of Men",6],["The Giver",5],["Oryx and Crake",4],["We",3],["Parable of the Sower",0],["Dune",-1],["The War of the Worlds",-1],["Jurassic Park",-1],["Slaughterhouse-Five",-1]]},
+ {"cat":"Literature","q":"Characters created by Charles Dickens","a":[["Oliver Twist",60],["Ebenezer Scrooge",56,["scrooge"]],["Fagin",34],["David Copperfield",30],["Miss Havisham",26],["Pip",24],["Tiny Tim",22],["The Artful Dodger",20,["artful dodger"]],["Uriah Heep",12],["Mr Micawber",10,["micawber"]],["Sydney Carton",6],["Little Nell",4],["Sam Weller",2],["Wackford Squeers",0],["Becky Sharp",-1],["Heathcliff",-1],["Tess Durbeyfield",-1],["Jean Valjean",-1]]},
+ {"cat":"Crime Fiction","q":"Authors who created a famous fictional detective","a":[["Agatha Christie",62],["Arthur Conan Doyle",58,["conan doyle"]],["Ian Rankin",20],["Raymond Chandler",16],["Colin Dexter",14],["P D James",12,["pd james"]],["Ruth Rendell",10],["Dorothy L Sayers",8,["dorothy sayers"]],["Val McDermid",7],["Georges Simenon",6],["Dashiell Hammett",5],["Edgar Allan Poe",4],["G K Chesterton",3,["gk chesterton"]],["Wilkie Collins",0],["John le Carre",-1],["Frederick Forsyth",-1],["Robert Ludlum",-1],["Ken Follett",-1]]},
+ {"cat":"Nobel Prize","q":"Winners of the Nobel Prize in Literature","a":[["Ernest Hemingway",34],["Bob Dylan",30],["Toni Morrison",24],["Rudyard Kipling",22],["Gabriel Garcia Marquez",20],["W B Yeats",18,["wb yeats","yeats"]],["Kazuo Ishiguro",16],["T S Eliot",14,["ts eliot"]],["Winston Churchill",12],["Samuel Beckett",10],["Doris Lessing",8],["William Golding",6],["Han Kang",4],["Nadine Gordimer",0],["Leo Tolstoy",-1],["James Joyce",-1],["Virginia Woolf",-1],["Jorge Luis Borges",-1]]},
+ {"cat":"Children's Books","q":"Children's picture books","a":[["The Very Hungry Caterpillar",66],["The Gruffalo",60],["The Tiger Who Came to Tea",40],["Where the Wild Things Are",34],["We're Going on a Bear Hunt",30],["The Snowman",26],["Guess How Much I Love You",20],["Room on the Broom",18],["Dear Zoo",16],["Elmer",12],["Each Peach Pear Plum",8],["Owl Babies",5],["Not Now Bernard",3],["Peepo!",0,["peepo"]],["Charlotte's Web",-1],["The Wind in the Willows",-1],["The Worst Witch",-1],["James and the Giant Peach",-1]]},
+ {"cat":"Crime Fiction","q":"Agatha Christie novels featuring Hercule Poirot","a":[["Murder on the Orient Express",62],["Death on the Nile",52],["The Murder of Roger Ackroyd",26],["The ABC Murders",22],["Evil Under the Sun",16],["The Mysterious Affair at Styles",14],["Peril at End House",10],["Hercule Poirot's Christmas",8],["Appointment with Death",7],["Five Little Pigs",6],["Cards on the Table",5],["Curtain",4],["Dumb Witness",1],["Sad Cypress",0],["And Then There Were None",-1],["The Murder at the Vicarage",-1],["A Murder Is Announced",-1],["The Body in the Library",-1]]},
+ {"cat":"Theatre","q":"Plays written by George Bernard Shaw","a":[["Pygmalion",46],["Saint Joan",20],["Man and Superman",16],["Major Barbara",12],["Arms and the Man",10],["Mrs Warren's Profession",8],["Caesar and Cleopatra",7],["Heartbreak House",6],["Candida",4],["The Doctor's Dilemma",3],["Androcles and the Lion",2],["Back to Methuselah",1],["The Devil's Disciple",1],["Widowers' Houses",0],["The Importance of Being Earnest",-1],["An Inspector Calls",-1],["Look Back in Anger",-1],["Waiting for Godot",-1]]},
+ {"cat":"Music","q":"Studio albums released by David Bowie in the 1970s","closed":true,"a":[["The Rise and Fall of Ziggy Stardust and the Spiders from Mars",44,["ziggy stardust","ziggy"]],["Hunky Dory",30],["Aladdin Sane",24],["Diamond Dogs",18],["Heroes",16],["Low",14],["Young Americans",10],["The Man Who Sold the World",8],["Station to Station",6],["Pin Ups",3],["Lodger",0],["Scary Monsters and Super Creeps",-1,["scary monsters"]],["Let's Dance",-1],["David Live",-1],["Stage",-1]]},
+ {"cat":"Music","q":"Musicians who have been members of Fleetwood Mac","a":[["Mick Fleetwood",62],["Stevie Nicks",56],["Lindsey Buckingham",40],["Christine McVie",34],["John McVie",30],["Peter Green",14],["Jeremy Spencer",5],["Danny Kirwan",4],["Bob Welch",3],["Neil Finn",2],["Mike Campbell",1],["Rick Vito",0],["Billy Burnette",0],["Eric Clapton",-1],["Tom Petty",-1],["Don Henley",-1],["Glenn Frey",-1]]},
+ {"cat":"Opera","q":"Operas composed by Giuseppe Verdi","a":[["Aida",40],["La traviata",34],["Rigoletto",30],["Nabucco",18],["Il trovatore",16],["Otello",12],["Falstaff",8],["Macbeth",6],["Don Carlos",5],["Un ballo in maschera",3],["La forza del destino",3],["Simon Boccanegra",1],["Ernani",0],["Luisa Miller",0],["Tosca",-1],["Carmen",-1],["Turandot",-1],["Norma",-1]]},
+ {"cat":"Instruments","q":"Instruments of the brass family","a":[["Trumpet",70],["Trombone",60],["Tuba",48],["French horn",36],["Cornet",20],["Euphonium",10],["Bugle",8],["Flugelhorn",7],["Sousaphone",4],["Tenor horn",3],["Baritone horn",2],["Piccolo trumpet",1],["Mellophone",0],["Wagner tuba",0],["Saxophone",-1],["Clarinet",-1],["Oboe",-1],["Flute",-1]]},
+ {"cat":"Eurovision","q":"Countries that have won the Eurovision Song Contest","a":[["Ireland",46],["Sweden",44],["United Kingdom",40,["uk","britain","great britain"]],["France",22],["Israel",20],["Norway",18],["Netherlands",15],["Italy",12],["Denmark",10],["Ukraine",9],["Germany",7],["Switzerland",6],["Luxembourg",3],["Latvia",0],["Monaco",0],["Australia",-1],["Poland",-1],["Iceland",-1]]},
+ {"cat":"Christmas","q":"Acts that have had a UK Christmas number one single","a":[["Slade",40],["The Beatles",30,["beatles"]],["Spice Girls",24],["Cliff Richard",22],["Band Aid",20],["Queen",18],["LadBaby",16],["Wham!",14,["wham"]],["Mr Blobby",12],["East 17",9],["Shakin' Stevens",7],["Rage Against the Machine",6],["Michael Jackson",4],["Mud",2],["The Flying Pickets",0,["flying pickets"]],["Wizzard",-1],["The Pogues",-1],["Oasis",-1]]},
+ {"cat":"Musicals","q":"Musicals with music composed by Andrew Lloyd Webber","a":[["The Phantom of the Opera",56,["phantom of the opera","phantom"]],["Cats",50],["Jesus Christ Superstar",34],["Evita",30],["Joseph and the Amazing Technicolor Dreamcoat",28,["joseph"]],["Starlight Express",20],["Sunset Boulevard",10],["School of Rock",6],["Aspects of Love",4],["Love Never Dies",3],["Whistle Down the Wind",2],["The Woman in White",1],["By Jeeves",0],["The Beautiful Game",0],["Les Miserables",-1],["Miss Saigon",-1],["Wicked",-1],["Chess",-1]]},
+ {"cat":"Band Names","q":"Bands with an animal in their name","a":[["Eagles",40,["the eagles"]],["Arctic Monkeys",34],["Scorpions",28],["Counting Crows",20],["Whitesnake",18],["The Monkees",16,["monkees"]],["Gorillaz",12],["Atomic Kitten",9],["Cage the Elephant",6],["Modest Mouse",4],["Wolfmother",3],["Grizzly Bear",2],["Buffalo Springfield",1],["The Turtles",0,["turtles"]],["Blind Melon",-1],["The Smashing Pumpkins",-1],["The Stone Roses",-1],["Kaiser Chiefs",-1]]},
+ {"cat":"Music","q":"Songs recorded by The Rolling Stones","a":[["(I Can't Get No) Satisfaction",52,["satisfaction"]],["Paint It Black",40],["Jumpin' Jack Flash",26],["Angie",24],["Start Me Up",22],["Brown Sugar",20],["Sympathy for the Devil",18],["Honky Tonk Women",14],["Gimme Shelter",11],["Ruby Tuesday",9],["Wild Horses",6],["You Can't Always Get What You Want",5],["Tumbling Dice",2],["Little Red Rooster",0],["My Generation",-1],["The House of the Rising Sun",-1,["house of the rising sun"]],["All Right Now",-1],["For What It's Worth",-1]]},
+ {"cat":"Motown","q":"Acts that recorded for Motown Records","a":[["The Supremes",48,["supremes"]],["Stevie Wonder",44],["Marvin Gaye",40],["The Temptations",34,["temptations"]],["The Jackson 5",30,["jackson 5","jackson five"]],["Diana Ross",26],["The Four Tops",22,["four tops"]],["Smokey Robinson",18],["Lionel Richie",12],["The Commodores",9,["commodores"]],["Gladys Knight and the Pips",7,["gladys knight"]],["Martha and the Vandellas",5],["Mary Wells",2],["The Marvelettes",1],["Edwin Starr",0],["Otis Redding",-1],["Aretha Franklin",-1],["Wilson Pickett",-1]]},
+ {"cat":"Music Theory","q":"Italian musical terms relating to tempo","a":[["Allegro",42],["Presto",34],["Adagio",32],["Andante",30],["Largo",22],["Moderato",20],["Lento",14],["Vivace",12],["Accelerando",8],["Grave",6],["Allegretto",5],["Prestissimo",4],["Rallentando",3],["Larghetto",2],["Andantino",0],["Forte",-1],["Crescendo",-1],["Staccato",-1]]},
+ {"cat":"Classical","q":"Works composed by Wolfgang Amadeus Mozart","a":[["Eine kleine Nachtmusik",40],["The Magic Flute",36],["Requiem",30],["The Marriage of Figaro",28],["Don Giovanni",24],["Symphony No. 40",16],["Rondo alla Turca",12,["turkish march"]],["Cosi fan tutte",10],["Clarinet Concerto",8],["Symphony No. 41",6,["jupiter symphony"]],["Piano Concerto No. 21",3],["The Abduction from the Seraglio",2],["Ave verum corpus",1],["Twelve Variations on Ah vous dirai-je, maman",0],["The Barber of Seville",-1],["The Four Seasons",-1],["Fur Elise",-1],["Ode to Joy",-1]]},
+ {"cat":"Music","q":"Studio albums released by Madonna","a":[["Like a Virgin",48],["Like a Prayer",36],["True Blue",30],["Ray of Light",28],["Music",20],["Madonna",18],["Confessions on a Dance Floor",16],["Erotica",12],["Bedtime Stories",7],["MDNA",6],["American Life",5],["Hard Candy",4],["Rebel Heart",2],["Madame X",0],["The Immaculate Collection",-1],["Something to Remember",-1],["GHV2",-1],["The Confessions Tour",-1]]},
+ {"cat":"Music","q":"Songs recorded by Michael Jackson as a solo artist","a":[["Thriller",60],["Billie Jean",52],["Beat It",40],["Bad",30],["Smooth Criminal",26],["Man in the Mirror",20],["Black or White",18],["Earth Song",14],["Heal the World",10],["Don't Stop 'Til You Get Enough",9],["Rock with You",8],["Dirty Diana",6],["The Way You Make Me Feel",4],["Human Nature",0],["I Want You Back",-1],["ABC",-1],["Blame It on the Boogie",-1],["Can You Feel It",-1]]},
+ {"cat":"NHL","q":"The twelve NHL teams of the 1967-68 season, the first after the Original Six era","closed":true,"a":[["Montreal Canadiens",55,["canadiens","habs","montreal"]],["Toronto Maple Leafs",50,["maple leafs","leafs","toronto"]],["Boston Bruins",45,["bruins","boston"]],["New York Rangers",40,["rangers","ny rangers"]],["Chicago Blackhawks",35,["blackhawks","black hawks","chicago"]],["Detroit Red Wings",32,["red wings","detroit"]],["Philadelphia Flyers",12,["flyers","philadelphia"]],["Pittsburgh Penguins",10,["penguins","pittsburgh"]],["St Louis Blues",6,["blues","st louis","saint louis blues"]],["Los Angeles Kings",5,["kings","la kings","los angeles"]],["Minnesota North Stars",2,["north stars","minnesota"]],["Oakland Seals",0,["california seals","seals","california golden seals"]],["Buffalo Sabres",-1,["sabres","buffalo"]],["Vancouver Canucks",-1,["canucks","vancouver"]],["New York Islanders",-1,["islanders","ny islanders"]],["Atlanta Flames",-1,["flames","atlanta"]]]},
+ {"cat":"NHL","q":"Canadian cities that have been home to an NHL team","closed":true,"a":[["Montreal",65,["montreal quebec"]],["Toronto",60],["Vancouver",40],["Edmonton",30],["Calgary",26],["Ottawa",6],["Winnipeg",4],["Quebec City",1,["quebec"]],["Hamilton",0,["hamilton ontario"]],["Halifax",-1],["Saskatoon",-1],["Victoria",-1],["Regina",-1],["London",-1,["london ontario"]]]},
+ {"cat":"NHL","q":"NHL teams that have won the Stanley Cup since 2000","closed":true,"a":[["Detroit Red Wings",30,["red wings","detroit"]],["Pittsburgh Penguins",25,["penguins","pittsburgh"]],["Chicago Blackhawks",22,["blackhawks","chicago"]],["Boston Bruins",20,["bruins","boston"]],["Tampa Bay Lightning",15,["lightning","tampa bay","tampa"]],["Colorado Avalanche",12,["avalanche","avs","colorado"]],["Los Angeles Kings",10,["kings","la kings","los angeles"]],["Washington Capitals",9,["capitals","caps","washington"]],["Florida Panthers",8,["panthers","florida"]],["New Jersey Devils",5,["devils","new jersey"]],["Carolina Hurricanes",4,["hurricanes","canes","carolina"]],["Vegas Golden Knights",3,["golden knights","vegas","las vegas"]],["St Louis Blues",2,["blues","st louis","saint louis blues"]],["Anaheim Ducks",0,["ducks","anaheim","mighty ducks"]],["Edmonton Oilers",-1,["oilers","edmonton"]],["Dallas Stars",-1,["stars","dallas"]],["Vancouver Canucks",-1,["canucks","vancouver"]],["Montreal Canadiens",-1,["canadiens","habs","montreal"]]]},
+ {"cat":"NHL","q":"Players who have scored 700 or more goals in the NHL","closed":true,"a":[["Wayne Gretzky",70,["gretzky"]],["Alex Ovechkin",55,["ovechkin","ovi"]],["Gordie Howe",30,["howe"]],["Jaromir Jagr",15,["jagr"]],["Brett Hull",6],["Phil Esposito",4,["esposito"]],["Marcel Dionne",2,["dionne"]],["Mike Gartner",0,["gartner"]],["Mario Lemieux",-1,["lemieux"]],["Mark Messier",-1,["messier"]],["Steve Yzerman",-1,["yzerman"]],["Teemu Selanne",-1,["selanne"]],["Bobby Hull",-1],["Sidney Crosby",-1,["crosby"]]]},
+ {"cat":"NHL","q":"Players who won the Hart Trophy as NHL most valuable player during the 1990s","closed":true,"a":[["Mario Lemieux",25,["lemieux"]],["Jaromir Jagr",15,["jagr"]],["Mark Messier",8,["messier"]],["Brett Hull",6],["Dominik Hasek",5,["hasek"]],["Eric Lindros",3,["lindros"]],["Sergei Fedorov",0,["fedorov"]],["Wayne Gretzky",-1,["gretzky"]],["Patrick Roy",-1],["Joe Sakic",-1,["sakic"]],["Steve Yzerman",-1,["yzerman"]],["Peter Forsberg",-1,["forsberg"]],["Mike Modano",-1,["modano"]]]},
+ {"cat":"Hockey","q":"Terms for parts and markings of an ice hockey rink","a":[["Blue line",45,["blue lines"]],["Penalty box",35,["sin bin","penalty bench"]],["Centre red line",30,["red line","centre line","center line","center red line"]],["Goal line",22,["goal lines"]],["Faceoff circle",20,["face off circle","faceoff circles"]],["Goal crease",16,["crease"]],["Boards",12],["Neutral zone",10],["Glass",8,["plexiglass","the glass"]],["Goal mouth",7],["Defensive zone",5,["defending zone"]],["Faceoff dot",4,["face off dot","faceoff spot"]],["Hash marks",2,["hashmarks"]],["Trapezoid",0,["the trapezoid","goalie trapezoid"]],["Penalty spot",-1],["Halfway line",-1,["half way line"]],["The key",-1,["key"]],["22 metre line",-1,["22 line","twenty two metre line"]]]},
+ {"cat":"Olympics","q":"Countries that had won Olympic gold in men's ice hockey up to and including the 2022 Games","closed":true,"a":[["Canada",75],["United States",40,["usa","america","united states of america"]],["Soviet Union",35,["ussr","russia soviet union"]],["Sweden",20],["Finland",12],["Czech Republic",6,["czechia","czech"]],["Olympic Athletes from Russia",4,["russia","oar"]],["Unified Team",2,["unified team of the cis","cis"]],["Great Britain",0,["britain","uk","united kingdom"]],["Czechoslovakia",-1],["Slovakia",-1],["Switzerland",-1],["Germany",-1],["Norway",-1]]},
+ {"cat":"MLB","q":"MLB teams that have won the World Series since 2005","closed":true,"a":[["New York Yankees",45,["yankees","yanks"]],["Los Angeles Dodgers",35,["dodgers","la dodgers"]],["Boston Red Sox",30,["red sox","boston"]],["Chicago Cubs",20,["cubs","chicago cubs"]],["San Francisco Giants",15,["giants","sf giants","san francisco"]],["Houston Astros",12,["astros","houston"]],["St Louis Cardinals",10,["cardinals","cards","st louis"]],["Atlanta Braves",9,["braves","atlanta"]],["Philadelphia Phillies",8,["phillies","philadelphia"]],["Chicago White Sox",6,["white sox"]],["Kansas City Royals",4,["royals","kansas city"]],["Washington Nationals",2,["nationals","nats","washington"]],["Texas Rangers",0,["rangers","texas"]],["New York Mets",-1,["mets"]],["Tampa Bay Rays",-1,["rays","tampa bay"]],["Cleveland Guardians",-1,["guardians","cleveland","cleveland indians"]],["Detroit Tigers",-1,["tigers","detroit"]]]},
+ {"cat":"MLB","q":"The fifteen MLB teams that play in the American League","closed":true,"a":[["New York Yankees",65,["yankees","yanks"]],["Boston Red Sox",55,["red sox","boston"]],["Toronto Blue Jays",30,["blue jays","jays","toronto"]],["Houston Astros",20,["astros","houston"]],["Los Angeles Angels",18,["angels","anaheim angels","la angels"]],["Seattle Mariners",15,["mariners","seattle"]],["Chicago White Sox",14,["white sox"]],["Detroit Tigers",12,["tigers","detroit"]],["Baltimore Orioles",10,["orioles","os","baltimore"]],["Texas Rangers",8,["rangers","texas"]],["Kansas City Royals",6,["royals","kansas city"]],["Minnesota Twins",5,["twins","minnesota"]],["Athletics",4,["oakland athletics","as","oakland as","oakland a's","a's","sacramento athletics"]],["Tampa Bay Rays",3,["rays","tampa bay","devil rays"]],["Cleveland Guardians",0,["guardians","cleveland","cleveland indians"]],["New York Mets",-1,["mets"]],["Milwaukee Brewers",-1,["brewers","milwaukee"]],["Miami Marlins",-1,["marlins","miami","florida marlins"]]]},
+ {"cat":"MLB","q":"MLB franchises that have relocated from another city","a":[["Los Angeles Dodgers",30,["dodgers","brooklyn dodgers","la dodgers"]],["San Francisco Giants",20,["giants","new york giants","sf giants"]],["Athletics",12,["oakland athletics","as","a's","philadelphia athletics","kansas city athletics"]],["Atlanta Braves",8,["braves","boston braves","milwaukee braves"]],["Baltimore Orioles",6,["orioles","st louis browns","browns"]],["Washington Nationals",5,["nationals","nats","montreal expos","expos"]],["Minnesota Twins",4,["twins","washington senators"]],["Texas Rangers",2,["rangers","texas"]],["Milwaukee Brewers",0,["brewers","seattle pilots","pilots"]],["Chicago Cubs",-1,["cubs"]],["Boston Red Sox",-1,["red sox"]],["St Louis Cardinals",-1,["cardinals","cards"]],["New York Mets",-1,["mets"]],["Detroit Tigers",-1,["tigers"]]]},
+ {"cat":"MLB","q":"Pitchers who won a Cy Young Award during the 1990s","closed":true,"a":[["Roger Clemens",30,["clemens"]],["Greg Maddux",25,["maddux"]],["Randy Johnson",22,["johnson","the big unit"]],["Pedro Martinez",18,["pedro","martinez"]],["Tom Glavine",12,["glavine"]],["Dennis Eckersley",9,["eckersley","eck"]],["John Smoltz",8,["smoltz"]],["David Cone",5,["cone"]],["Jack McDowell",3,["mcdowell"]],["Bob Welch",2,["welch"]],["Doug Drabek",1,["drabek"]],["Pat Hentgen",0,["hentgen"]],["Nolan Ryan",-1,["ryan"]],["Curt Schilling",-1,["schilling"]],["Mike Mussina",-1,["mussina"]],["Kevin Brown",-1]]},
+ {"cat":"MLB","q":"Players who have hit 600 or more home runs in Major League Baseball","closed":true,"a":[["Babe Ruth",70,["ruth","the babe"]],["Hank Aaron",45,["aaron","hammerin hank"]],["Barry Bonds",40,["bonds"]],["Willie Mays",25,["mays"]],["Alex Rodriguez",15,["a rod","arod","rodriguez"]],["Albert Pujols",9,["pujols"]],["Ken Griffey Jr",6,["griffey","ken griffey junior"]],["Sammy Sosa",4,["sosa"]],["Jim Thome",0,["thome"]],["Mark McGwire",-1,["mcgwire"]],["Mickey Mantle",-1,["mantle"]],["Frank Robinson",-1],["Harmon Killebrew",-1,["killebrew"]],["Reggie Jackson",-1,["reggie"]]]},
+ {"cat":"Baseball","q":"The nine fielding positions on a baseball team","closed":true,"a":[["Pitcher",75],["Catcher",60],["First baseman",30,["first base","1st baseman","first baseman"]],["Shortstop",20,["short stop"]],["Second baseman",14,["second base","2nd baseman"]],["Third baseman",9,["third base","3rd baseman"]],["Center fielder",5,["centre fielder","center field","centre field"]],["Left fielder",2,["left field"]],["Right fielder",0,["right field"]],["Designated hitter",-1,["dh"]],["Pinch runner",-1],["Wicket keeper",-1,["wicketkeeper"]],["Rover",-1]]},
+ {"cat":"Baseball","q":"Ways a batter can reach first base in baseball","a":[["Base hit",55,["hit","single","a single"]],["Walk",40,["base on balls","bases on balls","a walk"]],["Hit by pitch",25,["hit by a pitch","hbp"]],["Fielding error",15,["error","an error"]],["Intentional walk",12,["intentional base on balls"]],["Fielder's choice",6,["fielders choice"]],["Dropped third strike",3,["uncaught third strike","dropped 3rd strike"]],["Catcher's interference",1,["catchers interference"]],["Obstruction by a fielder",0,["obstruction","fielder obstruction"]],["Balk",-1],["Stolen base",-1,["steal","steals"]],["Sacrifice fly",-1,["sac fly"]],["Ground rule double",-1,["ground-rule double"]]]},
+ {"cat":"Space","q":"Astronauts who flew to the Moon on Apollo but never walked on it","closed":true,"a":[["Jim Lovell",38,["james lovell"]],["Michael Collins",34],["Fred Haise",14],["Jack Swigert",11],["Frank Borman",8],["Ken Mattingly",7,["thomas mattingly"]],["Thomas Stafford",6],["William Anders",5,["bill anders"]],["Richard Gordon",2,["dick gordon"]],["Al Worden",1,["alfred worden"]],["Stuart Roosa",0],["Ronald Evans",0],["Neil Armstrong",-1],["Buzz Aldrin",-1],["Alan Shepard",-1],["Deke Slayton",-1]]},
+ {"cat":"Space","q":"Apollo missions that carried astronauts into space","closed":true,"a":[["Apollo 11",88],["Apollo 13",66],["Apollo 8",14],["Apollo 12",12],["Apollo 17",10],["Apollo 10",8],["Apollo 15",6],["Apollo 14",5],["Apollo 16",4],["Apollo 9",3],["Apollo 7",0],["Apollo 1",-1],["Apollo 4",-1],["Apollo 6",-1],["Apollo 18",-1]]},
+ {"cat":"Space","q":"National and international space agencies","a":[["NASA",92],["European Space Agency",44,["esa"]],["Roscosmos",26,["russian space agency"]],["JAXA",14,["japan aerospace exploration agency"]],["ISRO",12,["indian space research organisation"]],["China National Space Administration",8,["cnsa"]],["Canadian Space Agency",6,["csa"]],["UK Space Agency",5],["CNES",3,["french space agency"]],["DLR",2,["german aerospace centre"]],["Italian Space Agency",1,["asi"]],["Korea Aerospace Research Institute",0,["kari"]],["Brazilian Space Agency",0,["aeb"]],["Iranian Space Agency",0,["isa"]],["SpaceX",-1],["Blue Origin",-1],["Arianespace",-1],["Virgin Galactic",-1]]},
+ {"cat":"Astronomy","q":"Constellations of the night sky","a":[["Orion",56],["Ursa Major",44,["the great bear"]],["Leo",34],["Taurus",32],["Cassiopeia",30],["Ursa Minor",28,["the little bear"]],["Gemini",26],["Scorpius",24,["scorpio"]],["Pegasus",18],["Andromeda",14],["Cygnus",12,["the swan"]],["Draco",10],["Perseus",8],["Lyra",2],["Aquila",0],["The Plough",-1,["the big dipper"]],["The Pleiades",-1],["The Milky Way",-1]]},
+ {"cat":"Astronomy","q":"Telescopes that have been launched into space","a":[["Hubble",76,["hubble space telescope"]],["James Webb",52,["jwst","james webb space telescope"]],["Kepler",12],["Spitzer",8],["Chandra",7],["Gaia",5],["Herschel",4],["TESS",3],["Planck",2],["Fermi",1],["Swift",1],["XMM-Newton",0,["xmm newton"]],["COBE",0],["Euclid",0],["Arecibo",-1],["Keck",-1],["Very Large Telescope",-1],["Voyager",-1]]},
+ {"cat":"Astronomy","q":"Named objects that orbit the Sun beyond Neptune","a":[["Pluto",84],["Eris",22],["Makemake",10],["Haumea",8],["Sedna",7],["Quaoar",4],["Arrokoth",3],["Gonggong",1],["Orcus",1],["Varuna",0],["Ixion",0],["Salacia",0],["Ceres",-1],["Vesta",-1],["Pallas",-1],["Hygiea",-1]]},
+ {"cat":"Physics","q":"SI units of measurement named after a scientist","a":[["Watt",58],["Newton",52],["Volt",44],["Ampere",34,["amp"]],["Hertz",26],["Joule",22],["Ohm",20],["Pascal",16],["Kelvin",14],["Coulomb",8],["Farad",6],["Tesla",5],["Becquerel",2],["Weber",0],["Siemens",0],["Metre",-1],["Mole",-1],["Candela",-1]]},
+ {"cat":"Physics","q":"Branches of physics","a":[["Mechanics",42],["Thermodynamics",36],["Quantum mechanics",34],["Optics",30],["Electromagnetism",26],["Nuclear physics",22],["Astrophysics",18],["Particle physics",14],["Acoustics",10],["Cosmology",8],["Fluid dynamics",5],["Condensed matter physics",3],["Plasma physics",1],["Statistical mechanics",0],["Biophysics",0],["Metaphysics",-1],["Physiology",-1],["Biochemistry",-1]]},
+ {"cat":"Human Body","q":"Organ systems of the human body","a":[["Digestive system",58,["digestive"]],["Nervous system",50,["nervous"]],["Respiratory system",46,["respiratory"]],["Circulatory system",44,["circulatory","cardiovascular system"]],["Skeletal system",34,["skeletal"]],["Muscular system",28,["muscular"]],["Immune system",20,["immune"]],["Reproductive system",16,["reproductive"]],["Endocrine system",10,["endocrine"]],["Urinary system",6,["urinary","renal system"]],["Lymphatic system",4,["lymphatic"]],["Integumentary system",0,["integumentary"]],["The liver",-1],["The pancreas",-1],["The spleen",-1],["The thyroid",-1]]},
+ {"cat":"Human Body","q":"The blood groups of the ABO and Rhesus system","closed":true,"a":[["O positive",62],["A positive",50],["O negative",34],["B positive",30],["A negative",14],["AB positive",6],["B negative",4],["AB negative",0],["C positive",-1],["O neutral",-1],["AO negative",-1],["BB positive",-1]]},
+ {"cat":"Animals","q":"Wild members of the cat family","a":[["Lion",82],["Tiger",78],["Leopard",62],["Cheetah",58],["Jaguar",46],["Puma",30,["cougar","mountain lion"]],["Lynx",26],["Snow leopard",22],["Bobcat",14],["Ocelot",10],["Caracal",6],["Serval",4],["Clouded leopard",3],["Jaguarundi",0],["Hyena",-1],["Meerkat",-1],["Mongoose",-1],["Civet",-1]]},
+ {"cat":"Animals","q":"Birds that cannot fly","a":[["Ostrich",80],["Penguin",74],["Emu",56],["Kiwi",46],["Dodo",30],["Cassowary",24],["Rhea",14],["Kakapo",6],["Moa",4],["Takahe",3],["Weka",1],["Elephant bird",0],["Steamer duck",0],["Flightless cormorant",0],["Puffin",-1],["Peacock",-1],["Roadrunner",-1],["Albatross",-1]]},
+ {"cat":"Dinosaurs","q":"Prehistoric creatures that were true dinosaurs","a":[["Tyrannosaurus rex",84,["t rex","t. rex","tyrannosaurus"]],["Stegosaurus",62],["Triceratops",58],["Velociraptor",50],["Diplodocus",42],["Brachiosaurus",34],["Ankylosaurus",20],["Spinosaurus",18],["Allosaurus",14],["Iguanodon",10],["Apatosaurus",8,["brontosaurus"]],["Parasaurolophus",4],["Megalosaurus",2],["Pachycephalosaurus",0],["Pterodactyl",-1,["pterodactylus"]],["Plesiosaurus",-1],["Mosasaurus",-1],["Dimetrodon",-1]]},
+ {"cat":"Geology","q":"Geological periods of the Phanerozoic eon","closed":true,"a":[["Jurassic",72],["Cretaceous",44],["Triassic",40],["Cambrian",26],["Carboniferous",20],["Permian",14],["Devonian",12],["Silurian",8],["Ordovician",6],["Quaternary",4],["Neogene",1],["Paleogene",0,["palaeogene"]],["Mesozoic",-1],["Precambrian",-1],["Pleistocene",-1],["Tertiary",-1]]},
+ {"cat":"Star Trek","q":"Star Trek television series","a":[["Star Trek: The Original Series",58,["the original series","tos","star trek"]],["Star Trek: The Next Generation",52,["the next generation","tng"]],["Star Trek: Deep Space Nine",36,["deep space nine","ds9"]],["Star Trek: Voyager",34,["voyager","uss voyager"]],["Star Trek: Enterprise",22,["enterprise"]],["Star Trek: Discovery",18,["discovery"]],["Star Trek: Picard",15,["picard"]],["Star Trek: Strange New Worlds",11,["strange new worlds","snw"]],["Star Trek: The Animated Series",6,["the animated series","tas"]],["Star Trek: Lower Decks",5,["lower decks"]],["Star Trek: Prodigy",2,["prodigy"]],["Star Trek: Short Treks",0,["short treks"]],["Babylon 5",-1],["Battlestar Galactica",-1],["Star Trek: Phase II",-1],["Star Trek: Section 31",-1]]},
+ {"cat":"Star Trek","q":"Captains of a starship called Enterprise in Star Trek","a":[["James T Kirk",66,["kirk","james kirk","captain kirk"]],["Jean-Luc Picard",58,["picard","jean luc picard"]],["Jonathan Archer",16,["archer"]],["Christopher Pike",13,["pike"]],["Spock",8,["mister spock","mr spock"]],["Robert April",3,["april"]],["Rachel Garrett",3,["garrett"]],["Edward Jellico",1,["jellico"]],["John Harriman",1,["harriman"]],["Willard Decker",0,["decker","will decker"]],["Seven of Nine",0,["seven","annika hansen","hansen"]],["Benjamin Sisko",-1],["Kathryn Janeway",-1],["Michael Burnham",-1],["Carol Freeman",-1]]},
+ {"cat":"Star Trek","q":"Alien races of the Star Trek universe","a":[["Klingon",74,["klingons"]],["Vulcan",70,["vulcans"]],["Romulan",48,["romulans"]],["Borg",44,["the borg"]],["Ferengi",34,["ferengis"]],["Cardassian",26,["cardassians"]],["Bajoran",20,["bajorans"]],["Andorian",16,["andorians"]],["Betazoid",11,["betazoids"]],["Trill",9,["trills"]],["Gorn",8,["gorns"]],["Jem'Hadar",7,["jem hadar","jemhadar"]],["Tellarite",4,["tellarites"]],["Talaxian",3,["talaxians"]],["Denobulan",1,["denobulans"]],["Tholian",0,["tholians"]],["Wookiee",-1],["Time Lord",-1]]},
+ {"cat":"Trek Films","q":"Star Trek feature films released in cinemas","closed":true,"a":[["Star Trek II: The Wrath of Khan",44,["the wrath of khan","wrath of khan","khan","star trek 2"]],["Star Trek: The Motion Picture",30,["the motion picture","star trek 1"]],["Star Trek (2009)",26,["star trek 2009","star trek reboot"]],["Star Trek: First Contact",22,["first contact"]],["Star Trek IV: The Voyage Home",20,["the voyage home","voyage home","star trek 4"]],["Star Trek III: The Search for Spock",18,["the search for spock","search for spock","star trek 3"]],["Star Trek: Generations",16,["generations"]],["Star Trek Into Darkness",14,["into darkness"]],["Star Trek Beyond",10,["beyond"]],["Star Trek VI: The Undiscovered Country",8,["the undiscovered country","undiscovered country","star trek 6"]],["Star Trek V: The Final Frontier",6,["the final frontier","final frontier","star trek 5"]],["Star Trek: Nemesis",4,["nemesis"]],["Star Trek: Insurrection",0,["insurrection"]],["Galaxy Quest",-1],["Star Trek: Section 31",-1],["Star Trek: Prodigy",-1]]},
+ {"cat":"Trek Cast","q":"Actors who have played a Star Trek captain","a":[["William Shatner",70,["shatner"]],["Patrick Stewart",62,["stewart"]],["Chris Pine",30,["pine"]],["Kate Mulgrew",28,["mulgrew"]],["Avery Brooks",26,["brooks"]],["Scott Bakula",22,["bakula"]],["Anson Mount",12,["mount"]],["Sonequa Martin-Green",10,["martin-green","martin green"]],["Dawnn Lewis",7,["lewis"]],["Bruce Greenwood",6,["greenwood"]],["Jeri Ryan",4,["ryan"]],["Jeffrey Hunter",3,["hunter"]],["Ronny Cox",1,["cox"]],["Tricia O'Neil",0,["o neil","oneil"]],["Alan Ruck",0,["ruck"]],["Edward James Olmos",-1],["Nathan Fillion",-1],["Richard Dean Anderson",-1]]},
+ {"cat":"Star Trek","q":"Characters who appeared in Star Trek: Voyager","a":[["Kathryn Janeway",50,["janeway"]],["Seven of Nine",42,["seven","annika hansen","hansen"]],["Chakotay",24,["commander chakotay"]],["Tuvok",22,["mister tuvok"]],["Tom Paris",20,["paris","thomas paris"]],["B'Elanna Torres",18,["torres","belanna torres"]],["The Doctor",16,["doctor","emh","the emh"]],["Harry Kim",14,["kim"]],["Neelix",12,["mister neelix"]],["Kes",6,["ocampa kes"]],["Seska",3,["seska the cardassian"]],["Reginald Barclay",2,["barclay","reg barclay"]],["Naomi Wildman",1,["naomi"]],["Vorik",0,["ensign vorik"]],["Jadzia Dax",-1],["Julian Bashir",-1],["Travis Mayweather",-1]]},
+ {"cat":"Ted Lasso","q":"Characters in the television series Ted Lasso","a":[["Ted Lasso",84,["lasso","ted"]],["Roy Kent",48,["kent","roy"]],["Rebecca Welton",42,["welton","rebecca"]],["Jamie Tartt",38,["tartt","jamie"]],["Keeley Jones",36,["keeley","jones"]],["Coach Beard",32,["beard"]],["Nathan Shelley",28,["nate","shelley","nate shelley"]],["Leslie Higgins",20,["higgins","leslie"]],["Sam Obisanya",18,["obisanya","sam"]],["Dani Rojas",14,["rojas","dani"]],["Trent Crimm",9,["crimm","trent"]],["Rupert Mannion",8,["mannion","rupert"]],["Sharon Fieldstone",5,["fieldstone","doctor sharon","sharon"]],["Michelle Lasso",3,["michelle"]],["Mae",0,["mae the landlady"]],["Jason Sudeikis",-1],["Brett Goldstein",-1],["Juno Temple",-1]]},
+ {"cat":"Ted Lasso","q":"Footballers who played for AFC Richmond in Ted Lasso","a":[["Jamie Tartt",54,["tartt","jamie"]],["Roy Kent",50,["kent","roy"]],["Sam Obisanya",34,["obisanya","sam"]],["Dani Rojas",28,["rojas","dani"]],["Isaac McAdoo",18,["mcadoo","isaac"]],["Colin Hughes",12,["hughes","colin"]],["Zava",10,["zava the striker"]],["Jan Maas",8,["maas","jan"]],["Moe Bumbercatch",5,["bumbercatch","moe"]],["Thierry Zoreaux",2,["zoreaux","van damme","thierry"]],["Richard Montlaur",0,["montlaur","richard"]],["Coach Beard",-1],["Nathan Shelley",-1],["Rupert Mannion",-1],["Leslie Higgins",-1]]},
+ {"cat":"Ted Lasso","q":"Actors in the main cast of Ted Lasso","a":[["Jason Sudeikis",66,["sudeikis"]],["Hannah Waddingham",34,["waddingham"]],["Brett Goldstein",30,["goldstein"]],["Juno Temple",26,["temple"]],["Nick Mohammed",20,["mohammed"]],["Phil Dunster",18,["dunster"]],["Brendan Hunt",16,["hunt"]],["Jeremy Swift",10,["swift"]],["Anthony Head",9,["head"]],["Toheeb Jimoh",8,["jimoh"]],["Annette Badland",6,["badland"]],["Cristo Fernandez",4,["fernandez","cristo"]],["Sarah Niles",3,["niles"]],["James Lance",1,["lance"]],["Kola Bokinni",0,["bokinni"]],["Olivia Colman",-1],["Martin Freeman",-1],["Jodie Whittaker",-1]]},
+ {"cat":"Bond Films","q":"Official James Bond films released before 1980","closed":true,"a":[["Goldfinger",40,["gold finger"]],["Dr No",34,["doctor no"]],["Thunderball",18,["thunder ball"]],["From Russia with Love",16,["from russia"]],["Moonraker",15,["moon raker"]],["Live and Let Die",14,["live and let die"]],["The Spy Who Loved Me",12,["spy who loved me"]],["You Only Live Twice",6,["you only live twice"]],["Diamonds Are Forever",5,["diamonds are forever"]],["The Man with the Golden Gun",4,["man with the golden gun","golden gun"]],["On Her Majesty's Secret Service",0,["on her majestys secret service","ohmss"]],["Never Say Never Again",-1],["For Your Eyes Only",-1],["Octopussy",-1],["Casino Royale",-1]]},
+ {"cat":"Pixar","q":"Pixar feature films","a":[["Toy Story",60,["toy story 1"]],["Finding Nemo",46,["nemo"]],["The Incredibles",34,["incredibles"]],["Monsters Inc",30,["monsters incorporated"]],["Up",28,["up 2009"]],["Cars",24,["cars 1"]],["WALL-E",22,["wall e","walle"]],["Inside Out",20,["inside out 1"]],["Ratatouille",16,["ratatoullie"]],["Coco",12,["coco 2017"]],["A Bug's Life",8,["a bugs life","bugs life"]],["Brave",6,["brave 2012"]],["Soul",4,["soul 2020"]],["The Good Dinosaur",1,["good dinosaur"]],["Onward",0,["onward 2020"]],["Shrek",-1],["Frozen",-1],["Despicable Me",-1]]},
+ {"cat":"Friends","q":"Characters in the sitcom Friends","a":[["Rachel Green",70,["rachel","green"]],["Ross Geller",62,["ross"]],["Joey Tribbiani",60,["joey","tribbiani"]],["Monica Geller",58,["monica"]],["Chandler Bing",56,["chandler","bing"]],["Phoebe Buffay",54,["phoebe","buffay"]],["Gunther",22,["gunther the barista"]],["Janice",20,["janice hosenstein"]],["Richard Burke",10,["richard","burke"]],["Mike Hannigan",8,["mike","hannigan"]],["Ursula Buffay",6,["ursula"]],["Carol Willick",5,["carol","willick"]],["Emily Waltham",4,["emily","waltham"]],["Mr Heckles",2,["heckles"]],["Estelle Leonard",0,["estelle","leonard"]],["Elaine Benes",-1],["Ted Mosby",-1],["Cosmo Kramer",-1]]},
+ {"cat":"Marvel","q":"Films in the Marvel Cinematic Universe","a":[["Iron Man",52,["iron man 1"]],["The Avengers",44,["avengers","avengers assemble"]],["Black Panther",38,["panther"]],["Avengers: Endgame",36,["endgame"]],["Avengers: Infinity War",28,["infinity war"]],["Guardians of the Galaxy",26,["guardians"]],["Thor",24,["thor 1"]],["Captain America: The First Avenger",20,["the first avenger","captain america"]],["Doctor Strange",18,["dr strange"]],["Ant-Man",16,["ant man","antman"]],["Spider-Man: Homecoming",12,["homecoming","spiderman homecoming"]],["Captain Marvel",10,["captain marvel 2019"]],["The Incredible Hulk",6,["incredible hulk"]],["Shang-Chi and the Legend of the Ten Rings",4,["shang chi","shangchi"]],["Eternals",0,["the eternals"]],["X-Men: First Class",-1],["The Amazing Spider-Man",-1],["Man of Steel",-1]]},
+ {"cat":"Hitchcock","q":"Feature films directed by Alfred Hitchcock","a":[["Psycho",62,["psycho 1960"]],["The Birds",52,["birds"]],["Vertigo",34,["vertigo 1958"]],["Rear Window",30,["rear window 1954"]],["North by Northwest",28,["north by north west"]],["Rebecca",20,["rebecca 1940"]],["Dial M for Murder",18,["dial m"]],["The 39 Steps",16,["39 steps","thirty nine steps"]],["Strangers on a Train",12,["strangers on a train 1951"]],["To Catch a Thief",10,["to catch a thief 1955"]],["Notorious",8,["notorious 1946"]],["Rope",6,["rope 1948"]],["Spellbound",6,["spellbound 1945"]],["Marnie",5,["marnie 1964"]],["Frenzy",3,["frenzy 1972"]],["Topaz",0,["topaz 1969"]],["Les Diaboliques",-1],["Peeping Tom",-1]]},
+ {"cat":"NBA","q":"NBA teams in the Eastern Conference","closed":true,"a":[["Boston Celtics",62,["celtics"]],["Chicago Bulls",58,["bulls"]],["New York Knicks",54,["knicks"]],["Miami Heat",44,["heat"]],["Philadelphia 76ers",38,["76ers","sixers"]],["Toronto Raptors",33,["raptors"]],["Brooklyn Nets",29,["nets","new jersey nets"]],["Detroit Pistons",26,["pistons"]],["Cleveland Cavaliers",24,["cavaliers","cavs"]],["Milwaukee Bucks",21,["bucks"]],["Atlanta Hawks",15,["hawks"]],["Indiana Pacers",6,["pacers"]],["Orlando Magic",6,["magic"]],["Washington Wizards",4,["wizards"]],["Charlotte Hornets",0,["hornets"]],["Los Angeles Lakers",-1],["Golden State Warriors",-1],["Dallas Mavericks",-1]]},
+ {"cat":"NBA","q":"NBA franchises that won a championship before 2020","a":[["Los Angeles Lakers",70,["lakers","minneapolis lakers"]],["Boston Celtics",60,["celtics"]],["Chicago Bulls",57,["bulls"]],["Golden State Warriors",44,["warriors"]],["San Antonio Spurs",30,["spurs"]],["Miami Heat",26,["heat"]],["Detroit Pistons",19,["pistons"]],["Philadelphia 76ers",15,["76ers","sixers"]],["Houston Rockets",13,["rockets"]],["New York Knicks",11,["knicks"]],["Cleveland Cavaliers",10,["cavaliers","cavs"]],["Dallas Mavericks",9,["mavericks","mavs"]],["Milwaukee Bucks",6,["bucks"]],["Portland Trail Blazers",3,["trail blazers","blazers"]],["Washington Bullets",0,["bullets","washington wizards"]],["Phoenix Suns",-1],["Utah Jazz",-1],["Los Angeles Clippers",-1]]},
+ {"cat":"NFL","q":"Teams that won one of the first 25 Super Bowls","closed":true,"a":[["Pittsburgh Steelers",30,["steelers"]],["San Francisco 49ers",28,["49ers","niners"]],["Dallas Cowboys",26,["cowboys"]],["Green Bay Packers",24,["packers"]],["Miami Dolphins",18,["dolphins"]],["New York Giants",16,["giants"]],["Chicago Bears",14,["bears"]],["Oakland Raiders",12,["raiders","los angeles raiders","las vegas raiders"]],["Washington Redskins",8,["redskins","washington commanders"]],["New York Jets",6,["jets"]],["Kansas City Chiefs",5,["chiefs"]],["Baltimore Colts",0,["colts","indianapolis colts"]],["Buffalo Bills",-1],["Minnesota Vikings",-1],["Cincinnati Bengals",-1],["Philadelphia Eagles",-1]]},
+ {"cat":"Tennis","q":"Men who won the Wimbledon singles title between 1968 and 1999","closed":true,"a":[["Pete Sampras",55],["Bjorn Borg",52],["John McEnroe",48],["Boris Becker",44],["Andre Agassi",34],["Jimmy Connors",30],["Rod Laver",26],["Stefan Edberg",20],["Arthur Ashe",17],["Pat Cash",15],["John Newcombe",11],["Michael Stich",6],["Richard Krajicek",4],["Stan Smith",2],["Jan Kodes",0],["Ivan Lendl",-1],["Mats Wilander",-1],["Guillermo Vilas",-1]]},
+ {"cat":"Formula 1","q":"Formula 1 world champions of the 1970s and 1980s","closed":true,"a":[["Niki Lauda",58],["Ayrton Senna",52],["Alain Prost",50],["James Hunt",40],["Jackie Stewart",34],["Emerson Fittipaldi",26],["Nelson Piquet",24],["Mario Andretti",19],["Keke Rosberg",9],["Jody Scheckter",5],["Jochen Rindt",3],["Alan Jones",0],["Nigel Mansell",-1],["Gilles Villeneuve",-1],["Ronnie Peterson",-1],["Carlos Reutemann",-1]]},
+ {"cat":"F1 circuits","q":"Circuits that have staged a Formula 1 world championship Grand Prix","a":[["Monaco",60,["monte carlo"]],["Silverstone",55],["Monza",48],["Spa-Francorchamps",34,["spa"]],["Nurburgring",26],["Suzuka",22],["Interlagos",20,["sao paulo"]],["Imola",18],["Hockenheim",15],["Zandvoort",12],["Hungaroring",10],["Melbourne",9,["albert park"]],["Brands Hatch",6],["Watkins Glen",4],["Kyalami",2],["Anderstorp",0],["Goodwood",-1],["Oulton Park",-1],["Laguna Seca",-1]]},
+ {"cat":"Golf","q":"Golfers who won the Masters at Augusta in the 20th century","a":[["Jack Nicklaus",55],["Tiger Woods",48],["Arnold Palmer",40],["Nick Faldo",36],["Seve Ballesteros",32],["Gary Player",26],["Tom Watson",20],["Bernhard Langer",16],["Ian Woosnam",14],["Sandy Lyle",13],["Jose Maria Olazabal",9],["Mark O'Meara",5],["Larry Mize",2],["Fuzzy Zoeller",1],["Gene Sarazen",0],["Greg Norman",-1],["Lee Trevino",-1],["Colin Montgomerie",-1]]},
+ {"cat":"Rugby union","q":"Nations that have reached the quarter-finals of a Rugby World Cup","closed":true,"a":[["New Zealand",58,["all blacks"]],["England",52],["Australia",46,["wallabies"]],["South Africa",44,["springboks"]],["France",40],["Wales",38],["Ireland",30],["Scotland",24],["Argentina",20,["pumas"]],["Fiji",8],["Japan",6],["Samoa",3,["western samoa"]],["Canada",0],["Italy",-1],["Tonga",-1],["Romania",-1]]},
+ {"cat":"Cricket","q":"Nations with full Test-playing status","closed":true,"a":[["England",62],["Australia",60],["India",55],["Pakistan",46],["West Indies",44],["South Africa",40],["New Zealand",36],["Sri Lanka",30],["Bangladesh",11],["Zimbabwe",6],["Afghanistan",4],["Ireland",0],["Kenya",-1],["Netherlands",-1],["Scotland",-1],["Nepal",-1]]},
+ {"cat":"Boxing","q":"Weight divisions in professional boxing","a":[["Heavyweight",78],["Middleweight",60],["Welterweight",52],["Lightweight",48],["Featherweight",42],["Bantamweight",36],["Flyweight",32],["Cruiserweight",28],["Light heavyweight",24],["Super middleweight",20],["Light welterweight",10,["super lightweight","junior welterweight"]],["Super bantamweight",6],["Light flyweight",4],["Strawweight",0,["minimumweight","mini flyweight"]],["Super heavyweight",-1],["Light bantamweight",-1],["Super cruiserweight",-1]]},
+ {"cat":"Olympics","q":"Cities that have hosted the Summer Olympic Games","a":[["London",66],["Paris",58],["Tokyo",54],["Athens",48],["Los Angeles",44],["Beijing",42],["Rio de Janeiro",38,["rio"]],["Sydney",34],["Barcelona",30],["Moscow",24],["Munich",18],["Mexico City",10],["Melbourne",6],["Helsinki",5],["Antwerp",1],["St Louis",0,["saint louis"]],["Chicago",-1],["Manchester",-1]]},
+ {"cat":"Snooker","q":"Winners of the World Snooker Championship between 1969 and 2000","closed":true,"a":[["Steve Davis",58],["Stephen Hendry",50],["Alex Higgins",38],["Dennis Taylor",30],["John Higgins",26],["Ray Reardon",22],["Mark Williams",16],["Ken Doherty",12],["Terry Griffiths",11],["Cliff Thorburn",6],["Joe Johnson",5],["John Spencer",0],["Jimmy White",-1],["Ronnie O'Sullivan",-1],["Willie Thorne",-1],["Matthew Stevens",-1]]},
+ {"cat":"Darts","q":"Men who won a world darts championship before the year 2000","closed":true,"a":[["Eric Bristow",46],["Phil Taylor",44],["John Lowe",30],["Jocky Wilson",26],["Raymond van Barneveld",22],["Dennis Priestley",16],["Keith Deller",14],["John Part",10],["Bob Anderson",8],["Leighton Rees",6],["Steve Beaton",5],["Richie Burnett",3],["Les Wallace",0],["Bobby George",-1],["Rod Harrington",-1],["Peter Manley",-1]]},
+ {"cat":"Horse racing","q":"Horses that have won the Epsom Derby","a":[["Shergar",45],["Nijinsky",30],["Mill Reef",26],["Sea the Stars",24],["Galileo",22],["Nashwan",14],["Lammtarra",12],["Generous",10],["Golden Horn",8],["Reference Point",6],["Sinndar",5],["Grundy",4],["Kahyasi",2],["Dr Devious",1],["Erhaab",0],["Red Rum",-1],["Desert Orchid",-1],["Frankel",-1]]},
+ {"cat":"Toronto","q":"Neighbourhoods and districts of Toronto","a":[["Scarborough",42],["North York",34],["Etobicoke",28],["Chinatown",26],["Yorkville",22],["Kensington Market",19],["The Distillery District",16],["The Beaches",13,["the beach"]],["Cabbagetown",10],["Liberty Village",8],["The Annex",6],["Leslieville",4],["Roncesvalles",2],["Mimico",0],["Gastown",-1],["Wicker Park",-1],["Le Plateau",-1],["Back Bay",-1]]},
+ {"cat":"Toronto","q":"Landmarks and attractions of Toronto","a":[["CN Tower",76],["Rogers Centre",30,["skydome"]],["Casa Loma",20],["Ripley's Aquarium",18],["Royal Ontario Museum",16,["rom"]],["Hockey Hall of Fame",15],["Scotiabank Arena",12,["air canada centre"]],["Toronto Islands",10],["Art Gallery of Ontario",8,["ago"]],["St Lawrence Market",6],["High Park",5],["Nathan Phillips Square",3],["Fort York",1],["Scarborough Bluffs",0],["Stanley Park",-1],["Parliament Hill",-1],["Notre-Dame Basilica",-1]]},
+ {"cat":"New York","q":"Bridges of New York City","a":[["Brooklyn Bridge",80],["George Washington Bridge",52],["Manhattan Bridge",44],["Verrazzano-Narrows Bridge",38,["verrazano bridge"]],["Williamsburg Bridge",28],["Queensboro Bridge",20,["59th street bridge"]],["Triborough Bridge",13,["rfk bridge"]],["Throgs Neck Bridge",6],["Whitestone Bridge",4],["Hell Gate Bridge",3],["High Bridge",2],["Kosciuszko Bridge",1],["Willis Avenue Bridge",0],["Golden Gate Bridge",-1],["Tobin Bridge",-1],["Ambassador Bridge",-1],["Jacques Cartier Bridge",-1]]},
+ {"cat":"Los Angeles","q":"Neighbourhoods of the city of Los Angeles","a":[["Hollywood",78],["Venice",44],["Downtown",34],["Bel Air",30],["Silver Lake",22],["Echo Park",18],["Koreatown",16],["Westwood",13],["Watts",9],["Studio City",6],["Van Nuys",4],["Boyle Heights",2],["Eagle Rock",0],["Beverly Hills",-1],["Santa Monica",-1],["Pasadena",-1],["Burbank",-1]]},
+ {"cat":"Chicago","q":"Landmarks and attractions of Chicago","a":[["Willis Tower",50,["sears tower"]],["Wrigley Field",38],["Cloud Gate",30,["the bean"]],["Millennium Park",26],["Navy Pier",22],["Art Institute of Chicago",18],["Magnificent Mile",15],["Soldier Field",13],["John Hancock Center",11],["Shedd Aquarium",8],["Field Museum",6],["Buckingham Fountain",4],["Tribune Tower",2],["Marina City",0],["Gateway Arch",-1],["Space Needle",-1],["Liberty Bell",-1]]},
+ {"cat":"Montreal","q":"Landmarks and districts of Montreal","a":[["Old Montreal",40,["vieux-montreal"]],["Mount Royal",34,["mont royal"]],["Notre-Dame Basilica",27],["The Olympic Stadium",24],["Saint Catherine Street",15],["The Plateau",14,["le plateau"]],["Bell Centre",12],["The Underground City",10],["Saint Joseph's Oratory",8],["Mile End",6],["Jean-Talon Market",4],["Habitat 67",3],["Outremont",1],["Verdun",0],["Chateau Frontenac",-1],["Byward Market",-1],["Distillery District",-1]]},
+ {"cat":"Vancouver","q":"Landmarks and districts of Vancouver","a":[["Stanley Park",44],["Gastown",30],["Granville Island",26],["Chinatown",22],["Capilano Suspension Bridge",19],["English Bay",15],["Grouse Mountain",14],["Yaletown",11],["Kitsilano",10],["Canada Place",8],["Lions Gate Bridge",6],["Robson Street",5],["Commercial Drive",3],["Coal Harbour",1],["Mount Pleasant",0],["Whistler",-1],["Butchart Gardens",-1],["Fisherman's Wharf",-1]]},
+ {"cat":"Boston","q":"Landmarks and neighbourhoods of Boston","a":[["Fenway Park",54],["Boston Common",34],["Freedom Trail",25],["Faneuil Hall",20],["Beacon Hill",18],["Back Bay",16],["The North End",14],["Bunker Hill Monument",12],["South Boston",10,["southie"]],["Public Garden",8],["Newbury Street",6],["Old North Church",5],["Charlestown",4],["Roxbury",2],["Jamaica Plain",0],["Harvard Square",-1],["Plymouth Rock",-1],["Salem Witch Museum",-1]]},
+ {"cat":"San Francisco","q":"Landmarks and neighbourhoods of San Francisco","a":[["Golden Gate Bridge",80],["Alcatraz",58],["Fisherman's Wharf",34],["Chinatown",30],["Golden Gate Park",27],["Haight-Ashbury",20],["Lombard Street",18],["The Castro",16],["Mission District",14],["Nob Hill",11],["Coit Tower",9],["Painted Ladies",6],["The Presidio",5],["Twin Peaks",3],["Sunset District",0],["Silicon Valley",-1],["Berkeley",-1],["Santa Cruz Boardwalk",-1]]},
+ {"cat":"Washington","q":"Landmarks of Washington DC","a":[["The White House",76],["Lincoln Memorial",60],["Washington Monument",56],["The Capitol",50],["Jefferson Memorial",28],["Vietnam Veterans Memorial",25],["National Mall",22],["Georgetown",18],["National Air and Space Museum",16],["Supreme Court",14],["Ford's Theatre",8],["Kennedy Center",6],["Dupont Circle",4],["Tidal Basin",2],["Anacostia",0],["The Pentagon",-1],["Mount Vernon",-1],["Independence Hall",-1]]},
+ {"cat":"Sydney","q":"Landmarks and suburbs of Sydney","a":[["Sydney Opera House",86],["Sydney Harbour Bridge",78],["Bondi Beach",58],["Darling Harbour",30],["Circular Quay",25],["Manly",22],["The Rocks",18],["Taronga Zoo",16],["Kings Cross",14],["Parramatta",12],["Coogee",8],["Luna Park",6],["Surry Hills",5],["Newtown",3],["Watsons Bay",0],["Federation Square",-1],["St Kilda",-1],["Great Barrier Reef",-1]]},
+ {"cat":"Tokyo","q":"Districts and neighbourhoods of Tokyo","a":[["Shibuya",54],["Shinjuku",48],["Ginza",40],["Akihabara",34],["Harajuku",30],["Asakusa",22],["Roppongi",19],["Ueno",15],["Ikebukuro",12],["Odaiba",10],["Chiyoda",8],["Nakano",5],["Kanda",4],["Setagaya",2],["Koenji",0],["Gion",-1],["Dotonbori",-1],["Arashiyama",-1]]},
+ {"cat":"Dubai","q":"Landmarks and districts of Dubai","a":[["Burj Khalifa",70],["Burj Al Arab",46],["Palm Jumeirah",40],["The Dubai Mall",34],["Dubai Marina",25],["Jumeirah Beach",20],["Atlantis The Palm",18],["Deira",15],["Dubai Creek",13],["Dubai Frame",8],["Global Village",6],["Miracle Garden",5],["Jebel Ali",3],["Al Fahidi",1],["Satwa",0],["Sheikh Zayed Grand Mosque",-1],["Ferrari World",-1],["Yas Marina Circuit",-1]]},
+ {"cat":"Mexico City","q":"Landmarks and neighbourhoods of Mexico City","a":[["The Zocalo",30],["Chapultepec Park",26],["Frida Kahlo Museum",22,["casa azul"]],["Palacio de Bellas Artes",20],["Metropolitan Cathedral",18],["Coyoacan",16],["Xochimilco",14],["Estadio Azteca",13],["Polanco",9],["Angel of Independence",8],["Templo Mayor",6],["Museum of Anthropology",5],["Torre Latinoamericana",2],["Tlatelolco",1],["Iztapalapa",0],["Teotihuacan",-1],["Chichen Itza",-1],["Guadalajara Cathedral",-1]]}
+];
+
+/* ---- FINAL ROUND: all closed sets, always typed ---- */
+const FINALS = [
+ {cat:"Countries with a land border with Russia",
+  a:[["China",46],["Ukraine",42],["Finland",30],["Norway",21],["Poland",18],["Belarus",16],
+     ["Kazakhstan",14],["Mongolia",11],["Estonia",6],["Latvia",4],["Lithuania",3],["Georgia",2],
+     ["Azerbaijan",0],["North Korea",0]]},
+
+ {cat:"Countries with a land border with China",
+  a:[["Russia",44],["India",40],["Mongolia",30],["North Korea",26],["Pakistan",22],["Nepal",18],
+     ["Vietnam",16],["Kazakhstan",12],["Myanmar",8,["burma"]],["Laos",6],["Kyrgyzstan",4],["Bhutan",2],
+     ["Tajikistan",0],["Afghanistan",0]]},
+
+ {cat:"The first twenty elements of the periodic table",
+  a:[["Hydrogen",58],["Helium",44],["Oxygen",40],["Carbon",36],["Nitrogen",30],["Calcium",18],
+     ["Sodium",16],["Neon",12],["Magnesium",9],["Sulfur",8,["sulphur"]],["Aluminium",7,["aluminum"]],
+     ["Chlorine",6],["Lithium",5],["Potassium",5],["Silicon",4],["Fluorine",4],["Phosphorus",3],
+     ["Boron",2],["Beryllium",0],["Argon",0]]},
+
+ {cat:"Shakespeare plays with a person's name in the title",
+  a:[["Romeo and Juliet",62],["Hamlet",60],["Macbeth",55],["King Lear",40],["Julius Caesar",38],
+     ["Othello",30],["Richard III",16,["richard 3","richard the third"]],["Henry V",14,["henry 5","henry the fifth"]],
+     ["Antony and Cleopatra",12],["Henry VIII",6,["henry 8","henry the eighth"]],
+     ["Richard II",5,["richard 2","richard the second"]],["Titus Andronicus",4],["King John",3],
+     ["Henry IV",3,["henry 4","henry iv part 1","henry iv part 2"]],
+     ["Henry VI",2,["henry 6","henry vi part 1","henry vi part 2","henry vi part 3"]],
+     ["Pericles",2],["Cymbeline",1],["Coriolanus",0],["Timon of Athens",0],["Troilus and Cressida",0]]}
+];
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const TILE_COLOURS = [
+  "linear-gradient(135deg,#ff5f9e,#ff2e6b)","linear-gradient(135deg,#7a5cff,#4b2ddb)",
+  "linear-gradient(135deg,#18c8ff,#0a7bd4)","linear-gradient(135deg,#31d97a,#0fa35c)",
+  "linear-gradient(135deg,#ffb020,#ff7a1a)","linear-gradient(135deg,#ff6f5e,#e0322c)",
+  "linear-gradient(135deg,#c05bff,#7a1fd0)","linear-gradient(135deg,#00d4c1,#03908d)",
+  "linear-gradient(135deg,#ffd23f,#f0a30a)","linear-gradient(135deg,#5b8cff,#2748d8)",
+  "linear-gradient(135deg,#ff8fd0,#e5399a)","linear-gradient(135deg,#8de23a,#4aa312)"
+];
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* Board of n answers: at least one very obscure one, up to 3 decoys, rest correct */
+function pickTiles(list, n){
+  const good = shuffle(list.filter(x=>x[1]>=0));
+  const bad  = shuffle(list.filter(x=>x[1]<0));
+  const low  = good.filter(x=>x[1]<=6);
+  const chosen = [];
+  if(low.length) chosen.push(low[Math.floor(Math.random()*low.length)]);
+  for(const g of good){ if(chosen.length >= n-2) break; if(chosen.indexOf(g)<0) chosen.push(g); }
+  const wrongs = bad.slice(0, Math.min(3, bad.length, n - chosen.length));
+  const out = chosen.concat(wrongs);
+  for(const g of good){ if(out.length >= n) break; if(out.indexOf(g)<0) out.push(g); }
+  return shuffle(out);
+}
+
+/* ============================================================
+   TYPED ANSWER MATCHING  (generous)
+   ============================================================ */
+function norm(s){
+  return String(s).toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/&/g," and ")
+    .replace(/[^a-z0-9]+/g," ")
+    .replace(/\b(the|a|an|of)\b/g," ")
+    .replace(/\s+/g," ").trim();
+}
+function lev(a,b){
+  if(a===b) return 0;
+  const m=a.length, n=b.length;
+  if(!m) return n; if(!n) return m;
+  let prev=new Array(n+1), cur=new Array(n+1);
+  for(let j=0;j<=n;j++) prev[j]=j;
+  for(let i=1;i<=m;i++){
+    cur[0]=i;
+    for(let j=1;j<=n;j++){
+      cur[j]=Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    }
+    const t=prev; prev=cur; cur=t;
+  }
+  return prev[n];
+}
+function tolerance(len){ return len>=9 ? 2 : len>=5 ? 1 : 0; }
+/* Returns the matching answer entry from list, or null */
+function matchAnswer(typed, list){
+  const t = norm(typed);
+  if(!t) return null;
+  // 1. exact match on name or alias
+  for(const e of list){
+    if(norm(e[0]) === t) return e;
+    if(e[2]) for(const al of e[2]) if(norm(al) === t) return e;
+  }
+  // 2. surname / last-significant-word match (e.g. "connery", "thatcher")
+  for(const e of list){
+    const parts = norm(e[0]).split(" ");
+    if(parts.length > 1){
+      const last = parts[parts.length-1];
+      if(last.length >= 4 && last === t) return e;
+    }
+  }
+  // 3. near miss — a typo or two
+  let best = null, bestD = 99;
+  for(const e of list){
+    const cands = [norm(e[0])].concat(e[2] ? e[2].map(norm) : []);
+    for(const c of cands){
+      const d = lev(t, c);
+      if(d <= tolerance(Math.max(c.length, t.length)) && d < bestD){ bestD = d; best = e; }
+    }
+  }
+  return best;
+}
+
+/* Scramble a word's letters for the anagram round (never returns the original) */
+function scramble(word){
+  const letters = word.toUpperCase().replace(/[^A-Z0-9]/g,"").split("");
+  if(letters.length < 2) return letters.join("");
+  const orig = letters.join("");
+  let out = orig;
+  for(let tries=0; tries<24 && out===orig; tries++){
+    const a = letters.slice();
+    for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+    out = a.join("");
+  }
+  return out;
+}
+
+/* ---------- sound ---------- */
+let soundOn = true, actx = null;
+function ac(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return actx; }
+function beep(freq, dur, type, vol){
+  if(!soundOn) return; const c = ac(); if(!c) return;
+  try{
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type || "square"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol||0.05, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + (dur||0.08));
+    o.connect(g); g.connect(c.destination);
+    o.start(); o.stop(c.currentTime + (dur||0.08) + 0.02);
+  }catch(e){}
+}
+function fanfare(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.22,"triangle",.09), i*110)); }
+function buzzer(){ beep(140,.5,"sawtooth",.07); setTimeout(()=>beep(105,.55,"sawtooth",.07),110); }
+
+/* ---------- confetti ---------- */
+const cvs = $("confetti"), ctx = cvs.getContext("2d");
+let bits = [], raf = null;
+function sizeCanvas(){ cvs.width = innerWidth; cvs.height = innerHeight; }
+sizeCanvas(); addEventListener("resize", sizeCanvas);
+function confetti(n){
+  const cols = ["#25e6ff","#ff3ea5","#a8ff3e","#ffc93c","#a06bff","#ffffff"];
+  for(let i=0;i<(n||90);i++){
+    bits.push({x:Math.random()*cvs.width, y:-20-Math.random()*cvs.height*0.3,
+      w:6+Math.random()*7, h:8+Math.random()*10,
+      vy:2.2+Math.random()*3.4, vx:-1.6+Math.random()*3.2,
+      rot:Math.random()*6.28, vr:-0.16+Math.random()*0.32,
+      c:cols[Math.floor(Math.random()*cols.length)]});
+  }
+  if(!raf) raf = requestAnimationFrame(tick);
+}
+function tick(){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  bits = bits.filter(b=>b.y < cvs.height+40);
+  bits.forEach(b=>{
+    b.x+=b.vx; b.y+=b.vy; b.rot+=b.vr;
+    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.rot);
+    ctx.fillStyle=b.c; ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h); ctx.restore();
+  });
+  if(bits.length) raf = requestAnimationFrame(tick); else { raf=null; ctx.clearRect(0,0,cvs.width,cvs.height); }
+}
+
+/* ============================================================
+   MATCH STATE
+   ============================================================ */
+const TARGET   = 5;          // match points needed to reach the final
+const ORDER    = [0,1,0,1];  // pick order within a round
+const BOARD_N  = 12;         // answers on a tile board
+const P_ANAGRAM = 0.20;      // share of rounds played as an anagram round
+const P_TYPED   = 0.35;      // share of rounds played as type-it-in (the rest are tile boards)
+let state = null, busy = false;
+
+function newMatch(n1, n2){
+  state = {
+    p:[ {name:n1||"Player 1", pts:0, round:0},
+        {name:n2||"Player 2", pts:0, round:0} ],
+    roundNo:0, pickIdx:0, q:null, mode:"board", taken:[], used:new Set(),
+    jackpot:1000, finalist:null, guesses:0, wonJackpot:false,
+    final:null, fTaken:[], history:[]
+  };
+  $("nm0").textContent = state.p[0].name;
+  $("nm1").textContent = state.p[1].name;
+  renderPips(); updateHUD();
+}
+/* draw an unused question of the requested kind */
+function drawQuestion(kind){
+  const src = kind === "ana"    ? QUESTIONS.filter(q=>q.mode === "anagram")
+            : kind === "closed" ? QUESTIONS.filter(q=>q.closed && q.mode !== "anagram")
+            :                     QUESTIONS.filter(q=>q.mode !== "anagram");
+  if(!src.length) return QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
+  let pool = src.filter(q=>!state.used.has(q));
+  if(!pool.length){ state.used = new Set(); pool = src; }
+  const q = pool[Math.floor(Math.random()*pool.length)];
+  state.used.add(q);
+  return q;
+}
+function updateHUD(){ $("jackVal").textContent = "£" + state.jackpot.toLocaleString("en-GB"); }
+function renderPips(){
+  [0,1].forEach(i=>{
+    const box = $("pip"+i); box.innerHTML = "";
+    for(let k=0;k<TARGET;k++){
+      const d = document.createElement("i");
+      d.className = "pip" + (k < state.p[i].pts ? " on" : "");
+      box.appendChild(d);
+    }
+    $("rt"+i).textContent = state.p[i].round;
+  });
+}
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
+  window.scrollTo(0,0);
+  $("pillJack").hidden = !(id==="scGame" || id==="scFinal" || id==="scEnd");
+}
+
+/* ============================================================
+   ROUNDS
+   ============================================================ */
+function startRound(){
+  busy = false;
+  state.roundNo++;
+  state.pickIdx = 0;
+  state.taken = [];
+  state.p[0].round = 0; state.p[1].round = 0;
+  /* pick the round type first, then a question that suits it */
+  const roll = Math.random();
+  const kind = roll < P_ANAGRAM ? "ana" : roll < P_ANAGRAM + P_TYPED ? "closed" : "board";
+  state.q = drawQuestion(kind);
+  state.mode = state.q.mode === "anagram" ? "anagram" : (kind === "closed" ? "type" : "board");
+  state.pending = null; state.pendingBtn = null;
+
+  const label = state.mode==="type" ? " · type it in" : state.mode==="anagram" ? " · anagrams" : "";
+  const tag = $("roundTag");
+  tag.textContent = "Round " + state.roundNo + label;
+  tag.className = "roundtag" + (state.mode==="board" ? "" : " type");
+  $("catTxt").textContent = state.q.cat;
+  $("qTxt").textContent = state.q.q;
+  $("board").hidden = true;
+  $("roundEnd").hidden = true;
+  $("missWrap").hidden = true;
+  $("turnBox").hidden = false;
+
+  if(state.mode === "board"){
+    $("typeBox").hidden = true;
+    $("qHint").hidden = true;
+    const grid = $("grid");
+    grid.hidden = false;
+    grid.innerHTML = "";
+    pickTiles(state.q.a, BOARD_N).forEach((t,i)=>{
+      const b = document.createElement("button");
+      b.className = "tile"; b.type = "button";
+      b.innerHTML = '<span>'+esc(t[0])+'</span>';
+      b.style.background = TILE_COLOURS[i % TILE_COLOURS.length];
+      b.style.animationDelay = (i*0.03)+"s";
+      b.addEventListener("click", ()=>reveal(t, t[1] < 0, b));
+      grid.appendChild(b);
+    });
+  } else if(state.mode === "anagram"){
+    $("typeBox").hidden = true;
+    $("anaPrompt").hidden = true;
+    $("typeChips").innerHTML = "";
+    $("typeNote").textContent = "";
+    $("qHint").textContent = "Anagram round — tap one, then type what it unscrambles to.";
+    $("qHint").hidden = false;
+    const grid = $("grid");
+    grid.hidden = false;
+    grid.innerHTML = "";
+    shuffle(state.q.a.filter(x=>x[1]>=0)).slice(0, BOARD_N).forEach((t,i)=>{
+      const b = document.createElement("button");
+      b.className = "tile"; b.type = "button";
+      b.innerHTML = '<span class="scr">'+esc(scramble(t[0]))+'</span>';
+      b.style.background = TILE_COLOURS[i % TILE_COLOURS.length];
+      b.style.animationDelay = (i*0.03)+"s";
+      b.addEventListener("click", ()=>chooseAnagram(t, b));
+      grid.appendChild(b);
+    });
+  } else {
+    $("grid").hidden = true;
+    $("typeBox").hidden = false;
+    const n = state.q.a.filter(x=>x[1]>=0).length;
+    $("qHint").textContent = "No board this round — type it in. We have " + n + " correct answers.";
+    $("qHint").hidden = false;
+    $("typeChips").innerHTML = "";
+    $("typeNote").textContent = "";
+    $("typeInput").value = "";
+    $("typeForm").hidden = false;
+  }
+  renderPips();
+  updateTurn();
+  show("scGame");
+}
+
+function updateTurn(){
+  const i = ORDER[state.pickIdx];
+  const nth = state.pickIdx < 2 ? 1 : 2;
+  const box = $("turnBox");
+  box.className = "turn " + (i===0 ? "one" : "two");
+  box.innerHTML = esc(state.p[i].name) + " to answer<small>" +
+                  (state.mode==="anagram" ? "Choose an anagram" : "Answer " + nth + " of 2") + "</small>";
+  $("pc0").classList.toggle("active", i===0);
+  $("pc1").classList.toggle("active", i===1);
+  if(state.mode === "anagram"){
+    $("typeForm").className = "typeform " + (i===0 ? "one" : "two");
+    $("typeBox").hidden = true;
+    $("anaPrompt").hidden = true;
+    $("typeForm").hidden = false;
+    $("typeInput").value = "";
+    $("typeGo").disabled = false;
+  }
+  if(state.mode === "type"){
+    $("typeForm").className = "typeform " + (i===0 ? "one" : "two");
+    $("typeInput").placeholder = state.p[i].name + ", type an answer…";
+    $("typeInput").value = "";
+    $("typeNote").textContent = "";
+    $("typeGo").disabled = false;
+    try{ $("typeInput").focus({preventScroll:true}); }catch(e){}
+  }
+}
+
+/* anagram round: a player claims a scrambled tile, then types the solution */
+function chooseAnagram(entry, btn){
+  if(busy || btn.classList.contains("taken")) return;
+  const pi = ORDER[state.pickIdx];
+  beep(760,.07,"triangle",.05);
+  state.pending = entry; state.pendingBtn = btn;
+  btn.classList.add("taken", pi===0 ? "one" : "two");
+  const letters = entry[0].replace(/[^A-Za-z0-9]/g,"").length;
+  $("anaPrompt").innerHTML = '<div class="scr">' + esc(btn.textContent) + '</div>' +
+                             '<div class="len">' + letters + ' letters</div>';
+  $("anaPrompt").hidden = false;
+  $("typeBox").hidden = false;
+  $("typeInput").placeholder = "Unscramble it…";
+  $("typeInput").value = "";
+  $("typeNote").textContent = "";
+  $("typeGo").disabled = false;
+  $("turnBox").innerHTML = esc(state.p[pi].name) + " to answer<small>Solve the anagram</small>";
+  try{ $("typeInput").focus({preventScroll:true}); }catch(e){}
+  setTimeout(()=> $("typeBox").scrollIntoView({behavior:"smooth", block:"nearest"}), 60);
+}
+
+/* one answer from one player: entry (or free text), then the countdown */
+function reveal(entry, wrong, tileBtn, typedText){
+  if(busy) return;
+  if(tileBtn && tileBtn.dataset.done) return;   /* already revealed */
+  busy = true;
+  if(tileBtn) tileBtn.dataset.done = "1";
+  beep(880,.06,"square",.05);
+  const pi = ORDER[state.pickIdx];
+  const score = wrong ? 100 : entry[1];
+  const label = entry ? entry[0] : typedText;
+
+  if(entry && !wrong) state.taken.push(entry);
+
+  let badge = null;
+  if(tileBtn){
+    tileBtn.classList.add("taken", pi===0 ? "one" : "two");
+    badge = document.createElement("i");
+    badge.className = "badge" + (wrong ? " wrong" : (score===0 ? " zero" : ""));
+    badge.textContent = score;
+    badge.style.visibility = "hidden";
+    tileBtn.appendChild(badge);
+  }
+
+  $("boardWho").textContent = state.p[pi].name + " answered";
+  $("ansTxt").textContent = label;
+  $("board").hidden = false;
+  $("nextBtn").disabled = true;
+  $("verdict").textContent = ""; $("verdict").className = "verdict";
+  setTimeout(()=> $("board").scrollIntoView({behavior:"smooth", block:"nearest"}), 60);
+
+  countdown($("bigNum"), $("barFill"), score, wrong, ()=>{
+    if(badge) badge.style.visibility = "visible";
+    if(state.mode === "type") addChip($("typeChips"), label, score, wrong, pi);
+    if(state.mode === "anagram" && tileBtn && entry){
+      const sp = tileBtn.querySelector("span");
+      if(sp){ sp.className = ""; sp.textContent = entry[0]; }
+    }
+    state.p[pi].round += score;
+    state.history.push({r:state.roundNo, q:state.q.q, p:pi, a:label, s:score, wrong:wrong});
+    if(!wrong && score===0){ state.jackpot += 250; confetti(120); fanfare(); }
+    renderPips(); updateHUD();
+
+    const v = $("verdict");
+    if(wrong && state.mode==="anagram" && entry){
+      v.textContent = "✗ It was " + entry[0] + " — 100 points!"; v.className = "verdict bad";
+    }
+    else if(wrong){ v.textContent = "✗ Not a valid answer — 100 points!"; v.className = "verdict bad"; }
+    else if(score===0){ v.textContent = "★ NULL ANSWER! +£250 on the jackpot"; v.className = "verdict good"; }
+    else if(score<=6){ v.textContent = state.mode==="anagram"
+        ? "Superb — hardly anybody solved that one." : "Superb — barely anybody said that."; v.className = "verdict good"; }
+    else if(score<=25){ v.textContent = "A good, low score."; v.className = "verdict good"; }
+    else { v.textContent = "A bit obvious, that one."; v.className = "verdict bad"; }
+
+    const last = state.pickIdx >= ORDER.length - 1;
+    $("nextBtn").textContent = last ? "Round result →" : ("Over to " + state.p[ORDER[state.pickIdx+1]].name + " →");
+    $("nextBtn").disabled = false;
+  });
+}
+
+function addChip(box, label, score, wrong, pi, miss){
+  const c = document.createElement("span");
+  c.className = "chip " + (miss ? "miss" : (pi===0 ? "one" : "two"));
+  c.innerHTML = esc(label) + '<b class="' + (wrong ? "wrong" : (score===0 ? "zero" : "")) + '">' + score + '</b>';
+  box.appendChild(c);
+}
+
+/* animated 100 → score countdown */
+function countdown(numEl, barEl, target, wrong, done){
+  numEl.className = "bignum";
+  let v = 100;
+  numEl.textContent = v; barEl.style.width = "100%";
+  if(wrong){
+    setTimeout(()=>{ numEl.classList.add("wrong"); buzzer(); done && done(); }, 700);
+    return;
+  }
+  const step = () => {
+    if(v <= target){
+      if(target===0) numEl.classList.add("zero");
+      done && done();
+      return;
+    }
+    v--;
+    numEl.textContent = v;
+    barEl.style.width = v + "%";
+    if(v % 2 === 0) beep(300 + v*6, .03, "square", .028);
+    const near = v - target;
+    const delay = near > 30 ? 16 : near > 12 ? 42 : near > 4 ? 110 : 240;
+    setTimeout(step, delay);
+  };
+  setTimeout(step, 450);
+}
+
+function afterPick(){
+  if(state.pickIdx >= ORDER.length - 1){ endRound(); return; }
+  state.pickIdx++;
+  busy = false;
+  $("board").hidden = true;
+  $("nextBtn").disabled = true;
+  state.pending = null; state.pendingBtn = null;
+  updateTurn();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function endRound(){
+  $("board").hidden = true;
+  $("turnBox").hidden = true;
+  $("typeForm").hidden = true;
+  $("typeNote").textContent = "";
+  $("pc0").classList.remove("active");
+  $("pc1").classList.remove("active");
+
+  const a = state.p[0].round, b = state.p[1].round;
+  $("vn0").textContent = state.p[0].name; $("vt0").textContent = a;
+  $("vn1").textContent = state.p[1].name; $("vt1").textContent = b;
+  $("vs0").classList.toggle("win", a < b);
+  $("vs1").classList.toggle("win", b < a);
+
+  const head = $("roundHead");
+  if(a === b){
+    head.textContent = "Round drawn — no point awarded";
+    head.className = "headline";
+    beep(300,.2,"triangle",.05);
+  } else {
+    const w = a < b ? 0 : 1;
+    state.p[w].pts++;
+    head.textContent = state.p[w].name + " wins the round  ·  +1 point";
+    head.className = "headline good";
+    fanfare();
+  }
+  renderPips();
+
+  /* on typed and anagram rounds, reveal what they missed */
+  if(state.mode === "type" || state.mode === "anagram"){
+    const missed = state.q.a.filter(e=>e[1]>=0 && state.taken.indexOf(e)<0)
+                            .sort((x,y)=>x[1]-y[1]).slice(0,14);
+    if(missed.length){
+      const box = $("missChips"); box.innerHTML = "";
+      missed.forEach(e=>addChip(box, e[0], e[1], false, 0, true));
+      $("missWrap").hidden = false;
+    }
+  }
+
+  const winner = state.p[0].pts >= TARGET ? 0 : (state.p[1].pts >= TARGET ? 1 : -1);
+  if(winner >= 0){
+    state.finalist = winner;
+    $("roundNextBtn").textContent = state.p[winner].name + " goes to the final →";
+  } else {
+    $("roundNextBtn").textContent = "Next round →";
+  }
+  $("roundEnd").hidden = false;
+  setTimeout(()=> $("roundEnd").scrollIntoView({behavior:"smooth", block:"nearest"}), 60);
+}
+
+/* ---- typed round submit ---- */
+$("typeForm").addEventListener("submit", ev=>{
+  ev.preventDefault();
+  if(busy) return;
+  const raw = $("typeInput").value.trim();
+  if(!raw) return;
+
+  /* anagram round: check the typed solution against the claimed tile only */
+  if(state.mode === "anagram"){
+    if(!state.pending) return;
+    const solved = !!matchAnswer(raw, [state.pending]);
+    $("typeNote").textContent = "";
+    $("typeGo").disabled = true;
+    $("typeInput").blur();
+    $("anaPrompt").hidden = true;
+    reveal(state.pending, !solved, state.pendingBtn, raw);
+    return;
+  }
+
+  const hit = matchAnswer(raw, state.q.a);
+  if(hit && hit[1] >= 0 && state.taken.indexOf(hit) >= 0){
+    $("typeNote").textContent = "“" + hit[0] + "” has already gone — try another.";
+    $("typeForm").classList.add("shake");
+    setTimeout(()=>$("typeForm").classList.remove("shake"), 420);
+    beep(220,.14,"square",.05);
+    $("typeInput").select();
+    return;
+  }
+  $("typeNote").textContent = "";
+  $("typeGo").disabled = true;
+  $("typeInput").blur();
+  if(hit && hit[1] >= 0) reveal(hit, false, null, raw);
+  else if(hit)          reveal(hit, true,  null, raw);     // a listed decoy
+  else                  reveal(null, true, null, raw);     // not on our board
+});
+
+/* ============================================================
+   FINAL  (always typed)
+   ============================================================ */
+function startFinal(){
+  busy = false;
+  state.guesses = 0;
+  state.fTaken = [];
+  const name = state.p[state.finalist].name;
+  $("finalTitle").textContent = name + ", choose your category";
+  $("finalHint").textContent = "Three guesses. One null answer wins £" + state.jackpot.toLocaleString("en-GB") + ".";
+  $("finalBoard").hidden = true;
+  $("fTypeBox").hidden = true;
+  $("lives").hidden = true;
+  const pick = $("finalPick");
+  pick.hidden = false; pick.innerHTML = "";
+  shuffle(FINALS).forEach((f,i)=>{
+    const b = document.createElement("button");
+    b.className = "catbtn"; b.type = "button";
+    b.textContent = f.cat;
+    b.style.background = TILE_COLOURS[(i*3) % TILE_COLOURS.length];
+    b.addEventListener("click", ()=>{ beep(660,.08,"triangle",.05); openFinal(f); });
+    pick.appendChild(b);
+  });
+  show("scFinal");
+}
+function openFinal(f){
+  state.final = f;
+  $("finalPick").hidden = true;
+  $("finalTitle").textContent = f.cat;
+  $("finalHint").textContent = state.p[state.finalist].name + ", name an answer nobody gave. Guesses remaining: 3";
+  $("fTypeBox").hidden = false;
+  $("fChips").innerHTML = "";
+  $("fTypeNote").textContent = "";
+  $("fTypeInput").value = "";
+  $("fTypeGo").disabled = false;
+  $("fTypeForm").className = "typeform " + (state.finalist===0 ? "one" : "two");
+  $("lives").hidden = false; renderLives();
+  try{ $("fTypeInput").focus({preventScroll:true}); }catch(e){}
+}
+function renderLives(){
+  const l = $("lives").children;
+  for(let i=0;i<l.length;i++) l[i].className = "life" + (i < state.guesses ? " used" : "");
+}
+$("fTypeForm").addEventListener("submit", ev=>{
+  ev.preventDefault();
+  if(busy) return;
+  const raw = $("fTypeInput").value.trim();
+  if(!raw) return;
+  const hit = matchAnswer(raw, state.final.a);
+  if(hit && state.fTaken.indexOf(hit) >= 0){
+    $("fTypeNote").textContent = "You've already tried “" + hit[0] + "”.";
+    $("fTypeForm").classList.add("shake");
+    setTimeout(()=>$("fTypeForm").classList.remove("shake"), 420);
+    beep(220,.14,"square",.05);
+    $("fTypeInput").select();
+    return;
+  }
+  $("fTypeNote").textContent = "";
+  $("fTypeGo").disabled = true;
+  $("fTypeInput").blur();
+  finalGuess(hit, raw);
+});
+
+function finalGuess(entry, typedText){
+  busy = true;
+  beep(880,.06,"square",.05);
+  const wrong = !entry || entry[1] < 0;
+  const score = wrong ? 100 : entry[1];
+  if(entry) state.fTaken.push(entry);
+  $("fAnsTxt").textContent = typedText;
+  $("finalBoard").hidden = false;
+  $("fNextBtn").disabled = true;
+  $("fVerdict").textContent = ""; $("fVerdict").className = "verdict";
+  setTimeout(()=> $("finalBoard").scrollIntoView({behavior:"smooth", block:"nearest"}), 60);
+
+  countdown($("fBigNum"), $("fBarFill"), score, wrong, ()=>{
+    addChip($("fChips"), entry ? entry[0] : typedText, score, wrong, state.finalist);
+    state.guesses++; renderLives();
+    $("fNextBtn").disabled = false;
+    const v = $("fVerdict");
+    if(!wrong && score===0){
+      v.textContent = "★ NULL ANSWER! The jackpot is won!";
+      v.className = "verdict good";
+      confetti(220); fanfare();
+      state.wonJackpot = true;
+      $("fNextBtn").textContent = "See the result →";
+      $("fNextBtn").onclick = endMatch;
+    } else {
+      v.textContent = wrong ? "✗ Not on our board." :
+        "Not a null answer — " + score + (score===1 ? " person" : " people") + " said that.";
+      v.className = "verdict bad";
+      if(state.guesses >= 3){
+        $("fNextBtn").textContent = "See the result →";
+        $("fNextBtn").onclick = endMatch;
+      } else {
+        $("fNextBtn").textContent = "Guess again →";
+        $("fNextBtn").onclick = ()=>{
+          busy = false;
+          $("finalBoard").hidden = true;
+          $("fTypeInput").value = "";
+          $("fTypeGo").disabled = false;
+          $("finalHint").textContent = state.p[state.finalist].name + ", name an answer nobody gave. Guesses remaining: " + (3 - state.guesses);
+          try{ $("fTypeInput").focus({preventScroll:true}); }catch(e){}
+        };
+      }
+    }
+  });
+}
+
+/* ============================================================
+   RESULT
+   ============================================================ */
+function endMatch(){
+  const w = state.finalist, l = 1 - w;
+  $("rankTxt").textContent = state.wonJackpot
+    ? state.p[w].name + " wins the jackpot!"
+    : state.p[w].name + " wins the match";
+  $("matchTxt").textContent = "Match " + state.p[w].pts + " – " + state.p[l].pts +
+                             "  ·  " + state.p[l].name + " runner-up";
+  $("jackTxt").innerHTML = state.wonJackpot
+    ? "Jackpot won: <b style='color:var(--lime)'>£" + state.jackpot.toLocaleString("en-GB") + "</b>"
+    : "Jackpot not won — it rolls over to £" + (state.jackpot + 250).toLocaleString("en-GB");
+
+  /* reveal the null answers they didn't find */
+  const fw = $("fMissWrap");
+  if(state.final && !state.wonJackpot){
+    const zeros = state.final.a.filter(e=>e[1]===0);
+    if(zeros.length){
+      const box = $("fMissChips"); box.innerHTML = "";
+      zeros.forEach(e=>addChip(box, e[0], 0, false, 0, true));
+      fw.hidden = false;
+    } else fw.hidden = true;
+  } else fw.hidden = true;
+
+  const bd = $("breakdown"); bd.innerHTML = "";
+  const rounds = {};
+  state.history.forEach(h=>{ (rounds[h.r] = rounds[h.r] || []).push(h); });
+  Object.keys(rounds).forEach(r=>{
+    const picks = rounds[r];
+    const t0 = picks.filter(h=>h.p===0).reduce((s,h)=>s+h.s,0);
+    const t1 = picks.filter(h=>h.p===1).reduce((s,h)=>s+h.s,0);
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = '<span class="r-q"><b>Round '+r+'</b> · '+esc(picks[0].q||"")+'</span>' +
+                    '<span class="r-a one">'+t0+'</span><span style="opacity:.4">–</span>' +
+                    '<span class="r-a two">'+t1+'</span>';
+    bd.appendChild(row);
+  });
+  if(state.wonJackpot) confetti(160);
+  show("scEnd");
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+$("playBtn").addEventListener("click", ()=>{ ac(); show("scSetup"); });
+$("howBtn").addEventListener("click", ()=> show("scHow"));
+$("howBack").addEventListener("click", ()=> show("scHome"));
+$("setupBack").addEventListener("click", ()=> show("scHome"));
+$("startBtn").addEventListener("click", ()=>{
+  ac();
+  newMatch($("n1").value.trim() || "Player 1", $("n2").value.trim() || "Player 2");
+  startRound();
+});
+$("nextBtn").addEventListener("click", afterPick);
+$("roundNextBtn").addEventListener("click", ()=>{
+  if(state.finalist !== null) startFinal(); else startRound();
+});
+$("againBtn").addEventListener("click", ()=> show("scSetup"));
+$("sndBtn").addEventListener("click", e=>{
+  soundOn = !soundOn;
+  e.currentTarget.textContent = soundOn ? "🔊" : "🔇";
+  if(soundOn){ ac(); beep(660,.08,"triangle",.05); }
+});
+show("scHome");
+</script>
+</body>
+</html>
