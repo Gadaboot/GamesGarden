@@ -75,7 +75,76 @@
     { id: 'ae_l10',      game: 'Arrow Exit',    icon: '➡️', name: 'Finding a Way',     desc: 'Reach level 10 in Arrow Exit' },
     { id: 'ae_l50',      game: 'Arrow Exit',    icon: '🧠', name: 'Untangler',         desc: 'Reach level 50 in Arrow Exit' },
     { id: 'aes_l10',     game: 'Arrow Exit Shapes', icon: '🔷', name: 'Shape Shifter', desc: 'Reach level 10 in Arrow Exit Shapes' },
-    { id: 'aes_l50',     game: 'Arrow Exit Shapes', icon: '🏵️', name: 'Shape Master',  desc: 'Reach level 50 in Arrow Exit Shapes' }
+    { id: 'aes_l50',     game: 'Arrow Exit Shapes', icon: '🏵️', name: 'Shape Master',  desc: 'Reach level 50 in Arrow Exit Shapes' },
+    { id: 'sf_line',     game: 'Snug Fit',      icon: '🧱', name: 'First Clear',       desc: 'Clear your first line in Snug Fit' },
+    { id: 'sf_triple',   game: 'Snug Fit',      icon: '💥', name: 'Triple Threat',     desc: 'Clear three lines with one shape' },
+    { id: 'sf_streak5',  game: 'Snug Fit',      icon: '🔥', name: 'On the Bounce',     desc: 'Clear on five drops in a row' },
+    { id: 'sf_sweep',    game: 'Snug Fit',      icon: '✨', name: 'Clean Sweep',       desc: 'Empty the whole board in Snug Fit' },
+    { id: 'sf_1500',     game: 'Snug Fit',      icon: '📈', name: 'Snug as Anything', desc: 'Score 1,500 in Snug Fit' },
+    { id: 'sf_5000',     game: 'Snug Fit',      icon: '🏆', name: 'Master Fitter',     desc: 'Score 5,000 in Snug Fit' },
+    { id: 'sf_nine',     game: 'Snug Fit',      icon: '🔹', name: 'Nine Lives',        desc: 'Score 2,500 on the Nine board' },
+    { id: 'mz_first',    game: 'Maze Escape',   icon: '🏁', name: 'Way Out',           desc: 'Escape your first maze' },
+    { id: 'mz_l5',       game: 'Maze Escape',   icon: '🌱', name: 'Getting Rolling',   desc: 'Clear level 5' },
+    { id: 'mz_l10',      game: 'Maze Escape',   icon: '🔥', name: 'Ten Down',          desc: 'Clear level 10' },
+    { id: 'mz_l25',      game: 'Maze Escape',   icon: '💎', name: 'Halfway Hero',      desc: 'Clear level 25' },
+    { id: 'mz_l50',      game: 'Maze Escape',   icon: '👑', name: 'Maze Master',       desc: 'Clear level 50' },
+    { id: 'mz_all',      game: 'Maze Escape',   icon: '🌟', name: 'Escape Artist',     desc: 'Clear all 60 mazes' },
+    { id: 'mz_gifts10',  game: 'Maze Escape',   icon: '🎁', name: 'Unwrapped',         desc: 'Collect 10 gifts' },
+    { id: 'mz_gifts50',  game: 'Maze Escape',   icon: '🎀', name: 'Gift Hunter',       desc: 'Collect 50 gifts' },
+    { id: 'mz_gifts150', game: 'Maze Escape',   icon: '🛍️', name: 'Hoarder',          desc: 'Collect 150 gifts' },
+    { id: 'mz_secret',   game: 'Maze Escape',   icon: '🚪', name: 'Secret Knock',      desc: 'Find 5 secret doors' },
+    { id: 'mz_trap',     game: 'Maze Escape',   icon: '🕳️', name: 'Back to Square 1', desc: 'Fall through 3 trap doors' },
+    { id: 'mz_speed',    game: 'Maze Escape',   icon: '⚡', name: 'Quicksilver',       desc: 'Escape a maze in under 15 seconds' },
+    { id: 'mz_flawless', game: 'Maze Escape',   icon: '✨', name: 'Spotless Run',      desc: 'Clear a level taking every gift, no traps' },
+    { id: 'mz_themes',   game: 'Maze Escape',   icon: '🎨', name: 'Interior Designer', desc: 'Play all three boards' },
+    { id: 'mz_score',    game: 'Maze Escape',   icon: '💰', name: 'Ten Grand',         desc: 'Reach 10,000 points in Maze Escape' },
+    { id: 'mz_marathon', game: 'Maze Escape',   icon: '🏃', name: 'Marathon',          desc: 'Clear 10 mazes in one sitting' },
+    { id: 'mz_shapes',   game: 'Maze Escape',   icon: '🧩', name: 'Shape Shifter',     desc: 'Clear a maze of every shape' },
+    { id: 'sud_win',     game: 'Sudoku',        icon: '🔢', name: 'Grid Filled',       desc: 'Solve a Sudoku' },
+    { id: 'sud_clean',   game: 'Sudoku',        icon: '🧼', name: 'Spotless',          desc: 'Solve one with no slips and no hints' },
+    { id: 'sud_hard',    game: 'Sudoku',        icon: '🧠', name: 'Deep Thinker',      desc: 'Solve a Hard or Expert grid' },
+    { id: 'sud_expert',  game: 'Sudoku',        icon: '👑', name: 'Sudoku Master',     desc: 'Solve an Expert grid' },
+    { id: 'sud_fast',    game: 'Sudoku',        icon: '⚡', name: 'Quick Pencil',      desc: 'Solve above Easy in under 5 minutes' },
+    { id: 'sud_alldiff', game: 'Sudoku',        icon: '🎯', name: 'Full House',        desc: 'Solve a grid at every level' },
+    { id: 'ws_first',    game: 'Water Sort',    icon: '🧪', name: 'First Pour',        desc: 'Sort your first level' },
+    { id: 'ws_l10',      game: 'Water Sort',    icon: '🌈', name: 'Ten Tidy',          desc: 'Reach level 10' },
+    { id: 'ws_l25',      game: 'Water Sort',    icon: '🔬', name: 'Colour Chemist',    desc: 'Reach level 25' },
+    { id: 'ws_l50',      game: 'Water Sort',    icon: '👑', name: 'Master Mixer',      desc: 'Reach level 50' },
+    { id: 'ws_noextra',  game: 'Water Sort',    icon: '💪', name: 'No Help Needed',    desc: 'Sort a level without an extra tube' },
+    { id: 'ws_tidy',     game: 'Water Sort',    icon: '✨', name: 'Neat Work',        desc: 'Sort a level in very few moves' },
+    { id: 'mj_win',      game: 'Mahjong',       icon: '🀄', name: 'Board Cleared',     desc: 'Clear a Mahjong board' },
+    { id: 'mj_noshuffle',game: 'Mahjong',       icon: '🧿', name: 'No Shuffling',      desc: 'Clear a board without shuffling' },
+    { id: 'mj_tower',    game: 'Mahjong',       icon: '🏯', name: 'Tower Cleared',     desc: 'Clear the full 144-tile Tower' },
+    { id: 'mj_fast',     game: 'Mahjong',       icon: '⚡', name: 'Swift Hands',       desc: 'Clear the Tower in under 10 minutes' },
+    { id: 'mj_alllayouts',game:'Mahjong',       icon: '🏵️', name: 'Every Board',      desc: 'Clear all three Mahjong boards' },
+    { id: 'no_first',    game: 'Picture Logic', icon: '🖼️', name: 'Picture Revealed',  desc: 'Finish your first picture' },
+    { id: 'no_clean',    game: 'Picture Logic', icon: '🧼', name: 'Not a Slip',        desc: 'Finish a picture with no mistakes' },
+    { id: 'no_big',      game: 'Picture Logic', icon: '🖼️', name: 'Big Canvas',        desc: 'Finish a 15x15 picture' },
+    { id: 'no_10',       game: 'Picture Logic', icon: '🎨', name: 'Gallery Started',   desc: 'Finish 10 pictures' },
+    { id: 'no_30',       game: 'Picture Logic', icon: '🖼️', name: 'Gallery Owner',     desc: 'Finish 30 pictures' },
+    { id: 'no_pack',     game: 'Picture Logic', icon: '👑', name: 'Full Collection',   desc: 'Finish every picture in one set' },
+    { id: 'sp_win',      game: 'Spider',        icon: '🕷️', name: 'All Eight Home',   desc: 'Win a game of Spider' },
+    { id: 'sp_two',      game: 'Spider',        icon: '♠️', name: 'Two Suits Down',    desc: 'Win a two-suit game' },
+    { id: 'sp_four',     game: 'Spider',        icon: '👑', name: 'Four Suits Down',   desc: 'Win a four-suit game' },
+    { id: 'sp_noundo',   game: 'Spider',        icon: '🧿', name: 'No Second Thoughts',desc: 'Win without using undo' },
+    { id: 'sp_allsuits', game: 'Spider',        icon: '🏅', name: 'Every Difficulty',  desc: 'Win at one, two and four suits' },
+    { id: 'fc_win',      game: 'FreeCell',      icon: '🃏', name: 'All Home',          desc: 'Win a game of FreeCell' },
+    { id: 'fc_noundo',   game: 'FreeCell',      icon: '🧿', name: 'Straight Through',  desc: 'Win without using undo' },
+    { id: 'fc_tidy',     game: 'FreeCell',      icon: '✨', name: 'Economical',       desc: 'Win in 70 moves or fewer' },
+    { id: 'fc_5',        game: 'FreeCell',      icon: '📈', name: 'Five Deals',        desc: 'Win five different deals' },
+    { id: 'fc_25',       game: 'FreeCell',      icon: '👑', name: 'Twenty-Five Deals', desc: 'Win twenty-five different deals' },
+    { id: 'ms_win',      game: 'Mine Hunt',     icon: '💣', name: 'All Clear',         desc: 'Clear a board without hitting a mine' },
+    { id: 'ms_med',      game: 'Mine Hunt',     icon: '🎯', name: 'Tricky Cleared',    desc: 'Clear the 12 × 15 board' },
+    { id: 'ms_hard',     game: 'Mine Hunt',     icon: '🧨', name: 'Fiendish Cleared',  desc: 'Clear the 14 × 18 board' },
+    { id: 'ms_fast',     game: 'Mine Hunt',     icon: '⏱️', name: 'Steady Hands',      desc: 'Clear Fiendish in under five minutes' },
+    { id: 'ms_allsizes', game: 'Mine Hunt',     icon: '🏵️', name: 'Every Board',       desc: 'Clear Gentle, Tricky and Fiendish' },
+    { id: 'ms_10',       game: 'Mine Hunt',     icon: '🔟', name: 'Ten Sweeps',        desc: 'Clear ten boards in total' },
+    { id: 'wse_first',   game: 'Word Search',   icon: '🔎', name: 'First Find',        desc: 'Finish a Word Search puzzle' },
+    { id: 'wse_hard',    game: 'Word Search',   icon: '🧠', name: 'Fiendish Finder',   desc: 'Finish a 14 x 14 puzzle' },
+    { id: 'wse_clean',   game: 'Word Search',   icon: '✨', name: 'No Help Needed',    desc: 'Finish one without a hint or a reveal' },
+    { id: 'wse_fast',    game: 'Word Search',   icon: '⚡', name: 'Eagle Eyed',        desc: 'Finish Tricky or Fiendish in under three minutes' },
+    { id: 'wse_10',      game: 'Word Search',   icon: '📚', name: 'Ten Themes',        desc: 'Finish ten puzzles in total' },
+    { id: 'wse_alldiff', game: 'Word Search',   icon: '🏵️', name: 'Every Size',        desc: 'Finish Gentle, Tricky and Fiendish' }
   ];
 
   var GAME_PAGES = [
@@ -84,7 +153,8 @@
     'cat-poopers', 'sea-battle', 'ludo', 'scopa', 'solitaire-tower',
     'empty-hand', 'england-football-coach', 'arrow-exit', 'billiards',
     'arrow-exit-shapes', 'word-points', 'spinny-letters', 'one-false-step',
-    'nullpoints'
+    'nullpoints', 'snug-fit', 'maze-escape', 'sudoku', 'water-sort', 'mahjong',
+    'picture-logic', 'spider', 'freecell', 'mine-hunt', 'word-search'
   ];
 
   var A_KEY = 'gg_ach', S_KEY = 'gg_streak', P_KEY = 'gg_played';
@@ -112,6 +182,13 @@
     var def = queue.shift();
     if (!def) { showing = false; return; }
     showing = true;
+    /* the library may be included in <head>, before body exists */
+    if (!document.body) {
+      document.addEventListener('DOMContentLoaded', function () {
+        queue.unshift(def); showing = false; next();
+      }, { once: true });
+      return;
+    }
     var el = document.createElement('div');
     el.setAttribute('style',
       'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 12px);left:50%;' +

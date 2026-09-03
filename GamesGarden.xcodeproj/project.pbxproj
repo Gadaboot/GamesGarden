@@ -42,6 +42,27 @@
 		6761C940304999900050EC58 /* sea-battle.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C93C304999900050EC58 /* sea-battle.html */; };
 		6761C941304999900050EC58 /* five-dice.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C937304999900050EC58 /* five-dice.html */; };
 		6761C942304999900050EC58 /* icon_five-dice.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C939304999900050EC58 /* icon_five-dice.png */; };
+		6761C9443049D1FD0050EC58 /* maze-escape.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C9433049D1FD0050EC58 /* maze-escape.html */; };
+		6761C9463049D2090050EC58 /* icon_maze-escape.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C9453049D2090050EC58 /* icon_maze-escape.png */; };
+		6761C9483049D2E80050EC58 /* icon_snug-fit.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C9473049D2E80050EC58 /* icon_snug-fit.png */; };
+		6761C94A3049D2F40050EC58 /* snug-fit.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C9493049D2F40050EC58 /* snug-fit.html */; };
+		6761C94C3049D97B0050EC58 /* TiltBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6761C94B3049D97B0050EC58 /* TiltBridge.swift */; };
+		6761C9523049E7370050EC58 /* icon_sudoku.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C9513049E7370050EC58 /* icon_sudoku.png */; };
+		6761C9543049E7470050EC58 /* sudoku.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C9533049E7470050EC58 /* sudoku.html */; };
+		6761C9563049FFFE0050EC58 /* icon_water-sort.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C9553049FFFE0050EC58 /* icon_water-sort.png */; };
+		6761C958304A00100050EC58 /* water-sort.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C957304A00100050EC58 /* water-sort.html */; };
+		6761C95A304A03A10050EC58 /* icon_mahjong.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C959304A03A10050EC58 /* icon_mahjong.png */; };
+		6761C95C304A03BB0050EC58 /* mahjong.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C95B304A03BB0050EC58 /* mahjong.html */; };
+		6761C95E304A069B0050EC58 /* icon_picture-logic.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C95D304A069B0050EC58 /* icon_picture-logic.png */; };
+		6761C960304A06B30050EC58 /* picture-logic.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C95F304A06B30050EC58 /* picture-logic.html */; };
+		6761C962304A099E0050EC58 /* spider.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C961304A099E0050EC58 /* spider.html */; };
+		6761C964304A09B40050EC58 /* icon_spider.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C963304A09B40050EC58 /* icon_spider.png */; };
+		6761C966304A0D7D0050EC58 /* icon_freecell.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C965304A0D7D0050EC58 /* icon_freecell.png */; };
+		6761C968304A0D8A0050EC58 /* freecell.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C967304A0D8A0050EC58 /* freecell.html */; };
+		6761C96A304A10BD0050EC58 /* mine-hunt.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C969304A10BD0050EC58 /* mine-hunt.html */; };
+		6761C96C304A10D00050EC58 /* icon_mine-hunt.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C96B304A10D00050EC58 /* icon_mine-hunt.png */; };
+		6761C96E304A14E10050EC58 /* icon_word-search.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C96D304A14E10050EC58 /* icon_word-search.png */; };
+		6761C970304A14F10050EC58 /* word-search.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C96F304A14F10050EC58 /* word-search.html */; };
 		67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56403300CD0A600D2D146 /* icon_Ludo.png */; };
 		67C56406300CD0AF00D2D146 /* icon_scopa.png in Resources */ = {isa = PBXBuildFile; fileRef = 67C56405300CD0AF00D2D146 /* icon_scopa.png */; };
 		67C56408300CD0BA00D2D146 /* ludo.html in Resources */ = {isa = PBXBuildFile; fileRef = 67C56407300CD0BA00D2D146 /* ludo.html */; };
@@ -102,6 +123,27 @@
 		6761C93A304999900050EC58 /* icon_frog-jump.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_frog-jump.png"; sourceTree = "<group>"; };
 		6761C93B304999900050EC58 /* icon_sea-battle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_sea-battle.png"; sourceTree = "<group>"; };
 		6761C93C304999900050EC58 /* sea-battle.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "sea-battle.html"; sourceTree = "<group>"; };
+		6761C9433049D1FD0050EC58 /* maze-escape.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "maze-escape.html"; sourceTree = "<group>"; };
+		6761C9453049D2090050EC58 /* icon_maze-escape.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_maze-escape.png"; sourceTree = "<group>"; };
+		6761C9473049D2E80050EC58 /* icon_snug-fit.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_snug-fit.png"; sourceTree = "<group>"; };
+		6761C9493049D2F40050EC58 /* snug-fit.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "snug-fit.html"; sourceTree = "<group>"; };
+		6761C94B3049D97B0050EC58 /* TiltBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiltBridge.swift; sourceTree = "<group>"; };
+		6761C9513049E7370050EC58 /* icon_sudoku.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_sudoku.png; sourceTree = "<group>"; };
+		6761C9533049E7470050EC58 /* sudoku.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = sudoku.html; sourceTree = "<group>"; };
+		6761C9553049FFFE0050EC58 /* icon_water-sort.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_water-sort.png"; sourceTree = "<group>"; };
+		6761C957304A00100050EC58 /* water-sort.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "water-sort.html"; sourceTree = "<group>"; };
+		6761C959304A03A10050EC58 /* icon_mahjong.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_mahjong.png; sourceTree = "<group>"; };
+		6761C95B304A03BB0050EC58 /* mahjong.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = mahjong.html; sourceTree = "<group>"; };
+		6761C95D304A069B0050EC58 /* icon_picture-logic.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_picture-logic.png"; sourceTree = "<group>"; };
+		6761C95F304A06B30050EC58 /* picture-logic.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "picture-logic.html"; sourceTree = "<group>"; };
+		6761C961304A099E0050EC58 /* spider.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = spider.html; sourceTree = "<group>"; };
+		6761C963304A09B40050EC58 /* icon_spider.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_spider.png; sourceTree = "<group>"; };
+		6761C965304A0D7D0050EC58 /* icon_freecell.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_freecell.png; sourceTree = "<group>"; };
+		6761C967304A0D8A0050EC58 /* freecell.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = freecell.html; sourceTree = "<group>"; };
+		6761C969304A10BD0050EC58 /* mine-hunt.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "mine-hunt.html"; sourceTree = "<group>"; };
+		6761C96B304A10D00050EC58 /* icon_mine-hunt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_mine-hunt.png"; sourceTree = "<group>"; };
+		6761C96D304A14E10050EC58 /* icon_word-search.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_word-search.png"; sourceTree = "<group>"; };
+		6761C96F304A14F10050EC58 /* word-search.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "word-search.html"; sourceTree = "<group>"; };
 		67C56403300CD0A600D2D146 /* icon_Ludo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_Ludo.png; sourceTree = "<group>"; };
 		67C56405300CD0AF00D2D146 /* icon_scopa.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_scopa.png; sourceTree = "<group>"; };
 		67C56407300CD0BA00D2D146 /* ludo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = ludo.html; sourceTree = "<group>"; };
@@ -159,6 +201,7 @@
 			children = (
 				AA0000000000000000000005 /* GamesGardenApp.swift */,
 				AA000000000000000000000B /* ContentView.swift */,
+				6761C94B3049D97B0050EC58 /* TiltBridge.swift */,
 				6731DF2F300FDF040070AC8B /* achievements.js */,
 				67C5640B300CD3C900D2D146 /* index.html */,
 				6703E67E3007A17A000B3226 /* 2048-merge-blocks.html */,
@@ -173,21 +216,31 @@
 				67E1D1F630261BB3002AEE31 /* england-football-coach.html */,
 				6761C92130497A3B0050EC58 /* empty-hand.html */,
 				6761C937304999900050EC58 /* five-dice.html */,
+				6761C967304A0D8A0050EC58 /* freecell.html */,
 				6761C938304999900050EC58 /* frog-jump.html */,
 				67C56407300CD0BA00D2D146 /* ludo.html */,
+				6761C95B304A03BB0050EC58 /* mahjong.html */,
+				6761C9433049D1FD0050EC58 /* maze-escape.html */,
+				6761C969304A10BD0050EC58 /* mine-hunt.html */,
 				6761C90D30495EB70050EC58 /* nullpoints.html */,
 				67D8238A2FFF955C00892511 /* octo.html */,
 				6761C92930498E2A0050EC58 /* one-false-step.html */,
+				6761C95F304A06B30050EC58 /* picture-logic.html */,
 				6731DF27300FD9510070AC8B /* privacy.html */,
 				67C56409300CD0C200D2D146 /* scopa.html */,
 				6761C93C304999900050EC58 /* sea-battle.html */,
 				67D8239C2FFFA7ED00892511 /* solitaire.html */,
 				6761C92D30498EF10050EC58 /* solitaire-tower.html */,
 				6761C9173049700B0050EC58 /* spinny-letters.html */,
+				6761C9493049D2F40050EC58 /* snug-fit.html */,
+				6761C961304A099E0050EC58 /* spider.html */,
+				6761C9533049E7470050EC58 /* sudoku.html */,
 				6731DF2B300FDCA90070AC8B /* support.html */,
 				6731DF2D300FDEF70070AC8B /* trophies.html */,
+				6761C957304A00100050EC58 /* water-sort.html */,
 				6761C931304995620050EC58 /* word-points.html */,
 				6761C913304969DD0050EC58 /* word-guess.html */,
+				6761C96F304A14F10050EC58 /* word-search.html */,
 				AA0000000000000000000001 /* welcome.png */,
 				6703E67C3007A173000B3226 /* icon_2048.png */,
 				67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */,
@@ -200,18 +253,28 @@
 				67D823912FFFA1EB00892511 /* icon_chess.png */,
 				6761C9353049962A0050EC58 /* icon_cup-run.png */,
 				6761C91D30497A1A0050EC58 /* icon_empty-hand.png */,
+				6761C965304A0D7D0050EC58 /* icon_freecell.png */,
 				6761C939304999900050EC58 /* icon_five-dice.png */,
 				6761C93A304999900050EC58 /* icon_frog-jump.png */,
 				67C56403300CD0A600D2D146 /* icon_Ludo.png */,
+				6761C959304A03A10050EC58 /* icon_mahjong.png */,
+				6761C9453049D2090050EC58 /* icon_maze-escape.png */,
+				6761C96B304A10D00050EC58 /* icon_mine-hunt.png */,
 				6761C90F30495EC50050EC58 /* icon_nullpoints.png */,
 				67D823862FFEDC9900892511 /* icon_octo.png */,
 				6761C92B30498E3F0050EC58 /* icon_one-false-step.png */,
+				6761C95D304A069B0050EC58 /* icon_picture-logic.png */,
 				67C56405300CD0AF00D2D146 /* icon_scopa.png */,
 				6761C93B304999900050EC58 /* icon_sea-battle.png */,
+				6761C9473049D2E80050EC58 /* icon_snug-fit.png */,
 				67D8239E2FFFA7F800892511 /* icon_solitaire.png */,
 				6761C92F30498EFD0050EC58 /* icon_solitaire-tower.png */,
 				6761C91530496FFC0050EC58 /* icon_spinny-letters.png */,
+				6761C963304A09B40050EC58 /* icon_spider.png */,
+				6761C9513049E7370050EC58 /* icon_sudoku.png */,
+				6761C9553049FFFE0050EC58 /* icon_water-sort.png */,
 				6761C933304995740050EC58 /* icon_word-points.png */,
+				6761C96D304A14E10050EC58 /* icon_word-search.png */,
 				6761C911304969D20050EC58 /* icon_wordguess.png */,
 				67D8239A2FFFA51400892511 /* Assets.xcassets */,
 			);
@@ -278,36 +341,50 @@
 			files = (
 				67C56406300CD0AF00D2D146 /* icon_scopa.png in Resources */,
 				67050094303DDD240096E2BC /* icon_billiards.png in Resources */,
+				6761C958304A00100050EC58 /* water-sort.html in Resources */,
 				6761C914304969DD0050EC58 /* word-guess.html in Resources */,
 				6731DF30300FDF040070AC8B /* achievements.js in Resources */,
+				6761C95C304A03BB0050EC58 /* mahjong.html in Resources */,
 				6761C9183049700B0050EC58 /* spinny-letters.html in Resources */,
+				6761C9483049D2E80050EC58 /* icon_snug-fit.png in Resources */,
 				6761C934304995740050EC58 /* icon_word-points.png in Resources */,
 				6731DF2E300FDEF70070AC8B /* trophies.html in Resources */,
 				6731DF2C300FDCA90070AC8B /* support.html in Resources */,
 				67D8239F2FFFA7F800892511 /* icon_solitaire.png in Resources */,
+				6761C9563049FFFE0050EC58 /* icon_water-sort.png in Resources */,
 				6761C9363049962A0050EC58 /* icon_cup-run.png in Resources */,
 				67D823A12FFFAD1C00892511 /* icon_bubbleshooter.png in Resources */,
 				6705008C303DDA090096E2BC /* arrow-exit.html in Resources */,
 				67C5640C300CD3C900D2D146 /* index.html in Resources */,
 				6761C92E30498EF10050EC58 /* solitaire-tower.html in Resources */,
+				6761C9443049D1FD0050EC58 /* maze-escape.html in Resources */,
 				6761C912304969D20050EC58 /* icon_wordguess.png in Resources */,
+				6761C9463049D2090050EC58 /* icon_maze-escape.png in Resources */,
 				6761C92630498D240050EC58 /* icon_cat-poopers.png in Resources */,
+				6761C96E304A14E10050EC58 /* icon_word-search.png in Resources */,
 				67050096303DDFB80096E2BC /* icon_arrowshapes.png in Resources */,
 				6761C92A30498E2A0050EC58 /* one-false-step.html in Resources */,
 				67C56408300CD0BA00D2D146 /* ludo.html in Resources */,
+				6761C94A3049D2F40050EC58 /* snug-fit.html in Resources */,
 				67D823872FFEDC9900892511 /* icon_octo.png in Resources */,
 				67D823922FFFA1EB00892511 /* icon_checkers.png in Resources */,
+				6761C964304A09B40050EC58 /* icon_spider.png in Resources */,
 				67050092303DDCB10096E2BC /* billiards.html in Resources */,
+				6761C96A304A10BD0050EC58 /* mine-hunt.html in Resources */,
+				6761C970304A14F10050EC58 /* word-search.html in Resources */,
 				6761C90E30495EB70050EC58 /* nullpoints.html in Resources */,
+				6761C960304A06B30050EC58 /* picture-logic.html in Resources */,
 				67D823932FFFA1EB00892511 /* icon_chess.png in Resources */,
 				6761C92830498D320050EC58 /* cat-poopers.html in Resources */,
 				6761C93030498EFD0050EC58 /* icon_solitaire-tower.png in Resources */,
 				6731DF28300FD9510070AC8B /* privacy.html in Resources */,
 				6703E67F3007A17A000B3226 /* 2048-merge-blocks.html in Resources */,
 				6703E67D3007A173000B3226 /* icon_2048.png in Resources */,
+				6761C9523049E7370050EC58 /* icon_sudoku.png in Resources */,
 				6761C93D304999900050EC58 /* icon_sea-battle.png in Resources */,
 				6761C93E304999900050EC58 /* frog-jump.html in Resources */,
 				6761C93F304999900050EC58 /* icon_frog-jump.png in Resources */,
+				6761C95E304A069B0050EC58 /* icon_picture-logic.png in Resources */,
 				6761C940304999900050EC58 /* sea-battle.html in Resources */,
 				6761C941304999900050EC58 /* five-dice.html in Resources */,
 				6761C942304999900050EC58 /* icon_five-dice.png in Resources */,
@@ -315,20 +392,26 @@
 				67D8238E2FFFA18C00892511 /* chess.html in Resources */,
 				67D8239B2FFFA51400892511 /* Assets.xcassets in Resources */,
 				6761C932304995620050EC58 /* word-points.html in Resources */,
+				6761C968304A0D8A0050EC58 /* freecell.html in Resources */,
 				67D8238F2FFFA18C00892511 /* checkers.html in Resources */,
+				6761C95A304A03A10050EC58 /* icon_mahjong.png in Resources */,
 				6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */,
 				67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */,
 				6761C92230497A3B0050EC58 /* empty-hand.html in Resources */,
 				67E1D1F730261BB3002AEE31 /* england-football-coach.html in Resources */,
+				6761C96C304A10D00050EC58 /* icon_mine-hunt.png in Resources */,
 				67050098303DDFC80096E2BC /* arrow-exit-shapes.html in Resources */,
 				67D8239D2FFFA7ED00892511 /* solitaire.html in Resources */,
+				6761C966304A0D7D0050EC58 /* icon_freecell.png in Resources */,
 				6761C91E30497A1A0050EC58 /* icon_empty-hand.png in Resources */,
+				6761C9543049E7470050EC58 /* sudoku.html in Resources */,
 				67D8238B2FFF955C00892511 /* octo.html in Resources */,
 				AA000000000000000000000F /* welcome.png in Resources */,
 				6761C92C30498E3F0050EC58 /* icon_one-false-step.png in Resources */,
 				67050086303DD9D30096E2BC /* icon_arrowexit.png in Resources */,
 				6761C91630496FFC0050EC58 /* icon_spinny-letters.png in Resources */,
 				67D823AD2FFFBBCD00892511 /* anagram-crosswords.html in Resources */,
+				6761C962304A099E0050EC58 /* spider.html in Resources */,
 				67C5640A300CD0C200D2D146 /* scopa.html in Resources */,
 				67D823B32FFFBBEC00892511 /* icon_anagram-crosswords.png in Resources */,
 			);
@@ -343,6 +426,7 @@
 			files = (
 				AA0000000000000000000002 /* GamesGardenApp.swift in Sources */,
 				AA0000000000000000000008 /* ContentView.swift in Sources */,
+				6761C94C3049D97B0050EC58 /* TiltBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -399,6 +483,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Offline Games Arcade";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Used to roll the ball when you tilt your phone";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
@@ -427,6 +512,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Offline Games Arcade";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Used to roll the ball when you tilt your phone";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;

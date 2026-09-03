@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>FreeCell</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(ellipse at 50% 8%, #ffb765 0%, #f2823a 40%, #d2561f 100%);
+    color:#fff;display:flex;flex-direction:column;touch-action:none
+  }
+  header{display:flex;align-items:center;gap:8px;
+    padding:calc(env(safe-area-inset-top,0px) + 7px) 10px 5px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#8a3b0c;
+    background:rgba(255,255,255,.93);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(110,45,5,.3);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  h1{flex:1;text-align:center;font-size:clamp(14px,4.4vw,19px);font-weight:900;letter-spacing:1.5px;
+    text-shadow:0 2px 0 #c65a1c,0 4px 10px rgba(90,35,0,.4)}
+  .strip{display:flex;gap:6px;padding:0 10px 5px}
+  .chip{flex:1;text-align:center;padding:5px 2px;border-radius:12px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.34)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(12px,3.9vw,16px);font-weight:900;font-variant-numeric:tabular-nums}
+  #board{position:relative;flex:1;margin:0 6px;min-height:0}
+  .slot{position:absolute;width:var(--cw);height:var(--ch);border-radius:calc(var(--cw)*.10);
+    border:1.5px dashed rgba(255,255,255,.45);background:rgba(255,255,255,.10);
+    display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--cw)*.42);color:rgba(255,255,255,.55)}
+  .slot.found{border-style:solid;border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.16)}
+  .card{position:absolute;width:var(--cw);height:var(--ch);border-radius:calc(var(--cw)*.10);
+    background:#fffdf4;box-shadow:0 1px 3px rgba(90,35,0,.42);cursor:pointer;overflow:hidden;
+    transition:left .16s ease, top .16s ease}
+  .card.noanim{transition:none}
+  .card.drag{transition:none;box-shadow:0 9px 22px rgba(80,30,0,.55)}
+  .card.red{color:#d4183a}
+  .card.black{color:#24262e}
+  .card .corner{position:absolute;line-height:.94;text-align:center;font-weight:800;
+    font-size:calc(var(--cw)*.28);pointer-events:none;top:calc(var(--cw)*.06);left:calc(var(--cw)*.08)}
+  .card .corner span{display:block}
+  .card .big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--cw)*.46);pointer-events:none;opacity:.9}
+  .card .big .cr{font-size:calc(var(--cw)*.40);font-weight:900;margin-right:calc(var(--cw)*.03)}
+  .card.hi{animation:hip .55s ease}
+  @keyframes hip{0%,100%{box-shadow:0 1px 3px rgba(90,35,0,.42)}
+    50%{box-shadow:0 0 0 3px #ffe066,0 0 16px 5px rgba(255,224,102,.85)}}
+  .card.bad{animation:shk .3s ease}
+  @keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  #tools{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;
+    padding:6px 10px calc(env(safe-area-inset-bottom,0px) + 8px)}
+  .tool{background:rgba(255,255,255,.94);border:1.5px solid #fff;border-radius:14px;
+    padding:8px 2px 7px;text-align:center;cursor:pointer;color:#8a3b0c;
+    box-shadow:0 4px 0 rgba(150,60,10,.35),0 5px 12px rgba(110,45,5,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(150,60,10,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:17px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.72}
+  .ovl{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+    background:rgba(120,50,10,.45);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card2{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#fff5ea);
+    border:2px solid #fff;border-radius:22px;padding:20px 18px 16px;text-align:center;
+    color:#7a3a10;box-shadow:0 20px 50px rgba(90,35,0,.45);max-height:100%;overflow:auto}
+  .card2 h2{font-size:24px;font-weight:900;letter-spacing:1px;color:#c2560f;margin-bottom:3px}
+  .card2 p{font-size:14px;line-height:1.55;color:#9a6b47;margin:8px 0}
+  .btn{display:block;width:100%;margin-top:9px;padding:13px;border:none;border-radius:15px;
+    font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ffb45e,#ef8017);color:#fff;
+    box-shadow:0 5px 0 #c2600a,0 8px 18px rgba(190,90,10,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #c2600a}
+  .btn-alt{background:#fdf0e2;color:#a55a20;border:1.5px solid #f3ddc6}
+  .rules{text-align:left;font-size:13px;line-height:1.7;color:#8d6244;margin:11px 2px}
+  .rules b{color:#c2560f}
+  .stats2{display:flex;gap:8px;margin-top:12px}
+  .st{flex:1;background:#fdf0e2;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#b5885f}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#c2560f}
+  .dealin{display:flex;gap:8px;margin-top:12px;align-items:center}
+  .dealin input{flex:1;font:900 16px inherit;padding:10px;border-radius:12px;border:1.5px solid #f0d9c0;
+    background:#fff8f1;color:#a55a20;text-align:center;-webkit-appearance:none}
+  @media (max-height:700px){
+    .card2{padding:15px 15px 12px}.card2 h2{font-size:20px}
+    .rules{font-size:11.7px;line-height:1.5}.btn{padding:11px;font-size:14px;margin-top:7px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="pill" href="index.html">&#9776; Menu</a>
+  <h1>FREECELL</h1>
+  <button class="pill" id="bPause">&#10074;&#10074;</button>
+</header>
+<div class="strip">
+  <div class="chip"><div class="k">DEAL</div><div class="v" id="vDeal">1</div></div>
+  <div class="chip"><div class="k">HOME</div><div class="v" id="vHome">0/52</div></div>
+  <div class="chip"><div class="k">MOVES</div><div class="v" id="vMoves">0</div></div>
+  <div class="chip"><div class="k">TIME</div><div class="v" id="vTime">0:00</div></div>
+</div>
+<div id="board"></div>
+<div id="tools">
+  <div class="tool" id="tUndo"><div class="ti">&#8630;</div><div class="tl">UNDO</div></div>
+  <div class="tool" id="tHint"><div class="ti">&#128161;</div><div class="tl">HINT</div></div>
+  <div class="tool" id="tAuto"><div class="ti">&#9650;</div><div class="tl">SEND UP</div></div>
+  <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW</div></div>
+</div>
+<div class="ovl" id="ovl"><div class="card2" id="card2"></div></div>
+
+<script src="achievements.js"></script>
+<script>
+var FC_SEEDS=[1001, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1011, 1014, 1015, 1017, 1019, 1020, 1022, 1023, 1024, 1025, 1026, 1027, 1030, 1031, 1032, 1034, 1035, 1036, 1037, 1038, 1039, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1051, 1052, 1053, 1054, 1055, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1070, 1071, 1073, 1074, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1087, 1088, 1089, 1091, 1093, 1094, 1095, 1096, 1098, 1099, 1101, 1102, 1103, 1104, 1105, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1116, 1119, 1120, 1121, 1122, 1123, 1124, 1127, 1128, 1129, 1130, 1131, 1132, 1133, 1135, 1136, 1137, 1138, 1139, 1140, 1141, 1142, 1143, 1145, 1146, 1147, 1148, 1150, 1151, 1153, 1154, 1155, 1156, 1157, 1158, 1160, 1161, 1163, 1164, 1166, 1167, 1168, 1169, 1170, 1171, 1172, 1173, 1174, 1175, 1176, 1177, 1180, 1181, 1183, 1184, 1185, 1186, 1189, 1190, 1191, 1192, 1193, 1194, 1195, 1196, 1197, 1198, 1199, 1200, 1201, 1202, 1204, 1207, 1208, 1210, 1211, 1212, 1214, 1215, 1217, 1218, 1219, 1220, 1223, 1224, 1225, 1226, 1229, 1230, 1231, 1232, 1234, 1235, 1236, 1237, 1238, 1239, 1241, 1242, 1243, 1244, 1245, 1246, 1247, 1249, 1252, 1253, 1254, 1256, 1257, 1258, 1259, 1266, 1267, 1269, 1270, 1271, 1272, 1273, 1274, 1275, 1276, 1277, 1278, 1279, 1281, 1282, 1283, 1284, 1286, 1287, 1288, 1290, 1291, 1292, 1295, 1296, 1297, 1298, 1299, 1300, 1301, 1302, 1304, 1306, 1307, 1308, 1310, 1311, 1312, 1313, 1314, 1315, 1319, 1320, 1321, 1322, 1324, 1325, 1327, 1328, 1329, 1330, 1331, 1332, 1333, 1334, 1335, 1336, 1337, 1338, 1340, 1341, 1343, 1344, 1345, 1346, 1347, 1349, 1351, 1353, 1354, 1355, 1356, 1357, 1358, 1359, 1360, 1361, 1362, 1363, 1364, 1365, 1366, 1367, 1368, 1369, 1370, 1371, 1373, 1376, 1379, 1380, 1381, 1383, 1384, 1385, 1387, 1389, 1390, 1391, 1392, 1394, 1395, 1397, 1398, 1399, 1400, 1401, 1402, 1403, 1405, 1406, 1408, 1409, 1410, 1414, 1415, 1416, 1417, 1418, 1419, 1420, 1422, 1423, 1425, 1428, 1429, 1430, 1431, 1433, 1434, 1435, 1436, 1437, 1438, 1439, 1440, 1442, 1444, 1445, 1446, 1447, 1448, 1449, 1450, 1454, 1455, 1456, 1457, 1458, 1459, 1460, 1462, 1465, 1466, 1467, 1468, 1469, 1470, 1471, 1473, 1475, 1477, 1478, 1479, 1480, 1481, 1482, 1483, 1484, 1487, 1488, 1489, 1490, 1491, 1492, 1493, 1494, 1496, 1497, 1499, 1500, 1501, 1502, 1503, 1504, 1505, 1507, 1508, 1509, 1510, 1511, 1512, 1513, 1516, 1517, 1518];
+(function(){
+"use strict";
+var SUITS=["♠","♥","♦","♣"];
+var SUIT_COLOR=["black","red","red","black"];
+var RANK_TXT=["","A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+function R(c){ return c>>2; } function SU(c){ return c&3; }
+function isRed(c){ var s=c&3; return s===1||s===2; }
+
+var LS="gg_freecell_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+/* ---------------- state ---------------- */
+var S=null, elMap={}, colSlots=[], freeSlots=[], foundSlots=[], undoStack=[];
+var dealNo=1, secs=0, running=false, started=false, done=false;
+var CW=0,CH=0,GAP=0,OV=0,TOPH=0;
+
+function rng(seed){ var s=seed>>>0||1;
+  return function(){ s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296; }; }
+function dealFromSeed(seed){
+  var rand=rng(seed), d=[], r, s, i;
+  for(r=1;r<=13;r++) for(s=0;s<4;s++) d.push((r<<2)|s);
+  for(i=d.length-1;i>0;i--){ var j=(rand()*(i+1))|0; var t=d[i]; d[i]=d[j]; d[j]=t; }
+  var cols=[[],[],[],[],[],[],[],[]];
+  for(i=0;i<52;i++) cols[i%8].push(d[i]);
+  return {cols:cols, free:[null,null,null,null], found:[0,0,0,0], moves:0};
+}
+function newGame(n){
+  dealNo = ((n-1) % FC_SEEDS.length + FC_SEEDS.length) % FC_SEEDS.length + 1;
+  S = dealFromSeed(FC_SEEDS[dealNo-1]);
+  undoStack=[]; secs=0; done=false; running=true; hintPlan=null;
+  save("deal", dealNo);
+  clearEls(); layout(); render(true); paintHUD();
+  /* deliberately does NOT persist - boot calls this before the title screen
+     reads the stored game, and saving here would wipe it */
+}
+function clearEls(){
+  for(var k in elMap) if(elMap[k].parentNode) elMap[k].parentNode.removeChild(elMap[k]);
+  elMap={};
+}
+function homeCount(){ return S.found[0]+S.found[1]+S.found[2]+S.found[3]; }
+
+/* ---------------- persistence ---------------- */
+function pack(){ return {d:dealNo, c:S.cols, f:S.free, o:S.found, m:S.moves, t:secs}; }
+function persist(){ if(done){ save("cur",null); return; } try{ save("cur", pack()); }catch(e){} }
+function restore(){
+  var v=load("cur",null);
+  if(!v||!v.c) return false;
+  dealNo=v.d; secs=v.t|0;
+  S={cols:v.c.map(function(x){return x.slice();}), free:v.f.slice(), found:v.o.slice(), moves:v.m|0};
+  undoStack=[]; done=false; running=true; hintPlan=null;
+  clearEls(); layout(); render(true); paintHUD();
+  return true;
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- rules ---------------- */
+function canStack(card, onto){ return R(onto)===R(card)+1 && isRed(onto)!==isRed(card); }
+function canToFound(c){ return S.found[SU(c)] === R(c)-1; }
+function freeCount(){ var n=0; for(var i=0;i<4;i++) if(S.free[i]===null) n++; return n; }
+function emptyCols(){ var n=0; for(var i=0;i<8;i++) if(!S.cols[i].length) n++; return n; }
+function capacity(toEmpty){
+  var e=emptyCols(); if(toEmpty&&e>0) e--;
+  return (freeCount()+1) * Math.pow(2,e);
+}
+function runLen(col){
+  if(!col.length) return 0;
+  var n=1;
+  for(var i=col.length-1;i>0;i--){ if(canStack(col[i],col[i-1])) n++; else break; }
+  return n;
+}
+function safeToFound(c){
+  var r=R(c); if(r<=2) return true;
+  var red=isRed(c);
+  var a = red ? S.found[0] : S.found[1];
+  var b = red ? S.found[3] : S.found[2];
+  return a>=r-1 && b>=r-1;
+}
+function autoSend(){
+  var any=false, moved=true;
+  while(moved){
+    moved=false;
+    for(var i=0;i<8;i++){
+      var col=S.cols[i];
+      if(!col.length) continue;
+      var c=col[col.length-1];
+      if(canToFound(c)&&safeToFound(c)){ col.pop(); S.found[SU(c)]=R(c); moved=true; any=true; }
+    }
+    for(var f=0;f<4;f++){
+      var c2=S.free[f];
+      if(c2==null) continue;
+      if(canToFound(c2)&&safeToFound(c2)){ S.free[f]=null; S.found[SU(c2)]=R(c2); moved=true; any=true; }
+    }
+  }
+  return any;
+}
+function pushUndo(){
+  undoStack.push(JSON.stringify(pack()));
+  if(undoStack.length>300) undoStack.shift();
+}
+
+/* ---------------- layout ---------------- */
+var boardEl=document.getElementById("board");
+function longest(){ var m=1; for(var i=0;i<8;i++) m=Math.max(m,S.cols[i].length); return m; }
+function layout(){
+  var bw=boardEl.clientWidth, bh=boardEl.clientHeight;
+  if(bw<50||bh<50||!S) return;
+  GAP=Math.max(3, bw*0.008);
+  CW=Math.floor((bw-GAP*7)/8);
+  CH=Math.round(CW*1.42);
+  TOPH=CH+Math.max(8,CH*0.20);
+  var avail=bh-TOPH-CH-4;
+  OV=Math.max(9, Math.min(CH*0.34, avail/Math.max(1,longest()-1)));
+  document.documentElement.style.setProperty("--cw",CW+"px");
+  document.documentElement.style.setProperty("--ch",CH+"px");
+  if(!colSlots.length){
+    var i,d;
+    for(i=0;i<4;i++){ d=document.createElement("div"); d.className="slot";
+      d.dataset.free=i; boardEl.appendChild(d); freeSlots.push(d); }
+    for(i=0;i<4;i++){ d=document.createElement("div"); d.className="slot found";
+      d.dataset.found=i; d.textContent=SUITS[i]; boardEl.appendChild(d); foundSlots.push(d); }
+    for(i=0;i<8;i++){ d=document.createElement("div"); d.className="slot";
+      d.dataset.col=i; boardEl.appendChild(d); colSlots.push(d); }
+  }
+  for(var k=0;k<4;k++){
+    freeSlots[k].style.left=(k*(CW+GAP))+"px"; freeSlots[k].style.top="0px";
+    foundSlots[k].style.left=((k+4)*(CW+GAP))+"px"; foundSlots[k].style.top="0px";
+  }
+  for(k=0;k<8;k++){ colSlots[k].style.left=(k*(CW+GAP))+"px"; colSlots[k].style.top=TOPH+"px"; }
+}
+window.addEventListener("resize", function(){ if(S){ layout(); render(true); } });
+
+function cardEl(c){
+  var el=elMap[c];
+  if(el) return el;
+  el=document.createElement("div");
+  el.className="card "+SUIT_COLOR[SU(c)];
+  el.dataset.card=c;
+  var rt=RANK_TXT[R(c)], su=SUITS[SU(c)];
+  var big=(R(c)>10)?'<span class="cr">'+rt+'</span>'+su:su;
+  el.innerHTML='<div class="corner"><span>'+rt+'</span><span>'+su+'</span></div>'+
+               '<div class="big">'+big+'</div>';
+  boardEl.appendChild(el); elMap[c]=el;
+  return el;
+}
+function colX(i){ return i*(CW+GAP); }
+function render(noanim){
+  if(!S) return;
+  var seen={}, i, j;
+  for(i=0;i<4;i++){
+    var fc=S.free[i];
+    if(fc!=null){ var e=cardEl(fc); seen[fc]=1;
+      if(noanim) e.classList.add("noanim"); else e.classList.remove("noanim");
+      e.style.left=colX(i)+"px"; e.style.top="0px"; e.style.zIndex=20; e.style.display=""; }
+  }
+  for(i=0;i<4;i++){
+    var top=S.found[i];
+    for(var r=1;r<=top;r++){
+      var cc=(r<<2)|i, el2=cardEl(cc); seen[cc]=1;
+      if(noanim) el2.classList.add("noanim"); else el2.classList.remove("noanim");
+      el2.style.left=colX(i+4)+"px"; el2.style.top="0px"; el2.style.zIndex=20+r; el2.style.display="";
+    }
+  }
+  for(i=0;i<8;i++){
+    for(j=0;j<S.cols[i].length;j++){
+      var c=S.cols[i][j], el3=cardEl(c); seen[c]=1;
+      if(noanim) el3.classList.add("noanim"); else el3.classList.remove("noanim");
+      el3.style.left=colX(i)+"px";
+      el3.style.top=(TOPH + j*OV)+"px";
+      el3.style.zIndex=40+j; el3.style.display="";
+    }
+  }
+  for(var k in elMap) if(!seen[k]) elMap[k].style.display="none";
+  if(noanim) setTimeout(function(){ for(var k2 in elMap) elMap[k2].classList.remove("noanim"); },30);
+}
+function paintHUD(){
+  document.getElementById("vDeal").textContent=dealNo;
+  document.getElementById("vHome").textContent=homeCount()+"/52";
+  document.getElementById("vMoves").textContent=S.moves;
+  document.getElementById("vTime").textContent=fmt(secs);
+  document.getElementById("tUndo").className="tool"+((!undoStack.length||done)?" off":"");
+}
+function fmt(s){ var m=(s/60)|0; return m+":"+("0"+(s%60)).slice(-2); }
+
+/* ---------------- moves ---------------- */
+function locate(card){
+  for(var i=0;i<8;i++){ var k=S.cols[i].indexOf(card); if(k>=0) return {kind:"col",col:i,idx:k}; }
+  for(var f=0;f<4;f++) if(S.free[f]===card) return {kind:"free",cell:f};
+  return null;
+}
+function movableFrom(loc){
+  if(loc.kind==="free") return 1;
+  var col=S.cols[loc.col];
+  var tail=col.length-loc.idx;
+  if(tail>runLen(col)) return 0;
+  return tail;
+}
+function tryMove(loc, dest){
+  /* dest: {kind:"col",col} | {kind:"free",cell} | {kind:"found",suit} */
+  var i;
+  if(loc.kind==="free"){
+    var c=S.free[loc.cell];
+    if(dest.kind==="found"){ if(SU(c)!==dest.suit || !canToFound(c)) return false;
+      pushUndo(); S.free[loc.cell]=null; S.found[SU(c)]=R(c); after(); return true; }
+    if(dest.kind==="free"){ if(S.free[dest.cell]!==null) return false;
+      pushUndo(); S.free[loc.cell]=null; S.free[dest.cell]=c; after(); return true; }
+    var col=S.cols[dest.col];
+    if(col.length && !canStack(c, col[col.length-1])) return false;
+    pushUndo(); S.free[loc.cell]=null; col.push(c); after(); return true;
+  }
+  var src=S.cols[loc.col], n=src.length-loc.idx;
+  if(n<1 || n>runLen(src)) return false;
+  if(dest.kind==="found"){
+    if(n!==1) return false;
+    var c1=src[src.length-1];
+    if(SU(c1)!==dest.suit || !canToFound(c1)) return false;
+    pushUndo(); src.pop(); S.found[SU(c1)]=R(c1); after(); return true;
+  }
+  if(dest.kind==="free"){
+    if(n!==1 || S.free[dest.cell]!==null) return false;
+    pushUndo(); S.free[dest.cell]=src.pop(); after(); return true;
+  }
+  if(dest.col===loc.col) return false;
+  var d=S.cols[dest.col];
+  var cap=capacity(!d.length);
+  if(n>cap) { flashMsg("Not enough free cells to move "+n+" cards"); return false; }
+  if(d.length && !canStack(src[loc.idx], d[d.length-1])) return false;
+  pushUndo();
+  var moving=src.splice(loc.idx);
+  for(i=0;i<moving.length;i++) d.push(moving[i]);
+  after();
+  return true;
+}
+function after(){
+  S.moves++;
+  var sent=autoSend();
+  beep(sent?620:430,.06,"triangle",.045, sent?820:null);
+  if(window.GGA) GGA.haptic("light");
+  layout(); render(); paintHUD(); persist();
+  checkWin();
+}
+function checkWin(){
+  if(homeCount()<52) return;
+  done=true; running=false; save("cur",null);
+  var best=load("best",0);
+  var isBest=!best || S.moves<best;
+  if(isBest) save("best", S.moves);
+  var wl=load("won",{}); wl[dealNo]=1; save("won",wl);
+  if(window.GGA){
+    GGA.award("fc_win");
+    if(undoStack.length===0) GGA.award("fc_noundo");
+    if(S.moves<=70) GGA.award("fc_tidy");
+    var n=0; for(var k in wl) n++;
+    if(n>=5) GGA.award("fc_5");
+    if(n>=25) GGA.award("fc_25");
+    GGA.haptic("success");
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  setTimeout(function(){ winScreen(isBest); },600);
+}
+
+/* ---------------- pointer ---------------- */
+var drag=null;
+function pt(e){ var t=e.touches?e.touches[0]:e; return {x:t.clientX,y:t.clientY}; }
+function findCard(target){
+  var el=target;
+  while(el && el!==boardEl && !(el.dataset&&el.dataset.card!=null)) el=el.parentNode;
+  return (el&&el.dataset&&el.dataset.card!=null)?+el.dataset.card:-1;
+}
+function destAt(px,py){
+  /* px,py relative to the board */
+  var i;
+  if(py < TOPH - CH*0.15){
+    for(i=0;i<4;i++) if(px>=colX(i)-GAP/2 && px<colX(i)+CW+GAP/2) return {kind:"free",cell:i};
+    for(i=0;i<4;i++) if(px>=colX(i+4)-GAP/2 && px<colX(i+4)+CW+GAP/2) return {kind:"found",suit:i};
+    return null;
+  }
+  for(i=0;i<8;i++) if(px>=colX(i)-GAP/2 && px<colX(i)+CW+GAP/2) return {kind:"col",col:i};
+  return null;
+}
+function onDown(e){
+  if(done||!started||!S) return;
+  var card=findCard(e.target);
+  if(card<0) return;
+  var loc=locate(card);
+  if(!loc) return;
+  var n=movableFrom(loc);
+  if(n<1){
+    var el0=elMap[card];
+    if(el0){ el0.classList.add("bad"); setTimeout(function(){ el0.classList.remove("bad"); },320); }
+    beep(190,.1,"sawtooth",.04);
+    return;
+  }
+  e.preventDefault();
+  var p=pt(e), rect=elMap[card].getBoundingClientRect();
+  var cards = loc.kind==="free" ? [card] : S.cols[loc.col].slice(loc.idx);
+  drag={loc:loc, cards:cards, dx:p.x-rect.left, dy:p.y-rect.top,
+        moved:false, sx:p.x, sy:p.y};
+  cards.forEach(function(c,k){ var el=elMap[c]; el.classList.add("drag"); el.style.zIndex=900+k; });
+  if(window.GGA) GGA.haptic("light");
+}
+function onMove(e){
+  if(!drag) return;
+  e.preventDefault();
+  var p=pt(e);
+  if(Math.abs(p.x-drag.sx)>3||Math.abs(p.y-drag.sy)>3) drag.moved=true;
+  var br=boardEl.getBoundingClientRect();
+  drag.cards.forEach(function(c,k){
+    var el=elMap[c];
+    el.style.left=(p.x-drag.dx-br.left)+"px";
+    el.style.top=(p.y-drag.dy-br.top+k*OV)+"px";
+  });
+}
+function onUp(e){
+  if(!drag) return;
+  var d=drag; drag=null;
+  d.cards.forEach(function(c){ elMap[c].classList.remove("drag"); });
+  var p=e.changedTouches?{x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY}:pt(e);
+  var br=boardEl.getBoundingClientRect();
+  var ok=false;
+  if(!d.moved){
+    ok=autoMove(d.loc);
+  }else{
+    var cx=p.x-d.dx-br.left+CW/2, cy=p.y-d.dy-br.top+CH/2;
+    var dest=destAt(cx,cy);
+    if(dest) ok=tryMove(d.loc,dest);
+  }
+  if(!ok){ layout(); render(); if(d.moved) beep(200,.08,"sawtooth",.035); }
+}
+function autoMove(loc){
+  /* tap: foundation first, then a real stack, then a free cell */
+  var card = loc.kind==="free" ? S.free[loc.cell] : S.cols[loc.col][loc.idx];
+  var n = movableFrom(loc);
+  if(n===1 && canToFound(card) && tryMove(loc,{kind:"found",suit:SU(card)})) return true;
+  var i;
+  for(i=0;i<8;i++){
+    if(loc.kind==="col" && i===loc.col) continue;
+    var d=S.cols[i];
+    if(d.length && canStack(card, d[d.length-1]) && tryMove(loc,{kind:"col",col:i})) return true;
+  }
+  for(i=0;i<8;i++){
+    if(loc.kind==="col" && i===loc.col) continue;
+    if(!S.cols[i].length && tryMove(loc,{kind:"col",col:i})) return true;
+  }
+  if(n===1 && loc.kind==="col"){
+    for(i=0;i<4;i++) if(S.free[i]===null && tryMove(loc,{kind:"free",cell:i})) return true;
+  }
+  return false;
+}
+boardEl.addEventListener("touchstart",onDown,{passive:false});
+boardEl.addEventListener("touchmove",onMove,{passive:false});
+boardEl.addEventListener("touchend",onUp);
+boardEl.addEventListener("touchcancel",onUp);
+boardEl.addEventListener("mousedown",onDown);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",onUp);
+
+/* ---------------- tools ---------------- */
+document.getElementById("tUndo").onclick=function(){
+  if(done||!undoStack.length) return;
+  var v=JSON.parse(undoStack.pop());
+  dealNo=v.d; secs=v.t|0;
+  S={cols:v.c.map(function(x){return x.slice();}),free:v.f.slice(),found:v.o.slice(),moves:v.m|0};
+  clearEls(); layout(); render(true); paintHUD(); persist();
+  beep(360,.07,"sine",.05);
+};
+document.getElementById("tAuto").onclick=function(){
+  if(done) return;
+  pushUndo();
+  var any=false, moved=true;
+  while(moved){
+    moved=false;
+    for(var i=0;i<8;i++){
+      var col=S.cols[i];
+      if(col.length && canToFound(col[col.length-1])){ var c=col.pop(); S.found[SU(c)]=R(c); moved=true; any=true; }
+    }
+    for(var f=0;f<4;f++){
+      var c2=S.free[f];
+      if(c2!=null && canToFound(c2)){ S.free[f]=null; S.found[SU(c2)]=R(c2); moved=true; any=true; }
+    }
+  }
+  if(!any){ undoStack.pop(); flashMsg("Nothing can go up yet"); beep(200,.1,"sawtooth",.04); return; }
+  S.moves++;
+  beep(700,.14,"triangle",.06,1000);
+  layout(); render(); paintHUD(); persist(); checkWin();
+};
+document.getElementById("tHint").onclick=function(){
+  if(done) return;
+  var sm=nextPlannedMove(20000);
+  var m = sm ? solverMoveToUI(sm) : findHint();
+  if(!m){ flashMsg("No useful move — try Undo"); beep(200,.12,"sawtooth",.05); return; }
+  m.cards.forEach(function(c){ var el=elMap[c]; if(el){ el.classList.add("hi");
+    setTimeout(function(){ el.classList.remove("hi"); },1100); } });
+  var slot = m.dest.kind==="col" ? colSlots[m.dest.col]
+           : m.dest.kind==="free" ? freeSlots[m.dest.cell] : foundSlots[m.dest.suit];
+  slot.style.boxShadow="0 0 0 3px #ffe066";
+  setTimeout(function(){ slot.style.boxShadow=""; },1100);
+  beep(760,.13,"sine",.06,1050);
+};
+
+/* ---------------- embedded solver (used for hints) ----------------
+   Same search that verified every deal, run from the live position with a
+   small budget so the hint is a move on a real winning line. */
+function solverState(){
+  return {cols:S.cols.map(function(c){return c.slice();}), free:S.free.slice(), found:S.found.slice()};
+}
+function sv_clone(st){ return {cols:st.cols.map(function(c){return c.slice();}),
+  free:st.free.slice(), found:st.found.slice()}; }
+function sv_won(st){ return st.found[0]===13&&st.found[1]===13&&st.found[2]===13&&st.found[3]===13; }
+function sv_safe(st,c){
+  var r=R(c); if(r<=2) return true;
+  var red=isRed(c);
+  var a=red?st.found[0]:st.found[1], b=red?st.found[3]:st.found[2];
+  return a>=r-1&&b>=r-1;
+}
+function sv_auto(st){
+  var moved=true;
+  while(moved){
+    moved=false;
+    for(var i=0;i<8;i++){
+      var col=st.cols[i];
+      if(!col.length) continue;
+      var c=col[col.length-1];
+      if(st.found[SU(c)]===R(c)-1 && sv_safe(st,c)){ col.pop(); st.found[SU(c)]=R(c); moved=true; }
+    }
+    for(var f=0;f<4;f++){
+      var c2=st.free[f];
+      if(c2==null) continue;
+      if(st.found[SU(c2)]===R(c2)-1 && sv_safe(st,c2)){ st.free[f]=null; st.found[SU(c2)]=R(c2); moved=true; }
+    }
+  }
+}
+function sv_key(st){
+  return st.cols.map(function(c){return c.join(",");}).sort().join("|")+"#"+
+    st.free.slice().sort(function(a,b){return (a==null?-1:a)-(b==null?-1:b);}).join(",")+"#"+st.found.join(",");
+}
+function sv_moves(st){
+  var out=[],i,j;
+  for(i=0;i<8;i++){ var col=st.cols[i];
+    if(col.length && st.found[SU(col[col.length-1])]===R(col[col.length-1])-1) out.push({t:"cf",from:i}); }
+  for(i=0;i<4;i++) if(st.free[i]!=null && st.found[SU(st.free[i])]===R(st.free[i])-1) out.push({t:"ff",from:i});
+  var fe=-1; for(i=0;i<8;i++) if(!st.cols[i].length){ fe=i; break; }
+  for(i=0;i<4;i++){ var c=st.free[i];
+    if(c==null) continue;
+    for(j=0;j<8;j++){ var d=st.cols[j];
+      if(!d.length){ if(j===fe) out.push({t:"fc",from:i,to:j}); }
+      else if(canStack(c,d[d.length-1])) out.push({t:"fc",from:i,to:j}); } }
+  for(i=0;i<8;i++){ var sc=st.cols[i];
+    if(!sc.length) continue;
+    var card=sc[sc.length-1];
+    for(j=0;j<8;j++){ if(i===j) continue;
+      var t=st.cols[j];
+      if(!t.length){ if(sc.length>1 && j===fe) out.push({t:"cc",from:i,to:j}); }
+      else if(canStack(card,t[t.length-1])) out.push({t:"cc",from:i,to:j}); } }
+  for(i=0;i<8;i++){ if(!st.cols[i].length) continue;
+    for(j=0;j<4;j++) if(st.free[j]===null){ out.push({t:"cx",from:i,to:j}); break; } }
+  return out;
+}
+function sv_apply(st,m){
+  var c;
+  if(m.t==="cf"){ c=st.cols[m.from].pop(); st.found[SU(c)]=R(c); }
+  else if(m.t==="ff"){ c=st.free[m.from]; st.free[m.from]=null; st.found[SU(c)]=R(c); }
+  else if(m.t==="fc"){ c=st.free[m.from]; st.free[m.from]=null; st.cols[m.to].push(c); }
+  else if(m.t==="cc"){ c=st.cols[m.from].pop(); st.cols[m.to].push(c); }
+  else if(m.t==="cx"){ c=st.cols[m.from].pop(); st.free[m.to]=c; }
+}
+function sv_score(st){
+  var s=st.found[0]+st.found[1]+st.found[2]+st.found[3], i;
+  for(i=0;i<8;i++) if(!st.cols[i].length) s+=3;
+  for(i=0;i<4;i++) if(st.free[i]===null) s+=1;
+  for(i=0;i<8;i++) s+=runLen(st.cols[i]);
+  return s;
+}
+/* Returns a whole winning line (move list + the state key before each move).
+   Hints follow one plan rather than re-searching every time, which is what
+   stopped consecutive hints from undoing each other. */
+function solvePlan(nodeCap){
+  var root=solverState();
+  sv_auto(root);
+  if(sv_won(root)) return null;
+  var seen={}, nodes=0;
+  var stack=[{st:root, path:[]}];
+  seen[sv_key(root)]=1;
+  while(stack.length && nodes<nodeCap){
+    var cur=stack.pop(); nodes++;
+    var ms=sv_moves(cur.st), kids=[];
+    for(var i=0;i<ms.length;i++){
+      var nx=sv_clone(cur.st);
+      var beforeKey=sv_key(cur.st);
+      sv_apply(nx,ms[i]); sv_auto(nx);
+      var path=cur.path.concat([{m:ms[i], k:beforeKey}]);
+      if(sv_won(nx)) return path;
+      var k=sv_key(nx);
+      if(seen[k]) continue;
+      seen[k]=1;
+      kids.push({st:nx, path:path});
+    }
+    kids.sort(function(a,b){ return sv_score(a.st)-sv_score(b.st); });
+    for(var j=0;j<kids.length;j++) stack.push(kids[j]);
+    if(stack.length>12000) stack.splice(0, stack.length-6000);
+  }
+  return null;
+}
+var hintPlan=null;
+function nextPlannedMove(nodeCap){
+  var st=solverState(); sv_auto(st);
+  var key=sv_key(st);
+  if(hintPlan){
+    for(var i=0;i<hintPlan.length;i++) if(hintPlan[i].k===key) return hintPlan[i].m;
+  }
+  hintPlan=solvePlan(nodeCap);
+  if(!hintPlan) return null;
+  for(var j=0;j<hintPlan.length;j++) if(hintPlan[j].k===key) return hintPlan[j].m;
+  return hintPlan[0].m;
+}
+function solverMoveToUI(m){
+  if(m.t==="cf"){ var col=S.cols[m.from];
+    return {loc:{kind:"col",col:m.from,idx:col.length-1},
+            dest:{kind:"found",suit:SU(col[col.length-1])}, cards:[col[col.length-1]]}; }
+  if(m.t==="ff") return {loc:{kind:"free",cell:m.from},
+            dest:{kind:"found",suit:SU(S.free[m.from])}, cards:[S.free[m.from]]};
+  if(m.t==="fc") return {loc:{kind:"free",cell:m.from}, dest:{kind:"col",col:m.to}, cards:[S.free[m.from]]};
+  if(m.t==="cc"){ var c2=S.cols[m.from];
+    return {loc:{kind:"col",col:m.from,idx:c2.length-1}, dest:{kind:"col",col:m.to},
+            cards:[c2[c2.length-1]]}; }
+  if(m.t==="cx"){ var c3=S.cols[m.from];
+    return {loc:{kind:"col",col:m.from,idx:c3.length-1}, dest:{kind:"free",cell:m.to},
+            cards:[c3[c3.length-1]]}; }
+  return null;
+}
+
+function findHint(){
+  var i,j,best=null,bestSc=-1e9;
+  function consider(loc, dest, cards, sc){
+    if(sc>bestSc){ bestSc=sc; best={loc:loc,dest:dest,cards:cards,score:sc}; }
+  }
+  /* foundation moves are almost always good */
+  for(i=0;i<8;i++){
+    var col=S.cols[i];
+    if(!col.length) continue;
+    var c=col[col.length-1];
+    if(canToFound(c)) consider({kind:"col",col:i,idx:col.length-1},{kind:"found",suit:SU(c)},[c],100);
+  }
+  for(i=0;i<4;i++){
+    var fc=S.free[i];
+    if(fc!=null && canToFound(fc)) consider({kind:"free",cell:i},{kind:"found",suit:SU(fc)},[fc],95);
+  }
+  /* column to column */
+  for(i=0;i<8;i++){
+    var src=S.cols[i];
+    if(!src.length) continue;
+    var rl=runLen(src);
+    for(var k=src.length-rl;k<src.length;k++){
+      var n=src.length-k;
+      var head=src[k];
+      for(j=0;j<8;j++){
+        if(i===j) continue;
+        var d=S.cols[j];
+        if(!d.length) continue;
+        if(!canStack(head, d[d.length-1])) continue;
+        if(n>capacity(false)) continue;
+        var sc=30+n*2;
+        if(k===0) sc-=8;                        /* emptying a column is usually better kept */
+        consider({kind:"col",col:i,idx:k},{kind:"col",col:j},src.slice(k),sc);
+      }
+    }
+  }
+  /* free cell back into play */
+  for(i=0;i<4;i++){
+    var f2=S.free[i];
+    if(f2==null) continue;
+    for(j=0;j<8;j++){
+      var d2=S.cols[j];
+      if(d2.length && canStack(f2,d2[d2.length-1])) consider({kind:"free",cell:i},{kind:"col",col:j},[f2],60);
+    }
+  }
+  return best;
+}
+var msgTimer=null;
+function flashMsg(txt){
+  var m=document.getElementById("msg");
+  if(!m){
+    m=document.createElement("div"); m.id="msg";
+    m.setAttribute("style","position:fixed;left:50%;transform:translateX(-50%);"+
+      "bottom:calc(env(safe-area-inset-bottom,0px) + 78px);z-index:50;background:rgba(120,50,10,.94);"+
+      "color:#fff;font-size:13px;font-weight:800;padding:9px 16px;border-radius:999px;"+
+      "box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none;transition:opacity .25s");
+    document.body.appendChild(m);
+  }
+  m.textContent=txt; m.style.opacity="1";
+  clearTimeout(msgTimer); msgTimer=setTimeout(function(){ m.style.opacity="0"; },1700);
+}
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card2=document.getElementById("card2");
+function openOvl(h){ card2.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+function titleScreen(){
+  var cur=load("cur",null), wl=load("won",{}), n=0;
+  for(var k in wl) n++;
+  var next=load("deal",1);
+  openOvl('<h2>FREECELL</h2><p>Every card is face up. Work them all home, aces first.</p>'+
+    '<div class="stats2">'+
+      '<div class="st"><div class="sk">DEALS WON</div><div class="sv">'+n+'</div></div>'+
+      '<div class="st"><div class="sk">BEST MOVES</div><div class="sv">'+(load("best",0)||"–")+'</div></div>'+
+      '<div class="st"><div class="sk">DEALS</div><div class="sv">'+FC_SEEDS.length+'</div></div>'+
+    '</div>'+
+    (cur&&cur.c?'<button class="btn btn-go" id="bResume">CARRY ON &middot; DEAL '+cur.d+'</button>':'')+
+    '<button class="btn btn-'+(cur&&cur.c?'alt':'go')+'" id="bPlay">PLAY DEAL '+next+'</button>'+
+    '<div class="dealin"><input id="dn" type="number" min="1" max="'+FC_SEEDS.length+'" value="'+next+'">'+
+      '<button class="btn btn-alt" style="margin:0;width:auto;padding:11px 16px" id="bGoDeal">GO</button></div>'+
+    '<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>');
+  var br=card2.querySelector("#bResume");
+  if(br) br.onclick=function(){ started=true; if(!restore()) newGame(next); persist(); closeOvl(); };
+  card2.querySelector("#bPlay").onclick=function(){ started=true; newGame(next); persist(); closeOvl(); };
+  card2.querySelector("#bGoDeal").onclick=function(){
+    var v=parseInt(card2.querySelector("#dn").value,10);
+    if(!v||v<1) v=1;
+    started=true; newGame(v); persist(); closeOvl();
+  };
+  card2.querySelector("#bRules").onclick=rulesScreen;
+}
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Send every card up to the four piles at the top, each suit from <b>Ace to King</b>.<br><br>'+
+    '&#9642; In the columns, build <b>downwards in alternating colours</b> &mdash; a red six on a black seven.<br><br>'+
+    '&#9642; The four boxes at the top left are <b>free cells</b>. Each holds one card, and it can come back out whenever you like.<br><br>'+
+    '&#9642; You can drag a run of cards at once, but only as many as your empty cells and columns allow. The game tells you if you are short.<br><br>'+
+    '&#9642; Tap a card to send it wherever it best fits. <b>Send Up</b> clears everything that can go home.<br><br>'+
+    '&#9642; Every deal here has been <b>checked by a solver</b>, so all of them can be won.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card2.querySelector("#bBack").onclick=titleScreen;
+}
+function winScreen(isBest){
+  openOvl('<h2>'+(isBest?"NEW BEST!":"ALL HOME!")+'</h2>'+
+    '<p>Deal '+dealNo+' solved.</p>'+
+    '<div class="stats2">'+
+      '<div class="st"><div class="sk">MOVES</div><div class="sv">'+S.moves+'</div></div>'+
+      '<div class="st"><div class="sk">BEST</div><div class="sv">'+(load("best",0)||S.moves)+'</div></div>'+
+      '<div class="st"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bNext">DEAL '+(dealNo+1)+'</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHOOSE A DEAL</button>');
+  card2.querySelector("#bNext").onclick=function(){ newGame(dealNo+1); persist(); closeOvl(); };
+  card2.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("tNew").onclick=function(){
+  openOvl('<h2>NEW DEAL?</h2><p>This one will be left as it is.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEXT DEAL</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card2.querySelector("#y").onclick=function(){ newGame(dealNo+1); persist(); closeOvl(); };
+  card2.querySelector("#n").onclick=closeOvl;
+};
+document.getElementById("bPause").onclick=function(){
+  if(done){ titleScreen(); return; }
+  running=false;
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats2">'+
+      '<div class="st"><div class="sk">DEAL</div><div class="sv">'+dealNo+'</div></div>'+
+      '<div class="st"><div class="sk">HOME</div><div class="sv">'+homeCount()+'</div></div>'+
+      '<div class="st"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHOOSE A DEAL</button>');
+  card2.querySelector("#bGo").onclick=function(){ running=true; closeOvl(); };
+  card2.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+setInterval(function(){ if(running&&!done&&started){ secs++;
+  document.getElementById("vTime").textContent=fmt(secs);
+  if(secs%10===0) persist(); } },1000);
+newGame(load("deal",1));
+started=false; running=false;
+titleScreen();
+setTimeout(function(){ layout(); render(true); },60);
+window.addEventListener("orientationchange", function(){ setTimeout(function(){ layout(); render(true); },220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+})();
+</script>
+</body>
+</html>

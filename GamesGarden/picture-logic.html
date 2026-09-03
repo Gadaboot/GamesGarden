@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Picture Logic</title>
+<style>
+  :root{ --ink:#3b3160; --soft:#7d73a8; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 10% -8%, #ffe1f2 0%, transparent 55%),
+      radial-gradient(120% 80% at 92% 104%, #d9f0ff 0%, transparent 55%),
+      linear-gradient(160deg, #ffd9ec 0%, #e4dcff 48%, #d3f2ff 100%);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);
+    background:rgba(255,255,255,.8);border:1.5px solid #fff;padding:7px 13px;border-radius:999px;
+    font-size:13px;font-weight:800;box-shadow:0 3px 10px rgba(90,70,150,.18);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.5px;line-height:1;
+    font-size:clamp(14px,4.6vw,21px);color:#fff;text-shadow:0 2px 0 #b39ad8, 0 4px 12px rgba(80,50,140,.35)}
+  .strip{display:flex;gap:6px;margin-bottom:6px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:14px;
+    background:rgba(255,255,255,.74);border:1.5px solid #fff;box-shadow:0 3px 10px rgba(90,70,150,.14)}
+  .chip .k{font-size:8.5px;letter-spacing:1.2px;font-weight:900;color:var(--soft)}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  .v-bad{color:#f0517a}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+  .tool{background:rgba(255,255,255,.88);border:1.5px solid #fff;border-radius:16px;
+    padding:10px 2px 8px;text-align:center;cursor:pointer;color:var(--ink);
+    box-shadow:0 4px 0 rgba(165,150,205,.55), 0 6px 14px rgba(90,70,150,.16)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(165,150,205,.55)}
+  .tool.off{opacity:.4}
+  .tool.on{background:linear-gradient(180deg,#ffe08a,#ffc23c);border-color:#ffb01f}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9.5px;font-weight:900;letter-spacing:.6px;margin-top:3px;color:var(--soft)}
+  .tool.on .tl{color:#8a6414}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(70,55,120,.36);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:358px;background:linear-gradient(180deg,#fff,#f8f4ff);
+    border:2px solid #fff;border-radius:22px;padding:20px 18px 16px;text-align:center;
+    box-shadow:0 20px 50px rgba(60,40,120,.4);max-height:100%;overflow:auto}
+  .card h2{font-size:24px;font-weight:900;letter-spacing:1px;color:#5a44a8;margin-bottom:3px}
+  .card p{font-size:14px;line-height:1.55;color:var(--soft);margin:8px 0}
+  .packs{display:grid;grid-template-columns:1fr;gap:9px;margin-top:13px}
+  .pack{border-radius:16px;padding:12px 12px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .pack:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .pack .pn{font-size:15px}
+  .pack .pt{font-size:10.5px;opacity:.93;font-weight:800;margin-top:2px}
+  .p-a{background:linear-gradient(180deg,#76dfa8,#33b371)}
+  .p-b{background:linear-gradient(180deg,#77c6ff,#2b8ce0)}
+  .p-c{background:linear-gradient(180deg,#c79cff,#8a5ae0)}
+  .lvls{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:12px}
+  .lv{aspect-ratio:1;border-radius:12px;background:#efeaff;border:1.5px solid #e2daff;
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;
+    color:#6b5aa8;cursor:pointer}
+  .lv:active{transform:scale(.94)}
+  .lv.done{background:linear-gradient(180deg,#8fe7b4,#3cba79);color:#fff;border-color:#3cba79}
+  .btn{display:block;width:100%;margin-top:9px;padding:13px;border:none;border-radius:15px;
+    font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#b493ff,#7a51e0);color:#fff;
+    box-shadow:0 5px 0 #5c3ab0, 0 8px 18px rgba(90,50,180,.3)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #5c3ab0}
+  .btn-alt{background:#f1ecff;color:#6a55a8;border:1.5px solid #e3daf8}
+  .rules{text-align:left;font-size:13px;line-height:1.7;color:#6a5f92;margin:11px 2px}
+  .rules b{color:#5a44a8}
+  .stats{display:flex;gap:8px;margin-top:12px}
+  .stat{flex:1;background:#f2edff;border-radius:13px;padding:8px 4px}
+  .stat .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:var(--soft)}
+  .stat .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#5a44a8}
+  #reveal{position:static;margin:12px auto 2px;display:block;border-radius:12px;
+    box-shadow:0 6px 18px rgba(60,40,120,.28);image-rendering:pixelated}
+  @media (max-height:700px){
+    .card{padding:15px 15px 12px}.card h2{font-size:20px}
+    .rules{font-size:11.8px;line-height:1.5}.btn{padding:11px;font-size:14px;margin-top:7px}
+    .lvls{grid-template-columns:repeat(6,1fr);gap:5px;margin-top:9px}
+    .lv{font-size:11.5px;border-radius:9px}
+    .card p{margin:5px 0;font-size:12.5px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">PICTURE LOGIC</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">PUZZLE</div><div class="v" id="vLvl">1</div></div>
+    <div class="chip"><div class="k">FILLED</div><div class="v" id="vFill">0/0</div></div>
+    <div class="chip"><div class="k">SLIPS</div><div class="v v-bad" id="vErr">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool on" id="tFill"><div class="ti">&#9632;</div><div class="tl">FILL</div></div>
+    <div class="tool" id="tMark"><div class="ti">&#10007;</div><div class="tl">MARK</div></div>
+    <div class="tool" id="tHint"><div class="ti">&#128161;</div><div class="tl">HINT</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+var NONO_PACKS={"5":[{"n":"Heart","b":"1101111111111110111000100"},{"n":"Star","b":"0000000100011100111001010"},{"n":"Diamond","b":"0010001110011100111000100"},{"n":"Clover","b":"0010001110111111111100100"},{"n":"Spade","b":"0010001110011101111100100"},{"n":"Anchor","b":"0010000100001000010001110"},{"n":"Shamrock","b":"0111000100111111101100000"},{"n":"Smiley","b":"0111011011100011101101110"},{"n":"Blossom","b":"0010011111110110101001110"},{"n":"Snowflake","b":"0010001110011100111000100"},{"n":"Cross","b":"0010000100111110010000100"},{"n":"Triangle","b":"0010000100011100111011111"},{"n":"Crown","b":"0111010001011100111001110"},{"n":"Castle","b":"0111001110011100111001110"},{"n":"Knight","b":"0010001100011100111001110"},{"n":"Bishop","b":"0010000100001000010001110"},{"n":"Pawn","b":"0010001110011100111011111"},{"n":"Yin Yang","b":"0000011000111001111101110"},{"n":"House","b":"0010001010100011000111111"},{"n":"Frown","b":"0111011011100011101101110"},{"n":"Flower","b":"0010011111011101111100100"},{"n":"Letter A","b":"0010001110010101111110001"},{"n":"Letter E","b":"0111001000011100100001110"},{"n":"Letter G","b":"0111111000110111101101111"},{"n":"Letter K","b":"1001011100111001111010011"},{"n":"Letter M","b":"1101111011111111010110001"},{"n":"Letter S","b":"0111011000011100001101110"},{"n":"Two","b":"0111000010001100110001110"},{"n":"Three","b":"0111000010011100001001110"},{"n":"Four","b":"0011001110010101111100110"},{"n":"Five","b":"0111001100011100001001110"},{"n":"Seven","b":"1111000010001100010001100"},{"n":"Nine","b":"0111011010011110001001110"},{"n":"Question","b":"0111000010001000010000100"},{"n":"Ampersand","b":"0110001000111011011011111"},{"n":"At","b":"0111010111110111011001110"}],"10":[{"n":"Heart","b":"0111001110111111111111111111111111111111111111111101111111100011111100000111100000001100000000110000"},{"n":"Diamond","b":"0000100000000011000000011110000011111100011111111001111111100011111100000111100000001100000000100000"},{"n":"Clover","b":"0000110000000111100000011110000001111000001111110011111111101111111111111111111001110011100000110000"},{"n":"Anchor","b":"0000110000000100100000011110000000110000001111110000001100000000110000110011001111001100110011111100"},{"n":"Shamrock","b":"0001111000000111100000011110000000110000111111111111111111110111001110011000011000001000000000100000"},{"n":"Blossom","b":"0000110000000111100001111111101111001111111000011111100001110010000100011111111001111111100011001100"},{"n":"Snowflake","b":"0000100000000111100001101101100110110110010111101001011110100110110110011011011000011110000000110000"},{"n":"Cross","b":"0000110000000011000000001100000001111000111111111111111111110001111000000011000000001100000000110000"},{"n":"Pentagon","b":"0000000000000111100000111111001111111111111111111111111111110111111110011111111001111111100011111100"},{"n":"Hexagon","b":"0000110000001111110001111111100111111110011111111001111111100111111110011111111000111111000000110000"},{"n":"Triangle","b":"0000000000000011000000001100000001111000000111100000111111000011111100011111111001111111101111111111"},{"n":"Castle","b":"0110110110001111110000111111000011111100001111110000111111000011111100001111110000100001000111111110"},{"n":"Knight","b":"0000100000001110000000111100000011111000011111110001111111000111111100000111111000111111100011111110"},{"n":"Pawn","b":"0000110000000011000000011110000001111000000111100000011110000011111100011111111001111111100111111110"},{"n":"House","b":"0000110000000111100000111111000111001110110000011111000000111100000011110000001111111111111111111111"},{"n":"Flower","b":"0000110000000111100001111111101111111111011111111001111111101111111111011111111000011110000000110000"},{"n":"Letter A","b":"0001111000000111100000011110000011111100001100110001110011100111111110011111111011100001111110000111"},{"n":"Letter B","b":"0111111100011111111001110011100111001110011111110001111111100111001110011100111001111111100111111100"},{"n":"Letter E","b":"0111111110011111111001110000000111000000011111110001111111000111000000011100000001111111100111111110"},{"n":"Letter G","b":"0001111110011111111001110000001110000000111000111111100011111110000111011100011101111111110001111110"},{"n":"Letter H","b":"1110000111111000011111100001111110000111111111111111111111111110000111111000011111100001111110000111"},{"n":"Letter K","b":"1110001110111001110011101110001111110000111110000011111000001111110000111011100011100111001110001111"},{"n":"Letter M","b":"1110000111111100111111110011111111001111110111101111011110111100110011110011001111000000111100000011"},{"n":"Letter R","b":"1111111000111111110011100111001110011100111111110011111110001110011100111001110011100011101110001110"},{"n":"Letter S","b":"0011111100011111110001110000000111000000001111110000011111100000001110010000111001111111100011111100"},{"n":"Two","b":"0011111000011111110000000011100000001110000001110000001110000001110000001110000001111111100111111110"},{"n":"Three","b":"0011111100001111110000000011000000011100000111100000011111000000001110000000111001111111000111111000"},{"n":"Four","b":"0000111100000011110000011111000011111100001101110001100111000111111110011111111000000111000000011100"},{"n":"Five","b":"0111111100011111110001110000000111111000011111110000000011100000001110010000111001111111000011111000"},{"n":"Seven","b":"0111111110011111111000000011000000011100000001100000001110000000111000000111000000011100000011100000"},{"n":"Nine","b":"0011111000011111110001110011100111001110011100111000111111100001101110000000110000111111000011111000"},{"n":"At","b":"0001111100011000011001001000111101111001100100100110010010011001111110010010110001100001000001111100"}],"15":[{"n":"Heart","b":"001111000111100011111101111110111111101111111111111111111111111111111111111111111111111111011111111111110011111111111110001111111111100000111111111000000011111110000000011111110000000001111100000000000111000000000000010000000"},{"n":"Clover","b":"000000111000000000001111100000000011111110000000011111110000000011111110000000001111100000000111111111000011111111111110011111111111110111111111111110111111111111110011111111111110001111010111100000000010000000000000010000000"},{"n":"Spade","b":"000000010000000000000111000000000000111000000000001111100000000011111110000000111111111000000111111111000001111111111100001111111111100011111111111110011111111111100001111010111100000110010011000000000010000000000000110000000"},{"n":"Plane","b":"000001000000000000001100000000000001110000000000000110000000000000111100000110000111100000110000011110000111111111111111110000011110000110000111100000000000111100000000000110000000000001110000000000001100000000000001000000000"},{"n":"Anchor","b":"000000111000000000001101100000000001000100000000001100100000000000111000000000111111111000000111111111000000000010000000000000010000000000000010000000100000010000011111000010000111111000010000111001110011011100000011111110000"},{"n":"Shamrock","b":"000001101100000000011111110000000011111110000000001111110000000001111100000000000111000000011111011111111111111111111111111111111111111011111010111110011110010011110011110010011110000000010000000000000100000000000000100000000"},{"n":"Blossom","b":"000000111000000000001111100000000001111100000000001111110100011111111111110111110000011111111100000001111111100000001111011100000001110001110000011100001110000011100001111111111100001111111111100001111101111100000111000111000"},{"n":"Snowflake","b":"000000010000000000000010000000000001111100000010110111011010011110010011110001110010011100011111111111110000000111000000011011111111110001110010011100011110010011110010110111011010000001111100000000000010000000000000010000000"},{"n":"Cross","b":"000001111100000000001111100000000001111100000000001111100000000001111100000111111111111111111111111111111111111111111111111111111111111111111111111111000001111100000000001111100000000001111100000000001111100000000001111100000"},{"n":"Pentagon","b":"000000010000000000000111000000000011111110000000111111111000001111111111100111111111111111111111111111111111111111111111011111111111110011111111111110011111111111110001111111111100001111111111100001111111111100000111111111000"},{"n":"Hexagon","b":"000000111000000000001111100000000111111111000011111111111110011111111111110011111111111110011111111111110011111111111110011111111111110011111111111110011111111111110011111111111110000111111111000000001111100000000000010000000"},{"n":"Triangle","b":"000000010000000000000010000000000000111000000000000111000000000001111100000000001111100000000011111110000000011111110000000111111111000000111111111000001111111111100001111111111100011111111111110011111111111110111111111111111"},{"n":"Crown","b":"000000010000000000110010011000000110010011000111010010010110011010010010110001011010110100001011010110100001111010101000000111111111000000111111111000000111111111000000111111111000000111111111000000111111111000000111111111000"},{"n":"Pawn","b":"000000111000000000000111000000000000111000000000001111100000000011111100000000011111110000000011111110000000001111100000000011111110000000111111111000001111111111100001111111111100011111111111110011111111111110011111111111110"},{"n":"House","b":"000000010000000000000111000000000001111100000000011101110000000111000111000011110000011100111100000001111111000000000111111000000000111111000000000111111000000000111111000000000111111111111111111111111111111111111111111111111"},{"n":"Flower","b":"000000111000000000001111100000000001111100000011111111011110011110111011110011111010111110011111111111100000000111000000001111111111100011111010111110011110111011110011111111011110000001111100000000001111100000000000111000000"},{"n":"Letter A","b":"000001111100000000001111100000000011111110000000011111110000000011111110000000111101111000000111101111000001111000111000001111000111100001111111111100011111111111110011111111111110011110000011110111100000001111111100000001111"},{"n":"Letter B","b":"011111111110000011111111111000011111111111100011110000111100011110000111100011110001111100011111111111000011111111111000011111111111100011110000111110011110000011110011110000111110011111111111100011111111111100011111111110000"},{"n":"Letter G","b":"000001111111100000111111111110001111111111110011111000000010011110000000000011110000000000111110000111110111110001111111111110001111111011110000001111011110000001111011111000001111001111111111111000111111111110000001111111100"},{"n":"Letter H","b":"011110000011110011110000011110011110000011110011110000011110011110000011110011110000011110011111111111110011111111111110011111111111110011110000011110011110000011110011110000011110011110000011110011110000011110011110000011110"},{"n":"Letter K","b":"111100000111110111100001111100111100011111000111100111110000111101111100000111111111000000111111110000000111111100000000111111110000000111111111000000111101111100000111100111110000111100011111000111100001111100111100000111110"},{"n":"Letter N","b":"011110000011110011111000011110011111100011110011111100011110011111110011110011111110011110011111111011110011110111011110011110111111110011110011111110011110011111110011110001111110011110001111110011110000111110011110000111110"},{"n":"Letter R","b":"011111111100000011111111111000011111111111000011110001111000011110001111000011110001111000011111111111000011111111110000011111111110000011110111111000011110001111000011110001111100011110000111100011110000111110011110000011110"},{"n":"Four","b":"000000011111000000000111111000000000111111000000001111111000000011101111000000011101111000000111001111000001110001111000011100001111000011111111111110011111111111110011111111111110000000001111000000000001111000000000001111000"},{"n":"Ampersand","b":"000011111100000000111111100000001111001100000001111000000000001111000000000001111100000000001111110001110011111111001110111101111101110111000111111110111100011111100111100001111100011111111111100011111111111110000111110001111"},{"n":"At","b":"000001111110000000111111111000001110000001100011000000000110011001111110011110011101110011110011000110011110011000110011110011000110011110011101110110011001111111100011000000000000001100000001000000111111111000000011111110000"}]};
+(function(){
+"use strict";
+var LS="gg_nono_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var PACKS=[
+  {size:5,  name:"Little Pictures", cls:"p-a", tag:"5 &times; 5 &middot; a minute each"},
+  {size:10, name:"Bigger Pictures", cls:"p-b", tag:"10 &times; 10 &middot; a proper puzzle"},
+  {size:15, name:"Big Pictures",    cls:"p-c", tag:"15 &times; 15 &middot; take your time"}
+];
+var HUES=["#ff6b8a","#ff9f45","#ffc93c","#5fd18b","#3fc6d8","#5aa8ff","#a681ff","#ff7ec4"];
+
+/* ---------------- clue building ---------------- */
+function cluesFor(line){
+  var out=[], run=0, i;
+  for(i=0;i<line.length;i++){ if(line[i]===1) run++; else { if(run) out.push(run); run=0; } }
+  if(run) out.push(run);
+  return out.length?out:[0];
+}
+function buildClues(bits,n){
+  var rows=[], cols=[], r, c, line;
+  for(r=0;r<n;r++){ line=[]; for(c=0;c<n;c++) line.push(bits[r*n+c]); rows.push(cluesFor(line)); }
+  for(c=0;c<n;c++){ line=[]; for(r=0;r<n;r++) line.push(bits[r*n+c]); cols.push(cluesFor(line)); }
+  return {rows:rows, cols:cols};
+}
+
+/* ---------------- state ---------------- */
+var packIdx, lvlIdx, N, sol, clues, cells, errs, secs, timer, running, done, hue, picName;
+/* cells: 0 empty, 1 filled, 2 marked */
+
+function startLevel(pi, li){
+  packIdx=pi; lvlIdx=li;
+  var pack=NONO_PACKS[String(PACKS[pi].size)];
+  if(li>=pack.length) li=lvlIdx=0;
+  var p=pack[li];
+  N=PACKS[pi].size;
+  sol=p.b.split("").map(Number);
+  picName=p.n;
+  clues=buildClues(sol,N);
+  cells=new Array(N*N).fill(0);
+  errs=0; secs=0; done=false; running=true;
+  hue=HUES[(pi*7+li)%HUES.length];
+  layout(); paintHUD();
+}
+function persist(){
+  if(done){ save("cur",null); return; }
+  save("cur", {p:packIdx, l:lvlIdx, c:cells.join(""), e:errs, s:secs});
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||c.c==null) return false;
+  startLevel(c.p, c.l);
+  if(c.c.length===N*N) cells=c.c.split("").map(Number);
+  errs=c.e|0; secs=c.s|0; done=false; running=true;
+  paintHUD(); return true;
+}
+function solvedCount(){ var n=0; for(var i=0;i<sol.length;i++) if(sol[i]) n++; return n; }
+function filledCount(){ var n=0; for(var i=0;i<cells.length;i++) if(cells[i]===1) n++; return n; }
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var W=0,H=0,CS=0,GX=0,GY=0,GW=0,CLW=0,CLH=0,CF=0;
+
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40||!clues) return;
+  W=aw; H=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  var maxR=1, maxC=1, i;
+  for(i=0;i<clues.rows.length;i++) maxR=Math.max(maxR, clues.rows[i].length);
+  for(i=0;i<clues.cols.length;i++) maxC=Math.max(maxC, clues.cols[i].length);
+  /* clue gutters measured in cells */
+  var gutW=maxR*0.62+0.35, gutH=maxC*0.62+0.35;
+  CS = Math.min((aw-6)/(N+gutW), (ah-6)/(N+gutH));
+  GW = CS*N;
+  CLW = CS*gutW; CLH = CS*gutH;
+  GX = (aw - (GW+CLW))/2 + CLW;
+  GY = (ah - (GW+CLH))/2 + CLH;
+  CF = CS*0.52;
+}
+window.addEventListener("resize", function(){ layout(); });
+
+/* ---------------- line completion ---------------- */
+function lineDone(kind, idx){
+  var i, line=[];
+  for(i=0;i<N;i++) line.push(kind==="row" ? (cells[idx*N+i]===1?1:0) : (cells[i*N+idx]===1?1:0));
+  var got=cluesFor(line), want = kind==="row" ? clues.rows[idx] : clues.cols[idx];
+  if(got.length!==want.length) return false;
+  for(i=0;i<got.length;i++) if(got[i]!==want[i]) return false;
+  return true;
+}
+
+/* ---------------- drawing ---------------- */
+function frame(now){
+  requestAnimationFrame(frame);
+  if(!clues||!CS){ layout(); if(!CS) return; }
+  ctx.clearRect(0,0,W,H);
+  var r,c,i;
+  /* board plate */
+  ctx.fillStyle="rgba(255,255,255,.72)";
+  roundRect(GX-3, GY-3, GW+6, GW+6, 10); ctx.fill();
+
+  /* cells */
+  for(r=0;r<N;r++) for(c=0;c<N;c++){
+    var v=cells[r*N+c], x=GX+c*CS, y=GY+r*CS;
+    if(v===1){
+      ctx.fillStyle=hue;
+      roundRect(x+1,y+1,CS-2,CS-2,CS*0.16); ctx.fill();
+    }else{
+      ctx.fillStyle=((((r/5)|0)+((c/5)|0))%2) ? "rgba(235,230,255,.75)" : "rgba(255,255,255,.85)";
+      ctx.fillRect(x,y,CS,CS);
+      if(v===2){
+        ctx.strokeStyle="rgba(150,140,190,.85)"; ctx.lineWidth=Math.max(1.4,CS*0.09);
+        ctx.lineCap="round";
+        var m=CS*0.30;
+        ctx.beginPath();
+        ctx.moveTo(x+m,y+m); ctx.lineTo(x+CS-m,y+CS-m);
+        ctx.moveTo(x+CS-m,y+m); ctx.lineTo(x+m,y+CS-m);
+        ctx.stroke();
+      }
+    }
+  }
+  /* grid lines */
+  for(i=0;i<=N;i++){
+    var heavy = (i%5===0)||i===N;
+    ctx.strokeStyle = heavy ? "rgba(105,90,160,.75)" : "rgba(150,140,190,.32)";
+    ctx.lineWidth = heavy ? 2 : 1;
+    ctx.beginPath(); ctx.moveTo(GX+i*CS, GY); ctx.lineTo(GX+i*CS, GY+GW); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(GX, GY+i*CS); ctx.lineTo(GX+GW, GY+i*CS); ctx.stroke();
+  }
+  /* clues */
+  ctx.font="900 "+Math.round(CF)+"px -apple-system,Helvetica,Arial";
+  ctx.textBaseline="middle";
+  for(r=0;r<N;r++){
+    var cl=clues.rows[r], okR=lineDone("row",r);
+    ctx.textAlign="right";
+    for(i=0;i<cl.length;i++){
+      var v2=cl[i]; if(v2===0) continue;
+      ctx.fillStyle = okR ? "rgba(120,110,160,.35)" : "#4b3f7a";
+      ctx.fillText(v2, GX - (cl.length-1-i)*CS*0.62 - CS*0.16, GY + r*CS + CS/2);
+    }
+  }
+  ctx.textAlign="center";
+  for(c=0;c<N;c++){
+    var cc=clues.cols[c], okC=lineDone("col",c);
+    for(i=0;i<cc.length;i++){
+      var v3=cc[i]; if(v3===0) continue;
+      ctx.fillStyle = okC ? "rgba(120,110,160,.35)" : "#4b3f7a";
+      ctx.fillText(v3, GX + c*CS + CS/2, GY - (cc.length-1-i)*CS*0.62 - CS*0.30);
+    }
+  }
+  /* hint flash */
+  if(hintCell>=0 && now<hintUntil){
+    var hr=(hintCell/N)|0, hc=hintCell%N;
+    var pulse=0.4+0.35*Math.sin(now/90);
+    ctx.strokeStyle="rgba(60,200,130,"+pulse+")"; ctx.lineWidth=Math.max(2.5,CS*0.14);
+    roundRect(GX+hc*CS+1, GY+hr*CS+1, CS-2, CS-2, CS*0.16); ctx.stroke();
+  }
+  if(badCell>=0 && now<badUntil){
+    var br=(badCell/N)|0, bc=badCell%N;
+    ctx.fillStyle="rgba(240,80,120,.55)";
+    roundRect(GX+bc*CS+1, GY+br*CS+1, CS-2, CS-2, CS*0.16); ctx.fill();
+  }
+}
+function roundRect(x,y,w,h,r){
+  ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+/* ---------------- input ---------------- */
+var mode="fill", painting=null, lastCell=-1;
+var hintCell=-1, hintUntil=0, badCell=-1, badUntil=0;
+
+function cellAt(px,py){
+  if(px<GX||py<GY||px>=GX+GW||py>=GY+GW) return -1;
+  var c=((px-GX)/CS)|0, r=((py-GY)/CS)|0;
+  if(c<0||r<0||c>=N||r>=N) return -1;
+  return r*N+c;
+}
+function pos(e){
+  var r=cv.getBoundingClientRect();
+  var t=e.touches?e.touches[0]:e;
+  return {x:t.clientX-r.left, y:t.clientY-r.top};
+}
+function apply(i){
+  if(i<0||i===lastCell||done) return;
+  lastCell=i;
+  var cur=cells[i];
+  if(painting==="fill"){
+    if(cur===1) return;
+    if(!sol[i]){                        /* wrong guess - flag it, don't let it stick */
+      errs++; badCell=i; badUntil=performance.now()+420;
+      cells[i]=2;
+      beep(200,.16,"sawtooth",.05,140);
+      if(window.GGA) GGA.haptic("error");
+      paintHUD(); persist(); return;
+    }
+    cells[i]=1; beep(600+((i%7)*22),.05,"sine",.045);
+    if(window.GGA) GGA.haptic("light");
+  }else if(painting==="mark"){
+    if(cur===1) return;
+    cells[i]= cur===2 ? 0 : 2;
+    beep(430,.04,"sine",.035);
+  }else if(painting==="clear"){
+    if(cur===1) return;               /* correct fills stay put */
+    cells[i]=0;
+  }
+  paintHUD(); persist(); checkWin();
+}
+function onDown(e){
+  if(done||!started) return;
+  e.preventDefault();
+  var p=pos(e), i=cellAt(p.x,p.y);
+  if(i<0) return;
+  var cur=cells[i];
+  if(mode==="fill") painting = (cur===1) ? "clear" : "fill";
+  else painting = (cur===2) ? "clear" : "mark";
+  lastCell=-1; apply(i);
+}
+function onMove(e){
+  if(!painting||done) return;
+  e.preventDefault();
+  var p=pos(e); apply(cellAt(p.x,p.y));
+}
+function onUp(){ painting=null; lastCell=-1; }
+cv.addEventListener("touchstart", onDown, {passive:false});
+cv.addEventListener("touchmove", onMove, {passive:false});
+cv.addEventListener("touchend", onUp);
+cv.addEventListener("touchcancel", onUp);
+cv.addEventListener("mousedown", onDown);
+window.addEventListener("mousemove", onMove);
+window.addEventListener("mouseup", onUp);
+
+var tFill=document.getElementById("tFill"), tMark=document.getElementById("tMark");
+tFill.onclick=function(){ mode="fill"; tFill.className="tool on"; tMark.className="tool"; beep(600,.05,"sine",.045); };
+tMark.onclick=function(){ mode="mark"; tMark.className="tool on"; tFill.className="tool"; beep(480,.05,"sine",.045); };
+document.getElementById("tHint").onclick=function(){
+  if(done) return;
+  var opts=[];
+  for(var i=0;i<sol.length;i++) if(sol[i] && cells[i]!==1) opts.push(i);
+  if(!opts.length) return;
+  var pick=opts[(Math.random()*opts.length)|0];
+  cells[pick]=1; hintCell=pick; hintUntil=performance.now()+2200;
+  beep(780,.14,"sine",.06,1100);
+  paintHUD(); persist(); checkWin();
+};
+
+/* ---------------- win ---------------- */
+function paintHUD(){
+  document.getElementById("vLvl").textContent=(lvlIdx+1);
+  document.getElementById("vFill").textContent=filledCount()+"/"+solvedCount();
+  document.getElementById("vErr").textContent=errs;
+}
+function fmt(s){ var m=(s/60)|0; return m+":"+("0"+(s%60)).slice(-2); }
+function checkWin(){
+  for(var i=0;i<sol.length;i++) if(sol[i] && cells[i]!==1) return;
+  done=true; running=false; save("cur",null);
+  var key="done_"+PACKS[packIdx].size;
+  var d=load(key,{}); d[lvlIdx]=Math.min(d[lvlIdx]||9999, secs); save(key,d);
+  if(window.GGA){
+    GGA.award("no_first");
+    if(errs===0) GGA.award("no_clean");
+    if(PACKS[packIdx].size===15) GGA.award("no_big");
+    var cnt=0, packs=[5,10,15];
+    for(var k=0;k<packs.length;k++){ var dd=load("done_"+packs[k],{}); cnt+=Object.keys(dd).length; }
+    if(cnt>=10) GGA.award("no_10");
+    if(cnt>=30) GGA.award("no_30");
+    var full=true, pk=NONO_PACKS[String(PACKS[packIdx].size)];
+    var dcur=load("done_"+PACKS[packIdx].size,{});
+    for(var q=0;q<pk.length;q++) if(!(q in dcur)) full=false;
+    if(full) GGA.award("no_pack");
+    GGA.haptic("success");
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.26,"triangle",.09); },250);
+  setTimeout(winScreen,600);
+}
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card"), started=false;
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>PICTURE LOGIC</h2><p>The numbers tell you how many squares to fill. Work it out and a picture appears.</p><div class="packs">';
+  for(var i=0;i<PACKS.length;i++){
+    var P=PACKS[i], d=load("done_"+P.size,{}), n=Object.keys(d).length;
+    var total=NONO_PACKS[String(P.size)].length;
+    h+='<div class="pack '+P.cls+'" data-p="'+i+'"><div style="text-align:left">'+
+       '<div class="pn">'+P.name+'</div><div class="pt">'+P.tag+'</div></div>'+
+       '<div style="font-size:12px;font-weight:900">'+n+'/'+total+'</div></div>';
+  }
+  h+='</div>';
+  if(cur) h+='<button class="btn btn-go" id="bResume">CARRY ON</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".pack"), function(el){
+    el.onclick=function(){ levelScreen(+el.getAttribute("data-p")); };
+  });
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){ started=true; if(!restore()) startLevel(0,0); persist(); closeOvl(); layout(); };
+  card.querySelector("#bRules").onclick=rulesScreen;
+}
+function levelScreen(pi){
+  var P=PACKS[pi], pack=NONO_PACKS[String(P.size)], d=load("done_"+P.size,{});
+  var h='<h2>'+P.name+'</h2><p>'+Object.keys(d).length+' of '+pack.length+' solved</p><div class="lvls">';
+  for(var i=0;i<pack.length;i++)
+    h+='<div class="lv'+((i in d)?" done":"")+'" data-i="'+i+'">'+(i+1)+'</div>';
+  h+='</div><button class="btn btn-alt" id="bBack2">BACK</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".lv"), function(el){
+    el.onclick=function(){
+      started=true; startLevel(pi, +el.getAttribute("data-i")); persist(); closeOvl(); layout();
+    };
+  });
+  card.querySelector("#bBack2").onclick=titleScreen;
+}
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; The numbers beside each row and column say how many squares in a row are filled, in order. <b>3 1</b> means three together, a gap, then one.<br><br>'+
+    '&#9642; Tap <b>FILL</b> then drag to colour squares in. Tap <b>MARK</b> to cross off squares you know are empty.<br><br>'+
+    '&#9642; Get one wrong and it is crossed off for you and counted as a slip &mdash; so you can never build on a mistake.<br><br>'+
+    '&#9642; Clues fade once that row or column is finished.<br><br>'+
+    '&#9642; Every picture can be worked out by logic alone. No guessing needed, ever.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=titleScreen;
+}
+function winScreen(){
+  var pack=NONO_PACKS[String(PACKS[packIdx].size)];
+  var more = lvlIdx+1 < pack.length;
+  openOvl('<h2>'+picName.toUpperCase()+'!</h2>'+
+    '<p>'+(errs===0?"Solved without a single slip.":"Picture complete.")+'</p>'+
+    '<canvas id="reveal"></canvas>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+      '<div class="stat"><div class="sk">SLIPS</div><div class="sv">'+errs+'</div></div>'+
+      '<div class="stat"><div class="sk">SIZE</div><div class="sv">'+N+'&times;'+N+'</div></div>'+
+    '</div>'+
+    (more?'<button class="btn btn-go" id="bNext">NEXT PICTURE</button>':'')+
+    '<button class="btn btn-alt" id="bList">PICTURE LIST</button>');
+  /* paint the finished picture */
+  var cvr=card.querySelector("#reveal");
+  if(cvr){
+    var px=Math.max(6, Math.min(13, 210/N));
+    cvr.width=N*px; cvr.height=N*px;
+    cvr.style.width=(N*px)+"px"; cvr.style.height=(N*px)+"px";
+    var x=cvr.getContext("2d");
+    x.fillStyle="#ffffff"; x.fillRect(0,0,N*px,N*px);
+    for(var r=0;r<N;r++) for(var c=0;c<N;c++)
+      if(sol[r*N+c]){ x.fillStyle=hue; x.fillRect(c*px,r*px,px,px); }
+  }
+  var bn=card.querySelector("#bNext");
+  if(bn) bn.onclick=function(){ startLevel(packIdx, lvlIdx+1); persist(); closeOvl(); layout(); };
+  card.querySelector("#bList").onclick=function(){ levelScreen(packIdx); };
+}
+document.getElementById("bPause").onclick=function(){
+  if(done){ titleScreen(); return; }
+  running=false;
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="sk">PUZZLE</div><div class="sv">'+(lvlIdx+1)+'</div></div>'+
+      '<div class="stat"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+      '<div class="stat"><div class="sk">SLIPS</div><div class="sv">'+errs+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bList2">PICTURE LIST</button>');
+  card.querySelector("#bGo").onclick=function(){ running=true; closeOvl(); };
+  card.querySelector("#bList2").onclick=function(){ levelScreen(packIdx); };
+};
+
+/* ---------------- boot ---------------- */
+timer=setInterval(function(){ if(running&&!done&&started) { secs++; if(secs%10===0) persist(); } },1000);
+startLevel(0,0);
+started=false; running=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+})();
+</script>
+</body>
+</html>

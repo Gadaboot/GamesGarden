@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mine Hunt</title>
+<style>
+  :root{ --ink:#3b1f66; --soft:#8a6fc0; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 12% -8%, #d99bff 0%, transparent 55%),
+      radial-gradient(120% 80% at 90% 105%, #ffb0e6 0%, transparent 55%),
+      linear-gradient(160deg, #a95cf0 0%, #c25ce0 45%, #f06fb8 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#6a2fa8;
+    background:rgba(255,255,255,.92);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(70,20,120,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.6px;line-height:1;
+    font-size:clamp(15px,4.8vw,21px);text-shadow:0 2px 0 #9b4ed0,0 4px 12px rgba(60,10,110,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.34)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.94);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#6a2fa8;
+    box-shadow:0 4px 0 rgba(120,50,180,.35),0 6px 14px rgba(70,20,120,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(120,50,180,.35)}
+  .tool.on{background:linear-gradient(180deg,#ffe08a,#ffc23c);border-color:#ffb01f;color:#8a6414}
+  .tool .ti{font-size:18px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(80,30,130,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#faf3ff);
+    border:2px solid #fff;border-radius:22px;padding:20px 18px 16px;text-align:center;
+    color:#5b3a8f;box-shadow:0 20px 50px rgba(60,15,110,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:24px;font-weight:900;letter-spacing:1px;color:#8a3fd0;margin-bottom:3px}
+  .card p{font-size:14px;line-height:1.55;color:#8a6fc0;margin:8px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:9px;margin-top:13px}
+  .sz{border-radius:16px;padding:12px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:15px}
+  .sz .stg{font-size:10.5px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-a{background:linear-gradient(180deg,#7fe0a8,#33b371)}
+  .z-b{background:linear-gradient(180deg,#7cbcff,#3a7fe0)}
+  .z-c{background:linear-gradient(180deg,#ff8fb4,#e0447e)}
+  .btn{display:block;width:100%;margin-top:9px;padding:13px;border:none;border-radius:15px;
+    font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#c88bff,#8a3fd0);color:#fff;
+    box-shadow:0 5px 0 #6a2aa8,0 8px 18px rgba(110,40,190,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #6a2aa8}
+  .btn-alt{background:#f5edff;color:#7a4bb8;border:1.5px solid #e7d9fa}
+  .rules{text-align:left;font-size:13px;line-height:1.7;color:#7a63a8;margin:11px 2px}
+  .rules b{color:#8a3fd0}
+  .stats{display:flex;gap:8px;margin-top:12px}
+  .st{flex:1;background:#f5edff;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#a087c8}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#8a3fd0}
+  @media (max-height:700px){
+    .card{padding:15px 15px 12px}.card h2{font-size:20px}
+    .rules{font-size:11.7px;line-height:1.5}.btn{padding:11px;font-size:14px;margin-top:7px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">MINE HUNT</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">MINES LEFT</div><div class="v" id="vMines">0</div></div>
+    <div class="chip"><div class="k">TIME</div><div class="v" id="vTime">0:00</div></div>
+    <div class="chip"><div class="k">BEST</div><div class="v" id="vBest">&ndash;</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tFlag"><div class="ti">&#128681;</div><div class="tl">FLAG MODE</div></div>
+    <div class="tool" id="tHint"><div class="ti">&#128161;</div><div class="tl">HINT</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Minesweeper: mine placement that is guaranteed solvable without guessing. */
+function makeMines(){
+  "use strict";
+  function neighbours(i,W,H){
+    var r=(i/W)|0, c=i%W, out=[];
+    for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){
+      if(!dr&&!dc) continue;
+      var nr=r+dr, nc=c+dc;
+      if(nr<0||nc<0||nr>=H||nc>=W) continue;
+      out.push(nr*W+nc);
+    }
+    return out;
+  }
+  function counts(mines,W,H){
+    var n=new Array(W*H).fill(0);
+    for(var i=0;i<W*H;i++){
+      if(mines[i]){ n[i]=-1; continue; }
+      var nb=neighbours(i,W,H), k=0;
+      for(var j=0;j<nb.length;j++) if(mines[nb[j]]) k++;
+      n[i]=k;
+    }
+    return n;
+  }
+
+  /* Can the board be finished from `start` using logic only?
+     Rules: trivial counting, plus the subset rule between two constraints. */
+  function noGuessSolvable(mines, W, H, start){
+    var N=W*H;
+    var num=counts(mines,W,H);
+    var revealed=new Array(N).fill(false);
+    var flagged=new Array(N).fill(false);
+    var NB=[]; for(var i=0;i<N;i++) NB.push(neighbours(i,W,H));
+
+    function reveal(i){
+      if(revealed[i]||flagged[i]) return;
+      revealed[i]=true;
+      if(num[i]===0){
+        var nb=NB[i];
+        for(var k=0;k<nb.length;k++) if(!revealed[nb[k]]) reveal(nb[k]);
+      }
+    }
+    reveal(start);
+    var progress=true, guard=0;
+    while(progress && guard++<4000){
+      progress=false;
+      /* --- trivial rules --- */
+      for(var c=0;c<N;c++){
+        if(!revealed[c] || num[c]<=0) continue;
+        var nb=NB[c], hidden=[], flags=0, j;
+        for(j=0;j<nb.length;j++){
+          if(flagged[nb[j]]) flags++;
+          else if(!revealed[nb[j]]) hidden.push(nb[j]);
+        }
+        if(!hidden.length) continue;
+        if(num[c]===flags){ for(j=0;j<hidden.length;j++){ reveal(hidden[j]); progress=true; } }
+        else if(num[c]-flags===hidden.length){
+          for(j=0;j<hidden.length;j++){ flagged[hidden[j]]=true; progress=true; }
+        }
+      }
+      if(progress) continue;
+      /* --- subset rule --- */
+      var cons=[];
+      for(var d=0;d<N;d++){
+        if(!revealed[d] || num[d]<=0) continue;
+        var nb2=NB[d], hid=[], fl=0;
+        for(var k2=0;k2<nb2.length;k2++){
+          if(flagged[nb2[k2]]) fl++;
+          else if(!revealed[nb2[k2]]) hid.push(nb2[k2]);
+        }
+        if(hid.length) cons.push({cells:hid, n:num[d]-fl});
+      }
+      for(var a=0;a<cons.length && !progress;a++){
+        for(var b=0;b<cons.length;b++){
+          if(a===b) continue;
+          var A=cons[a], B=cons[b];
+          if(A.cells.length>=B.cells.length) continue;
+          var sub=true;
+          for(var m=0;m<A.cells.length;m++) if(B.cells.indexOf(A.cells[m])<0){ sub=false; break; }
+          if(!sub) continue;
+          var diff=B.cells.filter(function(x){ return A.cells.indexOf(x)<0; });
+          var dn=B.n-A.n;
+          if(dn===0){ for(m=0;m<diff.length;m++){ reveal(diff[m]); progress=true; } }
+          else if(dn===diff.length){ for(m=0;m<diff.length;m++){ flagged[diff[m]]=true; progress=true; } }
+          if(progress) break;
+        }
+      }
+    }
+    for(var z=0;z<N;z++) if(!mines[z] && !revealed[z]) return false;
+    return true;
+  }
+
+  function rng(seed){ var s=seed>>>0||1;
+    return function(){ s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296; }; }
+
+  /* Place mines after the first tap so it is always safe, and keep trying
+     until the board needs no guessing. Falls back to a plain safe board. */
+  function place(W,H,M,start,seed,budgetMs){
+    var rand=rng(seed||((Math.random()*1e9)|0));
+    var N=W*H, safe={}, nb=neighbours(start,W,H), i;
+    safe[start]=1;
+    for(i=0;i<nb.length;i++) safe[nb[i]]=1;
+    var pool=[];
+    for(i=0;i<N;i++) if(!safe[i]) pool.push(i);
+    if(M>pool.length) M=pool.length;
+    var t0=Date.now(), best=null, tries=0;
+    while(Date.now()-t0 < (budgetMs||900)){
+      tries++;
+      var p=pool.slice();
+      for(i=p.length-1;i>0;i--){ var j=(rand()*(i+1))|0; var t=p[i]; p[i]=p[j]; p[j]=t; }
+      var mines=new Array(N).fill(false);
+      for(i=0;i<M;i++) mines[p[i]]=true;
+      if(!best) best=mines;
+      if(noGuessSolvable(mines,W,H,start)) return {mines:mines, noGuess:true, tries:tries};
+    }
+    return {mines:best, noGuess:false, tries:tries};
+  }
+
+  return {neighbours:neighbours, counts:counts, noGuessSolvable:noGuessSolvable, place:place};
+}
+if(typeof module!=='undefined') module.exports = makeMines;
+
+(function(){
+"use strict";
+var MG=makeMines();
+var LS="gg_minehunt_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var SIZES=[
+  {id:"easy",  name:"Gentle",  cls:"z-a", W:9,  H:11, M:12, tag:"9 &times; 11 &middot; 12 mines"},
+  {id:"med",   name:"Tricky",  cls:"z-b", W:12, H:15, M:30, tag:"12 &times; 15 &middot; 30 mines"},
+  {id:"hard",  name:"Fiendish",cls:"z-c", W:14, H:18, M:55, tag:"14 &times; 18 &middot; 55 mines"}
+];
+function szOf(id){ for(var i=0;i<SIZES.length;i++) if(SIZES[i].id===id) return SIZES[i]; return SIZES[0]; }
+
+/* state: 0 hidden, 1 revealed, 2 flagged */
+var szId, W, H, MINES, mines, num, state, started2, dead, won, secs, running, started, firstTap, noGuess;
+
+function newGame(id){
+  szId=id; save("size",id);
+  var z=szOf(id);
+  W=z.W; H=z.H; MINES=z.M;
+  mines=new Array(W*H).fill(false);
+  num=new Array(W*H).fill(0);
+  state=new Array(W*H).fill(0);
+  firstTap=true; dead=false; won=false; secs=0; running=true; noGuess=false;
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+function armBoard(start){
+  var r=MG.place(W,H,MINES,start,undefined,700);
+  mines=r.mines; noGuess=r.noGuess;
+  num=MG.counts(mines,W,H);
+  firstTap=false;
+}
+function minesLeft(){
+  var f=0; for(var i=0;i<state.length;i++) if(state[i]===2) f++;
+  return MINES-f;
+}
+function hiddenSafe(){
+  var n=0;
+  for(var i=0;i<state.length;i++) if(!mines[i] && state[i]!==1) n++;
+  return n;
+}
+function persist(){
+  if(dead||won||firstTap){ save("cur",null); return; }
+  save("cur", {z:szId, m:mines.map(function(x){return x?1:0;}).join(""),
+    s:state.join(""), t:secs, ng:noGuess?1:0});
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||!c.m) return false;
+  szId=c.z; var z=szOf(szId); W=z.W; H=z.H; MINES=z.M;
+  if(c.m.length!==W*H) return false;
+  mines=c.m.split("").map(function(x){return x==="1";});
+  num=MG.counts(mines,W,H);
+  state=c.s.split("").map(Number);
+  secs=c.t|0; noGuess=!!c.ng; firstTap=false; dead=false; won=false; running=true;
+  layout(); paintHUD(); return true;
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,CS=0,OX=0,OY=0;
+var NUMCOL=["","#2b7fff","#1ca85f","#ff3d6b","#7c4dff","#e07a1c","#12b3c4","#5a4a8a","#8a8a99"];
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40||!W) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  CS=Math.floor(Math.min((aw-4)/W, (ah-4)/H));
+  OX=Math.round((aw-CS*W)/2); OY=Math.round((ah-CS*H)/2);
+}
+window.addEventListener("resize", function(){ layout(); });
+
+function rr(x,y,w,h,r){
+  ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function frame(){
+  requestAnimationFrame(frame);
+  if(!W||!CS){ layout(); if(!CS) return; }
+  ctx.clearRect(0,0,VW,VH);
+  var pad=Math.max(1, CS*0.045), r=Math.max(2, CS*0.20);
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  for(var i=0;i<W*H;i++){
+    var cx=OX+(i%W)*CS, cy=OY+((i/W)|0)*CS;
+    var s=state[i];
+    if(s===1){
+      ctx.fillStyle = mines[i] ? "#ff4d6d" : "rgba(255,255,255,.90)";
+      rr(cx+pad,cy+pad,CS-pad*2,CS-pad*2,r*0.7); ctx.fill();
+      if(mines[i]){
+        ctx.fillStyle="#fff";
+        ctx.beginPath(); ctx.arc(cx+CS/2,cy+CS/2,CS*0.20,0,6.284); ctx.fill();
+      }else if(num[i]>0){
+        ctx.fillStyle=NUMCOL[num[i]];
+        ctx.font="900 "+Math.round(CS*0.56)+"px -apple-system,Helvetica,Arial";
+        ctx.fillText(num[i], cx+CS/2, cy+CS/2+CS*0.03);
+      }
+    }else{
+      /* raised tile */
+      var g=ctx.createLinearGradient(0,cy,0,cy+CS);
+      g.addColorStop(0,"#f3e4ff"); g.addColorStop(1,"#d9bcf5");
+      ctx.fillStyle=g;
+      rr(cx+pad,cy+pad,CS-pad*2,CS-pad*2,r); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,.55)";
+      rr(cx+pad+CS*0.10, cy+pad+CS*0.08, CS-pad*2-CS*0.20, CS*0.22, r*0.6); ctx.fill();
+      if(s===2){
+        ctx.fillStyle="#e0347a";
+        ctx.beginPath();
+        ctx.moveTo(cx+CS*0.34, cy+CS*0.22);
+        ctx.lineTo(cx+CS*0.72, cy+CS*0.36);
+        ctx.lineTo(cx+CS*0.34, cy+CS*0.50);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle="#5b3a8f"; ctx.lineWidth=Math.max(1.6,CS*0.07); ctx.lineCap="round";
+        ctx.beginPath(); ctx.moveTo(cx+CS*0.34,cy+CS*0.20); ctx.lineTo(cx+CS*0.34,cy+CS*0.78); ctx.stroke();
+      }
+      if(dead && mines[i] && s!==2){
+        ctx.fillStyle="rgba(90,40,140,.55)";
+        ctx.beginPath(); ctx.arc(cx+CS/2,cy+CS/2,CS*0.18,0,6.284); ctx.fill();
+      }
+      if(dead && !mines[i] && s===2){
+        ctx.strokeStyle="#5b3a8f"; ctx.lineWidth=Math.max(1.8,CS*0.08);
+        var m2=CS*0.30;
+        ctx.beginPath();
+        ctx.moveTo(cx+m2,cy+m2); ctx.lineTo(cx+CS-m2,cy+CS-m2);
+        ctx.moveTo(cx+CS-m2,cy+m2); ctx.lineTo(cx+m2,cy+CS-m2);
+        ctx.stroke();
+      }
+    }
+  }
+  if(hintCell>=0 && performance.now()<hintUntil){
+    var hx=OX+(hintCell%W)*CS, hy=OY+((hintCell/W)|0)*CS;
+    var pulse=0.4+0.35*Math.sin(performance.now()/90);
+    ctx.strokeStyle="rgba(60,220,150,"+pulse+")"; ctx.lineWidth=Math.max(2.5,CS*0.13);
+    rr(hx+pad,hy+pad,CS-pad*2,CS-pad*2,r); ctx.stroke();
+  }
+}
+
+/* ---------------- play ---------------- */
+function reveal(i){
+  if(state[i]!==0) return;
+  state[i]=1;
+  if(mines[i]){ boom(i); return; }
+  if(num[i]===0){
+    var nb=MG.neighbours(i,W,H);
+    for(var k=0;k<nb.length;k++) reveal(nb[k]);
+  }
+}
+function chord(i){
+  if(state[i]!==1 || num[i]<=0) return false;
+  var nb=MG.neighbours(i,W,H), f=0, hid=[];
+  for(var k=0;k<nb.length;k++){
+    if(state[nb[k]]===2) f++;
+    else if(state[nb[k]]===0) hid.push(nb[k]);
+  }
+  if(f!==num[i] || !hid.length) return false;
+  for(k=0;k<hid.length;k++) reveal(hid[k]);
+  return true;
+}
+function boom(i){
+  dead=true; running=false; save("cur",null);
+  beep(220,.45,"sawtooth",.08,90);
+  if(window.GGA) GGA.haptic("error");
+  setTimeout(loseScreen, 700);
+}
+function checkWin(){
+  if(dead||won) return;
+  if(hiddenSafe()>0) return;
+  won=true; running=false; save("cur",null);
+  for(var i=0;i<state.length;i++) if(mines[i]) state[i]=2;
+  var key="best_"+szId, prev=load(key,null);
+  var isBest=(prev==null) || secs<prev;
+  if(isBest) save(key,secs);
+  save("wins_"+szId, load("wins_"+szId,0)+1);
+  var total=load("wins_total",0)+1; save("wins_total", total);
+  if(window.GGA){
+    GGA.award("ms_win");
+    if(szId==="med"||szId==="hard") GGA.award("ms_med");
+    if(szId==="hard") GGA.award("ms_hard");
+    if(szId==="hard" && secs<300) GGA.award("ms_fast");
+    var all=true;
+    for(var k=0;k<SIZES.length;k++) if(!load("wins_"+SIZES[k].id,0)) all=false;
+    if(all) GGA.award("ms_allsizes");
+    if(total>=10) GGA.award("ms_10");
+    GGA.haptic("success");
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  paintHUD();
+  setTimeout(function(){ winScreen(isBest); },600);
+}
+function paintHUD(){
+  document.getElementById("vMines").textContent=minesLeft();
+  document.getElementById("vTime").textContent=fmt(secs);
+  var b=load("best_"+szId,null);
+  document.getElementById("vBest").textContent=(b==null)?"–":fmt(b);
+}
+function fmt(s){ var m=(s/60)|0; return m+":"+("0"+(s%60)).slice(-2); }
+
+/* ---------------- input ---------------- */
+var flagMode=false, pressTimer=null, pressCell=-1, longFired=false;
+var hintCell=-1, hintUntil=0;
+function cellAt(x,y){
+  var c=Math.floor((x-OX)/CS), r=Math.floor((y-OY)/CS);
+  if(c<0||r<0||c>=W||r>=H) return -1;
+  return r*W+c;
+}
+function pos(e){
+  var b=cv.getBoundingClientRect();
+  var t=e.touches?e.touches[0]:e;
+  return {x:t.clientX-b.left, y:t.clientY-b.top};
+}
+function act(i, asFlag){
+  if(i<0||dead||won||!started) return;
+  if(firstTap){
+    if(asFlag) return;
+    armBoard(i);
+  }
+  if(asFlag){
+    if(state[i]===1) return;
+    state[i] = state[i]===2 ? 0 : 2;
+    beep(state[i]===2?560:420,.05,"sine",.045);
+    if(window.GGA) GGA.haptic("light");
+  }else{
+    if(state[i]===2) return;
+    if(state[i]===1){ if(!chord(i)) return; beep(500,.05,"triangle",.04); }
+    else{ reveal(i); if(!dead) beep(620,.05,"sine",.045); }
+  }
+  paintHUD(); persist();
+  if(!dead) checkWin();
+}
+function onDown(e){
+  if(dead||won||!started) return;
+  e.preventDefault();
+  var p=pos(e); pressCell=cellAt(p.x,p.y); longFired=false;
+  clearTimeout(pressTimer);
+  if(pressCell>=0 && !flagMode){
+    pressTimer=setTimeout(function(){
+      longFired=true;
+      act(pressCell, true);
+      if(window.GGA) GGA.haptic("medium");
+    }, 380);
+  }
+}
+function onMove(e){
+  if(pressCell<0) return;
+  var p=pos(e);
+  if(cellAt(p.x,p.y)!==pressCell){ clearTimeout(pressTimer); pressCell=-1; }
+}
+function onUp(e){
+  clearTimeout(pressTimer);
+  if(pressCell<0) return;
+  if(!longFired) act(pressCell, flagMode);
+  pressCell=-1; longFired=false;
+}
+cv.addEventListener("touchstart",onDown,{passive:false});
+cv.addEventListener("touchmove",onMove,{passive:false});
+cv.addEventListener("touchend",onUp);
+cv.addEventListener("touchcancel",function(){ clearTimeout(pressTimer); pressCell=-1; });
+cv.addEventListener("mousedown",onDown);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",onUp);
+cv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+var tFlag=document.getElementById("tFlag");
+tFlag.onclick=function(){
+  flagMode=!flagMode;
+  tFlag.className="tool"+(flagMode?" on":"");
+  beep(flagMode?620:460,.05,"sine",.045);
+};
+document.getElementById("tHint").onclick=function(){
+  if(dead||won||!started) return;
+  if(firstTap){ hintCell=((H/2|0)*W)+(W/2|0); hintUntil=performance.now()+2200;
+    beep(760,.13,"sine",.06,1050); return; }
+  /* find a square that logic proves is safe */
+  var i,k;
+  for(i=0;i<W*H;i++){
+    if(state[i]!==1||num[i]<=0) continue;
+    var nb=MG.neighbours(i,W,H), f=0, hid=[];
+    for(k=0;k<nb.length;k++){ if(state[nb[k]]===2) f++; else if(state[nb[k]]===0) hid.push(nb[k]); }
+    if(hid.length && f===num[i]){ hintCell=hid[0]; hintUntil=performance.now()+2400;
+      beep(760,.13,"sine",.06,1050); return; }
+  }
+  for(i=0;i<W*H;i++){
+    if(state[i]!==0 || mines[i]) continue;
+    hintCell=i; hintUntil=performance.now()+2400; beep(700,.13,"sine",.055,980); return;
+  }
+};
+document.getElementById("tNew").onclick=function(){
+  openOvl('<h2>NEW BOARD?</h2><p>This one will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW BOARD</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){ newGame(szId); persist(); closeOvl(); };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>MINE HUNT</h2><p>Clear every square that is not a mine. The numbers tell you how many mines are touching.</p><div class="sizes">';
+  for(var i=0;i<SIZES.length;i++){
+    var z=SIZES[i], b=load("best_"+z.id,null);
+    h+='<div class="sz '+z.cls+'" data-z="'+z.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+z.name+'</div><div class="stg">'+z.tag+'</div></div>'+
+       '<div style="font-size:12px;font-weight:900">'+((b==null)?"":fmt(b))+'</div></div>';
+  }
+  h+='</div>';
+  if(cur&&cur.m) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+szOf(cur.z).name+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){ started=true; newGame(el.getAttribute("data-z")); persist(); closeOvl(); layout(); };
+  });
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){ started=true; if(!restore()) newGame("easy"); persist(); closeOvl(); layout(); };
+  card.querySelector("#bRules").onclick=rulesScreen;
+}
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Tap a square to clear it. A number says how many of the eight squares around it hide a mine.<br><br>'+
+    '&#9642; <b>Hold a square</b> to plant a flag, or turn on <b>Flag Mode</b> and tap.<br><br>'+
+    '&#9642; Tap a number once you have flagged that many mines beside it and the rest of its neighbours open at once.<br><br>'+
+    '&#9642; Your <b>first tap is always safe</b> &mdash; the mines are laid out afterwards, around where you tapped.<br><br>'+
+    '&#9642; Better than that: every board is checked so it can be finished by <b>reasoning alone</b>. You will never have to guess.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=titleScreen;
+}
+function winScreen(isBest){
+  openOvl('<h2>'+(isBest?"NEW BEST TIME!":"ALL CLEAR!")+'</h2>'+
+    '<p>Every mine found on the '+szOf(szId).name+' board.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+      '<div class="st"><div class="sk">BEST</div><div class="sv">'+fmt(load("best_"+szId,0)|0)+'</div></div>'+
+      '<div class="st"><div class="sk">MINES</div><div class="sv">'+MINES+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER '+szOf(szId).name.toUpperCase()+'</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE SIZE</button>');
+  card.querySelector("#bAgain").onclick=function(){ newGame(szId); persist(); closeOvl(); layout(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+function loseScreen(){
+  openOvl('<h2>BOOM!</h2><p>That one was a mine. Every board here can be solved by reasoning &mdash; have another go.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">CLEARED</div><div class="sv">'+
+        (W*H-MINES-hiddenSafe())+'/'+(W*H-MINES)+'</div></div>'+
+      '<div class="st"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain2">TRY ANOTHER</button>'+
+    '<button class="btn btn-alt" id="bMenu3">CHANGE SIZE</button>');
+  card.querySelector("#bAgain2").onclick=function(){ newGame(szId); persist(); closeOvl(); layout(); };
+  card.querySelector("#bMenu3").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(dead||won){ titleScreen(); return; }
+  running=false;
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">BOARD</div><div class="sv">'+szOf(szId).name+'</div></div>'+
+      '<div class="st"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+      '<div class="st"><div class="sk">LEFT</div><div class="sv">'+minesLeft()+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE SIZE</button>');
+  card.querySelector("#bGo").onclick=function(){ running=true; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+setInterval(function(){ if(running&&!dead&&!won&&started&&!firstTap){ secs++;
+  document.getElementById("vTime").textContent=fmt(secs);
+  if(secs%10===0) persist(); } },1000);
+newGame(load("size","easy"));
+started=false; running=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0a1f">
+<!-- Tells the app which way up this game wants to be (read by TiltBridge.swift).
+     Other pages can say "landscape", or leave the tag out to rotate freely. -->
+<meta name="app-orientation" content="portrait">
+<title>Maze Escape — Tilt &amp; Roll</title>
+
+<!--
+  OPTIONAL: if your project has a shared achievements file, un-comment this line.
+  The game also works fine without it (it keeps its own local achievement list
+  and forwards every unlock to whatever global it can find — see ACHIEVEMENT BRIDGE).
+-->
+<!-- <script src="achievements.js"></script> -->
+
+<style>
+  :root{
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+
+    --bg1:#0b0a1f; --bg2:#160f38; --ink:#f4f1ff; --dim:#a79ed6;
+    --accent:#38f3d0; --accent2:#ff4ecd; --panel:rgba(20,16,48,.86); --line:rgba(255,255,255,.14);
+    --btn1:#7b5cff; --btn2:#ff4ecd;
+  }
+  body[data-theme="candy"]{
+    --bg1:#ffeaf6; --bg2:#e6f0ff; --ink:#3a2b55; --dim:#7c6a99;
+    --accent:#ff7ab8; --accent2:#6fc9ff; --panel:rgba(255,255,255,.9); --line:rgba(90,60,120,.16);
+    --btn1:#ff8fc4; --btn2:#7ad0ff;
+  }
+  body[data-theme="wood"]{
+    --bg1:#241708; --bg2:#3b2712; --ink:#fbeeda; --dim:#c8a978;
+    --accent:#f6c667; --accent2:#8fd07a; --panel:rgba(38,24,10,.88); --line:rgba(255,220,170,.18);
+    --btn1:#b7813c; --btn2:#7a4f21;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%; margin:0; overflow:hidden; overscroll-behavior:none;}
+  body{
+    background:radial-gradient(120% 90% at 50% 0%, var(--bg2) 0%, var(--bg1) 70%);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI",Roboto,system-ui,sans-serif;
+    user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+    touch-action:none;
+    transition:background .5s ease, color .3s ease;
+  }
+  #app{position:fixed; inset:0; display:flex; flex-direction:column;}
+
+  /* ---------- HUD ---------- */
+  #hud{
+    position:absolute; top:0; left:0; right:0; z-index:6;
+    padding:calc(var(--safe-t) + 8px) calc(var(--safe-r) + 10px) 8px calc(var(--safe-l) + 10px);
+    display:flex; align-items:center; gap:8px;
+    pointer-events:none;
+  }
+  #hud > *{pointer-events:auto;}
+  .chip{
+    background:var(--panel); border:1px solid var(--line); color:var(--ink);
+    border-radius:14px; padding:7px 11px; font-size:13px; font-weight:700;
+    display:flex; align-items:center; gap:6px; backdrop-filter:blur(12px);
+    box-shadow:0 6px 18px rgba(0,0,0,.28);
+  }
+  .chip small{display:block; font-size:9px; font-weight:800; letter-spacing:.12em; color:var(--dim); text-transform:uppercase;}
+  .chip b{font-size:15px; font-variant-numeric:tabular-nums; line-height:1.05;}
+  .iconbtn{
+    width:42px; height:42px; border-radius:14px; border:1px solid var(--line);
+    background:var(--panel); color:var(--ink); font-size:18px; display:grid; place-items:center;
+    backdrop-filter:blur(12px); box-shadow:0 6px 18px rgba(0,0,0,.28); cursor:pointer;
+  }
+  .iconbtn:active{transform:scale(.94);}
+  .spacer{flex:1;}
+
+  /* ---------- board ---------- */
+  #stage{position:absolute; inset:0; display:grid; place-items:center;}
+  canvas#board{display:block; touch-action:none;}
+
+  /* ---------- screens ---------- */
+  .screen{
+    position:absolute; inset:0; z-index:10; display:none;
+    padding:calc(var(--safe-t) + 14px) calc(var(--safe-r) + 16px) calc(var(--safe-b) + 16px) calc(var(--safe-l) + 16px);
+    background:linear-gradient(180deg, rgba(6,4,20,.72), rgba(6,4,20,.9));
+    backdrop-filter:blur(16px);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  body[data-theme="candy"] .screen{background:linear-gradient(180deg, rgba(255,245,252,.82), rgba(232,240,255,.94));}
+  body[data-theme="wood"] .screen{background:linear-gradient(180deg, rgba(28,17,6,.8), rgba(28,17,6,.94));}
+  .screen.show{display:block; animation:fade .28s ease;}
+  @keyframes fade{from{opacity:0; transform:scale(.98);} to{opacity:1; transform:none;}}
+  .wrap{max-width:520px; margin:0 auto; min-height:100%; display:flex; flex-direction:column; gap:14px; justify-content:center;}
+
+  .logo{text-align:center; margin-top:6px;}
+  .logo h1{
+    margin:6px 0 2px; font-size:clamp(30px,9vw,46px); line-height:1; letter-spacing:-.02em;
+    background:linear-gradient(100deg, var(--accent), var(--accent2) 60%, var(--btn1));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 4px 18px rgba(120,90,255,.35));
+  }
+  .logo p{margin:0; color:var(--dim); font-size:13px; font-weight:600;}
+  .logo .mark{font-size:44px; line-height:1;}
+
+  h2.sec{margin:2px 0 0; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); text-align:center;}
+
+  .themes{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .theme{
+    border-radius:18px; padding:10px 8px; border:2px solid transparent; cursor:pointer;
+    background:var(--panel); box-shadow:0 8px 22px rgba(0,0,0,.25); text-align:center;
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .theme:active{transform:scale(.96);}
+  .theme.sel{border-color:var(--accent); box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);}
+  .theme .sw{height:44px; border-radius:12px; margin-bottom:7px; position:relative; overflow:hidden;}
+  .theme .sw::after{content:""; position:absolute; left:50%; top:50%; width:15px; height:15px; margin:-7px 0 0 -7px;
+    border-radius:50%; background:radial-gradient(circle at 32% 28%, #fff, #cfd6e2 38%, #7c8598 65%, #3c4351 100%);
+    box-shadow:0 2px 5px rgba(0,0,0,.5);}
+  .theme .n{font-size:12px; font-weight:800;}
+  .theme .d{font-size:10px; color:var(--dim); font-weight:600;}
+  .sw.neon{background:linear-gradient(135deg,#12103a,#241a5e); box-shadow:inset 0 0 22px rgba(120,80,255,.7);}
+  .sw.neon::before,.sw.candy::before,.sw.wood::before{content:""; position:absolute; inset:0;}
+  .sw.neon::before{background:
+    linear-gradient(90deg,transparent 18%, #38f3d0 18%, #38f3d0 24%, transparent 24%),
+    linear-gradient(0deg,transparent 30%, #ff4ecd 30%, #ff4ecd 36%, transparent 36%),
+    linear-gradient(90deg,transparent 70%, #ffd23f 70%, #ffd23f 76%, transparent 76%);
+    filter:blur(.3px) drop-shadow(0 0 4px currentColor); opacity:.95;}
+  .sw.candy{background:linear-gradient(135deg,#fff2fa,#e9f4ff);}
+  .sw.candy::before{background:
+    linear-gradient(90deg,transparent 18%, #ff9ecb 18%, #ff9ecb 26%, transparent 26%),
+    linear-gradient(0deg,transparent 28%, #8fd6ff 28%, #8fd6ff 36%, transparent 36%),
+    linear-gradient(90deg,transparent 68%, #ffd98a 68%, #ffd98a 76%, transparent 76%);}
+  .sw.wood{background:linear-gradient(135deg,#c99551,#8b5e2a);}
+  .sw.wood::before{background:
+    linear-gradient(90deg,transparent 20%, #5b3a17 20%, #5b3a17 27%, transparent 27%),
+    linear-gradient(0deg,transparent 30%, #5b3a17 30%, #5b3a17 37%, transparent 37%);
+    opacity:.85;}
+
+  .btn{
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    border:none; border-radius:18px; padding:15px 18px; font-size:16px; font-weight:800; cursor:pointer;
+    color:#fff; background:linear-gradient(135deg, var(--btn1), var(--btn2));
+    box-shadow:0 10px 26px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.35);
+    letter-spacing:.01em; width:100%;
+  }
+  body[data-theme="candy"] .btn{color:#3a2b55; text-shadow:0 1px 0 rgba(255,255,255,.5);}
+  .btn:active{transform:translateY(2px); filter:brightness(.96);}
+  .btn.ghost{background:var(--panel); color:var(--ink); border:1px solid var(--line); box-shadow:none;}
+  .btn.sm{padding:11px 14px; font-size:14px; border-radius:14px;}
+  .row{display:flex; gap:10px;}
+
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center;}
+  .stat{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:9px 6px;}
+  .stat b{display:block; font-size:18px; font-variant-numeric:tabular-nums;}
+  .stat span{font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); font-weight:800;}
+
+  .lvgrid{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; padding-bottom:6px;}
+  .lv{
+    aspect-ratio:1/1; border-radius:14px; border:1px solid var(--line); background:var(--panel);
+    color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-weight:800; font-size:15px; cursor:pointer; position:relative; padding:0;
+  }
+  .lv small{font-size:8px; color:var(--dim); font-weight:700; margin-top:2px;}
+  .lv.done{border-color:var(--accent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);}
+  .lv .star{position:absolute; top:3px; right:5px; font-size:9px;}
+  .lv:active{transform:scale(.94);}
+
+  .achlist{display:flex; flex-direction:column; gap:8px;}
+  .ach{
+    display:flex; gap:11px; align-items:center; background:var(--panel); border:1px solid var(--line);
+    border-radius:16px; padding:10px 12px; opacity:.5;
+  }
+  .ach.on{opacity:1; border-color:color-mix(in srgb, var(--accent) 55%, transparent);}
+  .ach .ic{font-size:24px; width:34px; text-align:center; filter:grayscale(1);}
+  .ach.on .ic{filter:none;}
+  .ach .tx b{display:block; font-size:14px;}
+  .ach .tx span{font-size:11px; color:var(--dim); font-weight:600;}
+
+  /* toast */
+  #toast{
+    position:absolute; z-index:30; left:50%; top:calc(var(--safe-t) + 62px); transform:translate(-50%,-24px);
+    background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:10px 14px;
+    display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none;
+    box-shadow:0 12px 34px rgba(0,0,0,.4); backdrop-filter:blur(14px); transition:.35s cubic-bezier(.2,1.3,.4,1);
+    max-width:88vw;
+  }
+  #toast.show{opacity:1; transform:translate(-50%,0);}
+  #toast .ic{font-size:24px;}
+  #toast b{display:block; font-size:13px;}
+  #toast span{font-size:11px; color:var(--dim); font-weight:600;}
+
+  #hint{
+    position:absolute; left:0; right:0; bottom:calc(var(--safe-b) + 12px); z-index:5; text-align:center;
+    color:var(--dim); font-size:12px; font-weight:700; pointer-events:none; padding:0 20px;
+    text-shadow:0 2px 8px rgba(0,0,0,.5); transition:opacity .4s ease;
+  }
+  body[data-theme="candy"] #hint{color:#6b5a8a; text-shadow:0 1px 2px rgba(255,255,255,.95);}
+  #motionBar{
+    position:absolute; z-index:9; left:50%; transform:translateX(-50%);
+    bottom:calc(var(--safe-b) + 40px); display:none; cursor:pointer;
+    background:linear-gradient(135deg,#ff9f43,#ff6b6b); color:#fff; border:none;
+    border-radius:14px; padding:10px 16px; font-size:13px; font-weight:800;
+    box-shadow:0 8px 22px rgba(0,0,0,.35); max-width:92vw;
+  }
+  #motionBar.show{display:block; animation:fade .3s ease;}
+  #bubble{
+    position:relative; width:min(62vw,230px); height:min(62vw,230px); margin:2px auto;
+    border-radius:26px; background:var(--panel); border:1px solid var(--line);
+    box-shadow:inset 0 8px 26px rgba(0,0,0,.28);
+  }
+  #bubbleRing{
+    position:absolute; inset:16%; border-radius:50%; border:2px dashed var(--line);
+  }
+  #bubbleDot{
+    position:absolute; left:50%; top:50%; width:30px; height:30px; margin:-15px 0 0 -15px;
+    border-radius:50%; transition:transform .06s linear;
+    background:radial-gradient(circle at 32% 28%, #fff, #cfd6e2 38%, #7c8598 66%, #3c4351 100%);
+    box-shadow:0 3px 10px rgba(0,0,0,.5);
+  }
+  .btn.on{outline:2px solid var(--accent); outline-offset:-2px;}
+  #flash{position:absolute; inset:0; z-index:8; pointer-events:none; opacity:0; background:#ff2d55; transition:opacity .35s ease;}
+  .big{font-size:clamp(26px,8vw,38px); text-align:center; margin:0; letter-spacing:-.01em;}
+  .muted{color:var(--dim); font-size:13px; text-align:center; margin:0; font-weight:600;}
+  .credit{text-align:center; font-size:10px; color:var(--dim); opacity:.7; margin-top:2px;}
+</style>
+</head>
+<body data-theme="neon">
+<div id="app">
+
+  <div id="stage"><canvas id="board"></canvas></div>
+
+  <header id="hud" style="display:none">
+    <button class="iconbtn" id="btnBack" aria-label="Back to menu">❮</button>
+    <div class="chip"><div><small>Level</small><b id="hLevel">1</b></div></div>
+    <div class="chip"><div><small>Score</small><b id="hScore">0</b></div></div>
+    <div class="chip"><div><small>Time</small><b id="hTime">0.0</b></div></div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="btnCenter" aria-label="Re-centre tilt">🎯</button>
+    <button class="iconbtn" id="btnPause" aria-label="Pause">⏸</button>
+  </header>
+
+  <div id="hint"></div>
+  <button id="motionBar">📱 Tilt not detected — tap to check</button>
+  <div id="flash"></div>
+
+  <!-- TITLE -->
+  <section class="screen show" id="scTitle">
+    <div class="wrap">
+      <div class="logo">
+        <div class="mark">🌀</div>
+        <h1>MAZE ESCAPE</h1>
+        <p>Tilt your phone · roll the ball · find the way out</p>
+      </div>
+
+      <h2 class="sec">Choose your board</h2>
+      <div class="themes" id="themePick">
+        <div class="theme" data-theme="neon"><div class="sw neon"></div><div class="n">NEON</div><div class="d">Arcade glow</div></div>
+        <div class="theme" data-theme="candy"><div class="sw candy"></div><div class="n">CANDY</div><div class="d">Toy plastic</div></div>
+        <div class="theme" data-theme="wood"><div class="sw wood"></div><div class="n">WOOD</div><div class="d">Classic</div></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><b id="sBest">1</b><span>Level</span></div>
+        <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+        <div class="stat"><b id="sAch">0/0</b><span>Awards</span></div>
+      </div>
+
+      <button class="btn" id="btnPlay">▶  PLAY LEVEL <span id="playLv">1</span></button>
+      <div class="row">
+        <button class="btn ghost sm" id="btnLevels">🗺️ Levels</button>
+        <button class="btn ghost sm" id="btnAch">🏆 Awards</button>
+      </div>
+      <button class="btn ghost sm" id="btnHome">🏠 Main Menu</button>
+      <div class="credit">Gifts hide points, secret doors… and trap doors. · <span id="buildTag"></span></div>
+    </div>
+  </section>
+
+  <!-- LEVELS -->
+  <section class="screen" id="scLevels">
+    <div class="wrap">
+      <h1 class="big">Levels</h1>
+      <p class="muted">All <span id="lvCount">60</span> mazes are open — every board has its own layout.</p>
+      <div class="lvgrid" id="lvGrid"></div>
+      <button class="btn ghost sm" data-close>Back</button>
+    </div>
+  </section>
+
+  <!-- ACHIEVEMENTS -->
+  <section class="screen" id="scAch">
+    <div class="wrap">
+      <h1 class="big">Awards</h1>
+      <p class="muted" id="achCount"></p>
+      <div class="achlist" id="achList"></div>
+      <button class="btn ghost sm" data-close>Back</button>
+    </div>
+  </section>
+
+  <!-- LEVEL COMPLETE -->
+  <section class="screen" id="scWin">
+    <div class="wrap">
+      <div style="text-align:center; font-size:56px">🎉</div>
+      <h1 class="big" id="winTitle">Escaped!</h1>
+      <p class="muted" id="winSub"></p>
+      <div class="stats">
+        <div class="stat"><b id="wTime">0.0</b><span>Seconds</span></div>
+        <div class="stat"><b id="wGifts">0</b><span>Gifts</span></div>
+        <div class="stat"><b id="wBonus">0</b><span>Points</span></div>
+      </div>
+      <button class="btn" id="btnNext">NEXT LEVEL ▶</button>
+      <div class="row">
+        <button class="btn ghost sm" id="btnRetry">↻ Replay</button>
+        <button class="btn ghost sm" id="btnToLevels">🗺️ Levels</button>
+      </div>
+      <button class="btn ghost sm" id="btnHome3">🏠 Main Menu</button>
+    </div>
+  </section>
+
+  <!-- MOTION CHECK -->
+  <section class="screen" id="scMotion">
+    <div class="wrap">
+      <h1 class="big">Motion check</h1>
+      <p class="muted">Tilt the phone. If the dot moves, the game can read your movement.<br><b id="buildTag2"></b></p>
+      <div id="bubble"><div id="bubbleRing"></div><div id="bubbleDot"></div></div>
+      <div class="achlist">
+        <div class="ach on"><div class="ic">📶</div><div class="tx"><b id="mEvents">0 readings</b><span id="mVals">no data yet</span></div></div>
+        <div class="ach on"><div class="ic">🔐</div><div class="tx"><b id="mPerm">Permission: not requested</b><span id="mApi"></span></div></div>
+        <div class="ach on"><div class="ic">🌐</div><div class="tx"><b id="mSecure"></b><span id="mSrc"></span></div></div>
+      </div>
+      <button class="btn" id="btnEnableMotion">📱 Ask for motion access</button>
+      <p class="muted" id="mAdvice"></p>
+      <button class="btn ghost sm" data-close>Back</button>
+    </div>
+  </section>
+
+  <!-- PAUSE -->
+  <section class="screen" id="scPause">
+    <div class="wrap">
+      <div style="text-align:center; font-size:52px">⏸</div>
+      <h1 class="big">Paused</h1>
+      <p class="muted" id="pauseSub"></p>
+      <button class="btn" id="btnResume">▶  RESUME</button>
+      <h2 class="sec">Tilt sensitivity</h2>
+      <div class="row" id="sensRow">
+        <button class="btn ghost sm" data-sens="1">Gentle</button>
+        <button class="btn ghost sm" data-sens="2">Normal</button>
+        <button class="btn ghost sm" data-sens="3">Twitchy</button>
+      </div>
+      <div class="row">
+        <button class="btn ghost sm" id="btnRestart">↻ Restart level</button>
+        <button class="btn ghost sm" id="btnSound">🔊 Sound on</button>
+      </div>
+      <button class="btn ghost sm" id="btnMotion">📱 Motion check</button>
+      <button class="btn ghost sm" id="btnQuit">🗺️ Level select</button>
+      <button class="btn ghost sm" id="btnHome4">🏠 Main Menu</button>
+    </div>
+  </section>
+
+  <div id="toast"><div class="ic">🏆</div><div><b id="toastT"></b><span id="toastS"></span></div></div>
+</div>
+
+<script>
+"use strict";
+/* =========================================================================
+   MAZE ESCAPE — tilt-controlled maze game
+   Single self-contained file. Drop into your Xcode project alongside index.html.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------
+   ACHIEVEMENT BRIDGE
+   The game keeps its own list, and forwards every unlock to any
+   achievements.js you already have. It tries, in order:
+     window.Achievements.unlock/award/grant(id, payload)
+     window.AchievementManager.* / window.achievements.*
+     window.unlockAchievement(id, payload)
+     window.webkit.messageHandlers.achievements.postMessage(payload)  (native Swift)
+     window CustomEvent 'achievement'
+   Nothing found? It just shows its own toast. Nothing breaks.
+   --------------------------------------------------------------- */
+/* Bump this when you change the file — it is shown on the title screen and in
+   Motion check, so you can always tell which copy the app actually loaded. */
+const BUILD = 'v1.5';
+
+const ACHIEVEMENTS = [
+  {id:'first_escape',  ic:'🏁', name:'Way Out',          desc:'Escape your first maze'},
+  {id:'level_5',       ic:'🌱', name:'Getting Rolling',  desc:'Clear level 5'},
+  {id:'level_10',      ic:'🔥', name:'Ten Down',         desc:'Clear level 10'},
+  {id:'level_25',      ic:'💎', name:'Halfway Hero',     desc:'Clear level 25'},
+  {id:'level_50',      ic:'👑', name:'Maze Master',      desc:'Clear level 50'},
+  {id:'level_60',      ic:'🌟', name:'Escape Artist',    desc:'Clear all 60 mazes'},
+  {id:'gifts_10',      ic:'🎁', name:'Unwrapped',        desc:'Collect 10 gifts'},
+  {id:'gifts_50',      ic:'🎀', name:'Gift Hunter',      desc:'Collect 50 gifts'},
+  {id:'gifts_150',     ic:'🛍️', name:'Hoarder',          desc:'Collect 150 gifts'},
+  {id:'secret_5',      ic:'🚪', name:'Secret Knock',     desc:'Find 5 secret doors'},
+  {id:'trap_3',        ic:'🕳️', name:'Back to Square 1', desc:'Fall through 3 trap doors'},
+  {id:'speed_15',      ic:'⚡', name:'Quicksilver',      desc:'Escape a maze in under 15 seconds'},
+  {id:'flawless',      ic:'✨', name:'Clean Sweep',      desc:'Clear a level taking every gift, no traps'},
+  {id:'all_themes',    ic:'🎨', name:'Interior Designer',desc:'Play all three boards'},
+  {id:'score_10k',     ic:'💰', name:'Ten Grand',        desc:'Reach 10,000 total points'},
+  {id:'marathon_10',   ic:'🏃', name:'Marathon',         desc:'Clear 10 mazes in one sitting'},
+  {id:'shapes_all',    ic:'🧩', name:'Shape Shifter',    desc:'Clear a maze of every shape'}
+];
+
+const Ach = {
+  award(id){
+    if(!id || SAVE.ach[id]) return;
+    const def = ACHIEVEMENTS.find(a=>a.id===id) || {id, ic:'🏆', name:id, desc:''};
+    SAVE.ach[id] = Date.now();
+    persist();
+    showToast(def.ic, def.name, def.desc);
+    beep('ach');
+    Ach.forward(id, def);
+  },
+  forward(id, def){
+    const payload = {
+      id, name:def.name, description:def.desc, icon:def.ic,
+      game:'maze-escape', gameName:'Maze Escape', unlockedAt:Date.now()
+    };
+    const call = (fn, ctx)=>{ try{ fn.call(ctx, id, payload); }catch(e){} };
+    try{
+      const hosts = [window.Achievements, window.AchievementManager, window.achievements,
+                     window.GameAchievements, window.Awards];
+      for(const h of hosts){
+        if(!h) continue;
+        if(typeof h === 'function'){ call(h, window); continue; }
+        for(const m of ['unlock','award','grant','add','unlockAchievement']){
+          if(typeof h[m] === 'function'){ call(h[m], h); break; }
+        }
+      }
+      for(const g of ['unlockAchievement','awardAchievement','grantAchievement','onAchievement']){
+        if(typeof window[g] === 'function') call(window[g], window);
+      }
+      if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.achievements){
+        window.webkit.messageHandlers.achievements.postMessage(payload);
+      }
+      window.dispatchEvent(new CustomEvent('achievement', {detail:payload}));
+      document.dispatchEvent(new CustomEvent('achievement', {detail:payload}));
+    }catch(e){ /* never let the bridge break the game */ }
+  }
+};
+
+/* ---------------------------------------------------------------
+   SAVE (safe wrapper — falls back to memory if storage is blocked)
+   --------------------------------------------------------------- */
+const KEY = 'mazeEscape.v1';
+const DEFAULT_SAVE = {theme:'neon', level:1, score:0, best:{}, gifts:0, secrets:0, traps:0,
+                      shapes:{}, themesPlayed:{}, ach:{}, sens:2};
+let SAVE = Object.assign({}, DEFAULT_SAVE);
+(function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw) SAVE = Object.assign({}, DEFAULT_SAVE, JSON.parse(raw));
+    SAVE.best = SAVE.best||{}; SAVE.ach = SAVE.ach||{};
+    SAVE.shapes = SAVE.shapes||{}; SAVE.themesPlayed = SAVE.themesPlayed||{};
+  }catch(e){}
+})();
+function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(SAVE)); }catch(e){} }
+
+/* ---------------------------------------------------------------
+   HELPERS
+   --------------------------------------------------------------- */
+const $ = s=>document.querySelector(s);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mulberry32(a){return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+
+/* ---------------------------------------------------------------
+   LEVEL DESIGN — 60 levels, shape + size + gift mix per level
+   --------------------------------------------------------------- */
+const LEVELS = 60;
+const SHAPES = ['rect','diamond','circle','cross','hex','star'];
+
+function levelConfig(level){
+  const L = Math.max(1, level);
+  const shape = SHAPES[(L-1) % SHAPES.length];
+  // grows 5 -> 13 cells wide over the first ~45 levels
+  let cols = 5 + Math.floor((L-1)/4);
+  cols = clamp(cols, 5, 13);
+  if(shape==='cross' || shape==='star') cols = clamp(cols+1, 6, 13); // thin shapes need room
+  let rows = Math.round(cols * 1.28);
+  if(shape==='circle'||shape==='diamond'||shape==='hex') rows = cols; // keep them symmetrical
+  rows = clamp(rows, 5, 17);
+  const gifts   = clamp(2 + Math.floor(L/4), 2, 9);
+  const pTrap   = clamp(0.14 + L*0.004, 0.14, 0.34);
+  const pSecret = 0.26;
+  const braid   = clamp(0.02 + L*0.003, 0.02, 0.16); // loops make big mazes fairer
+  // how far from the centre the exit is allowed to sit (short early routes, long later ones)
+  const exitFar = clamp(0.46 + L*0.007, 0.46, 0.86);
+  const hue     = (L*47) % 360;
+  return {level:L, shape, cols, rows, gifts, pTrap, pSecret, braid, exitFar, hue};
+}
+
+/* ---------------------------------------------------------------
+   MAZE BUILDER
+   Tile grid: W = cols*2+1, H = rows*2+1. 1 = wall, 0 = open.
+   --------------------------------------------------------------- */
+function inShape(shape, cx, cy, cols, rows){
+  const nx = (cx-(cols-1)/2)/((cols-1)/2||1);
+  const ny = (cy-(rows-1)/2)/((rows-1)/2||1);
+  switch(shape){
+    case 'diamond': return Math.abs(nx)+Math.abs(ny) <= 1.06;
+    case 'circle':  return nx*nx+ny*ny <= 1.04;
+    case 'cross':   return Math.abs(nx) <= 0.4 || Math.abs(ny) <= 0.4;
+    case 'hex':     return Math.abs(nx)*0.55 + Math.abs(ny)*0.86 <= 0.92 || Math.abs(ny) <= 0.34;
+    case 'star': {
+      const r = Math.hypot(nx,ny); if(r<0.001) return true;
+      const a = Math.atan2(ny,nx);
+      return r <= 0.45 + 0.55*Math.abs(Math.cos(2.5*a));
+    }
+    default: return true;
+  }
+}
+
+function buildMaze(cfg){
+  const {cols, rows, shape, braid} = cfg;
+  const rnd = mulberry32(hashStr(GAME.theme+':'+cfg.level+':'+shape));
+  const W = cols*2+1, H = rows*2+1;
+  const wall = new Uint8Array(W*H).fill(1);
+  const idx = (x,y)=>y*W+x;
+  const mask = new Uint8Array(cols*rows);
+  for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) mask[y*cols+x] = inShape(shape,x,y,cols,rows)?1:0;
+
+  const sx = Math.floor(cols/2), sy = Math.floor(rows/2);
+  mask[sy*cols+sx] = 1;
+
+  const vis = new Uint8Array(cols*rows);
+  const carveCell = (x,y)=>{ wall[idx(2*x+1, 2*y+1)] = 0; };
+  const between = (x,y,nx2,ny2)=>{ wall[idx(x+nx2+1, y+ny2+1)] = 0; };
+
+  const stack = [[sx,sy]];
+  vis[sy*cols+sx]=1; carveCell(sx,sy);
+  const D = [[1,0],[-1,0],[0,1],[0,-1]];
+  while(stack.length){
+    const [x,y] = stack[stack.length-1];
+    const opts = [];
+    for(const [dx,dy] of D){
+      const nx2 = x+dx, ny2 = y+dy;
+      if(nx2<0||ny2<0||nx2>=cols||ny2>=rows) continue;
+      if(!mask[ny2*cols+nx2] || vis[ny2*cols+nx2]) continue;
+      opts.push([dx,dy]);
+    }
+    if(!opts.length){ stack.pop(); continue; }
+    const [dx,dy] = opts[(rnd()*opts.length)|0];
+    const nx2=x+dx, ny2=y+dy;
+    wall[idx(2*x+1+dx, 2*y+1+dy)] = 0;
+    carveCell(nx2,ny2);
+    vis[ny2*cols+nx2]=1;
+    stack.push([nx2,ny2]);
+  }
+
+  // braid: knock out a few extra walls to create loops
+  for(let y=0;y<rows;y++) for(let x=0;x<cols;x++){
+    if(!vis[y*cols+x]) continue;
+    for(const [dx,dy] of [[1,0],[0,1]]){
+      const nx2=x+dx, ny2=y+dy;
+      if(nx2>=cols||ny2>=rows) continue;
+      if(!vis[ny2*cols+nx2]) continue;
+      if(rnd() < braid) wall[idx(2*x+1+dx, 2*y+1+dy)] = 0;
+    }
+  }
+
+  // BFS distances (and parents) from start over open passages
+  const dist = new Int32Array(cols*rows).fill(-1);
+  const par  = new Int32Array(cols*rows).fill(-1);
+  dist[sy*cols+sx]=0;
+  let q=[[sx,sy]], head=0;
+  while(head<q.length){
+    const [x,y]=q[head++];
+    for(const [dx,dy] of D){
+      const nx2=x+dx, ny2=y+dy;
+      if(nx2<0||ny2<0||nx2>=cols||ny2>=rows) continue;
+      if(dist[ny2*cols+nx2]>=0) continue;
+      if(wall[idx(2*x+1+dx, 2*y+1+dy)]) continue;
+      dist[ny2*cols+nx2] = dist[y*cols+x]+1;
+      par[ny2*cols+nx2]  = y*cols+x;
+      q.push([nx2,ny2]);
+    }
+  }
+
+  // exit = a far cell that also sits near the border (long route, short tunnel)
+  let maxD = 0;
+  for(let i=0;i<dist.length;i++) if(dist[i]>maxD) maxD = dist[i];
+  let ex=sx, ey=sy, bestScore = Infinity, bestD = -1;
+  for(let y=0;y<rows;y++) for(let x=0;x<cols;x++){
+    const d = dist[y*cols+x];
+    if(d < maxD*(cfg.exitFar||0.78)) continue;
+    const edge = Math.min(x, cols-1-x, y, rows-1-y);
+    if(edge < bestScore || (edge === bestScore && d > bestD)){ bestScore = edge; bestD = d; ex=x; ey=y; }
+  }
+  const outs = [
+    {d:ex,           dir:[-1,0]},
+    {d:cols-1-ex,    dir:[1,0]},
+    {d:ey,           dir:[0,-1]},
+    {d:rows-1-ey,    dir:[0,1]}
+  ].sort((a,b)=>a.d-b.d);
+  const [tdx,tdy] = outs[0].dir;
+  const tunnel = [];
+  let tx = 2*ex+1, ty = 2*ey+1;
+  while(tx>=0 && ty>=0 && tx<W && ty<H){
+    wall[idx(tx,ty)] = 0;
+    tunnel.push([tx,ty]);
+    tx += tdx; ty += tdy;
+  }
+  const mouth = tunnel[tunnel.length-1] || [2*ex+1, 2*ey+1];
+
+  // the solution route: centre -> exit. Gifts must NOT sit on it.
+  const route = new Set();
+  for(let c = ey*cols+ex; c >= 0; c = par[c]) route.add(c);
+
+  // how deep off the route each cell sits (0 = on the route, 1+ = down a side branch)
+  const depth = new Int32Array(cols*rows).fill(-1);
+  const bq = Array.from(route); bq.forEach(c=>depth[c]=0);
+  head = 0;
+  while(head < bq.length){
+    const c = bq[head++], x = c%cols, y = (c/cols)|0;
+    for(const [dx,dy] of D){
+      const nx2=x+dx, ny2=y+dy;
+      if(nx2<0||ny2<0||nx2>=cols||ny2>=rows) continue;
+      const k = ny2*cols+nx2;
+      if(depth[k] >= 0 || dist[k] < 0) continue;
+      if(wall[idx(2*x+1+dx, 2*y+1+dy)]) continue;
+      depth[k] = depth[c]+1;
+      bq.push(k);
+    }
+  }
+
+  // gift pool, best first: deep detours, then one step off the route,
+  // and only as a last resort (tiny mazes) somewhere on it
+  const shuffle = a=>{ for(let i=a.length-1;i>0;i--){ const j=(rnd()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; };
+  const deep=[], shallow=[], fallback=[];
+  for(let y=0;y<rows;y++) for(let x=0;x<cols;x++){
+    const k = y*cols+x;
+    if(dist[k] < 0 || (x===ex && y===ey)) continue;
+    if(depth[k] >= 2) deep.push([x,y]);
+    else if(depth[k] === 1) shallow.push([x,y]);
+    else if(dist[k] >= 3) fallback.push([x,y]);
+  }
+  const pool = shuffle(deep).concat(shuffle(shallow), shuffle(fallback));
+
+  const gifts = [];
+  const n = Math.min(cfg.gifts, pool.length);
+  for(let i=0;i<n;i++){
+    const [x,y] = pool[i];
+    const r = rnd();
+    const type = r < cfg.pTrap ? 'trap' : (r < cfg.pTrap + cfg.pSecret ? 'secret' : 'points');
+    gifts.push({x:2*x+1+0.5, y:2*y+1+0.5, type, taken:false, bob:rnd()*Math.PI*2,
+                tone:(rnd()*5)|0, detour:depth[y*cols+x], spin:(rnd()-0.5)*0.6});
+  }
+
+  return {W,H,wall,idx, cols,rows, start:{x:2*sx+1+0.5, y:2*sy+1+0.5}, exitCell:[ex,ey],
+          exit:{x:2*ex+1+0.5, y:2*ey+1+0.5}, mouth, tunnelDir:[tdx,tdy],
+          tunnelSet:new Set(tunnel.map(t=>t[1]*W+t[0])), secretSet:new Set(),
+          gifts, shape, hue:cfg.hue};
+}
+
+/* ---------------------------------------------------------------
+   GAME STATE
+   --------------------------------------------------------------- */
+const GAME = {
+  theme: SAVE.theme || 'neon',
+  level: SAVE.level || 1,
+  score: SAVE.score || 0,
+  maze: null, cfg: null,
+  ball: {x:0,y:0,vx:0,vy:0,spin:0},
+  running:false, paused:false, started:0, elapsed:0, lastT:0,
+  giftsThisLevel:0, trapsThisLevel:0,
+  particles:[], floats:[], shake:0, ripples:[],
+  tilt:{x:0,y:0}, cal:{b:null,g:null}, tiltSource:'none',
+  motion:{events:0, lastAt:0, beta:0, gamma:0, source:'none', perm:'not requested',
+          permMotion:'-', hasOrientationAPI:false, hasMotionAPI:false, needsPermission:false,
+          secure:false, protocol:'', gSign:0, warned:false, nativeCalls:0},
+  sessionClears:0, muted:false
+};
+
+const BALL_R = 0.33;      // tile units
+const GAIN   = 11.0;      // acceleration (tiles/s^2) at full tilt
+const FRICT  = 2.5;       // damping per second
+const REST   = 0.36;      // wall bounciness
+const VMAX   = 6.5;
+
+/* ---------------------------------------------------------------
+   CANVAS
+   --------------------------------------------------------------- */
+const cv = $('#board'), ctx = cv.getContext('2d');
+let dpr = Math.min(window.devicePixelRatio||1, 3);
+let tile = 16, ox = 0, oy = 0, viewW = 0, viewH = 0;
+let mazeLayer = null, mazeLayerTile = 0;
+
+function fitCanvas(){
+  const padX = 10, padTop = 76, padBot = 50;
+  viewW = window.innerWidth;
+  viewH = window.innerHeight;
+  cv.width  = Math.floor(viewW*dpr);
+  cv.height = Math.floor(viewH*dpr);
+  cv.style.width = viewW+'px';
+  cv.style.height = viewH+'px';
+  if(GAME.maze){
+    const availW = viewW - padX*2;
+    const availH = viewH - padTop - padBot;
+    tile = Math.max(6, Math.min(availW/GAME.maze.W, availH/GAME.maze.H));
+    ox = (viewW - GAME.maze.W*tile)/2;
+    oy = padTop + (availH - GAME.maze.H*tile)/2;
+    if(Math.abs(tile-mazeLayerTile) > 0.01) renderMazeLayer();
+  }
+}
+window.addEventListener('resize', ()=>{ dpr = Math.min(window.devicePixelRatio||1,3); fitCanvas(); });
+window.addEventListener('orientationchange', ()=>setTimeout(fitCanvas,250));
+
+/* ---------------------------------------------------------------
+   THEME PAINT
+   --------------------------------------------------------------- */
+function palette(){
+  const h = GAME.maze ? GAME.maze.hue : 200;
+  if(GAME.theme==='neon') return {
+    floor:'#0d0a24', floor2:'#15113a', grid:'rgba(255,255,255,.045)',
+    wallLight:(t)=>`hsl(${(h + t*7)%360} 92% 58%)`,
+    wallDark:(t)=>`hsl(${(h + t*7)%360} 85% 32%)`,
+    edge:'rgba(255,255,255,.85)', glow:true, frame:'rgba(255,255,255,.10)',
+    gifts:[['#5cffe0','#1fa9c9'],['#ff7ae0','#c22fa8'],['#a98cff','#5b3ce0'],
+           ['#ffe066','#f09a1a'],['#7cff9e','#22b364']],
+    ribbon:'#f2fbff', giftGlow:'rgba(255,255,255,.38)'
+  };
+  if(GAME.theme==='candy') return {
+    floor:'#fff6fc', floor2:'#eef4ff', grid:'rgba(120,90,160,.07)',
+    wallLight:(t)=>`hsl(${(h + t*7)%360} 85% 76%)`,
+    wallDark:(t)=>`hsl(${(h + t*7)%360} 62% 58%)`,
+    edge:'rgba(255,255,255,.95)', glow:false, frame:'rgba(120,90,160,.18)',
+    gifts:[['#ff9ec4','#ef5f9b'],['#8fd0f7','#3f9fdb'],['#ffcf76','#f0a02c'],
+           ['#9fe4b4','#4bbd7c'],['#c9a8f5','#8f5fd8']],
+    ribbon:'#ffffff', giftGlow:'rgba(255,255,255,.55)'
+  };
+  return {
+    floor:'#c99a5b', floor2:'#a97c42', grid:'rgba(70,40,10,.10)',
+    wallLight:()=>'#7c5124', wallDark:()=>'#4a2d10',
+    edge:'rgba(255,225,180,.5)', glow:false, frame:'rgba(40,22,6,.55)',
+    gifts:[['#d4512f','#8c2a1c'],['#3f8f63','#1f5a3e'],['#e0a52a','#a06a0c'],
+           ['#4f6f9e','#2c4363'],['#93529e','#5f3370']],
+    ribbon:'#fff3dc', giftGlow:'rgba(255,236,196,.42)'
+  };
+}
+
+function renderMazeLayer(){
+  const m = GAME.maze; if(!m) return;
+  const P = palette();
+  const w = Math.ceil(m.W*tile*dpr), h = Math.ceil(m.H*tile*dpr);
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  g.scale(dpr,dpr);
+  const T = tile;
+
+  // floor
+  const fg = g.createLinearGradient(0,0,m.W*T,m.H*T);
+  fg.addColorStop(0,P.floor); fg.addColorStop(1,P.floor2);
+  g.fillStyle = fg; g.fillRect(0,0,m.W*T,m.H*T);
+
+  if(GAME.theme==='wood'){
+    g.globalAlpha=.5;
+    for(let i=0;i<m.H*T;i+=6){
+      g.strokeStyle = i%18===0 ? 'rgba(90,55,20,.35)' : 'rgba(150,105,55,.25)';
+      g.lineWidth = i%18===0 ? 1.6 : 0.8;
+      g.beginPath();
+      for(let x=0;x<=m.W*T;x+=10) g.lineTo(x, i + Math.sin((x+i)*0.02)*2.2 + Math.sin(x*0.006+i)*1.4);
+      g.stroke();
+    }
+    g.globalAlpha=1;
+  }else{
+    g.strokeStyle = P.grid; g.lineWidth = 1;
+    for(let x=0;x<=m.W;x++){ g.beginPath(); g.moveTo(x*T,0); g.lineTo(x*T,m.H*T); g.stroke(); }
+    for(let y=0;y<=m.H;y++){ g.beginPath(); g.moveTo(0,y*T); g.lineTo(m.W*T,y*T); g.stroke(); }
+  }
+
+  // walls
+  for(let y=0;y<m.H;y++){
+    for(let x=0;x<m.W;x++){
+      if(!m.wall[m.idx(x,y)]) continue;
+      const t = x+y;
+      if(GAME.theme === 'wood'){
+        const gr = g.createLinearGradient(x*T, y*T, (x+1)*T, (y+1)*T);
+        gr.addColorStop(0, P.wallLight(t));
+        gr.addColorStop(1, P.wallDark(t));
+        g.fillStyle = gr;
+      }else{
+        // flat per-tile colour: walls merge into one continuous mass that
+        // sweeps through the spectrum across the board
+        g.fillStyle = P.wallLight(t);
+      }
+      g.fillRect(x*T-0.4, y*T-0.4, T+0.8, T+0.8);
+    }
+  }
+
+  // edge lighting where a wall meets open floor
+  g.lineCap='round';
+  for(let y=0;y<m.H;y++){
+    for(let x=0;x<m.W;x++){
+      if(!m.wall[m.idx(x,y)]) continue;
+      const open = (xx,yy)=> xx<0||yy<0||xx>=m.W||yy>=m.H || !m.wall[m.idx(xx,yy)];
+      const X=x*T, Y=y*T, t=x+y;
+      g.lineWidth = Math.max(1.2, T*0.09);
+      if(P.glow){ g.shadowColor = P.wallLight(t); g.shadowBlur = T*0.55; } else { g.shadowBlur = 0; }
+      if(open(x,y-1)){ g.strokeStyle = P.edge; g.globalAlpha=GAME.theme==='wood'?.45:.75;
+        g.beginPath(); g.moveTo(X+1,Y+g.lineWidth/2); g.lineTo(X+T-1,Y+g.lineWidth/2); g.stroke(); }
+      if(open(x-1,y)){ g.strokeStyle = P.edge; g.globalAlpha=GAME.theme==='wood'?.32:.5;
+        g.beginPath(); g.moveTo(X+g.lineWidth/2,Y+1); g.lineTo(X+g.lineWidth/2,Y+T-1); g.stroke(); }
+      g.shadowBlur = 0;
+      if(open(x,y+1)){ g.strokeStyle='rgba(0,0,0,.42)'; g.globalAlpha=.75;
+        g.beginPath(); g.moveTo(X+1,Y+T-g.lineWidth/2); g.lineTo(X+T-1,Y+T-g.lineWidth/2); g.stroke(); }
+      if(open(x+1,y)){ g.strokeStyle='rgba(0,0,0,.3)'; g.globalAlpha=.7;
+        g.beginPath(); g.moveTo(X+T-g.lineWidth/2,Y+1); g.lineTo(X+T-g.lineWidth/2,Y+T-1); g.stroke(); }
+      g.globalAlpha=1;
+    }
+  }
+
+  // secret doors glow gold
+  if(m.secretSet.size){
+    g.save();
+    m.secretSet.forEach(k=>{
+      const x = k%m.W, y = (k/m.W)|0;
+      const rg = g.createRadialGradient((x+.5)*T,(y+.5)*T,0,(x+.5)*T,(y+.5)*T,T*.85);
+      rg.addColorStop(0,'rgba(255,214,102,.55)'); rg.addColorStop(1,'rgba(255,214,102,0)');
+      g.fillStyle = rg; g.fillRect((x-.6)*T,(y-.6)*T,T*2.2,T*2.2);
+    });
+    g.restore();
+  }
+
+  // start pad (where the ball begins — and where trap doors send you back to)
+  g.save();
+  const sxp = m.start.x*T, syp = m.start.y*T;
+  const sg = g.createRadialGradient(sxp,syp,0,sxp,syp,T*0.75);
+  sg.addColorStop(0,'rgba(255,255,255,.22)'); sg.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=sg; g.beginPath(); g.arc(sxp,syp,T*0.75,0,7); g.fill();
+  g.strokeStyle = GAME.theme==='candy' ? 'rgba(120,90,160,.45)' : 'rgba(255,255,255,.5)';
+  g.lineWidth = Math.max(1, T*0.06);
+  g.setLineDash([T*0.14, T*0.12]);
+  g.beginPath(); g.arc(sxp,syp,T*0.4,0,7); g.stroke();
+  g.setLineDash([]);
+  g.restore();
+
+  // exit tunnel wash
+  g.save();
+  m.tunnelSet.forEach(k=>{
+    const x = k%m.W, y=(k/m.W)|0;
+    const rg = g.createRadialGradient((x+.5)*T,(y+.5)*T,0,(x+.5)*T,(y+.5)*T,T);
+    rg.addColorStop(0,'rgba(80,255,180,.30)'); rg.addColorStop(1,'rgba(80,255,180,0)');
+    g.fillStyle=rg; g.fillRect((x-.7)*T,(y-.7)*T,T*2.4,T*2.4);
+  });
+  g.restore();
+
+  mazeLayer = c; mazeLayerTile = tile;
+}
+
+/* ---------------------------------------------------------------
+   DRAW
+   --------------------------------------------------------------- */
+function drawBall(g, b){
+  const R = BALL_R*tile;
+  const x = b.x*tile, y = b.y*tile;
+  // contact shadow
+  g.save();
+  g.globalAlpha = .38;
+  g.fillStyle = '#000';
+  g.beginPath(); g.ellipse(x+R*.22, y+R*.34, R*1.02, R*.86, 0, 0, 7); g.fill();
+  g.restore();
+
+  // chrome body
+  const grd = g.createRadialGradient(x-R*.38, y-R*.42, R*.05, x, y, R*1.08);
+  grd.addColorStop(0,   '#ffffff');
+  grd.addColorStop(0.18,'#eef2f7');
+  grd.addColorStop(0.42,'#b9c2cf');
+  grd.addColorStop(0.66,'#79839a');
+  grd.addColorStop(0.86,'#454d61');
+  grd.addColorStop(1,   '#252a38');
+  g.fillStyle = grd;
+  g.beginPath(); g.arc(x,y,R,0,7); g.fill();
+
+  // rolling speckles
+  g.save();
+  g.beginPath(); g.arc(x,y,R*0.98,0,7); g.clip();
+  g.globalAlpha=.18; g.fillStyle='#0a0d14';
+  for(let i=0;i<3;i++){
+    const a = b.spin + i*2.09;
+    g.beginPath(); g.ellipse(x+Math.cos(a)*R*.42, y+Math.sin(a)*R*.42, R*.20, R*.13, a, 0, 7); g.fill();
+  }
+  g.restore();
+
+  // rim light + specular
+  g.strokeStyle='rgba(255,255,255,.35)'; g.lineWidth=Math.max(.7,R*.08);
+  g.beginPath(); g.arc(x,y,R*0.92,Math.PI*0.75,Math.PI*1.85); g.stroke();
+  g.globalAlpha=.95; g.fillStyle='#fff';
+  g.beginPath(); g.ellipse(x-R*.34,y-R*.4,R*.24,R*.17,-0.7,0,7); g.fill();
+  g.globalAlpha=.5;
+  g.beginPath(); g.ellipse(x+R*.3,y+R*.36,R*.16,R*.1,-0.5,0,7); g.fill();
+  g.globalAlpha=1;
+}
+
+function drawGift(g, gift, time){
+  const T = tile;
+  const P = palette();
+  const pair = P.gifts[gift.tone % P.gifts.length];
+  const bob = Math.sin(time*2.6 + gift.bob)*T*0.07;
+  const x = gift.x*T, y = gift.y*T + bob;
+  const s = T*0.62;
+  g.save();
+  g.translate(x,y);
+  g.rotate(Math.sin(time*1.3+gift.bob)*0.10 + gift.spin*0.15);
+
+  // glow
+  const rg = g.createRadialGradient(0,0,0,0,0,s*1.25);
+  rg.addColorStop(0, P.giftGlow); rg.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=rg; g.beginPath(); g.arc(0,0,s*1.25,0,7); g.fill();
+
+  // box — colours come from the board you picked
+  const bg = g.createLinearGradient(-s/2,-s/2,s/2,s/2);
+  bg.addColorStop(0, pair[0]);
+  bg.addColorStop(1, pair[1]);
+  g.fillStyle = bg;
+  const r = s*0.16;
+  g.beginPath();
+  g.moveTo(-s/2+r,-s/2);
+  g.arcTo(s/2,-s/2,s/2,s/2,r); g.arcTo(s/2,s/2,-s/2,s/2,r);
+  g.arcTo(-s/2,s/2,-s/2,-s/2,r); g.arcTo(-s/2,-s/2,s/2,-s/2,r);
+  g.closePath(); g.fill();
+  g.strokeStyle='rgba(0,0,0,.25)'; g.lineWidth=Math.max(.6,s*.05); g.stroke();
+
+  // ribbon
+  g.fillStyle = P.ribbon;
+  g.fillRect(-s*0.09,-s/2, s*0.18, s);
+  g.fillRect(-s/2,-s*0.09, s, s*0.18);
+  // bow
+  g.globalAlpha = 0.88;
+  g.beginPath(); g.ellipse(-s*0.2,-s*0.5,s*0.2,s*0.13,-0.5,0,7); g.fill();
+  g.beginPath(); g.ellipse( s*0.2,-s*0.5,s*0.2,s*0.13, 0.5,0,7); g.fill();
+  g.fillStyle=P.ribbon; g.globalAlpha=1;
+  g.beginPath(); g.arc(0,-s*0.5,s*0.08,0,7); g.fill();
+  g.restore();
+}
+
+function drawExit(g, time){
+  const m = GAME.maze; const T = tile;
+  const [mx,my] = m.mouth;
+  const [dx,dy] = m.tunnelDir;
+  const x = (mx+0.5+dx*0.35)*T, y = (my+0.5+dy*0.35)*T;
+  g.save();
+  for(let i=0;i<3;i++){
+    const p = ((time*0.8 + i/3) % 1);
+    g.globalAlpha = (1-p)*0.55;
+    g.strokeStyle = '#5cffb0'; g.lineWidth = Math.max(1.2, T*0.09);
+    g.beginPath(); g.arc(x,y, T*(0.28+p*0.75), 0, 7); g.stroke();
+  }
+  g.globalAlpha = 0.85+Math.sin(time*4)*0.15;
+  g.fillStyle = '#8effc9';
+  const a = Math.atan2(dy,dx);
+  for(let i=0;i<2;i++){
+    g.save(); g.translate(x+Math.cos(a)*T*0.28*i, y+Math.sin(a)*T*0.28*i); g.rotate(a);
+    g.beginPath(); g.moveTo(-T*.14,-T*.2); g.lineTo(T*.12,0); g.lineTo(-T*.14,T*.2); g.closePath(); g.fill();
+    g.restore();
+  }
+  g.restore();
+}
+
+function drawGuide(g, time){
+  const m = GAME.maze, b = GAME.ball, T = tile;
+  const dx = m.mouth[0]+0.5 - b.x, dy = m.mouth[1]+0.5 - b.y;
+  const d = Math.hypot(dx,dy); if(d < 1.5) return;
+  const a = Math.atan2(dy,dx);
+  const R = BALL_R*T*1.9;
+  g.save();
+  g.globalAlpha = 0.28 + Math.sin(time*3)*0.1;
+  g.translate(b.x*T + Math.cos(a)*R, b.y*T + Math.sin(a)*R);
+  g.rotate(a);
+  g.fillStyle = '#5cffb0';
+  g.beginPath(); g.moveTo(-T*.13,-T*.16); g.lineTo(T*.13,0); g.lineTo(-T*.13,T*.16); g.closePath(); g.fill();
+  g.restore();
+}
+
+function draw(time){
+  const g = ctx;
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,viewW,viewH);
+  if(!GAME.maze) return;
+
+  const sh = GAME.shake;
+  const sx = sh? (Math.random()-.5)*sh : 0, sy = sh? (Math.random()-.5)*sh : 0;
+  g.save();
+  g.translate(ox+sx, oy+sy);
+
+  // board frame
+  const P = palette();
+  g.save();
+  g.shadowColor='rgba(0,0,0,.55)'; g.shadowBlur=26; g.shadowOffsetY=10;
+  g.fillStyle = P.frame;
+  const pad = tile*0.28, rr = tile*0.6;
+  roundRect(g, -pad, -pad, GAME.maze.W*tile+pad*2, GAME.maze.H*tile+pad*2, rr);
+  g.fill();
+  g.restore();
+
+  if(mazeLayer) g.drawImage(mazeLayer, 0,0, GAME.maze.W*tile, GAME.maze.H*tile);
+
+  drawExit(g, time);
+  for(const gift of GAME.maze.gifts) if(!gift.taken) drawGift(g, gift, time);
+
+  // ripples (trap / secret pulses)
+  for(const r of GAME.ripples){
+    g.save(); g.globalAlpha = r.life*0.6;
+    g.strokeStyle = r.color; g.lineWidth = Math.max(1.5, tile*0.14);
+    g.beginPath(); g.arc(r.x*tile, r.y*tile, (1-r.life)*tile*3.2, 0, 7); g.stroke();
+    g.restore();
+  }
+
+  drawGuide(g, time);
+  drawBall(g, GAME.ball);
+
+  // particles
+  for(const p of GAME.particles){
+    g.globalAlpha = clamp(p.life,0,1);
+    g.fillStyle = p.color;
+    g.beginPath(); g.arc(p.x*tile, p.y*tile, p.r*tile, 0, 7); g.fill();
+  }
+  g.globalAlpha=1;
+
+  // floating text
+  g.textAlign='center'; g.font = `800 ${Math.max(12,tile*0.75)}px -apple-system, system-ui, sans-serif`;
+  for(const f of GAME.floats){
+    g.globalAlpha = clamp(f.life,0,1);
+    g.lineWidth = 4; g.strokeStyle='rgba(0,0,0,.55)';
+    g.strokeText(f.text, f.x*tile, f.y*tile);
+    g.fillStyle = f.color;
+    g.fillText(f.text, f.x*tile, f.y*tile);
+  }
+  g.globalAlpha=1;
+  g.restore();
+}
+
+function roundRect(g,x,y,w,h,r){
+  g.beginPath();
+  g.moveTo(x+r,y);
+  g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r);
+  g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r);
+  g.closePath();
+}
+
+/* ---------------------------------------------------------------
+   PHYSICS
+   --------------------------------------------------------------- */
+function step(dt){
+  const m = GAME.maze, b = GAME.ball;
+  const ax = GAME.tilt.x * GAIN;
+  const ay = GAME.tilt.y * GAIN;
+
+  const SUB = 4, h = dt/SUB;
+  for(let s=0;s<SUB;s++){
+    b.vx += ax*h; b.vy += ay*h;
+    const damp = Math.exp(-FRICT*h);
+    b.vx *= damp; b.vy *= damp;
+    const sp = Math.hypot(b.vx,b.vy);
+    if(sp > VMAX){ b.vx = b.vx/sp*VMAX; b.vy = b.vy/sp*VMAX; }
+    b.x += b.vx*h; b.y += b.vy*h;
+    collide(b, m);
+  }
+  b.spin += Math.hypot(b.vx,b.vy)/BALL_R * dt * 0.55;
+
+  // gifts
+  for(const gift of m.gifts){
+    if(gift.taken) continue;
+    if(Math.hypot(gift.x-b.x, gift.y-b.y) < BALL_R + 0.34){ takeGift(gift); }
+  }
+
+  // escape?
+  if(b.x < -0.7 || b.y < -0.7 || b.x > m.W+0.7 || b.y > m.H+0.7) winLevel();
+}
+
+function collide(b, m){
+  const r = BALL_R;
+  const x0 = Math.floor(b.x-r), x1 = Math.floor(b.x+r);
+  const y0 = Math.floor(b.y-r), y1 = Math.floor(b.y+r);
+  for(let ty=y0; ty<=y1; ty++){
+    for(let tx=x0; tx<=x1; tx++){
+      if(tx<0||ty<0||tx>=m.W||ty>=m.H) continue;   // outside the grid is open (the way out)
+      if(!m.wall[m.idx(tx,ty)]) continue;
+      const cx = clamp(b.x, tx, tx+1), cy = clamp(b.y, ty, ty+1);
+      let dx = b.x-cx, dy = b.y-cy;
+      let d2 = dx*dx+dy*dy;
+      if(d2 >= r*r) continue;
+      let nx, ny, d;
+      if(d2 > 1e-9){ d = Math.sqrt(d2); nx = dx/d; ny = dy/d; }
+      else{
+        // centre inside the tile: push out through the nearest face
+        const left = b.x-tx, right = tx+1-b.x, up = b.y-ty, down = ty+1-b.y;
+        const mn = Math.min(left,right,up,down);
+        nx = mn===left?-1:mn===right?1:0;
+        ny = mn===up?-1:mn===down?1:0;
+        if(!nx && !ny) ny = -1;
+        d = 0;
+      }
+      b.x += nx*(r-d); b.y += ny*(r-d);
+      const vn = b.vx*nx + b.vy*ny;
+      if(vn < 0){
+        b.vx -= (1+REST)*vn*nx;
+        b.vy -= (1+REST)*vn*ny;
+        if(Math.abs(vn) > 1.6) beep('bump', clamp(Math.abs(vn)/6,.05,.35));
+      }
+    }
+  }
+}
+
+/* ---------------------------------------------------------------
+   GIFTS
+   --------------------------------------------------------------- */
+function takeGift(gift){
+  gift.taken = true;
+  GAME.giftsThisLevel++;
+  SAVE.gifts = (SAVE.gifts||0)+1;
+  const gp = palette().gifts;
+  burst(gift.x, gift.y, gp[gift.tone % gp.length][0], 16);
+
+  if(gift.type === 'points'){
+    const pts = 100 + GAME.level*10;
+    GAME.score += pts;
+    float(gift.x, gift.y, '+'+pts, '#ffd54a');
+    beep('coin');
+  }else if(gift.type === 'secret'){
+    GAME.score += 40;
+    SAVE.secrets = (SAVE.secrets||0)+1;
+    openSecretDoor();
+    float(gift.x, gift.y, 'SECRET DOOR!', '#7cf6ff');
+    ripple(gift.x, gift.y, '#7cf6ff');
+    beep('secret');
+    if(SAVE.secrets >= 5) Ach.award('secret_5');
+  }else{
+    GAME.trapsThisLevel++;
+    SAVE.traps = (SAVE.traps||0)+1;
+    GAME.score = Math.max(0, GAME.score-75);
+    float(GAME.maze.start.x, GAME.maze.start.y-0.8, 'TRAP DOOR!', '#ff6b8a');
+    ripple(gift.x, gift.y, '#ff6b8a');
+    // back to the beginning
+    GAME.ball.x = GAME.maze.start.x; GAME.ball.y = GAME.maze.start.y;
+    GAME.ball.vx = GAME.ball.vy = 0;
+    GAME.shake = 16;
+    flash();
+    burst(GAME.maze.start.x, GAME.maze.start.y, '#ff6b8a', 22);
+    beep('trap');
+    if(SAVE.traps >= 3) Ach.award('trap_3');
+  }
+  if(SAVE.gifts >= 10) Ach.award('gifts_10');
+  if(SAVE.gifts >= 50) Ach.award('gifts_50');
+  if(SAVE.gifts >= 150) Ach.award('gifts_150');
+  persist();
+  updateHud();
+}
+
+// bore a short tunnel from the ball toward the exit
+function openSecretDoor(){
+  const m = GAME.maze, b = GAME.ball;
+  let x = b.x, y = b.y;
+  const dx = m.mouth[0]+0.5 - x, dy = m.mouth[1]+0.5 - y;
+  const len = Math.hypot(dx,dy) || 1;
+  const stepX = dx/len, stepY = dy/len;
+  const maxTiles = Math.min(7, Math.max(3, Math.round(len*0.45)));
+  let carved = 0, dist = 0;
+  while(carved < maxTiles && dist < len){
+    dist += 0.5;
+    const tx = Math.floor(x + stepX*dist), ty = Math.floor(y + stepY*dist);
+    if(tx<0||ty<0||tx>=m.W||ty>=m.H) break;
+    const k = ty*m.W+tx;
+    if(m.wall[k]){
+      m.wall[k] = 0;
+      m.secretSet.add(k);
+      carved++;
+    }
+  }
+  renderMazeLayer();
+}
+
+/* ---------------------------------------------------------------
+   EFFECTS
+   --------------------------------------------------------------- */
+function burst(x,y,color,n){
+  for(let i=0;i<n;i++){
+    const a = Math.random()*Math.PI*2, s = 1+Math.random()*3.2;
+    GAME.particles.push({x,y,vx:Math.cos(a)*s, vy:Math.sin(a)*s, r:0.05+Math.random()*0.08, life:1, color});
+  }
+}
+function float(x,y,text,color){ GAME.floats.push({x,y,text,color,life:1}); }
+function ripple(x,y,color){ GAME.ripples.push({x,y,color,life:1}); }
+function flash(){
+  const f = $('#flash'); f.style.opacity = '.5';
+  setTimeout(()=>f.style.opacity='0', 120);
+}
+
+/* ---------------------------------------------------------------
+   AUDIO (tiny, optional)
+   --------------------------------------------------------------- */
+let actx = null;
+function beep(kind, vol){
+  if(GAME.muted) return;
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state === 'suspended') actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain();
+    const map = {coin:[880,1320,.09],secret:[520,980,.16],trap:[220,90,.28],
+                 win:[660,1320,.35],ach:[740,1480,.3],bump:[140,110,.05]};
+    const [f0,f1,dur] = map[kind]||map.bump;
+    o.type = kind==='bump'?'sine':'triangle';
+    o.frequency.setValueAtTime(f0, actx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(Math.max(40,f1), actx.currentTime+dur);
+    g.gain.setValueAtTime((vol!=null?vol:0.16), actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime+dur+0.02);
+  }catch(e){}
+}
+
+/* ---------------------------------------------------------------
+   CONTROLS — tilt, with drag + keyboard fallback
+   --------------------------------------------------------------- */
+function screenAngle(){
+  const a = (screen.orientation && typeof screen.orientation.angle === 'number')
+            ? screen.orientation.angle
+            : (typeof window.orientation === 'number' ? window.orientation : 0);
+  return a || 0;
+}
+const SENS_DEG = {1:30, 2:20, 3:13};   // degrees of tilt for full speed
+
+/* Every reading — from the browser OR from native Swift — comes through here. */
+function feedTilt(betaDeg, gammaDeg, source){
+  if(betaDeg == null || gammaDeg == null) return;
+  const M = GAME.motion;
+  M.events++;
+  M.lastAt = performance.now();
+  M.beta = betaDeg; M.gamma = gammaDeg;
+  if(M.source !== source){
+    M.source = source;
+    GAME.tiltSource = source;
+    if(GAME.running) setHint('Tilt your phone to roll the ball out');
+  }
+  if(GAME.cal.b === null){ GAME.cal.b = betaDeg; GAME.cal.g = gammaDeg; }
+  const deg = SENS_DEG[SAVE.sens] || 20;
+  let ax = clamp((gammaDeg - GAME.cal.g)/deg, -1, 1);
+  let ay = clamp((betaDeg  - GAME.cal.b)/deg, -1, 1);
+  const rad = screenAngle()*Math.PI/180;
+  const c = Math.cos(rad), s = Math.sin(rad);
+  GAME.tilt.x = ax*c + ay*s;
+  GAME.tilt.y = -ax*s + ay*c;
+}
+// motion counts as "live" only while readings keep arriving
+function motionLive(){ return GAME.motion.events > 0 && (performance.now()-GAME.motion.lastAt) < 2000; }
+
+function onOrient(e){
+  if(e.beta == null && e.gamma == null) return;
+  feedTilt(e.beta||0, e.gamma||0, 'orientation');
+}
+function onOrientAbs(e){
+  if(GAME.motion.source === 'orientation') return;   // relative events win if both fire
+  if(e.beta == null && e.gamma == null) return;
+  feedTilt(e.beta||0, e.gamma||0, 'orientation-abs');
+}
+function onMotion(e){
+  if(GAME.motion.source.startsWith('orientation')) return;
+  const a = e.accelerationIncludingGravity;
+  if(!a || (a.x == null && a.y == null)) return;
+  // gravity vector -> pseudo-degrees. iOS and Android disagree on sign, so
+  // normalise on the first reading: gravity should read "down the screen".
+  const g = 9.81;
+  const M = GAME.motion;
+  if(M.gSign === 0) M.gSign = (a.z != null && a.z < 0) ? -1 : 1;
+  const gx = clamp((a.x||0)/g, -1, 1) * M.gSign;
+  const gy = clamp((a.y||0)/g, -1, 1) * M.gSign;
+  feedTilt(-gy*57.3, gx*57.3, 'motion');
+}
+
+let tiltRequested = false;
+async function enableTilt(force){
+  const M = GAME.motion;
+  const DOE = window.DeviceOrientationEvent, DME = window.DeviceMotionEvent;
+  M.hasOrientationAPI = !!DOE;
+  M.hasMotionAPI = !!DME;
+  M.needsPermission = !!(DOE && typeof DOE.requestPermission === 'function');
+  M.secure = !!window.isSecureContext;
+  M.protocol = location.protocol;
+  if(tiltRequested && !force) return M.perm === 'granted' || M.events > 0;
+  tiltRequested = true;
+  try{
+    if(M.needsPermission){
+      // MUST be called from inside a user gesture (this is: every call site is a tap)
+      const res = await DOE.requestPermission();
+      M.perm = res;
+      if(res !== 'granted'){ addTiltListeners(); return false; }
+    }else{
+      M.perm = DOE ? 'not-required' : 'no-api';
+    }
+    if(DME && typeof DME.requestPermission === 'function'){
+      try{ M.permMotion = await DME.requestPermission(); }catch(e){ M.permMotion = 'error'; }
+    }
+    addTiltListeners();
+    return true;
+  }catch(err){
+    M.perm = 'error: '+(err && err.message ? err.message : err);
+    addTiltListeners();   // some WebViews throw but still deliver events
+    return false;
+  }
+}
+let listenersOn = false;
+function addTiltListeners(){
+  if(listenersOn) return;
+  listenersOn = true;
+  window.addEventListener('deviceorientation', onOrient, true);
+  window.addEventListener('deviceorientationabsolute', onOrientAbs, true);
+  window.addEventListener('devicemotion', onMotion, true);
+}
+// try on the very first tap anywhere, whatever the player tapped
+function ensureTilt(){ if(!tiltRequested) enableTilt(); }
+document.addEventListener('pointerdown', ensureTilt, {capture:true});
+document.addEventListener('touchstart',  ensureTilt, {capture:true, passive:true});
+
+function recentre(){
+  GAME.cal.b = null; GAME.cal.g = null;
+  GAME.tilt.x = GAME.tilt.y = 0;
+  showToast('🎯','Re-centred','Hold the phone how you like to play');
+}
+
+// drag fallback (also works on desktop with a mouse)
+let dragOrigin = null;
+cv.addEventListener('pointerdown', e=>{
+  if(!GAME.running) return;
+  dragOrigin = {x:e.clientX, y:e.clientY};
+  try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+});
+cv.addEventListener('pointermove', e=>{
+  if(!dragOrigin || !GAME.running) return;
+  if(motionLive()) return; // real tilt wins
+  GAME.tilt.x = clamp((e.clientX-dragOrigin.x)/70, -1, 1);
+  GAME.tilt.y = clamp((e.clientY-dragOrigin.y)/70, -1, 1);
+});
+const endDrag = ()=>{ dragOrigin=null; if(!motionLive()){ GAME.tilt.x=0; GAME.tilt.y=0; } };
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+
+const keys = {};
+addEventListener('keydown', e=>{
+  keys[e.key]=true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+});
+addEventListener('keyup', e=>{ keys[e.key]=false; });
+function readKeys(){
+  if(motionLive()) return;
+  const kx = (keys.ArrowRight||keys.d?1:0) - (keys.ArrowLeft||keys.a?1:0);
+  const ky = (keys.ArrowDown||keys.s?1:0) - (keys.ArrowUp||keys.w?1:0);
+  if(kx||ky){ GAME.tilt.x = kx; GAME.tilt.y = ky; }
+  else if(!dragOrigin){ GAME.tilt.x *= 0.8; GAME.tilt.y *= 0.8; }
+}
+
+/* ---------------------------------------------------------------
+   FLOW
+   --------------------------------------------------------------- */
+function setTheme(t){
+  GAME.theme = t;
+  document.body.dataset.theme = t;
+  SAVE.theme = t;
+  SAVE.themesPlayed[t] = 1;
+  if(Object.keys(SAVE.themesPlayed).length >= 3) Ach.award('all_themes');
+  persist();
+  document.querySelectorAll('#themePick .theme').forEach(el=>{
+    el.classList.toggle('sel', el.dataset.theme===t);
+  });
+  if(GAME.maze) renderMazeLayer();
+}
+
+function startLevel(n){
+  GAME.level = n;
+  GAME.cfg = levelConfig(n);
+  GAME.maze = buildMaze(GAME.cfg);
+  GAME.ball.x = GAME.maze.start.x; GAME.ball.y = GAME.maze.start.y;
+  GAME.ball.vx = GAME.ball.vy = 0; GAME.ball.spin = 0;
+  GAME.giftsThisLevel = 0; GAME.trapsThisLevel = 0;
+  GAME.particles.length = 0; GAME.floats.length = 0; GAME.ripples.length = 0;
+  GAME.shake = 0;
+  GAME.elapsed = 0; GAME.started = performance.now();
+  GAME.running = true; GAME.paused = false;
+  // whatever angle the phone is at right now becomes "level"
+  GAME.cal.b = null; GAME.cal.g = null;
+  GAME.motion.barAt = 0;
+  mazeLayerTile = 0;
+  fitCanvas();
+  hideScreens();
+  $('#hud').style.display = 'flex';
+  const src = motionLive() ? 'Tilt your phone to roll the ball out'
+                           : 'Drag anywhere (or use arrow keys) to tilt the board';
+  setHint(`Level ${n} · ${GAME.cfg.shape.toUpperCase()} maze · ${src}`);
+  updateHud();
+  SAVE.level = Math.max(SAVE.level||1, n);
+  persist();
+}
+
+function winLevel(){
+  if(!GAME.running) return;
+  GAME.running = false;
+  const secs = GAME.elapsed;
+  const total = GAME.maze.gifts.length;
+  const bonus = Math.max(60, Math.round(700 - secs*12)) + GAME.level*20;
+  GAME.score += bonus;
+  GAME.sessionClears++;
+  beep('win');
+
+  const key = GAME.theme+':'+GAME.level;
+  if(!SAVE.best[key] || secs < SAVE.best[key]) SAVE.best[key] = Math.round(secs*10)/10;
+  SAVE.score = GAME.score;
+  SAVE.level = Math.max(SAVE.level||1, Math.min(LEVELS, GAME.level+1));
+  SAVE.shapes[GAME.maze.shape] = 1;
+  persist();
+
+  Ach.award('first_escape');
+  if(GAME.level>=5)  Ach.award('level_5');
+  if(GAME.level>=10) Ach.award('level_10');
+  if(GAME.level>=25) Ach.award('level_25');
+  if(GAME.level>=50) Ach.award('level_50');
+  if(GAME.level>=60) Ach.award('level_60');
+  if(secs < 15) Ach.award('speed_15');
+  if(GAME.giftsThisLevel === total && total > 0 && GAME.trapsThisLevel === 0) Ach.award('flawless');
+  if(GAME.score >= 10000) Ach.award('score_10k');
+  if(GAME.sessionClears >= 10) Ach.award('marathon_10');
+  if(SHAPES.every(s=>SAVE.shapes[s])) Ach.award('shapes_all');
+
+  $('#wTime').textContent = secs.toFixed(1);
+  $('#wGifts').textContent = GAME.giftsThisLevel+'/'+total;
+  $('#wBonus').textContent = '+'+bonus;
+  $('#winTitle').textContent = GAME.level>=LEVELS ? 'All 60 cleared!' : 'Escaped!';
+  const best = SAVE.best[key];
+  $('#winSub').textContent = `Level ${GAME.level} · best ${best.toFixed(1)}s · total score ${GAME.score.toLocaleString()}`;
+  $('#btnNext').textContent = GAME.level>=LEVELS ? 'PLAY AGAIN ▶' : 'NEXT LEVEL ▶';
+  $('#hud').style.display='none';
+  setHint('');
+  show('#scWin');
+}
+
+/* ---------------------------------------------------------------
+   LOOP
+   --------------------------------------------------------------- */
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(0.05, (now-last)/1000); last = now;
+  const time = now/1000;
+
+  if(GAME.running){
+    readKeys();
+    GAME.elapsed = (now - GAME.started)/1000;
+    step(dt);
+    if((now|0) % 4 === 0) updateHud();
+    // no sensor data a couple of seconds in? say so instead of failing silently
+    const bar = $('#motionBar');
+    if(motionLive()) bar.classList.remove('show');
+    else if(!GAME.motion.warned && GAME.elapsed > 2.5){
+      bar.classList.add('show');
+      if(!GAME.motion.barAt) GAME.motion.barAt = now;
+      else if(now - GAME.motion.barAt > 9000){          // say it once, then stop nagging
+        GAME.motion.warned = true; bar.classList.remove('show');
+      }
+    }
+  }else{
+    $('#motionBar').classList.remove('show');
+  }
+  // effects decay
+  for(let i=GAME.particles.length-1;i>=0;i--){
+    const p = GAME.particles[i];
+    p.x += p.vx*dt; p.y += p.vy*dt; p.vx*=0.94; p.vy*=0.94; p.life -= dt*1.6;
+    if(p.life<=0) GAME.particles.splice(i,1);
+  }
+  for(let i=GAME.floats.length-1;i>=0;i--){
+    const f = GAME.floats[i]; f.y -= dt*1.1; f.life -= dt*0.9;
+    if(f.life<=0) GAME.floats.splice(i,1);
+  }
+  for(let i=GAME.ripples.length-1;i>=0;i--){
+    const r = GAME.ripples[i]; r.life -= dt*1.2;
+    if(r.life<=0) GAME.ripples.splice(i,1);
+  }
+  GAME.shake *= 0.86; if(GAME.shake < 0.3) GAME.shake = 0;
+
+  draw(time);
+  requestAnimationFrame(loop);
+}
+
+/* ---------------------------------------------------------------
+   UI
+   --------------------------------------------------------------- */
+function show(sel){ hideScreens(); $(sel).classList.add('show'); }
+function hideScreens(){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show')); }
+function setHint(t){ const h=$('#hint'); h.textContent=t; h.style.opacity = t?'1':'0'; if(t) setTimeout(()=>{h.style.opacity='0';}, 4200); }
+function updateHud(){
+  $('#hLevel').textContent = GAME.level;
+  $('#hScore').textContent = GAME.score.toLocaleString();
+  $('#hTime').textContent = GAME.elapsed.toFixed(1);
+}
+function showToast(ic, title, sub){
+  $('#toast .ic').textContent = ic;
+  $('#toastT').textContent = title;
+  $('#toastS').textContent = sub||'';
+  const t = $('#toast'); t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function refreshTitle(){
+  $('#sBest').textContent = SAVE.level||1;
+  $('#sScore').textContent = (SAVE.score||0).toLocaleString();
+  $('#sAch').textContent = Object.keys(SAVE.ach).length+'/'+ACHIEVEMENTS.length;
+  $('#playLv').textContent = GAME.level;
+}
+function buildLevelGrid(){
+  const grid = $('#lvGrid'); grid.innerHTML='';
+  $('#lvCount').textContent = LEVELS;
+  for(let i=1;i<=LEVELS;i++){
+    const b = document.createElement('button');
+    b.className = 'lv';
+    const best = SAVE.best[GAME.theme+':'+i];
+    if(best) b.classList.add('done');
+    b.innerHTML = `${i}<small>${best? best.toFixed(1)+'s' : levelConfig(i).shape}</small>` +
+                  (best? '<span class="star">⭐</span>' : '');
+    b.onclick = async ()=>{ await enableTilt(); startLevel(i); };
+    grid.appendChild(b);
+  }
+}
+function buildAchList(){
+  const list = $('#achList'); list.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{
+    const on = !!SAVE.ach[a.id];
+    const d = document.createElement('div');
+    d.className = 'ach'+(on?' on':'');
+    d.innerHTML = `<div class="ic">${on?a.ic:'🔒'}</div><div class="tx"><b>${a.name}</b><span>${a.desc}</span></div>`;
+    list.appendChild(d);
+  });
+  $('#achCount').textContent = Object.keys(SAVE.ach).length+' of '+ACHIEVEMENTS.length+' unlocked';
+}
+
+/* ---------------------------------------------------------------
+   MOTION CHECK PANEL
+   --------------------------------------------------------------- */
+function motionAdvice(){
+  const M = GAME.motion;
+  if(M.events > 0) return 'Motion is working. If the ball drifts, tap 🎯 in game to re-centre.';
+  if(M.nativeCalls > 0) return 'Native readings arrived but have stopped. Check the CoreMotion updates are still running in Swift.';
+  if(!M.hasOrientationAPI) return 'This browser exposes no orientation API at all. Feed tilt from Swift with MazeEscape.setTilt(beta, gamma), or drag to play.';
+  if(M.perm === 'denied') return 'iOS refused, and it REMEMBERS that answer — asking again returns denied without prompting. In an app: add NSMotionUsageDescription to Info.plist, then DELETE the app from the device and reinstall to clear the remembered No. In Safari: Settings → Safari → Motion & Orientation Access, then clear website data. Or skip all of it and feed tilt from Swift — the native bridge ignores this permission entirely.';
+  if(String(M.perm).startsWith('error')) return 'The permission request threw. In a WKWebView this usually means NSMotionUsageDescription is missing from Info.plist.';
+  if(M.perm === 'granted') return 'Permission granted but no readings are arriving — the web view is not being fed sensor data. Feed it from Swift with MazeEscape.setTilt(beta, gamma).';
+  if(!M.secure && M.protocol !== 'file:') return 'Not a secure context. iOS only delivers motion over https (or a file:// / app-served page).';
+  return 'Tap the button above — the request must come from a tap.';
+}
+function updateMotionPanel(){
+  if(!$('#scMotion').classList.contains('show')) return;
+  const M = GAME.motion;
+  const live = motionLive();
+  $('#mEvents').textContent = M.events + ' reading' + (M.events===1?'':'s') + (live?' · live':'');
+  $('#mVals').textContent = M.events
+      ? `beta ${M.beta.toFixed(1)}° · gamma ${M.gamma.toFixed(1)}° · via ${M.source}`
+      : 'no data yet';
+  $('#mPerm').textContent = 'Permission: ' + M.perm;
+  $('#mApi').textContent = `orientation API ${M.hasOrientationAPI?'yes':'no'} · motion API ${M.hasMotionAPI?'yes':'no'} · asks first ${M.needsPermission?'yes':'no'}`;
+  $('#mSecure').textContent = M.nativeCalls
+      ? 'Native bridge: connected · ' + M.nativeCalls + ' calls'
+      : 'Native bridge: not connected';
+  $('#mSrc').textContent = M.nativeCalls
+      ? 'Swift is calling MazeEscape.setTilt — this path ignores browser permissions'
+      : 'Swift has never called MazeEscape.setTilt(beta, gamma) on this page';
+  $('#mAdvice').textContent = motionAdvice();
+  const d = $('#bubbleDot');
+  d.style.transform = `translate(${(GAME.tilt.x*70).toFixed(1)}px, ${(GAME.tilt.y*70).toFixed(1)}px)`;
+}
+setInterval(updateMotionPanel, 100);
+
+function showMotionPanel(){
+  GAME.motion.warned = true;
+  if(GAME.running) pauseGame();
+  hideScreens();
+  $('#scMotion').classList.add('show');
+  $('#motionBar').classList.remove('show');
+  updateMotionPanel();
+}
+$('#btnMotion').onclick = showMotionPanel;
+$('#motionBar').onclick = showMotionPanel;
+$('#btnEnableMotion').onclick = async ()=>{
+  GAME.cal.b = null; GAME.cal.g = null;
+  const ok = await enableTilt(true);
+  updateMotionPanel();
+  showToast(ok?'📱':'⚠️', ok?'Motion enabled':'No motion access', motionAdvice());
+};
+
+/* sensitivity */
+function paintSens(){
+  document.querySelectorAll('#sensRow .btn').forEach(b=>
+    b.classList.toggle('on', +b.dataset.sens === (SAVE.sens||2)));
+}
+document.querySelectorAll('#sensRow .btn').forEach(b=>{
+  b.onclick = ()=>{ SAVE.sens = +b.dataset.sens; persist(); paintSens(); };
+});
+paintSens();
+
+/* buttons */
+document.querySelectorAll('#themePick .theme').forEach(el=>{
+  el.onclick = ()=>setTheme(el.dataset.theme);
+});
+$('#btnPlay').onclick = async ()=>{
+  const ok = await enableTilt(true);
+  if(!ok) setTimeout(()=>showToast('🖐️','Tilt unavailable','Drag to steer — tap 📱 Motion check for why'), 700);
+  GAME.cal.b = null; GAME.cal.g = null;
+  startLevel(GAME.level);
+};
+$('#btnLevels').onclick = ()=>{ buildLevelGrid(); show('#scLevels'); };
+$('#btnAch').onclick = ()=>{ buildAchList(); show('#scAch'); };
+document.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=>{ refreshTitle(); show('#scTitle'); });
+$('#btnBack').onclick = ()=>{ GAME.running=false; GAME.paused=false; $('#hud').style.display='none'; refreshTitle(); show('#scTitle'); };
+$('#btnCenter').onclick = recentre;
+$('#btnNext').onclick = async ()=>{ await enableTilt(); startLevel(GAME.level>=LEVELS ? 1 : GAME.level+1); };
+$('#btnRetry').onclick = async ()=>{ await enableTilt(); startLevel(GAME.level); };
+$('#btnToLevels').onclick = ()=>{ buildLevelGrid(); show('#scLevels'); };
+
+/* pause / resume */
+function pauseGame(){
+  if(!GAME.running) return;
+  GAME.running = false;
+  GAME.paused = true;
+  $('#pauseSub').textContent = `Level ${GAME.level} · ${GAME.elapsed.toFixed(1)}s · ${GAME.giftsThisLevel} gift${GAME.giftsThisLevel===1?'':'s'} collected`;
+  $('#hud').style.display = 'none';
+  show('#scPause');
+}
+function resumeGame(){
+  if(!GAME.paused) return;
+  GAME.paused = false;
+  GAME.started = performance.now() - GAME.elapsed*1000;
+  GAME.running = true;
+  GAME.cal.b = null; GAME.cal.g = null;   // re-level on resume
+  enableTilt();
+  hideScreens();
+  $('#hud').style.display = 'flex';
+}
+$('#btnPause').onclick = pauseGame;
+$('#btnResume').onclick = resumeGame;
+$('#btnRestart').onclick = ()=>{ GAME.paused=false; startLevel(GAME.level); };
+$('#btnQuit').onclick = ()=>{ GAME.paused=false; buildLevelGrid(); show('#scLevels'); };
+$('#btnSound').onclick = ()=>{
+  GAME.muted = !GAME.muted;
+  $('#btnSound').textContent = GAME.muted ? '🔇 Sound off' : '🔊 Sound on';
+};
+
+/* ==== MAIN MENU BUTTONS — these go back to your index.html ==== */
+const goHome = ()=>{ window.location.href = 'index.html'; };
+$('#btnHome').onclick = goHome;
+$('#btnHome3').onclick = goHome;
+$('#btnHome4').onclick = goHome;
+
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) pauseGame(); });
+window.addEventListener('blur', ()=>{ if(GAME.running) pauseGame(); });
+
+/* boot */
+$('#buildTag').textContent = BUILD;
+$('#buildTag2').textContent = 'file ' + BUILD;
+setTheme(GAME.theme);
+refreshTitle();
+fitCanvas();
+requestAnimationFrame(loop);
+
+/* ---------------------------------------------------------------
+   API for index.html / Swift.
+
+   NATIVE TILT BRIDGE — if the web view will not deliver motion events,
+   drive the ball straight from CoreMotion in Swift:
+
+     let mm = CMMotionManager()
+     mm.deviceMotionUpdateInterval = 1.0 / 60.0
+     mm.startDeviceMotionUpdates(to: .main) { motion, _ in
+         guard let g = motion?.gravity else { return }
+         let beta  = atan2(-g.y, -g.z) * 180 / .pi   // front-back tilt
+         let gamma = atan2( g.x, -g.z) * 180 / .pi   // left-right tilt
+         webView.evaluateJavaScript("MazeEscape.setTilt(\(beta),\(gamma))")
+     }
+
+   Call setTilt as often as you like (60Hz is ideal). Nothing else changes —
+   the game treats native readings exactly like browser ones.
+   --------------------------------------------------------------- */
+window.MazeEscape = {
+  start:startLevel, setTheme, get state(){ return GAME; },
+  achievements:ACHIEVEMENTS, award:(id)=>Ach.award(id),
+
+  // native tilt input (degrees)
+  setTilt(beta, gamma){ GAME.motion.nativeCalls++; feedTilt(+beta, +gamma, 'native'); },
+  // or hand over a gravity vector (-1..1 each) if that is easier
+  setGravity(gx, gy){ GAME.motion.nativeCalls++; feedTilt(-gy*57.3, gx*57.3, 'native'); },
+  recentre,
+  get motion(){ return Object.assign({}, GAME.motion, {live:motionLive()}); },
+  enableTilt:()=>enableTilt(true),
+
+  reset(){ SAVE = Object.assign({}, DEFAULT_SAVE); persist(); refreshTitle(); }
+};
+</script>
+</body>
+</html>

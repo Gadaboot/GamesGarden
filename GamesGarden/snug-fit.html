@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Snug Fit</title>
+<style>
+  :root{
+    --bg0:#0d1220; --bg1:#151d33; --ink:#eef3ff;
+    --gold:#ffc861; --good:#4aa3ff; --warn:#ff8a3d;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 80% at 50% -10%, #223056 0%, transparent 60%),
+      radial-gradient(90% 70% at 50% 110%, #1a2340 0%, transparent 60%),
+      linear-gradient(180deg,var(--bg0),#080c16);
+    color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    user-select:none;-webkit-user-select:none; touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 10px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:470px;display:flex;flex-direction:column;height:100%}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .menu-btn{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.26);
+    padding:7px 12px;border-radius:999px;font-size:13px;font-weight:700;
+    backdrop-filter:blur(8px);white-space:nowrap;cursor:pointer
+  }
+  .menu-btn:active{transform:scale(.95)}
+  .title{
+    flex:1;text-align:center;font-weight:900;white-space:nowrap;line-height:1;
+    font-size:clamp(15px,5vw,24px);letter-spacing:.5px;
+    background:linear-gradient(180deg,#fff6e8,#ffd08a 52%,#ff9b45);
+    -webkit-background-clip:text;background-clip:text;color:transparent
+  }
+  .strip{display:flex;gap:6px;margin-bottom:8px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:12px;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15)}
+  .chip .k{font-size:8.5px;letter-spacing:1.3px;opacity:.6;font-weight:800}
+  .chip .v{font-size:clamp(14px,4.6vw,19px);font-weight:900;line-height:1.2;font-variant-numeric:tabular-nums}
+  .v-gold{color:var(--gold)}.v-good{color:var(--good)}.v-warn{color:var(--warn)}
+  #stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
+  canvas{display:block;touch-action:none}
+  .ovl{
+    position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(6,9,18,.82);backdrop-filter:blur(7px);padding:14px
+  }
+  .ovl.on{display:flex}
+  .card{
+    width:100%;max-width:360px;background:linear-gradient(180deg,#1b2440,#131a2e);
+    border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:20px 20px 16px;
+    box-shadow:0 24px 60px rgba(0,0,0,.55);text-align:center;max-height:100%;overflow:auto
+  }
+  .card h2{font-size:24px;font-weight:900;margin-bottom:4px;
+    background:linear-gradient(180deg,#fff6e8,#ffd08a 55%,#ff9b45);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .card p{font-size:14px;line-height:1.55;opacity:.9;margin:9px 0}
+  .card .lead{font-size:15px}
+  .rules{text-align:left;font-size:13.5px;line-height:1.7;margin:12px 2px}
+  @media (max-height:700px){
+    .card{padding:15px 16px 13px}
+    .card h2{font-size:20px}
+    .rules{font-size:12.3px;line-height:1.55;margin:9px 1px}
+    .btn{padding:11px;font-size:14px;margin-top:8px}
+  }
+  .rules b{color:var(--gold)}
+  .btn{
+    display:block;width:100%;margin-top:10px;padding:14px;border:none;border-radius:14px;
+    font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.3px
+  }
+  .btn-go{background:linear-gradient(180deg,#7fc4ff,#3d8ee0);color:#06192e;
+    box-shadow:0 6px 0 #1f5da0, 0 10px 20px rgba(0,0,0,.4)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 3px 0 #1f5da0}
+  .btn-alt{background:rgba(255,255,255,.13);color:#fff;border:1px solid rgba(255,255,255,.22)}
+  .modes{display:flex;gap:8px;margin-top:12px}
+  .mode{
+    flex:1;padding:11px 6px;border-radius:14px;cursor:pointer;
+    background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.16)
+  }
+  .mode.sel{background:rgba(122,180,255,.2);border-color:#7fc4ff}
+  .mode .mt{font-size:14px;font-weight:900}
+  .mode .ms{font-size:10.5px;opacity:.7;margin-top:2px;line-height:1.35}
+  .stats{display:flex;gap:8px;margin-top:12px}
+  .stat{flex:1;background:rgba(255,255,255,.06);border-radius:12px;padding:8px 4px}
+  .stat .sk{font-size:8.5px;letter-spacing:1.2px;opacity:.6;font-weight:800}
+  .stat .sv{font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
+  #snd{
+    position:absolute;right:0;top:0;z-index:20;background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:999px;
+    width:34px;height:34px;font-size:15px;cursor:pointer;display:none
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="menu-btn" href="index.html">&#9776; Menu</a>
+    <div class="title">SNUG FIT</div>
+    <button class="menu-btn" id="bSound">&#128266;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">SCORE</div><div class="v v-gold" id="vScore">0</div></div>
+    <div class="chip"><div class="k">BEST</div><div class="v" id="vBest">0</div></div>
+    <div class="chip"><div class="k">STREAK</div><div class="v v-good" id="vStreak">0</div></div>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   SNUG FIT - drop the shapes, fill the lines, keep them coming
+   ============================================================ */
+
+var LS = "gg_snugfit_";
+function load(k, fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v); }catch(e){ return fb; } }
+function save(k, v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+/* ---------------- modes ---------------- */
+var MODES = {
+  classic:{ n:8, box:0, label:"Classic",  sub:"8&times;8 grid<br>rows &amp; columns" },
+  nine:   { n:9, box:3, label:"Nine",     sub:"9&times;9 grid<br>rows, columns &amp; boxes" }
+};
+var mode = load("mode","classic");
+if(!MODES[mode]) mode="classic";
+var N = MODES[mode].n, BOX = MODES[mode].box;
+
+/* ---------------- palette (hue only - never carries meaning) ---------------- */
+var COLS = [
+  {a:"#63b4ff",b:"#2f7fd4",c:"#9ad4ff"},   /* blue   */
+  {a:"#ffa055",b:"#e06a1c",c:"#ffc79a"},   /* orange */
+  {a:"#bb8dff",b:"#7d4fd6",c:"#dcc4ff"},   /* violet */
+  {a:"#ffd45e",b:"#e0a115",c:"#ffe9a8"},   /* gold   */
+  {a:"#3fd0dd",b:"#1897a6",c:"#8fe9f1"},   /* cyan   */
+  {a:"#ff76a3",b:"#d63f72",c:"#ffb3ca"},   /* pink   */
+  {a:"#8ede6a",b:"#4ba52f",c:"#c2f0aa"},   /* green  */
+  {a:"#dfe6f5",b:"#9aa6c2",c:"#ffffff"}    /* pearl  */
+];
+
+/* ---------------- piece shapes ---------------- */
+function P(cells,w){ return {cells:cells, w:w, size:cells.length}; }
+function rect(h,wd,weight){ var c=[]; for(var r=0;r<h;r++) for(var k=0;k<wd;k++) c.push([r,k]); return P(c,weight); }
+var SHAPES = [
+  rect(1,1,10),
+  rect(1,2,14), rect(2,1,14),
+  rect(1,3,14), rect(3,1,14),
+  rect(1,4,8),  rect(4,1,8),
+  rect(1,5,4),  rect(5,1,4),
+  rect(2,2,13), rect(3,3,3),
+  rect(2,3,5),  rect(3,2,5),
+  /* small L (3 cells, 4 turns) */
+  P([[0,0],[1,0],[1,1]],9), P([[0,0],[0,1],[1,0]],9),
+  P([[0,0],[0,1],[1,1]],9), P([[0,1],[1,0],[1,1]],9),
+  /* big L (5 cells, 4 turns) */
+  P([[0,0],[1,0],[2,0],[2,1],[2,2]],4), P([[0,0],[0,1],[0,2],[1,0],[2,0]],4),
+  P([[0,0],[0,1],[0,2],[1,2],[2,2]],4), P([[0,2],[1,2],[2,0],[2,1],[2,2]],4),
+  /* T (4 cells, 4 turns) */
+  P([[0,0],[0,1],[0,2],[1,1]],5), P([[0,1],[1,0],[1,1],[1,2]],5),
+  P([[0,0],[1,0],[1,1],[2,0]],5), P([[0,1],[1,0],[1,1],[2,1]],5),
+  /* S / Z */
+  P([[0,1],[0,2],[1,0],[1,1]],4), P([[0,0],[0,1],[1,1],[1,2]],4),
+  P([[0,0],[1,0],[1,1],[2,1]],4), P([[0,1],[1,0],[1,1],[2,0]],4)
+];
+SHAPES.forEach(function(s){
+  var mr=0,mc=0; s.cells.forEach(function(p){ if(p[0]>mr)mr=p[0]; if(p[1]>mc)mc=p[1]; });
+  s.h=mr+1; s.w2=mc+1;
+});
+
+/* ---------------- state ---------------- */
+var G, tray, score, best, streak, over, started;
+var placedCount, clearedLines, bestStreakRun;
+
+function blankGrid(){ var g=[]; for(var r=0;r<N;r++){ g.push([]); for(var c=0;c<N;c++) g[r].push(0); } return g; }
+
+function fillRatio(){
+  var n=0; for(var r=0;r<N;r++) for(var c=0;c<N;c++) if(G[r][c]) n++;
+  return n/(N*N);
+}
+function fits(sh,r0,c0){
+  for(var i=0;i<sh.cells.length;i++){
+    var r=r0+sh.cells[i][0], c=c0+sh.cells[i][1];
+    if(r<0||c<0||r>=N||c>=N||G[r][c]) return false;
+  }
+  return true;
+}
+function fitsAnywhere(sh){
+  for(var r=0;r<=N-sh.h;r++) for(var c=0;c<=N-sh.w2;c++) if(fits(sh,r,c)) return true;
+  return false;
+}
+function randShape(){
+  /* when the board gets tight, lean smaller so it stays winnable */
+  var tight = fillRatio();
+  var tot=0, i, w=[];
+  for(i=0;i<SHAPES.length;i++){
+    var ww=SHAPES[i].w;
+    if(tight>0.5) ww *= Math.pow(0.55, Math.max(0,SHAPES[i].size-3)*(tight-0.5)*2.4);
+    w.push(ww); tot+=ww;
+  }
+  var x=Math.random()*tot;
+  for(i=0;i<SHAPES.length;i++){ x-=w[i]; if(x<=0) return SHAPES[i]; }
+  return SHAPES[0];
+}
+function newTray(){
+  /* guarantee at least one of the three can actually be played */
+  for(var attempt=0; attempt<60; attempt++){
+    var t=[];
+    for(var i=0;i<3;i++) t.push({sh:randShape(), col:(Math.random()*COLS.length)|0, used:false, pop:0});
+    for(var j=0;j<3;j++) if(fitsAnywhere(t[j].sh)) return t;
+  }
+  return [{sh:SHAPES[0],col:0,used:false,pop:0},
+          {sh:SHAPES[0],col:1,used:false,pop:0},
+          {sh:SHAPES[0],col:2,used:false,pop:0}];
+}
+function anyMoveLeft(){
+  for(var i=0;i<tray.length;i++) if(!tray[i].used && fitsAnywhere(tray[i].sh)) return true;
+  return false;
+}
+
+function reset(keepBest){
+  N = MODES[mode].n; BOX = MODES[mode].box;
+  G = blankGrid(); tray = newTray();
+  score = 0; streak = 0; over = false;
+  placedCount = 0; clearedLines = 0; bestStreakRun = 0;
+  best = load("best_"+mode, 0);
+  parts.length = 0; sweeps.length = 0; banner = null; shake = 0;
+  drag = null;
+  layout(); paintHUD();
+  /* deliberately does NOT save - boot calls reset() before the title screen
+     reads the stored game, and saving here would wipe it */
+}
+
+/* ---------------- persistence ---------------- */
+function saveGame(){
+  if(over){ save("game_"+mode, null); return; }
+  save("game_"+mode, { g:G, score:score, streak:streak,
+    tray:tray.map(function(t){ return {i:SHAPES.indexOf(t.sh), col:t.col, used:t.used}; }),
+    placed:placedCount, cleared:clearedLines, bs:bestStreakRun });
+}
+function restoreGame(){
+  var s = load("game_"+mode, null);
+  if(!s || !s.g || s.g.length!==N) return false;
+  try{
+    G = s.g; score = s.score|0; streak = s.streak|0;
+    placedCount = s.placed|0; clearedLines = s.cleared|0; bestStreakRun = s.bs|0;
+    tray = s.tray.map(function(t){
+      return { sh:SHAPES[t.i]||SHAPES[0], col:t.col|0, used:!!t.used, pop:0 };
+    });
+    if(!tray.some(function(t){ return !t.used; })) tray = newTray();
+    over = false; best = load("best_"+mode,0);
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---------------- audio ---------------- */
+var AC=null, muted=load("muted",false);
+function ac(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(freq, dur, type, vol, slide){
+  if(muted) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(freq, a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide, a.currentTime+dur);
+    g.gain.setValueAtTime(0.0001, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||0.09, a.currentTime+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+0.02);
+  }catch(e){}
+}
+document.getElementById("bSound").onclick = function(){
+  muted = !muted; save("muted", muted);
+  this.innerHTML = muted ? "&#128263;" : "&#128266;";
+  if(!muted) beep(660,0.09,"triangle",0.08);
+};
+document.getElementById("bSound").innerHTML = muted ? "&#128263;" : "&#128266;";
+
+/* ---------------- canvas + layout ---------------- */
+var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+var DPR = Math.min(window.devicePixelRatio||1, 3);
+var W=0, H=0, CS=0, GX=0, GY=0, GW=0, TRAY_Y=0, TRAY_CS=0, TRAY_SLOT=0;
+
+function layout(){
+  var st = document.getElementById("stage");
+  var aw = st.clientWidth, ah = st.clientHeight;
+  if(aw<40||ah<40) return;
+  /* grid on top, tray underneath, whole block centred in the stage */
+  var gridMax = Math.min(aw - 4, ah*0.70);
+  CS = Math.floor(gridMax / N);
+  GW = CS*N;
+  W = aw; H = ah;
+  TRAY_SLOT = aw/3;
+
+  /* Tray cells: big enough to grab comfortably, still clearly smaller than
+     board cells so they read as "not placed yet". Widest piece is 5 cells. */
+  var spare = ah - GW - 14;                       /* room under the board */
+  TRAY_CS = Math.max(14, Math.min(CS*0.86, spare/5.2, TRAY_SLOT/5.4));
+  var trayH = TRAY_CS*5.0;
+
+  var gap = Math.max(12, Math.min(40, (ah - GW - trayH)*0.42));
+  var total = GW + gap + trayH;
+  GX = ((aw - GW)/2)|0;
+  GY = Math.max(2, ((ah - total)/2)|0);
+  TRAY_Y = GY + GW + gap;
+  cv.style.width = aw+"px"; cv.style.height = ah+"px";
+  cv.width = Math.round(aw*DPR); cv.height = Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  SPRC = {};                       /* sprites rebuilt at the new size */
+}
+window.addEventListener("resize", function(){ layout(); });
+
+/* ---------------- effects ---------------- */
+var parts=[], sweeps=[], banner=null, shake=0, scoreShown=0;
+var settle=null, lastT=0;
+function burst(x,y,col,n,power){
+  for(var i=0;i<n;i++){
+    var a=Math.random()*Math.PI*2, sp=(0.6+Math.random()*2.2)*(power||1);
+    parts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.1,
+      life:1, sz:2+Math.random()*3.4, col:col});
+  }
+}
+function showBanner(text, sub, col){
+  banner = {t:text, s:sub, col:col||"#ffd45e", life:1};
+}
+
+/* ---------------- block drawing ---------------- */
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+/* Blocks are pre-rendered once per display size and then blitted 1:1.
+   Painting gradients and four rounded paths per block per frame is what
+   makes this stutter on a phone; so does letting drawImage rescale, so
+   every sprite is built at exactly the size it gets drawn at. */
+var SPRC = {};
+function spriteSet(size){
+  var key = Math.max(4, Math.round(size));
+  if(SPRC[key]) return SPRC[key];
+  var s = key, pad = s*0.055, r = s*0.22, bs = s-pad*2, i;
+  function surface(){
+    var cn = document.createElement("canvas");
+    cn.width = Math.round(s*DPR); cn.height = Math.round(s*DPR);
+    var c2 = cn.getContext("2d"); c2.setTransform(DPR,0,0,DPR,0,0);
+    return c2;
+  }
+  function rr(c2,x,y,w,h,rad){
+    c2.beginPath();
+    c2.moveTo(x+rad,y); c2.arcTo(x+w,y,x+w,y+h,rad); c2.arcTo(x+w,y+h,x,y+h,rad);
+    c2.arcTo(x,y+h,x,y,rad); c2.arcTo(x,y,x+w,y,rad); c2.closePath();
+  }
+  var set = {gems:[], empty:null, px:Math.round(s*DPR)};
+  for(i=0;i<COLS.length;i++){
+    var col = COLS[i], c2 = surface();
+    c2.fillStyle="rgba(0,0,0,.35)";
+    rr(c2, pad, pad+Math.max(1.4,bs*0.075), bs, bs, r); c2.fill();
+    var g = c2.createLinearGradient(0, pad, 0, pad+bs);
+    g.addColorStop(0, col.a); g.addColorStop(1, col.b);
+    c2.fillStyle = g; rr(c2, pad, pad, bs, bs, r); c2.fill();
+    c2.fillStyle="rgba(255,255,255,.34)";
+    rr(c2, pad+bs*0.14, pad+bs*0.11, bs*0.72, bs*0.26, r*0.55); c2.fill();
+    c2.strokeStyle="rgba(255,255,255,.35)"; c2.lineWidth=Math.max(.8,bs*0.045);
+    rr(c2, pad, pad, bs, bs, r); c2.stroke();
+    set.gems.push(c2.canvas);
+  }
+  var e2 = surface();
+  e2.fillStyle="rgba(255,255,255,.045)";
+  rr(e2, pad, pad, bs, bs, r); e2.fill();
+  e2.strokeStyle="rgba(255,255,255,.055)"; e2.lineWidth=1;
+  rr(e2, pad, pad, bs, bs, r); e2.stroke();
+  set.empty = e2.canvas;
+  SPRC[key] = set;
+  return set;
+}
+function block(x,y,s,ci,alpha,lift){
+  var set = spriteSet(s);
+  if(alpha!=null && alpha<1) ctx.globalAlpha = alpha;
+  ctx.drawImage(set.gems[ci]||set.gems[0], x, y-(lift||0), s, s);
+  if(alpha!=null && alpha<1) ctx.globalAlpha = 1;
+}
+function emptyCell(x,y,s){
+  ctx.drawImage(spriteSet(s).empty, x, y, s, s);
+}
+
+/* ---------------- line detection ---------------- */
+function boxCells(bi){
+  var br=((bi/BOX)|0)*BOX, bc=(bi%BOX)*BOX, out=[];
+  for(var r=0;r<BOX;r++) for(var c=0;c<BOX;c++) out.push([br+r,bc+c]);
+  return out;
+}
+function findFull(){
+  var rows=[], cols=[], boxes=[], r, c, i, ok;
+  for(r=0;r<N;r++){ ok=true; for(c=0;c<N;c++) if(!G[r][c]){ ok=false; break; } if(ok) rows.push(r); }
+  for(c=0;c<N;c++){ ok=true; for(r=0;r<N;r++) if(!G[r][c]){ ok=false; break; } if(ok) cols.push(c); }
+  if(BOX){
+    var nb=(N/BOX)|0;
+    for(i=0;i<nb*nb;i++){
+      var cells=boxCells(i); ok=true;
+      for(var k=0;k<cells.length;k++) if(!G[cells[k][0]][cells[k][1]]){ ok=false; break; }
+      if(ok) boxes.push(i);
+    }
+  }
+  return {rows:rows, cols:cols, boxes:boxes, n:rows.length+cols.length+boxes.length};
+}
+
+/* ---------------- placing ---------------- */
+function place(item, r0, c0){
+  var i, cells=item.sh.cells;
+  for(i=0;i<cells.length;i++) G[r0+cells[i][0]][c0+cells[i][1]] = item.col+1;
+  item.used = true;
+  placedCount++;
+  score += cells.length;
+
+  /* pop the freshly-laid blocks */
+  for(i=0;i<cells.length;i++){
+    var px = GX + (c0+cells[i][1])*CS + CS/2, py = GY + (r0+cells[i][0])*CS + CS/2;
+    burst(px, py, COLS[item.col].c, 3, 0.5);
+  }
+  beep(300+cells.length*22, 0.06, "triangle", 0.05);
+  if(window.GGA) GGA.haptic("light");
+
+  var full = findFull();
+  if(full.n){
+    streak++;
+    if(streak>bestStreakRun) bestStreakRun=streak;
+    clearLines(full, item.col);
+  }else{
+    streak = 0;
+  }
+
+  /* refill when the tray is empty */
+  if(tray.every(function(t){ return t.used; })){
+    tray = newTray();
+    for(i=0;i<tray.length;i++) tray[i].pop = 1;
+  }
+
+  if(score>best){ best=score; save("best_"+mode, best); }
+  paintHUD(); checkOver(); saveGame();
+}
+
+function clearLines(full, srcCol){
+  var i, k, cleared = [], seen = {};
+  function mark(r,c){ var key=r*100+c; if(!seen[key]){ seen[key]=1; cleared.push([r,c]); } }
+  for(i=0;i<full.rows.length;i++) for(k=0;k<N;k++) mark(full.rows[i],k);
+  for(i=0;i<full.cols.length;i++) for(k=0;k<N;k++) mark(k,full.cols[i]);
+  for(i=0;i<full.boxes.length;i++){
+    var bc=boxCells(full.boxes[i]);
+    for(k=0;k<bc.length;k++) mark(bc[k][0],bc[k][1]);
+  }
+
+  /* score: base per cell, multiplied by how many lines went at once, plus streak */
+  var lines = full.n;
+  var multi = lines;                        /* 1 line x1, 2 lines x2 ... */
+  var sBonus = 1 + Math.min(streak-1, 8)*0.25;
+  var gained = Math.round(cleared.length * 9 * multi * sBonus);
+  score += gained;
+  clearedLines += lines;
+
+  /* visuals */
+  for(i=0;i<cleared.length;i++){
+    var r=cleared[i][0], c=cleared[i][1];
+    var ci = G[r][c]-1;
+    var x = GX + c*CS + CS/2, y = GY + r*CS + CS/2;
+    burst(x, y, (COLS[ci]||COLS[srcCol]).c, 7+lines*3, 1+lines*0.25);
+    G[r][c] = 0;
+  }
+  for(i=0;i<full.rows.length;i++) sweeps.push({horiz:true,  idx:full.rows[i], life:1});
+  for(i=0;i<full.cols.length;i++) sweeps.push({horiz:false, idx:full.cols[i], life:1});
+
+  shake = Math.min(13, 3.5 + lines*3);
+
+  var msg = null, col = "#ffd45e";
+  if(lines>=4){ msg="INCREDIBLE!"; col="#ff76a3"; }
+  else if(lines===3){ msg="TRIPLE!"; col="#bb8dff"; }
+  else if(lines===2){ msg="DOUBLE!"; col="#3fd0dd"; }
+  else if(streak>=3){ msg="STREAK x"+streak; col="#8ede6a"; }
+  if(msg) showBanner(msg, "+"+gained, col);
+
+  beep(520+lines*90, 0.16, "triangle", 0.09, 900+lines*140);
+  if(lines>=2) setTimeout(function(){ beep(760+lines*70,0.2,"sine",0.07,1250); }, 70);
+  if(window.GGA) GGA.haptic(lines>=3?"heavy":"medium");
+
+  /* board swept completely clean */
+  var empty=true;
+  for(i=0;i<N && empty;i++) for(k=0;k<N;k++) if(G[i][k]){ empty=false; break; }
+  if(empty){
+    score += 300;
+    showBanner("CLEAN SWEEP!", "+300", "#ffd45e");
+    shake = 15;
+    for(i=0;i<40;i++) burst(GX+Math.random()*GW, GY+Math.random()*GW, COLS[(Math.random()*8)|0].c, 3, 1.6);
+    if(window.GGA) GGA.award("sf_sweep");
+    beep(880,0.35,"sine",0.1,1760);
+  }
+
+  /* achievements */
+  if(window.GGA){
+    GGA.award("sf_line");
+    if(lines>=3) GGA.award("sf_triple");
+    if(streak>=5) GGA.award("sf_streak5");
+  }
+}
+
+function checkOver(){
+  if(anyMoveLeft()) return;
+  over = true;
+  save("game_"+mode, null);
+  if(window.GGA){
+    GGA.haptic("error");
+    if(score>=1500) GGA.award("sf_1500");
+    if(score>=5000) GGA.award("sf_5000");
+    if(mode==="nine" && score>=2500) GGA.award("sf_nine");
+  }
+  beep(300,0.4,"sawtooth",0.07,120);
+  setTimeout(endScreen, 620);
+}
+
+/* ---------------- HUD ---------------- */
+function paintHUD(){
+  document.getElementById("vBest").textContent = best.toLocaleString();
+  document.getElementById("vStreak").textContent = streak;
+}
+
+/* ---------------- pointer handling ---------------- */
+var drag = null;   /* {item, idx, px, py, gr, gc, valid} */
+
+function traySlotBounds(i){
+  var cx = TRAY_SLOT*i + TRAY_SLOT/2;
+  return {cx:cx, cy:TRAY_Y + TRAY_CS*2.5};
+}
+/* Each piece is drawn as large as its own shape allows, so a 1x1 or 2x2
+   isn't shrunk down to accommodate the rare 5-long bar. */
+function trayScale(sh){
+  return Math.min(TRAY_CS*1.7, CS*0.80, (TRAY_SLOT*0.92)/sh.w2, (TRAY_CS*4.6)/sh.h);
+}
+function drawTrayPiece(item, i){
+  if(item.used) return;
+  if(drag && drag.idx===i) return;
+  var b = traySlotBounds(i);
+  var s = trayScale(item.sh) * (1 + 0.14*item.pop);
+  var w = item.sh.w2*s, h = item.sh.h*s;
+  var x0 = b.cx - w/2, y0 = b.cy - h/2;
+  for(var k=0;k<item.sh.cells.length;k++)
+    block(x0+item.sh.cells[k][1]*s, y0+item.sh.cells[k][0]*s, s, item.col);
+}
+function hitTray(x,y){
+  for(var i=0;i<tray.length;i++){
+    if(tray[i].used) continue;
+    var b=traySlotBounds(i), s=trayScale(tray[i].sh);
+    var w=tray[i].sh.w2*s, h=tray[i].sh.h*s;
+    var x0=b.cx-w/2, y0=b.cy-h/2;
+    var pad = Math.max(16, s*0.6);   /* generous target */
+    if(x>=x0-pad && x<=x0+w+pad && y>=y0-pad && y<=y0+h+pad) return i;
+  }
+  return -1;
+}
+function pos(e){
+  var r = cv.getBoundingClientRect();
+  var t = e.touches ? e.touches[0] : e;
+  return {x:t.clientX-r.left, y:t.clientY-r.top};
+}
+function dragLift(sh){ return CS*1.15 + sh.h*CS*0.5; }
+/* Top-left corner the piece is drawn at, in free (unsnapped) space. */
+function freeCorner(px,py,sh){
+  return { x: px - sh.w2*CS/2, y: py - dragLift(sh) - sh.h*CS/2 };
+}
+function updateDrag(p){
+  drag.px = p.x; drag.py = p.y;
+  var sh = drag.item.sh, f = freeCorner(p.x, p.y, sh);
+  /* the grid cell the piece would land in - used for the ghost only,
+     the piece itself never jumps to it */
+  drag.gr = Math.round((f.y - GY)/CS);
+  drag.gc = Math.round((f.x - GX)/CS);
+  drag.valid = fits(sh, drag.gr, drag.gc);
+}
+function onDown(e){
+  if(over || !started) return;
+  var p = pos(e), i = hitTray(p.x, p.y);
+  if(i<0) return;
+  e.preventDefault();
+  drag = {item:tray[i], idx:i, px:p.x, py:p.y, gr:-99, gc:-99, valid:false,
+          fx:null, fy:null, clearing:false};
+  /* start the piece where it sat in the tray so it glides up to the finger */
+  var b = traySlotBounds(i), sh = tray[i].sh, ts = trayScale(sh);
+  drag.fx = b.cx - sh.w2*ts/2;
+  drag.fy = b.cy - sh.h*ts/2;
+  updateDrag(p);
+  if(window.GGA) GGA.haptic("light");
+}
+function onMove(e){
+  if(!drag) return;
+  e.preventDefault();
+  updateDrag(pos(e));
+  /* buzz only when the drop would actually clear something - buzzing on
+     every cell boundary is what made this feel clicky */
+  var nowClearing = drag.valid && wouldClear(drag.item.sh, drag.gr, drag.gc).length>0;
+  if(nowClearing && !drag.clearing && window.GGA) GGA.haptic("light");
+  drag.clearing = nowClearing;
+}
+function onUp(e){
+  if(!drag) return;
+  e.preventDefault();
+  var d = drag; drag = null;
+  if(!d.valid){ d.item.pop = 1; return; }
+  /* the piece is floating a few pixels off the grid - remember by how much
+     so it can slide the last bit rather than snapping */
+  var sh = d.item.sh, map = {}, cells = [];
+  for(var i=0;i<sh.cells.length;i++){
+    var r = d.gr+sh.cells[i][0], c = d.gc+sh.cells[i][1];
+    cells.push([r,c]); map[r*100+c] = 1;
+  }
+  settle = { cells:cells, map:map, t:1,
+             dx:(d.fx==null?0:d.fx)-(GX+d.gc*CS),
+             dy:(d.fy==null?0:d.fy)-(GY+d.gr*CS) };
+  place(d.item, d.gr, d.gc);
+}
+cv.addEventListener("touchstart", onDown, {passive:false});
+cv.addEventListener("touchmove",  onMove, {passive:false});
+cv.addEventListener("touchend",   onUp,   {passive:false});
+cv.addEventListener("touchcancel",onUp,   {passive:false});
+cv.addEventListener("mousedown",  onDown);
+window.addEventListener("mousemove", onMove);
+window.addEventListener("mouseup",   onUp);
+
+/* ---------------- render ---------------- */
+function frame(now){
+  requestAnimationFrame(frame);
+  if(!CS){ layout(); if(!CS) return; }
+  now = now || performance.now();
+  var dt = lastT ? Math.min(50, now-lastT) : 16.67;
+  lastT = now;
+  var i, r, c;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  if(shake>0.3){
+    ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
+    shake *= 0.86;
+  } else shake = 0;
+
+  /* board backing */
+  ctx.fillStyle="rgba(0,0,0,.28)";
+  roundRect(GX-5, GY-5, GW+10, GW+10, 16); ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.09)"; ctx.lineWidth=1.5;
+  roundRect(GX-5, GY-5, GW+10, GW+10, 16); ctx.stroke();
+
+  /* 3x3 box tint in Nine mode */
+  if(BOX){
+    for(var br=0;br<N/BOX;br++) for(var bc=0;bc<N/BOX;bc++){
+      if((br+bc)%2) continue;
+      ctx.fillStyle="rgba(255,255,255,.032)";
+      ctx.fillRect(GX+bc*BOX*CS, GY+br*BOX*CS, BOX*CS, BOX*CS);
+    }
+  }
+
+  /* cells */
+  for(r=0;r<N;r++) for(c=0;c<N;c++){
+    var x=GX+c*CS, y=GY+r*CS;
+    if(G[r][c]){
+      if(settle && settle.map[r*100+c]) continue;    /* drawn below, mid-slide */
+      block(x,y,CS,G[r][c]-1);
+    }
+    else emptyCell(x,y,CS);
+  }
+  /* the just-dropped piece easing into place */
+  if(settle){
+    var k = settle.t*settle.t;
+    for(i=0;i<settle.cells.length;i++){
+      var sr=settle.cells[i][0], sc=settle.cells[i][1];
+      if(!G[sr][sc]) continue;                        /* it cleared already */
+      block(GX+sc*CS+settle.dx*k, GY+sr*CS+settle.dy*k, CS, G[sr][sc]-1);
+    }
+  }
+
+  /* Landing footprint. The piece itself floats with the finger now, so this
+     is the only thing saying where it will actually go - make it clear. */
+  if(drag && drag.valid){
+    var sh = drag.item.sh;
+    for(i=0;i<sh.cells.length;i++){
+      var gr=drag.gr+sh.cells[i][0], gc=drag.gc+sh.cells[i][1];
+      block(GX+gc*CS, GY+gr*CS, CS, drag.item.col, 0.34);
+      ctx.strokeStyle="rgba(255,255,255,.5)";
+      ctx.lineWidth=Math.max(1.4, CS*0.045);
+      roundRect(GX+gc*CS+CS*0.06, GY+gr*CS+CS*0.06, CS*0.88, CS*0.88, CS*0.22);
+      ctx.stroke();
+    }
+    /* which lines would go if dropped here */
+    var hl = wouldClear(sh, drag.gr, drag.gc);
+    if(hl.length){
+      var pulse = 0.30 + 0.15*Math.sin(now/110);
+      ctx.fillStyle = "rgba(255,255,255,"+pulse+")";
+      for(i=0;i<hl.length;i++){
+        var cell=hl[i];
+        roundRect(GX+cell[1]*CS+CS*0.05, GY+cell[0]*CS+CS*0.05, CS*0.9, CS*0.9, CS*0.22);
+        ctx.fill();
+      }
+    }
+  }
+
+  /* clear sweeps */
+  for(i=sweeps.length-1;i>=0;i--){
+    var sw=sweeps[i]; sw.life-=0.055;
+    if(sw.life<=0){ sweeps.splice(i,1); continue; }
+    var g2, al=sw.life;
+    if(sw.horiz){
+      g2=ctx.createLinearGradient(GX,0,GX+GW,0);
+      g2.addColorStop(0,"rgba(255,255,255,0)");
+      g2.addColorStop(0.5,"rgba(255,255,255,"+(al*0.55)+")");
+      g2.addColorStop(1,"rgba(255,255,255,0)");
+      ctx.fillStyle=g2; ctx.fillRect(GX, GY+sw.idx*CS+CS*0.15, GW, CS*0.7);
+    }else{
+      g2=ctx.createLinearGradient(0,GY,0,GY+GW);
+      g2.addColorStop(0,"rgba(255,255,255,0)");
+      g2.addColorStop(0.5,"rgba(255,255,255,"+(al*0.55)+")");
+      g2.addColorStop(1,"rgba(255,255,255,0)");
+      ctx.fillStyle=g2; ctx.fillRect(GX+sw.idx*CS+CS*0.15, GY, CS*0.7, GW);
+    }
+  }
+
+  /* tray */
+  for(i=0;i<tray.length;i++){
+    if(tray[i].pop>0) tray[i].pop = Math.max(0, tray[i].pop-0.07);
+    drawTrayPiece(tray[i], i);
+  }
+
+  /* dragged piece - follows the finger freely, never snaps to the grid.
+     A light ease soaks up touch jitter without feeling laggy. */
+  if(drag){
+    var sh2 = drag.item.sh, tgt = freeCorner(drag.px, drag.py, sh2);
+    if(drag.fx==null){ drag.fx=tgt.x; drag.fy=tgt.y; }
+    var ease = 1 - Math.pow(0.45, dt/16.67);   /* same feel at 60Hz and 120Hz */
+    drag.fx += (tgt.x-drag.fx)*ease;
+    drag.fy += (tgt.y-drag.fy)*ease;
+    if(Math.abs(tgt.x-drag.fx)<0.35) drag.fx=tgt.x;
+    if(Math.abs(tgt.y-drag.fy)<0.35) drag.fy=tgt.y;
+    for(i=0;i<sh2.cells.length;i++)
+      block(drag.fx+sh2.cells[i][1]*CS, drag.fy+sh2.cells[i][0]*CS, CS,
+            drag.item.col, drag.valid?1:0.6);
+  }
+
+  if(settle){
+    settle.t -= dt/95;                        /* ~95ms to seat itself */
+    if(settle.t<=0) settle=null;
+  }
+
+  /* particles */
+  for(i=parts.length-1;i>=0;i--){
+    var pt=parts[i];
+    pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=0.16; pt.vx*=0.985; pt.life-=0.026;
+    if(pt.life<=0){ parts.splice(i,1); continue; }
+    ctx.globalAlpha=Math.max(0,pt.life);
+    ctx.fillStyle=pt.col;
+    ctx.beginPath(); ctx.arc(pt.x,pt.y,pt.sz*pt.life,0,6.284); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  /* banner */
+  if(banner){
+    banner.life -= 0.016;
+    if(banner.life<=0) banner=null;
+    else{
+      var a2 = banner.life>0.75 ? (1-banner.life)*4 : Math.min(1, banner.life*1.9);
+      var rise = (1-banner.life)*30;
+      ctx.globalAlpha = Math.max(0,Math.min(1,a2));
+      ctx.textAlign="center";
+      ctx.font = "900 "+Math.round(Math.min(38, GW*0.105))+"px -apple-system,Helvetica,Arial";
+      ctx.fillStyle="rgba(0,0,0,.55)";
+      ctx.fillText(banner.t, GX+GW/2+2, GY+GW*0.44-rise+2);
+      ctx.fillStyle=banner.col;
+      ctx.fillText(banner.t, GX+GW/2, GY+GW*0.44-rise);
+      ctx.font = "900 "+Math.round(Math.min(24, GW*0.068))+"px -apple-system,Helvetica,Arial";
+      ctx.fillStyle="#ffffff";
+      ctx.fillText(banner.s, GX+GW/2, GY+GW*0.44-rise+Math.min(30,GW*0.085));
+      ctx.globalAlpha=1;
+    }
+  }
+  ctx.restore();
+
+  /* score ticker */
+  if(scoreShown!==score){
+    var diff = score-scoreShown;
+    scoreShown += Math.sign(diff)*Math.max(1, Math.ceil(Math.abs(diff)*0.22));
+    if(Math.abs(score-scoreShown)<2) scoreShown=score;
+    document.getElementById("vScore").textContent = scoreShown.toLocaleString();
+  }
+}
+
+function wouldClear(sh, r0, c0){
+  var i, tmp=[], out=[];
+  for(i=0;i<sh.cells.length;i++){
+    var r=r0+sh.cells[i][0], c=c0+sh.cells[i][1];
+    tmp.push([r,c]); G[r][c]=1;
+  }
+  var f = findFull(), seen={};
+  function mark(r,c){ var k=r*100+c; if(!seen[k]){ seen[k]=1; out.push([r,c]); } }
+  for(i=0;i<f.rows.length;i++) for(var k2=0;k2<N;k2++) mark(f.rows[i],k2);
+  for(i=0;i<f.cols.length;i++) for(var k3=0;k3<N;k3++) mark(k3,f.cols[i]);
+  for(i=0;i<f.boxes.length;i++){
+    var bc=boxCells(f.boxes[i]);
+    for(var k4=0;k4<bc.length;k4++) mark(bc[k4][0],bc[k4][1]);
+  }
+  for(i=0;i<tmp.length;i++) G[tmp[i][0]][tmp[i][1]]=0;
+  return out;
+}
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(html){ card.innerHTML=html; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var saved = load("game_"+mode, null);
+  var hasSave = !!(saved && saved.g && saved.g.length===MODES[mode].n && saved.score>0);
+  var html =
+    '<h2>SNUG FIT</h2>'+
+    '<p class="lead">Three shapes at a time. Drop them in, fill a whole row or column, and watch it go.</p>'+
+    '<div class="modes">'+
+      '<div class="mode'+(mode==="classic"?" sel":"")+'" data-m="classic">'+
+        '<div class="mt">Classic</div><div class="ms">'+MODES.classic.sub+'</div></div>'+
+      '<div class="mode'+(mode==="nine"?" sel":"")+'" data-m="nine">'+
+        '<div class="mt">Nine</div><div class="ms">'+MODES.nine.sub+'</div></div>'+
+    '</div>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="sk">BEST</div><div class="sv">'+(load("best_"+mode,0)).toLocaleString()+'</div></div>'+
+      '<div class="stat"><div class="sk">GAMES</div><div class="sv">'+(load("games",0))+'</div></div>'+
+    '</div>'+
+    (hasSave ? '<button class="btn btn-go" id="bResume">CARRY ON &middot; '+saved.score.toLocaleString()+'</button>'+
+               '<button class="btn btn-alt" id="bNew">NEW GAME</button>'
+             : '<button class="btn btn-go" id="bNew">PLAY</button>')+
+    '<button class="btn btn-alt" id="bRules">HOW IT WORKS</button>';
+  openOvl(html);
+  Array.prototype.forEach.call(card.querySelectorAll(".mode"), function(el){
+    el.onclick = function(){
+      mode = el.getAttribute("data-m"); save("mode", mode);
+      N=MODES[mode].n; BOX=MODES[mode].box;
+      titleScreen();
+    };
+  });
+  var bR=card.querySelector("#bResume");
+  if(bR) bR.onclick = function(){
+    N=MODES[mode].n; BOX=MODES[mode].box;
+    if(!restoreGame()) reset();
+    layout(); paintHUD(); scoreShown=score;
+    document.getElementById("vScore").textContent = score.toLocaleString();
+    started=true; closeOvl();
+  };
+  card.querySelector("#bNew").onclick = function(){
+    save("games", load("games",0)+1);
+    reset(); saveGame(); scoreShown=0;
+    document.getElementById("vScore").textContent="0";
+    started=true; closeOvl();
+  };
+  card.querySelector("#bRules").onclick = rulesScreen;
+}
+
+function rulesScreen(){
+  openOvl(
+    '<h2>HOW IT WORKS</h2>'+
+    '<div class="rules">'+
+    '&#9632; Three shapes at a time. Drag each onto the board &mdash; they <b>don\'t rotate</b>, so think ahead.<br><br>'+
+    '&#9632; Fill a whole <b>row</b> or <b>column</b> and it clears away. In <b>Nine</b> mode a full <b>3&times;3 box</b> clears too.<br><br>'+
+    '&#9632; Clearing <b>more than one line at once</b> multiplies the score &mdash; a triple beats three singles.<br><br>'+
+    '&#9632; Clear on <b>consecutive drops</b> to build a streak; each one in the run scores more.<br><br>'+
+    '&#9632; Sweep the board completely empty for a <b>300 point</b> bonus.<br><br>'+
+    '&#9632; A fresh set of three only arrives once all three are down. It ends when <b>none of them fit</b>.'+
+    '</div>'+
+    '<button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick = titleScreen;
+}
+
+function endScreen(){
+  var isBest = score>=best && score>0;
+  save("games", load("games",0));
+  openOvl(
+    '<h2>'+(isBest?"NEW BEST!":"NO ROOM LEFT")+'</h2>'+
+    '<p class="lead">'+(isBest
+      ? "That's your highest yet on the "+MODES[mode].label+" board."
+      : "Nothing left that fits. Best is "+best.toLocaleString()+".")+'</p>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="sk">SCORE</div><div class="sv">'+score.toLocaleString()+'</div></div>'+
+      '<div class="stat"><div class="sk">LINES</div><div class="sv">'+clearedLines+'</div></div>'+
+      '<div class="stat"><div class="sk">BEST RUN</div><div class="sv">'+bestStreakRun+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">PLAY AGAIN</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE BOARD</button>');
+  card.querySelector("#bAgain").onclick = function(){
+    save("games", load("games",0)+1);
+    reset(); saveGame(); scoreShown=0;
+    document.getElementById("vScore").textContent="0";
+    started=true; closeOvl();
+  };
+  card.querySelector("#bMenu").onclick = titleScreen;
+}
+
+/* ---------------- boot ---------------- */
+reset();
+scoreShown=0;
+started=false;
+titleScreen();
+frame();
+setTimeout(layout, 60);
+window.addEventListener("orientationchange", function(){ setTimeout(layout, 220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) saveGame(); });
+window.addEventListener("pagehide", saveGame);
+
+})();
+</script>
+</body>
+</html>

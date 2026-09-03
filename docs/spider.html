@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Spider Solitaire</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(ellipse at 50% 12%, #4fd39a 0%, #2fae76 42%, #1d8b5c 100%);
+    color:#fff; display:flex; flex-direction:column; touch-action:none;
+  }
+  header{display:flex;align-items:center;gap:8px;
+    padding:calc(env(safe-area-inset-top,0px) + 7px) 10px 5px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#0f5236;
+    background:rgba(255,255,255,.9);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(0,60,35,.25);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  h1{flex:1;text-align:center;font-size:clamp(14px,4.4vw,19px);font-weight:900;letter-spacing:1.5px;
+    text-shadow:0 2px 0 #177a51,0 4px 10px rgba(0,50,30,.4)}
+  .strip{display:flex;gap:6px;padding:0 10px 6px}
+  .chip{flex:1;text-align:center;padding:5px 2px;border-radius:12px;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.8}
+  .chip .v{font-size:clamp(12px,3.9vw,16px);font-weight:900;font-variant-numeric:tabular-nums}
+  #board{position:relative;flex:1;margin:0 6px;min-height:0}
+  .slot{position:absolute;width:var(--cw);height:var(--ch);border-radius:calc(var(--cw)*.10);
+    border:1.5px dashed rgba(255,255,255,.38);background:rgba(255,255,255,.06)}
+  .card{
+    position:absolute;width:var(--cw);height:var(--ch);border-radius:calc(var(--cw)*.10);
+    background:#fffdf4;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer;overflow:hidden;
+    transition:left .17s ease, top .17s ease
+  }
+  .card.noanim{transition:none}
+  .card.drag{transition:none;box-shadow:0 9px 22px rgba(0,0,0,.5)}
+  .card.down{
+    background:repeating-linear-gradient(45deg,#3f8fd8 0 5px,#2f74b8 5px 10px);
+    border:calc(var(--cw)*.05) solid #f6f6ee
+  }
+  .card.down>div{display:none}
+  .card.red{color:#d81f45}
+  .card.black{color:#22242c}
+  .card .corner{position:absolute;line-height:.94;text-align:center;font-weight:800;
+    font-size:calc(var(--cw)*.30);pointer-events:none}
+  .card .corner.tl{top:calc(var(--cw)*.07);left:calc(var(--cw)*.09)}
+  .card .corner span{display:block}
+  .card .big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--cw)*.48);pointer-events:none;opacity:.92}
+  .card .big .cr{font-size:calc(var(--cw)*.42);font-weight:900;margin-right:calc(var(--cw)*.03)}
+  .card.ok{animation:okp .5s ease}
+  @keyframes okp{0%,100%{box-shadow:0 1px 3px rgba(0,0,0,.4)}
+    50%{box-shadow:0 0 0 3px #ffe066,0 0 16px 5px rgba(255,224,102,.8)}}
+  .card.bad{animation:shk .3s ease}
+  @keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  #tools{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:6px 10px calc(env(safe-area-inset-bottom,0px) + 8px)}
+  .tool{background:rgba(255,255,255,.92);border:1.5px solid #fff;border-radius:14px;
+    padding:8px 2px 7px;text-align:center;cursor:pointer;color:#0f5236;
+    box-shadow:0 4px 0 rgba(0,70,45,.3),0 5px 12px rgba(0,60,35,.2)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,70,45,.3)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:17px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.72}
+  .ovl{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+    background:rgba(10,60,40,.45);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card2{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#f0fbf5);
+    border:2px solid #fff;border-radius:22px;padding:20px 18px 16px;text-align:center}
+  .card2{color:#175a3c;box-shadow:0 20px 50px rgba(0,60,35,.45);max-height:100%;overflow:auto}
+  .card2 h2{font-size:24px;font-weight:900;letter-spacing:1px;color:#12734b;margin-bottom:3px}
+  .card2 p{font-size:14px;line-height:1.55;color:#5c8974;margin:8px 0}
+  .modes{display:grid;grid-template-columns:1fr;gap:9px;margin-top:13px}
+  .mode{border-radius:16px;padding:12px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .mode:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .mode .mn{font-size:15px}
+  .mode .mt{font-size:10.5px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .m-1{background:linear-gradient(180deg,#76dfa8,#33b371)}
+  .m-2{background:linear-gradient(180deg,#7cc4ff,#2f8ce0)}
+  .m-4{background:linear-gradient(180deg,#ffa970,#ef7a26)}
+  .btn{display:block;width:100%;margin-top:9px;padding:13px;border:none;border-radius:15px;
+    font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#6ce0a4,#2eae6e);color:#fff;
+    box-shadow:0 5px 0 #1e8552,0 8px 18px rgba(20,130,80,.3)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #1e8552}
+  .btn-alt{background:#edf8f2;color:#2c6f51;border:1.5px solid #d8ecdf}
+  .rules{text-align:left;font-size:13px;line-height:1.7;color:#4f7c65;margin:11px 2px}
+  .rules b{color:#12734b}
+  .stats2{display:flex;gap:8px;margin-top:12px}
+  .st{flex:1;background:#edf8f2;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#6d9c85}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#12734b}
+  @media (max-height:700px){
+    .card2{padding:15px 15px 12px}.card2 h2{font-size:20px}
+    .rules{font-size:11.7px;line-height:1.5}.btn{padding:11px;font-size:14px;margin-top:7px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="pill" href="index.html">&#9776; Menu</a>
+  <h1>SPIDER</h1>
+  <button class="pill" id="bPause">&#10074;&#10074;</button>
+</header>
+<div class="strip">
+  <div class="chip"><div class="k">SUITS</div><div class="v" id="vSuits">1</div></div>
+  <div class="chip"><div class="k">DONE</div><div class="v" id="vDone">0/8</div></div>
+  <div class="chip"><div class="k">MOVES</div><div class="v" id="vMoves">0</div></div>
+  <div class="chip"><div class="k">DEALS</div><div class="v" id="vDeals">5</div></div>
+</div>
+<div id="board"></div>
+<div id="tools">
+  <div class="tool" id="tUndo"><div class="ti">&#8630;</div><div class="tl">UNDO</div></div>
+  <div class="tool" id="tHint"><div class="ti">&#128161;</div><div class="tl">HINT</div></div>
+  <div class="tool" id="tDeal"><div class="ti">&#127183;</div><div class="tl">DEAL</div></div>
+  <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW</div></div>
+</div>
+<div class="ovl" id="ovl"><div class="card2" id="card2"></div></div>
+
+<script src="achievements.js"></script>
+<script>
+(function(){
+"use strict";
+var SUITS=["♠","♥","♦","♣"];
+var SUIT_COLOR=["black","red","red","black"];
+var RANK_TXT=["","A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+
+var LS="gg_spider_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+/* ---------------- state ---------------- */
+var S=null, elMap={}, slots=[], undoStack=[], suitCount=1, secs=0, running=false, started=false, done=false;
+var CW=0, CH=0, GAP=0, DOWN_OV=0, UP_OV=0;
+
+function newDeck(nSuits){
+  var suits = nSuits===1 ? [0,0,0,0,0,0,0,0]
+            : nSuits===2 ? [0,0,0,0,1,1,1,1]
+            :              [0,0,1,1,2,2,3,3];
+  var d=[], id=0;
+  for(var k=0;k<8;k++) for(var r=1;r<=13;r++) d.push({id:id++, r:r, s:suits[k], up:false});
+  for(var i=d.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var t=d[i]; d[i]=d[j]; d[j]=t; }
+  return d;
+}
+function newGame(nSuits){
+  suitCount=nSuits; save("suits",nSuits);
+  var deck=newDeck(nSuits);
+  S={ tab:[], stock:[], done:0, moves:0 };
+  for(var c=0;c<10;c++) S.tab.push([]);
+  var need=[6,6,6,6,5,5,5,5,5,5], p=0, c2;
+  for(c2=0;c2<10;c2++) for(var n=0;n<need[c2];n++) S.tab[c2].push(deck[p++]);
+  for(c2=0;c2<10;c2++) S.tab[c2][S.tab[c2].length-1].up=true;
+  while(p<deck.length) S.stock.push(deck[p++]);
+  undoStack=[]; secs=0; done=false; running=true;
+  clearEls(); layout(); render(true); paintHUD();
+  /* deliberately does NOT persist: boot calls newGame() before the title
+     screen reads the stored deal, and saving here would wipe it */
+}
+function clearEls(){
+  for(var k in elMap) if(elMap[k].parentNode) elMap[k].parentNode.removeChild(elMap[k]);
+  elMap={};
+}
+
+/* ---------------- persistence ---------------- */
+function packState(){
+  return { n:suitCount, d:S.done, m:S.moves, t:secs,
+    tab:S.tab.map(function(col){ return col.map(function(c){ return [c.id,c.r,c.s,c.up?1:0]; }); }),
+    st:S.stock.map(function(c){ return [c.id,c.r,c.s]; }) };
+}
+function persist(){ if(done){ save("cur",null); return; } try{ save("cur", packState()); }catch(e){} }
+function restore(){
+  var d=load("cur",null);
+  if(!d||!d.tab) return false;
+  suitCount=d.n; secs=d.t|0;
+  S={ tab:d.tab.map(function(col){ return col.map(function(a){ return {id:a[0],r:a[1],s:a[2],up:!!a[3]}; }); }),
+      stock:d.st.map(function(a){ return {id:a[0],r:a[1],s:a[2],up:false}; }),
+      done:d.d|0, moves:d.m|0 };
+  undoStack=[]; done=false; running=true;
+  clearEls(); layout(); render(true); paintHUD();
+  return true;
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var boardEl=document.getElementById("board");
+function longest(){ var m=1,i; for(i=0;i<10;i++) m=Math.max(m,S.tab[i].length); return m; }
+function layout(){
+  var bw=boardEl.clientWidth, bh=boardEl.clientHeight;
+  if(bw<50||bh<50||!S) return;
+  GAP=Math.max(2, bw*0.006);
+  CW=Math.floor((bw - GAP*9) / 10);
+  CH=Math.round(CW*1.45);
+  /* overlaps shrink so the tallest column always fits */
+  var L=longest();
+  var avail=bh-CH-4;
+  var ov=Math.min(CH*0.38, avail/Math.max(1,L-1));
+  UP_OV=Math.max(8, ov);
+  DOWN_OV=Math.max(5, Math.min(UP_OV*0.62, CH*0.17));
+  document.documentElement.style.setProperty("--cw", CW+"px");
+  document.documentElement.style.setProperty("--ch", CH+"px");
+  if(!slots.length){
+    for(var i=0;i<10;i++){
+      var d=document.createElement("div"); d.className="slot";
+      boardEl.appendChild(d); slots.push(d);
+    }
+  }
+  for(var k=0;k<10;k++){ slots[k].style.left=(k*(CW+GAP))+"px"; slots[k].style.top="0px"; }
+}
+window.addEventListener("resize", function(){ if(S){ layout(); render(true); } });
+
+function cardEl(c){
+  var el=elMap[c.id];
+  if(el) return el;
+  el=document.createElement("div");
+  el.className="card "+SUIT_COLOR[c.s];
+  el.dataset.id=c.id;
+  var rt=RANK_TXT[c.r], su=SUITS[c.s];
+  var big=(c.r>10) ? '<span class="cr">'+rt+'</span>'+su : su;
+  el.innerHTML='<div class="corner tl"><span>'+rt+'</span><span>'+su+'</span></div>'+
+               '<div class="big">'+big+'</div>';
+  boardEl.appendChild(el);
+  elMap[c.id]=el;
+  return el;
+}
+function colX(i){ return i*(CW+GAP); }
+function cardY(col, idx){
+  var y=0;
+  for(var k=0;k<idx;k++) y += S.tab[col][k].up ? UP_OV : DOWN_OV;
+  return y;
+}
+function render(noanim){
+  if(!S) return;
+  var seen={};
+  for(var i=0;i<10;i++){
+    for(var j=0;j<S.tab[i].length;j++){
+      var c=S.tab[i][j], el=cardEl(c);
+      seen[c.id]=1;
+      el.classList.toggle("down", !c.up);
+      if(noanim) el.classList.add("noanim"); else el.classList.remove("noanim");
+      el.style.left=colX(i)+"px";
+      el.style.top=cardY(i,j)+"px";
+      el.style.zIndex=10+j;
+      el.style.display="";
+    }
+  }
+  for(var k in elMap) if(!seen[k]) elMap[k].style.display="none";
+  if(noanim) setTimeout(function(){
+    for(var k2 in elMap) elMap[k2].classList.remove("noanim");
+  },30);
+}
+function paintHUD(){
+  document.getElementById("vSuits").textContent=suitCount;
+  document.getElementById("vDone").textContent=S.done+"/8";
+  document.getElementById("vMoves").textContent=S.moves;
+  document.getElementById("vDeals").textContent=Math.ceil(S.stock.length/10);
+  document.getElementById("tUndo").className="tool"+((!undoStack.length||done)?" off":"");
+  document.getElementById("tDeal").className="tool"+((!S.stock.length||done)?" off":"");
+}
+
+/* ---------------- rules ---------------- */
+function runStart(col){
+  /* index of the first card of the movable run at the bottom of a column */
+  var t=S.tab[col];
+  if(!t.length) return -1;
+  var i=t.length-1;
+  if(!t[i].up) return -1;
+  while(i>0){
+    var a=t[i-1], b=t[i];
+    if(!a.up || a.s!==b.s || a.r!==b.r+1) break;
+    i--;
+  }
+  return i;
+}
+function canMove(fromCol, idx, toCol){
+  if(fromCol===toCol) return false;
+  var t=S.tab[fromCol];
+  if(idx<0 || idx>=t.length || !t[idx].up) return false;
+  if(idx < runStart(fromCol)) return false;
+  var dest=S.tab[toCol];
+  if(!dest.length) return true;
+  var top=dest[dest.length-1];
+  return top.up && top.r === t[idx].r + 1;
+}
+function pushUndo(){
+  undoStack.push(JSON.stringify(packState()));
+  if(undoStack.length>250) undoStack.shift();
+}
+function doMove(fromCol, idx, toCol, silent){
+  var t=S.tab[fromCol];
+  var moved=t.splice(idx);
+  for(var i=0;i<moved.length;i++) S.tab[toCol].push(moved[i]);
+  if(t.length && !t[t.length-1].up) t[t.length-1].up=true;
+  S.moves++;
+  if(!silent) beep(430+Math.min(moved.length,6)*26,.06,"triangle",.045);
+  checkComplete(toCol);
+  layout(); render(); paintHUD(); persist();
+  if(!done) checkWin();
+}
+function checkComplete(col){
+  var t=S.tab[col];
+  if(t.length<13) return;
+  var s=t.length-13, suit=t[s].s;
+  if(t[s].r!==13) return;
+  for(var i=0;i<13;i++){
+    var c=t[s+i];
+    if(!c.up || c.s!==suit || c.r!==13-i) return;
+  }
+  var removed=t.splice(s,13);
+  for(i=0;i<removed.length;i++){
+    var el=elMap[removed[i].id];
+    if(el){ el.classList.add("ok"); }
+  }
+  S.done++;
+  if(t.length && !t[t.length-1].up) t[t.length-1].up=true;
+  beep(700,.14,"triangle",.07,1080);
+  setTimeout(function(){ beep(950,.2,"sine",.06,1300); },140);
+  if(window.GGA) GGA.haptic("medium");
+}
+function dealRow(){
+  if(!S.stock.length||done) return;
+  for(var i=0;i<10;i++) if(!S.tab[i].length){
+    flashMsg("Fill every empty column before dealing");
+    beep(190,.12,"sawtooth",.05); return;
+  }
+  pushUndo();
+  for(i=0;i<10 && S.stock.length;i++){
+    var c=S.stock.pop(); c.up=true; S.tab[i].push(c);
+  }
+  S.moves++;
+  for(i=0;i<10;i++) checkComplete(i);
+  layout(); render(); paintHUD(); persist();
+  beep(520,.1,"triangle",.05,660);
+  if(window.GGA) GGA.haptic("light");
+  checkWin();
+}
+function checkWin(){
+  if(S.done<8) return;
+  done=true; running=false; save("cur",null);
+  var key="best_"+suitCount, prev=load(key,0);
+  var isBest=!prev || S.moves<prev;
+  if(isBest) save(key,S.moves);
+  save("wins_"+suitCount, load("wins_"+suitCount,0)+1);
+  if(window.GGA){
+    GGA.award("sp_win");
+    if(suitCount>=2) GGA.award("sp_two");
+    if(suitCount===4) GGA.award("sp_four");
+    if(undoStack.length===0) GGA.award("sp_noundo");
+    var all=true; [1,2,4].forEach(function(n){ if(!load("wins_"+n,0)) all=false; });
+    if(all) GGA.award("sp_allsuits");
+    GGA.haptic("success");
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  setTimeout(function(){ winScreen(isBest); },600);
+}
+
+/* ---------------- pointer ---------------- */
+var drag=null;
+function pt(e){ var t=e.touches?e.touches[0]:e; return {x:t.clientX, y:t.clientY}; }
+function findCard(target){
+  var el=target;
+  while(el && el!==boardEl && !el.dataset.id) el=el.parentNode;
+  return (el && el.dataset && el.dataset.id!=null) ? +el.dataset.id : -1;
+}
+function locate(id){
+  for(var i=0;i<10;i++) for(var j=0;j<S.tab[i].length;j++)
+    if(S.tab[i][j].id===id) return {col:i, idx:j};
+  return null;
+}
+function onDown(e){
+  if(done||!started||!S) return;
+  var id=findCard(e.target);
+  if(id<0) return;
+  var loc=locate(id);
+  if(!loc) return;
+  var c=S.tab[loc.col][loc.idx];
+  if(!c.up) return;
+  if(loc.idx < runStart(loc.col)){
+    var el0=elMap[id];
+    if(el0){ el0.classList.add("bad"); setTimeout(function(){ el0.classList.remove("bad"); },320); }
+    beep(190,.1,"sawtooth",.04);
+    return;
+  }
+  e.preventDefault();
+  var p=pt(e);
+  var cards=S.tab[loc.col].slice(loc.idx);
+  var rect=elMap[id].getBoundingClientRect();
+  drag={ col:loc.col, idx:loc.idx, cards:cards, dx:p.x-rect.left, dy:p.y-rect.top,
+         moved:false, startX:p.x, startY:p.y };
+  cards.forEach(function(cc,k){
+    var el=elMap[cc.id];
+    el.classList.add("drag"); el.style.zIndex=900+k;
+  });
+  if(window.GGA) GGA.haptic("light");
+}
+function onMove(e){
+  if(!drag) return;
+  e.preventDefault();
+  var p=pt(e);
+  if(Math.abs(p.x-drag.startX)>3 || Math.abs(p.y-drag.startY)>3) drag.moved=true;
+  var br=boardEl.getBoundingClientRect();
+  drag.cards.forEach(function(cc,k){
+    var el=elMap[cc.id];
+    el.style.left=(p.x-drag.dx-br.left)+"px";
+    el.style.top=(p.y-drag.dy-br.top+k*UP_OV)+"px";
+  });
+}
+function onUp(e){
+  if(!drag) return;
+  var d=drag; drag=null;
+  d.cards.forEach(function(cc){ elMap[cc.id].classList.remove("drag"); });
+  var p=e.changedTouches ? {x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY} : pt(e);
+  var br=boardEl.getBoundingClientRect();
+  var target=-1;
+  if(!d.moved){
+    target=autoTarget(d.col, d.idx);
+  }else{
+    var cx=p.x-d.dx-br.left+CW/2;
+    var best=1e9;
+    for(var i=0;i<10;i++){
+      var dist=Math.abs(colX(i)+CW/2 - cx);
+      if(dist<best && canMove(d.col, d.idx, i)){ best=dist; target=i; }
+    }
+    if(best>CW*1.6) target=-1;
+  }
+  if(target>=0 && canMove(d.col,d.idx,target)){
+    pushUndo();
+    doMove(d.col,d.idx,target);
+  }else{
+    layout(); render();
+    if(d.moved) beep(200,.08,"sawtooth",.035);
+  }
+}
+function autoTarget(col, idx){
+  /* tap-to-move: prefer a non-empty column that continues the sequence */
+  var best=-1, bestScore=-1;
+  for(var i=0;i<10;i++){
+    if(!canMove(col,idx,i)) continue;
+    var dest=S.tab[i];
+    var score = dest.length ? (dest[dest.length-1].s===S.tab[col][idx].s ? 3 : 2) : 1;
+    if(score>bestScore){ bestScore=score; best=i; }
+  }
+  return best;
+}
+boardEl.addEventListener("touchstart", onDown, {passive:false});
+boardEl.addEventListener("touchmove", onMove, {passive:false});
+boardEl.addEventListener("touchend", onUp);
+boardEl.addEventListener("touchcancel", onUp);
+boardEl.addEventListener("mousedown", onDown);
+window.addEventListener("mousemove", onMove);
+window.addEventListener("mouseup", onUp);
+
+/* ---------------- tools ---------------- */
+document.getElementById("tUndo").onclick=function(){
+  if(done||!undoStack.length) return;
+  var s=JSON.parse(undoStack.pop());
+  suitCount=s.n; secs=s.t|0;
+  S={ tab:s.tab.map(function(col){ return col.map(function(a){ return {id:a[0],r:a[1],s:a[2],up:!!a[3]}; }); }),
+      stock:s.st.map(function(a){ return {id:a[0],r:a[1],s:a[2],up:false}; }),
+      done:s.d|0, moves:s.m|0 };
+  clearEls(); layout(); render(true); paintHUD(); persist();
+  beep(360,.07,"sine",.05);
+};
+document.getElementById("tDeal").onclick=function(){ dealRow(); };
+document.getElementById("tNew").onclick=function(){
+  openOvl('<h2>NEW GAME?</h2><p>This deal will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, DEAL AGAIN</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card2.querySelector("#y").onclick=function(){ newGame(suitCount); persist(); closeOvl(); };
+  card2.querySelector("#n").onclick=closeOvl;
+};
+document.getElementById("tHint").onclick=function(){
+  if(done) return;
+  var mv=findHint();
+  if(!mv){ flashMsg(S.stock.length ? "Nothing to move — try dealing" : "No moves left"); beep(200,.12,"sawtooth",.05); return; }
+  var cards=S.tab[mv.col].slice(mv.idx);
+  cards.forEach(function(c){ var el=elMap[c.id]; if(el){ el.classList.add("ok");
+    setTimeout(function(){ el.classList.remove("ok"); },1100); } });
+  var slot=slots[mv.to]; slot.style.boxShadow="0 0 0 3px #ffe066";
+  setTimeout(function(){ slot.style.boxShadow=""; },1100);
+  beep(760,.13,"sine",.06,1050);
+};
+function findHint(){
+  var best=null, bestScore=-1e9;
+  var emptyCols=0, i;
+  for(i=0;i<10;i++) if(!S.tab[i].length) emptyCols++;
+  for(var f=0;f<10;f++){
+    var rs=runStart(f);
+    if(rs<0) continue;
+    for(var idx=rs; idx<S.tab[f].length; idx++){
+      var moving=S.tab[f].slice(idx);
+      for(var t=0;t<10;t++){
+        if(!canMove(f,idx,t)) continue;
+        var dest=S.tab[t], score=0;
+        var joinsSuit = dest.length && dest[dest.length-1].s===moving[0].s;
+        if(joinsSuit) score += 10 + moving.length;          /* builds a real run */
+        else if(dest.length) score += 2;                     /* off-suit stack */
+        if(idx>0 && !S.tab[f][idx-1].up) score += 8;         /* turns a card over */
+        if(idx===0 && S.tab[f].length===moving.length){
+          /* this empties a column - only good if we can still deal or need the space */
+          score += (S.stock.length ? -6 : 3);
+        }
+        if(!dest.length){
+          score -= 5;                                        /* spending a free column */
+          if(S.stock.length && emptyCols<=1) score -= 6;     /* the last gap keeps dealing alive */
+        }
+        /* pointless: same-suit run just sliding to another off-suit spot */
+        if(!joinsSuit && idx===rs && dest.length &&
+           S.tab[f].length===moving.length && !dest.length) score -= 10;
+        if(score>bestScore){ bestScore=score; best={col:f, idx:idx, to:t, score:score}; }
+      }
+    }
+  }
+  return best;   /* always offer the best legal move if one exists */
+}
+var msgTimer=null;
+function flashMsg(txt){
+  var m=document.getElementById("msg");
+  if(!m){
+    m=document.createElement("div"); m.id="msg";
+    m.setAttribute("style","position:fixed;left:50%;transform:translateX(-50%);"+
+      "bottom:calc(env(safe-area-inset-bottom,0px) + 78px);z-index:50;background:rgba(8,60,40,.92);"+
+      "color:#fff;font-size:13px;font-weight:800;padding:9px 16px;border-radius:999px;"+
+      "box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none;transition:opacity .25s");
+    document.body.appendChild(m);
+  }
+  m.textContent=txt; m.style.opacity="1";
+  clearTimeout(msgTimer);
+  msgTimer=setTimeout(function(){ m.style.opacity="0"; },1700);
+}
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card2=document.getElementById("card2");
+function openOvl(h){ card2.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+var MODES=[{n:1,cls:"m-1",name:"One Suit",tag:"Spades only &middot; a gentle game"},
+           {n:2,cls:"m-2",name:"Two Suits",tag:"Spades and hearts &middot; a real test"},
+           {n:4,cls:"m-4",name:"Four Suits",tag:"The full deck &middot; properly hard"}];
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>SPIDER</h2><p>Build runs from King down to Ace in the same suit, and they fly away.</p><div class="modes">';
+  for(var i=0;i<MODES.length;i++){
+    var M=MODES[i], w=load("wins_"+M.n,0);
+    h+='<div class="mode '+M.cls+'" data-n="'+M.n+'"><div style="text-align:left">'+
+       '<div class="mn">'+M.name+'</div><div class="mt">'+M.tag+'</div></div>'+
+       '<div style="font-size:12px;font-weight:900">'+(w?w+" won":"")+'</div></div>';
+  }
+  h+='</div>';
+  if(cur&&cur.tab) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+cur.n+' SUIT'+(cur.n>1?'S':'')+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card2.querySelectorAll(".mode"), function(el){
+    el.onclick=function(){ started=true; newGame(+el.getAttribute("data-n")); persist(); closeOvl(); };
+  });
+  var br=card2.querySelector("#bResume");
+  if(br) br.onclick=function(){ started=true; if(!restore()) newGame(1); persist(); closeOvl(); };
+  card2.querySelector("#bRules").onclick=rulesScreen;
+}
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Stack cards <b>downwards</b> &mdash; any card can go on one a rank higher, whatever the suit.<br><br>'+
+    '&#9642; You can pick up several at once, but only if they run <b>down in the same suit</b>.<br><br>'+
+    '&#9642; Get a full <b>King to Ace</b> in one suit and it lifts off the table. Clear all eight to win.<br><br>'+
+    '&#9642; <b>Deal</b> puts a new card on every column &mdash; but only when no column is empty, so keep one filled.<br><br>'+
+    '&#9642; Tap a card to send it to the best spot, or drag it where you want. <b>Undo</b> goes back as far as you like.<br><br>'+
+    '&#9642; Start with <b>One Suit</b> to learn it. Four Suits is genuinely hard &mdash; not every deal can be won.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card2.querySelector("#bBack").onclick=titleScreen;
+}
+function winScreen(isBest){
+  var best=load("best_"+suitCount,0);
+  openOvl('<h2>'+(isBest?"NEW BEST!":"ALL EIGHT HOME!")+'</h2>'+
+    '<p>Every suit run cleared on '+suitCount+' suit'+(suitCount>1?'s':'')+'.</p>'+
+    '<div class="stats2">'+
+      '<div class="st"><div class="sk">MOVES</div><div class="sv">'+S.moves+'</div></div>'+
+      '<div class="st"><div class="sk">BEST</div><div class="sv">'+(best||S.moves)+'</div></div>'+
+      '<div class="st"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">DEAL AGAIN</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE SUITS</button>');
+  card2.querySelector("#bAgain").onclick=function(){ newGame(suitCount); persist(); closeOvl(); };
+  card2.querySelector("#bMenu").onclick=titleScreen;
+}
+function fmt(s){ var m=(s/60)|0; return m+":"+("0"+(s%60)).slice(-2); }
+document.getElementById("bPause").onclick=function(){
+  if(done){ titleScreen(); return; }
+  running=false;
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats2">'+
+      '<div class="st"><div class="sk">DONE</div><div class="sv">'+S.done+'/8</div></div>'+
+      '<div class="st"><div class="sk">MOVES</div><div class="sv">'+S.moves+'</div></div>'+
+      '<div class="st"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE SUITS</button>');
+  card2.querySelector("#bGo").onclick=function(){ running=true; closeOvl(); };
+  card2.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+setInterval(function(){ if(running&&!done&&started){ secs++; if(secs%10===0) persist(); } },1000);
+newGame(load("suits",1));
+started=false; running=false;
+titleScreen();
+setTimeout(function(){ layout(); render(true); },60);
+window.addEventListener("orientationchange", function(){ setTimeout(function(){ layout(); render(true); },220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+})();
+</script>
+</body>
+</html>

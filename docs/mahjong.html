@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mahjong</title>
+<style>
+  :root{ --ink:#2c4a3a; --soft:#6d8a79; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 10% -8%, #d6f5c8 0%, transparent 55%),
+      radial-gradient(120% 80% at 92% 104%, #ffe6c2 0%, transparent 55%),
+      linear-gradient(160deg, #b6ecc4 0%, #cfeadf 45%, #ffeecd 100%);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:520px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);
+    background:rgba(255,255,255,.8);border:1.5px solid #fff;padding:7px 13px;border-radius:999px;
+    font-size:13px;font-weight:800;box-shadow:0 3px 10px rgba(60,110,80,.18);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:2px;line-height:1;
+    font-size:clamp(16px,5vw,23px);color:#fff;text-shadow:0 2px 0 #6cae8a, 0 4px 12px rgba(30,90,60,.35)}
+  .strip{display:flex;gap:6px;margin-bottom:6px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:14px;
+    background:rgba(255,255,255,.72);border:1.5px solid #fff;box-shadow:0 3px 10px rgba(60,110,80,.14)}
+  .chip .k{font-size:8.5px;letter-spacing:1.2px;font-weight:900;color:var(--soft)}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  .v-warn{color:#e07a1c}
+  #stage{flex:1;position:relative;min-height:0}
+  canvas{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+  .tool{background:rgba(255,255,255,.88);border:1.5px solid #fff;border-radius:16px;
+    padding:10px 2px 8px;text-align:center;cursor:pointer;color:var(--ink);
+    box-shadow:0 4px 0 rgba(130,175,150,.55), 0 6px 14px rgba(60,110,80,.16)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(130,175,150,.55)}
+  .tool.off{opacity:.4}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9.5px;font-weight:900;letter-spacing:.6px;margin-top:3px;color:var(--soft)}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(40,80,60,.36);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#f3fbf5);
+    border:2px solid #fff;border-radius:22px;padding:20px 18px 16px;text-align:center;
+    box-shadow:0 20px 50px rgba(30,70,50,.4);max-height:100%;overflow:auto}
+  .card h2{font-size:25px;font-weight:900;letter-spacing:1px;color:#2f6b4b;margin-bottom:3px}
+  .card p{font-size:14px;line-height:1.55;color:var(--soft);margin:8px 0}
+  .lays{display:grid;grid-template-columns:1fr;gap:9px;margin-top:13px}
+  .lay{border-radius:16px;padding:12px 10px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .lay:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .lay .ln{font-size:15px;letter-spacing:.5px}
+  .lay .lt{font-size:10.5px;opacity:.92;font-weight:800;margin-top:2px;text-align:left}
+  .l-a{background:linear-gradient(180deg,#79dd9e,#37b46c)}
+  .l-b{background:linear-gradient(180deg,#6ec9ff,#2b8fe0)}
+  .l-c{background:linear-gradient(180deg,#ffab5e,#ef8319)}
+  .btn{display:block;width:100%;margin-top:9px;padding:13px;border:none;border-radius:15px;
+    font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#7fe0a5,#33b26b);color:#fff;
+    box-shadow:0 5px 0 #22854f, 0 8px 18px rgba(30,130,80,.3)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #22854f}
+  .btn-alt{background:#eef7f1;color:#3d7359;border:1.5px solid #d9ecdf}
+  .rules{text-align:left;font-size:13px;line-height:1.7;color:#557566;margin:11px 2px}
+  .rules b{color:#2f6b4b}
+  .stats{display:flex;gap:8px;margin-top:12px}
+  .stat{flex:1;background:#eef7f1;border-radius:13px;padding:8px 4px}
+  .stat .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:var(--soft)}
+  .stat .sv{font-size:17px;font-weight:900;font-variant-numeric:tabular-nums;color:#2f6b4b}
+  @media (max-height:700px){
+    .card{padding:15px 15px 12px}.card h2{font-size:21px}
+    .rules{font-size:11.8px;line-height:1.55}.btn{padding:11px;font-size:14px;margin-top:7px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">MAHJONG</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">LEFT</div><div class="v" id="vLeft">0</div></div>
+    <div class="chip"><div class="k">MOVES OPEN</div><div class="v v-warn" id="vOpen">0</div></div>
+    <div class="chip"><div class="k">TIME</div><div class="v" id="vTime">0:00</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tUndo"><div class="ti">&#8630;</div><div class="tl">UNDO</div></div>
+    <div class="tool" id="tHint"><div class="ti">&#128161;</div><div class="tl">HINT</div></div>
+    <div class="tool" id="tShuf"><div class="ti">&#127922;</div><div class="tl">SHUFFLE</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Mahjong Solitaire: layouts + guaranteed-solvable deals.
+   Positions use half-tile units: a tile at (x,y) covers x..x+1, y..y+1. */
+function makeMahjong(){
+  "use strict";
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+
+  /* ---- layouts: each is a list of {x,y,z} in half-units ---- */
+  function rect(cols, rows, z, ox, oy, out){
+    for(var r=0;r<rows;r++) for(var c=0;c<cols;c++)
+      out.push({x: ox + c*2, y: oy + r*2, z: z});
+    return out;
+  }
+  function centred(cols, rows, z, baseCols, baseRows, out){
+    var ox = (baseCols - cols),      /* half-units: (baseCols*2 - cols*2)/2 */
+        oy = (baseRows - rows);
+    return rect(cols, rows, z, ox, oy, out);
+  }
+
+  /* Portrait-shaped layouts: taller than wide, so they fill a phone screen. */
+  var LAYOUTS = {
+    blossom: function(){
+      var o=[];
+      rect(6,6,0,0,0,o);
+      centred(4,3,1,6,6,o);
+      return o;                                  /* 36 + 12 = 48 */
+    },
+    garden: function(){
+      var o=[];
+      rect(8,8,0,0,0,o);
+      centred(6,5,1,8,8,o);
+      centred(4,2,2,8,8,o);
+      return o;                                  /* 64 + 30 + 8 = 102 */
+    },
+    tower: function(){
+      var o=[];
+      rect(8,10,0,0,0,o);
+      centred(6,8,1,8,10,o);
+      centred(4,3,2,8,10,o);
+      centred(2,2,3,8,10,o);
+      return o;                                  /* 80 + 48 + 12 + 4 = 144 */
+    }
+  };
+
+  /* geometry helpers */
+  function overlap(a,b){ return Math.abs(a.x-b.x)<2 && Math.abs(a.y-b.y)<2; }
+  function isFree(tile, live){
+    var i,t;
+    for(i=0;i<live.length;i++){
+      t=live[i];
+      if(t===tile || t.gone) continue;
+      if(t.z===tile.z+1 && overlap(t,tile)) return false;      /* something on top */
+    }
+    var left=false, right=false;
+    for(i=0;i<live.length;i++){
+      t=live[i];
+      if(t===tile || t.gone) continue;
+      if(t.z!==tile.z) continue;
+      if(Math.abs(t.y-tile.y)>=2) continue;
+      if(t.x===tile.x-2) left=true;
+      if(t.x===tile.x+2) right=true;
+    }
+    return !(left && right);
+  }
+  function freeList(tiles){
+    var out=[];
+    for(var i=0;i<tiles.length;i++){
+      var t=tiles[i];
+      if(t.gone) continue;
+      if(isFree(t, tiles)) out.push(t);
+    }
+    return out;
+  }
+
+  /* ---- the tile faces (traditional set, 4 of each unless noted) ---- */
+  var FACES=[];
+  (function(){
+    var i;
+    for(i=1;i<=9;i++) FACES.push({k:"dot",  n:i});
+    for(i=1;i<=9;i++) FACES.push({k:"bam",  n:i});
+    for(i=1;i<=9;i++) FACES.push({k:"char", n:i});
+    ["E","S","W","N"].forEach(function(w){ FACES.push({k:"wind", n:w}); });
+    ["R","G","B"].forEach(function(d){ FACES.push({k:"drag", n:d}); });
+    /* flowers and seasons: one of each, but any flower matches any flower */
+    for(i=1;i<=4;i++) FACES.push({k:"flower", n:i, group:"flower"});
+    for(i=1;i<=4;i++) FACES.push({k:"season", n:i, group:"season"});
+  })();
+  function faceId(f){ return f.k+"-"+f.n; }
+  function matches(a,b){
+    if(a.group && a.group===b.group) return true;             /* any flower/season pair */
+    return !a.group && !b.group && a.k===b.k && a.n===b.n;
+  }
+
+  /* Build the multiset of tiles for a layout of size n (n must be even). */
+  function buildBag(n, rand){
+    var bag=[], i, f;
+    /* flowers + seasons first (8 tiles, one of each) when there is room */
+    if(n>=48){
+      for(i=0;i<FACES.length;i++) if(FACES[i].group) bag.push(FACES[i]);
+    }
+    var plain=FACES.filter(function(x){ return !x.group; });
+    /* shuffle the plain faces so small layouts use a varied subset */
+    var order=plain.slice();
+    for(i=order.length-1;i>0;i--){ var j=(rand()*(i+1))|0; var t=order[i]; order[i]=order[j]; order[j]=t; }
+    var k=0;
+    while(bag.length < n){
+      f = order[k % order.length]; k++;
+      var room = n - bag.length;
+      var add = Math.min(4, room);
+      if(add===1){ add=0; }                      /* never leave an unmatchable single */
+      if(add===3) add=2;
+      for(i=0;i<add;i++) bag.push(f);
+      if(add===0) break;
+    }
+    return bag;
+  }
+
+  /* ---- deal: place tiles by removing pairs in a valid order, in reverse ---- */
+  function deal(layoutName, seed){
+    var mk = LAYOUTS[layoutName] || LAYOUTS.blossom;
+    var rand = rng(seed || ((Math.random()*1e9)|0));
+    for(var attempt=0; attempt<60; attempt++){
+      var pos = mk();
+      if(pos.length % 2) pos.pop();
+      var tiles = pos.map(function(p,i){ return {x:p.x,y:p.y,z:p.z,i:i,gone:false}; });
+      /* peel pairs off, recording the order */
+      var order=[], ok=true, guard=0;
+      while(true){
+        var free = freeList(tiles);
+        if(free.length===0) break;
+        if(free.length===1){ ok=false; break; }
+        /* prefer a pair from different spots so the board opens up evenly */
+        var a=(rand()*free.length)|0, b;
+        do{ b=(rand()*free.length)|0; }while(b===a);
+        order.push([free[a], free[b]]);
+        free[a].gone=true; free[b].gone=true;
+        if(guard++ > pos.length) { ok=false; break; }
+      }
+      var used=0; for(var q=0;q<tiles.length;q++) if(tiles[q].gone) used++;
+      if(!ok || used!==tiles.length) continue;
+
+      /* assign faces: each recorded pair gets one face, so replaying the
+         recorded order is always a valid solution */
+      var bag = buildBag(tiles.length, rand);
+      /* bag holds face objects, 2 or 4 of each - pair them up */
+      var byFace={}, pairs=[];
+      bag.forEach(function(f){
+        var id=f.group ? f.group : faceId(f);
+        (byFace[id]=byFace[id]||[]).push(f);
+      });
+      Object.keys(byFace).forEach(function(id){
+        var arr=byFace[id];
+        for(var i=0;i+1<arr.length;i+=2) pairs.push([arr[i],arr[i+1]]);
+      });
+      if(pairs.length !== order.length) continue;
+      /* shuffle which pair goes where */
+      for(var i=pairs.length-1;i>0;i--){ var j=(rand()*(i+1))|0; var t=pairs[i]; pairs[i]=pairs[j]; pairs[j]=t; }
+      for(i=0;i<order.length;i++){
+        order[i][0].face = pairs[i][0];
+        order[i][1].face = pairs[i][1];
+      }
+      tiles.forEach(function(t){ t.gone=false; });
+      return {tiles:tiles, solution:order.map(function(p){ return [p[0].i, p[1].i]; })};
+    }
+    return null;
+  }
+
+  /* Reshuffle the faces of the tiles still on the board, keeping it solvable.
+     Same trick as dealing: peel the remaining layout into a legal pair order,
+     then lay the surviving faces back down along that order. */
+  function reshuffle(live, seed){
+    var rand = rng(seed || ((Math.random()*1e9)|0));
+    var faces = live.map(function(t){ return t.face; });
+    for(var attempt=0; attempt<60; attempt++){
+      var work = live.map(function(t){ return {x:t.x,y:t.y,z:t.z,ref:t,gone:false}; });
+      var order=[], ok=true, guard=0;
+      while(true){
+        var free=freeList(work);
+        if(free.length===0) break;
+        if(free.length===1){ ok=false; break; }
+        var a=(rand()*free.length)|0, b;
+        do{ b=(rand()*free.length)|0; }while(b===a);
+        order.push([free[a],free[b]]);
+        free[a].gone=true; free[b].gone=true;
+        if(guard++ > work.length){ ok=false; break; }
+      }
+      if(!ok || work.some(function(w){ return !w.gone; })) continue;
+      /* group the surviving faces into matching pairs */
+      var byId={}, pairs=[];
+      faces.forEach(function(f){
+        var id=f.group ? f.group : faceId(f);
+        (byId[id]=byId[id]||[]).push(f);
+      });
+      var leftover=[];
+      Object.keys(byId).forEach(function(id){
+        var arr=byId[id];
+        for(var i=0;i+1<arr.length;i+=2) pairs.push([arr[i],arr[i+1]]);
+        if(arr.length%2) leftover.push(arr[arr.length-1]);
+      });
+      if(leftover.length || pairs.length!==order.length) return false;
+      for(var i=pairs.length-1;i>0;i--){ var j=(rand()*(i+1))|0; var t=pairs[i]; pairs[i]=pairs[j]; pairs[j]=t; }
+      for(i=0;i<order.length;i++){
+        order[i][0].ref.face = pairs[i][0];
+        order[i][1].ref.face = pairs[i][1];
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /* pairs currently available to play */
+  function availablePairs(tiles){
+    var free=freeList(tiles), out=[];
+    for(var i=0;i<free.length;i++) for(var j=i+1;j<free.length;j++)
+      if(matches(free[i].face, free[j].face)) out.push([free[i], free[j]]);
+    return out;
+  }
+
+  return {LAYOUTS:LAYOUTS, deal:deal, isFree:isFree, freeList:freeList,
+          matches:matches, faceId:faceId, FACES:FACES,
+          reshuffle:reshuffle, availablePairs:availablePairs};
+}
+
+(function(){
+"use strict";
+var MJ = makeMahjong();
+
+var LS="gg_mahjong_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var LAYS=[
+  {id:"blossom", name:"Blossom", cls:"l-a", n:48,  tag:"48 tiles &middot; a quick one"},
+  {id:"garden",  name:"Garden",  cls:"l-b", n:102, tag:"102 tiles &middot; a proper sit-down"},
+  {id:"tower",   name:"Tower",   cls:"l-c", n:144, tag:"144 tiles &middot; the full set"}
+];
+function layOf(id){ for(var i=0;i<LAYS.length;i++) if(LAYS[i].id===id) return LAYS[i]; return LAYS[0]; }
+
+/* ---------------- state ---------------- */
+var layoutId, tiles, sel, history, secs, timer, running, done, shuffles, hintPair, hintUntil, dealtSolution;
+var pop=[];
+
+function startGame(id){
+  layoutId=id;
+  var d=MJ.deal(id);
+  if(!d) d=MJ.deal("blossom");
+  tiles=d.tiles; dealtSolution=d.solution;
+  sel=null; history=[]; secs=0; done=false; shuffles=0; hintPair=null;
+  running=true; pop=[];
+  layout(); paintHUD();
+}
+function liveTiles(){ return tiles.filter(function(t){ return !t.gone; }); }
+
+function persist(){
+  if(done){ save("cur",null); return; }
+  save("cur", {L:layoutId, t:tiles.map(function(t){
+    return [t.x,t.y,t.z,t.gone?1:0,t.face.k,t.face.n,t.face.group||""];
+  }), s:secs, sh:shuffles});
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||!c.t) return false;
+  layoutId=c.L;
+  tiles=c.t.map(function(a,i){
+    return {x:a[0],y:a[1],z:a[2],i:i,gone:!!a[3],
+            face:{k:a[4],n:a[5],group:a[6]||undefined}};
+  });
+  secs=c.s|0; shuffles=c.sh|0; sel=null; history=[]; done=false; running=true; pop=[];
+  layout(); paintHUD(); return true;
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.06,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- tile art ---------------- */
+var DOT_COLS=["#e8443f","#2f8fe0","#2aa15e","#e0912a","#8a4fd0","#20a6b8","#d0407f","#4a5a8a","#c9a11c"];
+var SPR={}, SPRW=0, SPRH=0;
+function faceKey(f){ return f.k+"|"+f.n; }
+function buildSprite(f, w, h, DPR){
+  var cn=document.createElement("canvas");
+  cn.width=Math.round(w*DPR); cn.height=Math.round(h*DPR);
+  var c=cn.getContext("2d"); c.setTransform(DPR,0,0,DPR,0,0);
+  var r=w*0.16;
+  function rr(x,y,ww,hh,rad){
+    c.beginPath(); c.moveTo(x+rad,y);
+    c.arcTo(x+ww,y,x+ww,y+hh,rad); c.arcTo(x+ww,y+hh,x,y+hh,rad);
+    c.arcTo(x,y+hh,x,y,rad); c.arcTo(x,y,x+ww,y,rad); c.closePath();
+  }
+  /* ivory face */
+  var g=c.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,"#fffdf5"); g.addColorStop(1,"#f2ead4");
+  c.fillStyle=g; rr(0,0,w,h,r); c.fill();
+  c.strokeStyle="rgba(120,110,80,.28)"; c.lineWidth=1; rr(.5,.5,w-1,h-1,r); c.stroke();
+  c.save(); rr(0,0,w,h,r); c.clip();
+  c.fillStyle="rgba(255,255,255,.75)"; c.fillRect(0,0,w,h*0.16);
+  c.restore();
+
+  var cx=w/2, cy=h/2, S=Math.min(w,h);
+  c.textAlign="center"; c.textBaseline="middle";
+  function cjk(txt, col, size){
+    c.fillStyle=col;
+    c.font="900 "+Math.round(S*size)+"px 'Hiragino Sans','Noto Sans CJK SC','PingFang SC','Heiti SC',sans-serif";
+    c.fillText(txt, cx, cy);
+  }
+  if(f.k==="dot"){
+    var n=f.n, col=DOT_COLS[(n-1)%DOT_COLS.length];
+    var pts = dotPositions(n);
+    var rad = S*(n<=4?0.115:(n<=6?0.098:0.085));
+    pts.forEach(function(p){
+      var px=cx+p[0]*w*0.30, py=cy+p[1]*h*0.30;
+      c.fillStyle=col;
+      c.beginPath(); c.arc(px,py,rad,0,6.284); c.fill();
+      c.fillStyle="rgba(255,255,255,.6)";
+      c.beginPath(); c.arc(px-rad*0.28,py-rad*0.3,rad*0.36,0,6.284); c.fill();
+    });
+  }else if(f.k==="bam"){
+    var n2=f.n;
+    if(n2===1){
+      drawStick(c,cx,cy,S*0.10,S*0.46,"#2aa15e");
+    }else{
+      var cols2 = n2<=6 ? Math.min(2,n2) : 3;
+      if(n2===5){ cols2=2; }
+      var perCol = Math.ceil(n2/cols2), idx=0;
+      for(var ci=0;ci<cols2;ci++){
+        var cnt = (ci<n2%cols2 || n2%cols2===0) ? perCol : perCol-1;
+        for(var ri=0;ri<cnt;ri++){
+          var px2=cx + (ci-(cols2-1)/2)*w*0.26;
+          var py2=cy + (ri-(cnt-1)/2)*h*0.26;
+          drawStick(c,px2,py2,S*0.055,S*0.20, idx%2? "#2aa15e":"#1f8f52");
+          idx++;
+        }
+      }
+    }
+  }else if(f.k==="char"){
+    var NUM=["一","二","三","四","五","六","七","八","九"];
+    c.fillStyle="#2b4a8f";
+    c.font="900 "+Math.round(S*0.36)+"px 'Hiragino Sans','Noto Sans CJK SC','PingFang SC',sans-serif";
+    c.fillText(NUM[f.n-1], cx, cy-h*0.16);
+    c.fillStyle="#c22f3c";
+    c.font="900 "+Math.round(S*0.34)+"px 'Hiragino Sans','Noto Sans CJK SC','PingFang SC',sans-serif";
+    c.fillText("萬", cx, cy+h*0.18);
+  }else if(f.k==="wind"){
+    cjk({E:"東",S:"南",W:"西",N:"北"}[f.n], "#2f5f8f", 0.46);
+  }else if(f.k==="drag"){
+    if(f.n==="R") cjk("中","#d2342f",0.46);
+    else if(f.n==="G") cjk("發","#1f9455",0.44);
+    else{
+      c.strokeStyle="#2f6fa8"; c.lineWidth=Math.max(2,S*0.045);
+      rr(w*0.24,h*0.20,w*0.52,h*0.60,S*0.06); c.stroke();
+    }
+  }else if(f.k==="flower"){
+    var FC=["#e8558f","#f0a12a","#c96fe0","#e04a4a"];
+    petals(c,cx,cy,S*0.19,FC[(f.n-1)%4]);
+  }else if(f.k==="season"){
+    var SC=["#3fb27a","#f0c020","#e07a2a","#5aa8e0"];
+    leaf(c,cx,cy,S*0.21,SC[(f.n-1)%4]);
+  }
+  return cn;
+}
+function dotPositions(n){
+  var P={
+    1:[[0,0]],
+    2:[[0,-.55],[0,.55]],
+    3:[[-.55,-.55],[0,0],[.55,.55]],
+    4:[[-.5,-.5],[.5,-.5],[-.5,.5],[.5,.5]],
+    5:[[-.55,-.55],[.55,-.55],[0,0],[-.55,.55],[.55,.55]],
+    6:[[-.5,-.6],[.5,-.6],[-.5,0],[.5,0],[-.5,.6],[.5,.6]],
+    7:[[-.55,-.7],[0,-.5],[.55,-.3],[-.5,.15],[.5,.15],[-.5,.7],[.5,.7]],
+    8:[[-.5,-.75],[.5,-.75],[-.5,-.25],[.5,-.25],[-.5,.25],[.5,.25],[-.5,.75],[.5,.75]],
+    9:[[-.62,-.62],[0,-.62],[.62,-.62],[-.62,0],[0,0],[.62,0],[-.62,.62],[0,.62],[.62,.62]]
+  };
+  return P[n]||P[1];
+}
+function drawStick(c,x,y,w,h,col){
+  c.fillStyle=col;
+  c.beginPath();
+  var r=w*0.5;
+  c.moveTo(x-w/2,y-h/2+r);
+  c.arcTo(x-w/2,y-h/2,x+w/2,y-h/2,r); c.arcTo(x+w/2,y-h/2,x+w/2,y+h/2,r);
+  c.arcTo(x+w/2,y+h/2,x-w/2,y+h/2,r); c.arcTo(x-w/2,y+h/2,x-w/2,y-h/2,r);
+  c.closePath(); c.fill();
+  c.fillStyle="rgba(255,255,255,.45)";
+  c.fillRect(x-w*0.18,y-h*0.32,w*0.22,h*0.64);
+}
+function petals(c,cx,cy,r,col){
+  for(var i=0;i<6;i++){
+    var a=i*Math.PI/3;
+    c.fillStyle=col;
+    c.beginPath();
+    c.ellipse(cx+Math.cos(a)*r*0.62, cy+Math.sin(a)*r*0.62, r*0.44, r*0.30, a, 0, 6.284);
+    c.fill();
+  }
+  c.fillStyle="#ffd84a";
+  c.beginPath(); c.arc(cx,cy,r*0.32,0,6.284); c.fill();
+}
+function leaf(c,cx,cy,r,col){
+  c.fillStyle=col;
+  c.beginPath();
+  c.moveTo(cx, cy-r);
+  c.quadraticCurveTo(cx+r*0.95, cy-r*0.15, cx, cy+r);
+  c.quadraticCurveTo(cx-r*0.95, cy-r*0.15, cx, cy-r);
+  c.closePath(); c.fill();
+  c.strokeStyle="rgba(255,255,255,.7)"; c.lineWidth=Math.max(1.4,r*0.11);
+  c.beginPath(); c.moveTo(cx,cy-r*0.8); c.lineTo(cx,cy+r*0.8); c.stroke();
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var W=0,H=0,TW=0,TH=0,HX=0,HY=0,OX=0,OY=0,LIFT=0;
+
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40||!tiles) return;
+  W=aw; H=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  var maxX=0,maxY=0,maxZ=0;
+  tiles.forEach(function(t){ if(t.x>maxX)maxX=t.x; if(t.y>maxY)maxY=t.y; if(t.z>maxZ)maxZ=t.z; });
+  var cols=(maxX/2)+1, rows=(maxY/2)+1, layers=maxZ+1;
+  /* solve tile size so the whole stack fits */
+  var liftFrac=0.16;
+  var wNeed = cols + (layers-1)*liftFrac;
+  var hNeed = rows + (layers-1)*liftFrac;
+  var byW = (aw-8) / wNeed;
+  var byH = (ah-8) / (hNeed*1.32);          /* tiles are taller than wide */
+  TW = Math.min(byW, byH);
+  TH = TW*1.32;
+  LIFT = TW*liftFrac;
+  HX = TW/2; HY = TH/2;
+  var boardW = cols*TW + (layers-1)*LIFT;
+  var boardH = rows*TH + (layers-1)*LIFT;
+  OX = (aw-boardW)/2;
+  OY = (ah-boardH)/2 + (layers-1)*LIFT;
+  if(Math.abs(TW-SPRW)>0.5 || Math.abs(TH-SPRH)>0.5){ SPR={}; SPRW=TW; SPRH=TH; }
+}
+window.addEventListener("resize", function(){ layout(); });
+
+function tilePos(t){ return {x: OX + t.x*HX + t.z*LIFT, y: OY + t.y*HY - t.z*LIFT}; }
+function sprite(f){
+  var k=faceKey(f);
+  if(!SPR[k]) SPR[k]=buildSprite(f, TW, TH, DPR);
+  return SPR[k];
+}
+
+/* ---------------- drawing ---------------- */
+function drawOrder(){
+  return tiles.filter(function(t){ return !t.gone; }).sort(function(a,b){
+    if(a.z!==b.z) return a.z-b.z;
+    if(a.y!==b.y) return a.y-b.y;
+    return b.x-a.x;
+  });
+}
+function frame(now){
+  requestAnimationFrame(frame);
+  if(!tiles||!TW){ layout(); if(!TW) return; }
+  ctx.clearRect(0,0,W,H);
+  var list=drawOrder(), i;
+  var freeSet={};
+  MJ.freeList(tiles).forEach(function(t){ freeSet[t.i]=1; });
+  var hint = (hintUntil && now<hintUntil) ? hintPair : null;
+  for(i=0;i<list.length;i++){
+    var t=list[i], p=tilePos(t);
+    /* the block's shaded left/bottom edge gives the stack its depth */
+    ctx.fillStyle="rgba(90,80,55,.34)";
+    roundRect(p.x-LIFT*0.85, p.y+LIFT*0.85, TW, TH, TW*0.16); ctx.fill();
+    ctx.drawImage(sprite(t.face), p.x, p.y, TW, TH);
+    if(!freeSet[t.i]){
+      ctx.fillStyle="rgba(35,60,45,.30)";
+      roundRect(p.x,p.y,TW,TH,TW*0.16); ctx.fill();
+    }
+    if(sel===t){
+      ctx.strokeStyle="#ffb42e"; ctx.lineWidth=Math.max(2.5,TW*0.09);
+      roundRect(p.x+1,p.y+1,TW-2,TH-2,TW*0.16); ctx.stroke();
+      ctx.fillStyle="rgba(255,196,60,.28)";
+      roundRect(p.x,p.y,TW,TH,TW*0.16); ctx.fill();
+    }
+    if(hint && (t===hint[0]||t===hint[1])){
+      var pulse=0.35+0.3*Math.sin(now/90);
+      ctx.strokeStyle="rgba(40,190,120,"+(0.6+pulse*0.4)+")"; ctx.lineWidth=Math.max(2.5,TW*0.09);
+      roundRect(p.x+1,p.y+1,TW-2,TH-2,TW*0.16); ctx.stroke();
+    }
+    if(t.shake && now<t.shake){
+      var dx=Math.sin(now/22)*TW*0.06;
+      ctx.fillStyle="rgba(230,70,70,.32)";
+      roundRect(p.x+dx,p.y,TW,TH,TW*0.16); ctx.fill();
+    }
+  }
+  for(i=pop.length-1;i>=0;i--){
+    var q=pop[i]; q.life-=0.055;
+    if(q.life<=0){ pop.splice(i,1); continue; }
+    var s=1+(1-q.life)*0.55;
+    ctx.globalAlpha=Math.max(0,q.life);
+    ctx.drawImage(sprite(q.face), q.x-TW*(s-1)/2, q.y-TH*(s-1)/2, TW*s, TH*s);
+    ctx.globalAlpha=1;
+  }
+}
+function roundRect(x,y,w,h,r){
+  ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+/* ---------------- input ---------------- */
+function hitTest(px,py){
+  var list=drawOrder(), best=null;
+  for(var i=0;i<list.length;i++){
+    var t=list[i], p=tilePos(t);
+    if(px>=p.x && px<=p.x+TW && py>=p.y && py<=p.y+TH) best=t;   /* later = on top */
+  }
+  return best;
+}
+function pos(e){
+  var r=cv.getBoundingClientRect();
+  var t=e.touches?e.touches[0]:e;
+  return {x:t.clientX-r.left, y:t.clientY-r.top};
+}
+function onTap(e){
+  if(done||!started) return;
+  e.preventDefault();
+  var p=pos(e), t=hitTest(p.x,p.y);
+  if(!t){ sel=null; return; }
+  if(!MJ.isFree(t,tiles)){
+    t.shake=performance.now()+320;
+    beep(170,.1,"sawtooth",.045);
+    if(window.GGA) GGA.haptic("warning");
+    return;
+  }
+  if(sel===t){ sel=null; beep(400,.05,"sine",.04); return; }
+  if(!sel){ sel=t; beep(560,.05,"sine",.045); if(window.GGA) GGA.haptic("light"); return; }
+  if(MJ.matches(sel.face, t.face)){
+    var a=sel, b=t; sel=null; hintPair=null;
+    history.push([a.i,b.i]);
+    var pa=tilePos(a), pb=tilePos(b);
+    pop.push({x:pa.x,y:pa.y,face:a.face,life:1});
+    pop.push({x:pb.x,y:pb.y,face:b.face,life:1});
+    a.gone=true; b.gone=true;
+    beep(680,.09,"triangle",.06,940);
+    if(window.GGA) GGA.haptic("medium");
+    paintHUD(); persist(); checkEnd();
+  }else{
+    sel=t; beep(520,.05,"sine",.04);
+  }
+}
+cv.addEventListener("touchstart", onTap, {passive:false});
+cv.addEventListener("mousedown", onTap);
+
+document.getElementById("tUndo").onclick=function(){
+  if(done||!history.length) return;
+  var h=history.pop();
+  tiles[h[0]].gone=false; tiles[h[1]].gone=false;
+  sel=null; paintHUD(); persist(); beep(360,.07,"sine",.05);
+};
+document.getElementById("tHint").onclick=function(){
+  if(done) return;
+  var av=MJ.availablePairs(tiles);
+  if(!av.length){ beep(200,.14,"sawtooth",.05); return; }
+  hintPair=av[(Math.random()*av.length)|0];
+  hintUntil=performance.now()+2600;
+  beep(760,.12,"sine",.06,1060);
+};
+document.getElementById("tShuf").onclick=function(){
+  if(done) return;
+  var live=liveTiles();
+  if(live.length<2) return;
+  if(MJ.reshuffle(live)){
+    shuffles++; sel=null; hintPair=null; history=[];
+    paintHUD(); persist();
+    beep(420,.16,"triangle",.06,720);
+    if(window.GGA) GGA.haptic("medium");
+  }else{
+    beep(200,.14,"sawtooth",.05);
+  }
+};
+
+/* ---------------- end states ---------------- */
+function paintHUD(){
+  var left=liveTiles().length;
+  document.getElementById("vLeft").textContent=left;
+  var open=MJ.availablePairs(tiles).length;
+  document.getElementById("vOpen").textContent=open;
+  document.getElementById("vTime").textContent=fmt(secs);
+  document.getElementById("tUndo").className="tool"+((!history.length||done)?" off":"");
+}
+function fmt(s){ var m=(s/60)|0; return m+":"+("0"+(s%60)).slice(-2); }
+
+function checkEnd(){
+  if(!liveTiles().length){ winGame(); return; }
+  if(!MJ.availablePairs(tiles).length){
+    setTimeout(stuckScreen, 500);
+  }
+}
+function winGame(){
+  done=true; running=false; save("cur",null);
+  var L=layOf(layoutId);
+  var key="best_"+layoutId, prev=load(key,0);
+  var isBest=!prev || secs<prev;
+  if(isBest) save(key, secs);
+  save("wins_"+layoutId, load("wins_"+layoutId,0)+1);
+  if(window.GGA){
+    GGA.award("mj_win");
+    if(shuffles===0) GGA.award("mj_noshuffle");
+    if(layoutId==="tower") GGA.award("mj_tower");
+    if(layoutId==="tower" && secs<600) GGA.award("mj_fast");
+    var all=true;
+    for(var i=0;i<LAYS.length;i++) if(!load("wins_"+LAYS[i].id,0)) all=false;
+    if(all) GGA.award("mj_alllayouts");
+    GGA.haptic("success");
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.26,"triangle",.09); },250);
+  setTimeout(function(){ winScreen(isBest); },650);
+}
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card"), started=false;
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>MAHJONG</h2><p>Clear the board by matching free tiles two at a time.</p><div class="lays">';
+  for(var i=0;i<LAYS.length;i++){
+    var L=LAYS[i], b=load("best_"+L.id,0);
+    h+='<div class="lay '+L.cls+'" data-l="'+L.id+'"><div style="text-align:left">'+
+       '<div class="ln">'+L.name+'</div><div class="lt">'+L.tag+'</div></div>'+
+       '<div style="font-size:12px;font-weight:900;opacity:.95">'+(b?fmt(b):"")+'</div></div>';
+  }
+  h+='</div>';
+  if(cur && cur.t) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+layOf(cur.L).name+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".lay"), function(el){
+    el.onclick=function(){ started=true; startGame(el.getAttribute("data-l")); persist(); closeOvl(); };
+  });
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){ started=true; if(!restore()) startGame("blossom"); persist(); closeOvl(); };
+  card.querySelector("#bRules").onclick=rulesScreen;
+}
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Match <b>two identical tiles</b> to take them off the board.<br><br>'+
+    '&#9642; A tile can only be taken if <b>nothing sits on top of it</b> and it has a <b>free edge</b> on its left or right. Tiles you cannot take are shaded.<br><br>'+
+    '&#9642; <b>Flowers</b> match any other flower, and <b>seasons</b> match any other season.<br><br>'+
+    '&#9642; <b>Moves open</b> at the top tells you how many pairs are currently playable &mdash; watch it, because reaching zero ends the run.<br><br>'+
+    '&#9642; Stuck or heading that way? <b>Shuffle</b> deals the remaining tiles again, and always leaves a board that can still be finished.<br><br>'+
+    '&#9642; Every board is built backwards from a completed solve, so there is <b>always a way through</b>.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=titleScreen;
+}
+function stuckScreen(){
+  if(done) return;
+  openOvl('<h2>NO MOVES LEFT</h2><p>Nothing pairs up from here &mdash; but a shuffle will sort that out.</p>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="sk">LEFT</div><div class="sv">'+liveTiles().length+'</div></div>'+
+      '<div class="stat"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bSh">SHUFFLE THE REST</button>'+
+    '<button class="btn btn-alt" id="bUn">UNDO MY LAST MOVE</button>'+
+    '<button class="btn btn-alt" id="bNew">NEW BOARD</button>');
+  card.querySelector("#bSh").onclick=function(){
+    document.getElementById("tShuf").onclick(); closeOvl();
+  };
+  card.querySelector("#bUn").onclick=function(){
+    document.getElementById("tUndo").onclick(); closeOvl();
+  };
+  card.querySelector("#bNew").onclick=function(){ startGame(layoutId); persist(); closeOvl(); };
+}
+function winScreen(isBest){
+  var best=load("best_"+layoutId,0);
+  openOvl('<h2>'+(isBest?"NEW BEST TIME!":"BOARD CLEARED!")+'</h2>'+
+    '<p>'+(shuffles===0?"Cleared without a single shuffle. Very tidy.":"Nicely unpicked.")+'</p>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+      '<div class="stat"><div class="sk">BEST</div><div class="sv">'+fmt(best)+'</div></div>'+
+      '<div class="stat"><div class="sk">SHUFFLES</div><div class="sv">'+shuffles+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER '+layOf(layoutId).name.toUpperCase()+'</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE BOARD</button>');
+  card.querySelector("#bAgain").onclick=function(){ startGame(layoutId); persist(); closeOvl(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(done){ titleScreen(); return; }
+  running=false;
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="sk">LEFT</div><div class="sv">'+liveTiles().length+'</div></div>'+
+      '<div class="stat"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+      '<div class="stat"><div class="sk">SHUFFLES</div><div class="sv">'+shuffles+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE BOARD</button>');
+  card.querySelector("#bGo").onclick=function(){ running=true; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+timer=setInterval(function(){
+  if(running && !done && started){ secs++;
+    document.getElementById("vTime").textContent=fmt(secs);
+    if(secs%10===0) persist(); }
+},1000);
+
+startGame("blossom");
+started=false; running=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+})();
+</script>
+</body>
+</html>

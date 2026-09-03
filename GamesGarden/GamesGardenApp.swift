@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct GamesGardenApp: App {
+    init() { TiltBridge.autoInstall() } 
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -10,4 +11,5 @@ struct GamesGardenApp: App {
                 .statusBarHidden(true)
         }
     }
+    
 }

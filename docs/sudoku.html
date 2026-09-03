@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Sudoku</title>
+<style>
+  :root{
+    --sky1:#8ee3f5; --sky2:#c9b6ff; --sun:#ffd166; --coral:#ff6b8a;
+    --ink:#2b3a67; --soft:#6b7aa8;
+    --cell:#ffffff; --peer:#eaf3ff; --same:#d5f5e3; --sel:#ffe9a8;
+    --given:#2b3a67; --mine:#1573e6; --bad:#ff4d6d;
+    --line:#c9d6ee; --thick:#7c8db5;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(130% 90% at 15% -10%, #b9f0ff 0%, transparent 55%),
+      radial-gradient(120% 80% at 90% 105%, #ffd7f0 0%, transparent 55%),
+      linear-gradient(165deg, var(--sky1) 0%, #dcd6ff 55%, #ffe3f1 100%);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:manipulation;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 9px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:460px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);
+    background:rgba(255,255,255,.72);border:1.5px solid rgba(255,255,255,.9);
+    padding:7px 13px;border-radius:999px;font-size:13px;font-weight:800;
+    box-shadow:0 3px 10px rgba(80,100,160,.16);cursor:pointer;white-space:nowrap
+  }
+  .pill:active{transform:scale(.95)}
+  .title{
+    flex:1;text-align:center;font-weight:900;letter-spacing:2px;line-height:1;
+    font-size:clamp(17px,5.4vw,25px);color:#fff;
+    text-shadow:0 2px 0 #7c8fd6, 0 4px 12px rgba(60,80,150,.35)
+  }
+  .strip{display:flex;gap:7px;margin-bottom:9px}
+  .chip{
+    flex:1;text-align:center;padding:6px 2px;border-radius:14px;
+    background:rgba(255,255,255,.65);border:1.5px solid rgba(255,255,255,.85);
+    box-shadow:0 3px 10px rgba(80,100,160,.13)
+  }
+  .chip .k{font-size:8.5px;letter-spacing:1.3px;font-weight:900;color:var(--soft)}
+  .chip .v{font-size:clamp(14px,4.4vw,18px);font-weight:900;font-variant-numeric:tabular-nums}
+  .v-bad{color:var(--bad)}
+  #stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+         min-height:0;position:relative;gap:10px}
+  /* ---------- board ---------- */
+  #board{
+    display:grid;grid-template-columns:repeat(9,1fr);
+    background:var(--thick);gap:1px;padding:3px;border-radius:14px;
+    box-shadow:0 10px 28px rgba(70,90,150,.3), 0 2px 0 rgba(255,255,255,.7) inset;
+    width:100%;aspect-ratio:1
+  }
+  .cel{
+    background:var(--cell);display:flex;align-items:center;justify-content:center;
+    font-weight:800;position:relative;cursor:pointer;line-height:1;
+    font-variant-numeric:tabular-nums
+  }
+  .cel.br{border-right:2px solid var(--thick)}
+  .cel.bb{border-bottom:2px solid var(--thick)}
+  .cel.peer{background:var(--peer)}
+  .cel.same{background:var(--same)}
+  .cel.sel{background:var(--sel);box-shadow:0 0 0 2.5px #f2a93b inset}
+  .cel.given{color:var(--given)}
+  .cel.mine{color:var(--mine)}
+  .cel.bad{color:#fff;background:var(--bad)!important}
+  .cel.pop{animation:pop .22s ease}
+  @keyframes pop{0%{transform:scale(.55)}60%{transform:scale(1.16)}100%{transform:scale(1)}}
+  .cel.flash{animation:flash .5s ease}
+  @keyframes flash{0%,100%{background:var(--cell)}45%{background:#b8f5cf}}
+  .notes{
+    position:absolute;inset:1px;display:grid;grid-template-columns:repeat(3,1fr);
+    grid-template-rows:repeat(3,1fr);pointer-events:none
+  }
+  .notes span{display:flex;align-items:center;justify-content:center;color:#8a97bd;font-weight:800}
+  /* ---------- pads ---------- */
+  #tools{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%}
+  .tool{
+    background:rgba(255,255,255,.8);border:1.5px solid rgba(255,255,255,.95);
+    border-radius:16px;padding:9px 2px 7px;text-align:center;cursor:pointer;
+    box-shadow:0 4px 0 rgba(150,165,205,.5), 0 6px 14px rgba(80,100,160,.16);
+    color:var(--ink)
+  }
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(150,165,205,.5)}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9.5px;font-weight:900;letter-spacing:.6px;margin-top:3px;color:var(--soft)}
+  .tool.on{background:linear-gradient(180deg,#ffe9a8,#ffcf5c);border-color:#ffb92e}
+  .tool.on .tl{color:#8a6414}
+  .tool .badge{
+    position:absolute;transform:translate(16px,-8px);background:var(--coral);color:#fff;
+    font-size:9px;font-weight:900;border-radius:999px;padding:1px 5px
+  }
+  #pad{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;width:100%}
+  .num{
+    position:relative;background:linear-gradient(180deg,#ffffff,#eef3ff);
+    border:1.5px solid #fff;border-radius:13px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:7px 0 5px;cursor:pointer;color:var(--mine);font-weight:900;
+    box-shadow:0 4px 0 #c3d0ea, 0 6px 14px rgba(80,100,160,.16)
+  }
+  .num:active{transform:translateY(3px);box-shadow:0 1px 0 #c3d0ea}
+  .num .d{font-size:clamp(16px,5.2vw,22px);line-height:1}
+  .num .r{font-size:8.5px;font-weight:800;color:var(--soft);margin-top:2px}
+  .num.done{opacity:.32;box-shadow:none;transform:none}
+  /* ---------- overlay ---------- */
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+       background:rgba(70,90,150,.34);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{
+    width:100%;max-width:355px;background:linear-gradient(180deg,#ffffff,#f3f7ff);
+    border:2px solid #fff;border-radius:22px;padding:20px 18px 16px;text-align:center;
+    box-shadow:0 20px 50px rgba(50,70,140,.4);max-height:100%;overflow:auto
+  }
+  .card h2{font-size:25px;font-weight:900;letter-spacing:1px;margin-bottom:3px;color:#3b4d8f}
+  .card p{font-size:14px;line-height:1.55;color:var(--soft);margin:8px 0}
+  .diffs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}
+  .diff{
+    border-radius:16px;padding:12px 6px;cursor:pointer;border:2px solid transparent;
+    color:#fff;font-weight:900;box-shadow:0 4px 0 rgba(0,0,0,.14)
+  }
+  .diff .dn{font-size:15px;letter-spacing:.5px}
+  .diff .dt{font-size:10px;opacity:.92;font-weight:800;margin-top:3px}
+  .diff:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .d-easy{background:linear-gradient(180deg,#6ddf9c,#38b96f)}
+  .d-medium{background:linear-gradient(180deg,#6ec6ff,#2b8fe0)}
+  .d-hard{background:linear-gradient(180deg,#ffb457,#f08a1d)}
+  .d-expert{background:linear-gradient(180deg,#ff7fa5,#e8447a)}
+  .btn{display:block;width:100%;margin-top:9px;padding:13px;border:none;border-radius:15px;
+       font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#7ee0a8,#35b96e);color:#fff;
+          box-shadow:0 5px 0 #239155, 0 8px 18px rgba(40,140,90,.3)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #239155}
+  .btn-alt{background:#eef2fb;color:#4a5c96;border:1.5px solid #dbe3f5}
+  .rules{text-align:left;font-size:13px;line-height:1.7;color:#54648f;margin:11px 2px}
+  .rules b{color:#3b4d8f}
+  .stats{display:flex;gap:8px;margin-top:12px}
+  .stat{flex:1;background:#eef3ff;border-radius:13px;padding:8px 4px}
+  .stat .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:var(--soft)}
+  .stat .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#3b4d8f}
+  @media (max-height:700px){
+    .card{padding:15px 15px 12px}.card h2{font-size:21px}
+    .rules{font-size:11.8px;line-height:1.5}.btn{padding:11px;font-size:14px;margin-top:7px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">SUDOKU</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">LEVEL</div><div class="v" id="vDiff">Easy</div></div>
+    <div class="chip"><div class="k">TIME</div><div class="v" id="vTime">0:00</div></div>
+    <div class="chip"><div class="k">SLIPS</div><div class="v v-bad" id="vErr">0</div></div>
+  </div>
+  <div id="stage">
+    <div id="board"></div>
+    <div id="tools">
+      <div class="tool" id="tUndo"><div class="ti">&#8630;</div><div class="tl">UNDO</div></div>
+      <div class="tool" id="tErase"><div class="ti">&#9003;</div><div class="tl">ERASE</div></div>
+      <div class="tool" id="tNotes"><div class="ti">&#9998;</div><div class="tl">NOTES</div></div>
+      <div class="tool" id="tHint"><div class="ti">&#128161;</div><div class="tl">HINT</div></div>
+    </div>
+    <div id="pad"></div>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Sudoku generator + grader. Written to be embedded in the game later. */
+function makeSudoku(){
+  "use strict";
+  var ROW=[], COL=[], BOX=[], PEERS=[], UNITS=[];
+  (function build(){
+    var i,j,r,c,b;
+    for(i=0;i<81;i++){ ROW.push((i/9)|0); COL.push(i%9); BOX.push((((i/9)|0)/3|0)*3 + ((i%9)/3|0)); }
+    for(r=0;r<9;r++){ var u=[]; for(c=0;c<9;c++) u.push(r*9+c); UNITS.push(u); }
+    for(c=0;c<9;c++){ var u2=[]; for(r=0;r<9;r++) u2.push(r*9+c); UNITS.push(u2); }
+    for(b=0;b<9;b++){ var u3=[]; for(i=0;i<81;i++) if(BOX[i]===b) u3.push(i); UNITS.push(u3); }
+    for(i=0;i<81;i++){
+      var s={};
+      for(j=0;j<81;j++) if(j!==i && (ROW[j]===ROW[i]||COL[j]===COL[i]||BOX[j]===BOX[i])) s[j]=1;
+      PEERS.push(Object.keys(s).map(Number));
+    }
+  })();
+
+  function rng(seed){
+    var s = seed>>>0 || 1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+  function shuffled(a, rand){
+    a=a.slice();
+    for(var i=a.length-1;i>0;i--){ var j=(rand()*(i+1))|0; var t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a;
+  }
+
+  /* ---- bitmask solver: counts solutions up to `limit` ---- */
+  function countSolutions(grid, limit){
+    var rows=new Array(9).fill(0), cols=new Array(9).fill(0), boxs=new Array(9).fill(0), i, v;
+    for(i=0;i<81;i++){
+      v=grid[i];
+      if(v){ var m=1<<v; rows[ROW[i]]|=m; cols[COL[i]]|=m; boxs[BOX[i]]|=m; }
+    }
+    var g=grid.slice(), found=0;
+    function rec(){
+      if(found>=limit) return;
+      var best=-1, bestMask=0, bestCount=10, k;
+      for(k=0;k<81;k++){
+        if(g[k]) continue;
+        var used = rows[ROW[k]]|cols[COL[k]]|boxs[BOX[k]];
+        var cand = (~used) & 0x3FE;              /* bits 1..9 */
+        var n=0, t=cand;
+        while(t){ t&=t-1; n++; }
+        if(n===0) return;
+        if(n<bestCount){ bestCount=n; best=k; bestMask=cand; if(n===1) break; }
+      }
+      if(best===-1){ found++; return; }
+      for(var d=1;d<=9;d++){
+        var bit=1<<d;
+        if(!(bestMask&bit)) continue;
+        g[best]=d; rows[ROW[best]]|=bit; cols[COL[best]]|=bit; boxs[BOX[best]]|=bit;
+        rec();
+        g[best]=0; rows[ROW[best]]&=~bit; cols[COL[best]]&=~bit; boxs[BOX[best]]&=~bit;
+        if(found>=limit) return;
+      }
+    }
+    rec();
+    return found;
+  }
+
+  /* ---- a completed grid ---- */
+  function fullGrid(rand){
+    var g=new Array(81).fill(0);
+    var rows=new Array(9).fill(0), cols=new Array(9).fill(0), boxs=new Array(9).fill(0);
+    function rec(k){
+      if(k===81) return true;
+      if(g[k]) return rec(k+1);
+      var order=shuffled([1,2,3,4,5,6,7,8,9], rand);
+      for(var i=0;i<9;i++){
+        var d=order[i], bit=1<<d;
+        if((rows[ROW[k]]|cols[COL[k]]|boxs[BOX[k]]) & bit) continue;
+        g[k]=d; rows[ROW[k]]|=bit; cols[COL[k]]|=bit; boxs[BOX[k]]|=bit;
+        if(rec(k+1)) return true;
+        g[k]=0; rows[ROW[k]]&=~bit; cols[COL[k]]&=~bit; boxs[BOX[k]]&=~bit;
+      }
+      return false;
+    }
+    rec(0);
+    return g;
+  }
+
+  /* ---- human-technique grader ----
+     returns the hardest technique needed, or -1 if logic alone can't finish:
+     1 naked single, 2 hidden single, 3 locked candidates, 4 naked/hidden pair  */
+  function grade(puzzle){
+    var cand=new Array(81), i, j, k, u, d;
+    for(i=0;i<81;i++) cand[i] = puzzle[i] ? (1<<puzzle[i]) : 0x3FE;
+    function eliminate(){
+      var again=true;
+      while(again){
+        again=false;
+        for(i=0;i<81;i++){
+          var c=cand[i];
+          if(c && !(c&(c-1))){                    /* exactly one bit = solved */
+            for(var p=0;p<PEERS[i].length;p++){
+              var q=PEERS[i][p];
+              if(cand[q] & c){ cand[q] &= ~c; again=true; if(!cand[q]) return false; }
+            }
+          }
+        }
+      }
+      return true;
+    }
+    function bits(m){ var n=0; while(m){ m&=m-1; n++; } return n; }
+    function solvedCount(){ var n=0; for(var x=0;x<81;x++) if(cand[x] && !(cand[x]&(cand[x]-1))) n++; return n; }
+
+    if(!eliminate()) return -1;
+    var hardest=0, guard=0;
+    while(solvedCount()<81 && guard++<200){
+      var before=solvedCount(), used=0;
+
+      /* 1 - naked single is implicit in eliminate() */
+      /* 2 - hidden single */
+      for(u=0;u<UNITS.length;u++){
+        for(d=1;d<=9;d++){
+          var bit=1<<d, spot=-1, n=0;
+          for(k=0;k<9;k++){ var cell=UNITS[u][k]; if(cand[cell]&bit){ n++; spot=cell; } }
+          if(n===1 && bits(cand[spot])>1){ cand[spot]=bit; used=Math.max(used,2); }
+        }
+      }
+      if(!eliminate()) return -1;
+      if(solvedCount()>before){ hardest=Math.max(hardest, used||1); continue; }
+
+      /* 3 - locked candidates (pointing / claiming) */
+      var changed=false;
+      for(var b=0;b<9;b++){
+        var boxCells=UNITS[18+b];
+        for(d=1;d<=9;d++){
+          var bit3=1<<d, inBox=[];
+          for(k=0;k<9;k++) if(cand[boxCells[k]]&bit3) inBox.push(boxCells[k]);
+          if(inBox.length<2 || inBox.length>3) continue;
+          var sameRow=inBox.every(function(x){ return ROW[x]===ROW[inBox[0]]; });
+          var sameCol=inBox.every(function(x){ return COL[x]===COL[inBox[0]]; });
+          if(sameRow) for(k=0;k<9;k++){ var cc=ROW[inBox[0]]*9+k;
+            if(BOX[cc]!==b && (cand[cc]&bit3)){ cand[cc]&=~bit3; changed=true; } }
+          if(sameCol) for(k=0;k<9;k++){ var cc2=k*9+COL[inBox[0]];
+            if(BOX[cc2]!==b && (cand[cc2]&bit3)){ cand[cc2]&=~bit3; changed=true; } }
+        }
+      }
+      if(changed){ if(!eliminate()) return -1; hardest=Math.max(hardest,3);
+        if(solvedCount()>before) continue; }
+
+      /* 4 - naked pairs */
+      var changed2=false;
+      for(u=0;u<UNITS.length;u++){
+        for(i=0;i<9;i++) for(j=i+1;j<9;j++){
+          var a=UNITS[u][i], bb=UNITS[u][j];
+          if(bits(cand[a])===2 && cand[a]===cand[bb]){
+            for(k=0;k<9;k++){
+              var z=UNITS[u][k];
+              if(z!==a && z!==bb && (cand[z]&cand[a])){ cand[z]&=~cand[a]; changed2=true; }
+            }
+          }
+        }
+      }
+      if(changed2){ if(!eliminate()) return -1; hardest=Math.max(hardest,4);
+        if(solvedCount()>before) continue; }
+
+      return -1;   /* logic stalled */
+    }
+    return solvedCount()===81 ? (hardest||1) : -1;
+  }
+
+  var LEVELS = {
+    easy:   {maxGrade:2, minGivens:38, holes:43},
+    medium: {maxGrade:2, minGivens:30, holes:51},
+    hard:   {maxGrade:3, minGivens:26, holes:55},
+    expert: {maxGrade:4, minGivens:22, holes:59}
+  };
+
+  function generate(diff, seed){
+    var cfg = LEVELS[diff] || LEVELS.easy;
+    var rand = rng(seed || ((Math.random()*1e9)|0));
+    for(var attempt=0; attempt<40; attempt++){
+      var sol = fullGrid(rand);
+      var puz = sol.slice();
+      var order = shuffled(Array.from({length:81},function(_,i){return i;}), rand);
+      var removed = 0;
+      for(var t=0;t<order.length;t++){
+        if(removed >= cfg.holes) break;
+        var i = order[t];
+        if(!puz[i]) continue;
+        var keep = puz[i];
+        puz[i]=0;
+        if(countSolutions(puz,2)!==1){ puz[i]=keep; continue; }
+        removed++;
+      }
+      var givens = 81-removed;
+      if(givens < cfg.minGivens) continue;
+      var g = grade(puz);
+      if(g<1) continue;
+      /* easy/medium must NOT need the harder techniques; hard/expert must */
+      var ok = (diff==='easy')   ? (g<=2 && givens>=36)
+             : (diff==='medium') ? (g===2)
+             : (diff==='hard')   ? (g===3 || g===4)
+             :                     (g>=4);
+      if(!ok) continue;
+      return {puzzle:puz, solution:sol, givens:givens, grade:g};
+    }
+    return null;
+  }
+
+  return {generate:generate, grade:grade, countSolutions:countSolutions, LEVELS:LEVELS};
+}
+
+(function(){
+"use strict";
+var SU = makeSudoku();
+
+var LS="gg_sudoku_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var DIFFS = [
+  {id:"easy",   name:"Easy",   cls:"d-easy",   tag:"A gentle start"},
+  {id:"medium", name:"Medium", cls:"d-medium", tag:"A proper puzzle"},
+  {id:"hard",   name:"Hard",   cls:"d-hard",   tag:"Needs real thought"},
+  {id:"expert", name:"Expert", cls:"d-expert", tag:"No easy moves"}
+];
+function diffOf(id){ for(var i=0;i<DIFFS.length;i++) if(DIFFS[i].id===id) return DIFFS[i]; return DIFFS[0]; }
+
+/* ---------------- state ---------------- */
+var puzzle, solution, grid, notes, diff, sel, errs, secs, timer, running, hintsUsed, undoStack, done;
+
+function fresh(d){
+  diff = d;
+  var made = SU.generate(d);
+  if(!made) made = SU.generate("easy");
+  puzzle = made.puzzle.slice();
+  solution = made.solution.slice();
+  grid = made.puzzle.slice();
+  notes = []; for(var i=0;i<81;i++) notes.push(0);
+  sel=-1; errs=0; secs=0; hintsUsed=0; undoStack=[]; done=false;
+  running=true;
+  paintAll();
+  /* deliberately does NOT persist: boot calls fresh() before the title
+     screen reads the stored game, and saving here would wipe it */
+}
+
+function persist(){
+  if(done){ save("cur", null); return; }
+  save("cur", {d:diff, p:puzzle, s:solution, g:grid, n:notes, e:errs, t:secs, h:hintsUsed});
+}
+function restore(){
+  var c = load("cur", null);
+  if(!c || !c.g || c.g.length!==81) return false;
+  diff=c.d; puzzle=c.p; solution=c.s; grid=c.g; notes=c.n||new Array(81).fill(0);
+  errs=c.e|0; secs=c.t|0; hintsUsed=c.h|0; sel=-1; undoStack=[]; done=false; running=true;
+  paintAll(); return true;
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.07,a.currentTime+.01);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- board ---------------- */
+var boardEl=document.getElementById("board"), padEl=document.getElementById("pad"), cels=[];
+(function buildBoard(){
+  for(var i=0;i<81;i++){
+    var d=document.createElement("div");
+    d.className="cel";
+    var r=(i/9)|0, c=i%9;
+    if(c===2||c===5) d.className+=" br";
+    if(r===2||r===5) d.className+=" bb";
+    (function(idx){ d.addEventListener("click", function(){ pick(idx); }); })(i);
+    boardEl.appendChild(d); cels.push(d);
+  }
+  for(var n=1;n<=9;n++){
+    var b=document.createElement("div");
+    b.className="num";
+    b.innerHTML='<div class="d">'+n+'</div><div class="r" id="rem'+n+'"></div>';
+    (function(v){ b.addEventListener("click", function(){ enter(v); }); })(n);
+    padEl.appendChild(b);
+  }
+  sizeBoard();
+})();
+
+function sizeBoard(){
+  var st=document.getElementById("stage");
+  var w=st.clientWidth, h=st.clientHeight;
+  if(!w||!h) return;
+  var side=Math.min(w, h-150);
+  side=Math.max(200, side);
+  boardEl.style.width=side+"px";
+  boardEl.style.fontSize=(side/9*0.52)+"px";
+  var noteSz=(side/9*0.235);
+  document.querySelectorAll(".notes span").forEach(function(s){ s.style.fontSize=noteSz+"px"; });
+  boardEl.dataset.note=noteSz;
+  /* spend any spare height on bigger, comfier buttons rather than empty air */
+  var spare = Math.max(0, h - side - 130);
+  var grow = Math.min(22, spare/4);
+  document.getElementById("tools").style.marginTop = Math.min(14, spare/6)+"px";
+  Array.prototype.forEach.call(document.querySelectorAll(".tool"), function(t){
+    t.style.padding = (9+grow*0.55)+"px 2px "+(7+grow*0.55)+"px";
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".num"), function(t){
+    t.style.padding = (7+grow*0.6)+"px 0 "+(5+grow*0.6)+"px";
+  });
+}
+window.addEventListener("resize", function(){ sizeBoard(); paintAll(); });
+
+function peersOf(i){
+  var r=(i/9)|0, c=i%9, br=((r/3)|0)*3, bc=((c/3)|0)*3, out={};
+  for(var k=0;k<9;k++){ out[r*9+k]=1; out[k*9+c]=1; }
+  for(var a=0;a<3;a++) for(var b=0;b<3;b++) out[(br+a)*9+(bc+b)]=1;
+  return out;
+}
+
+function paintAll(){
+  var pr = sel>=0 ? peersOf(sel) : {};
+  var selVal = sel>=0 ? grid[sel] : 0;
+  var noteSz = boardEl.dataset.note || 10;
+  for(var i=0;i<81;i++){
+    var el=cels[i], v=grid[i], cls="cel";
+    var r=(i/9)|0, c=i%9;
+    if(c===2||c===5) cls+=" br";
+    if(r===2||r===5) cls+=" bb";
+    if(sel>=0){
+      if(i===sel) cls+=" sel";
+      else if(selVal && v===selVal) cls+=" same";
+      else if(pr[i]) cls+=" peer";
+    }
+    if(v){
+      if(puzzle[i]) cls+=" given";
+      else if(v!==solution[i]) cls+=" bad";
+      else cls+=" mine";
+      el.textContent=v;
+    }else if(notes[i]){
+      var html='<div class="notes">';
+      for(var n=1;n<=9;n++)
+        html+='<span style="font-size:'+noteSz+'px">'+((notes[i]>>n)&1?n:"")+'</span>';
+      el.innerHTML=html+'</div>';
+    }else{
+      el.textContent="";
+    }
+    el.className=cls;
+  }
+  /* remaining counts */
+  var count=new Array(10).fill(0);
+  for(var k=0;k<81;k++) if(grid[k]===solution[k]) count[grid[k]]++;
+  for(var d=1;d<=9;d++){
+    var left=9-count[d];
+    var rem=document.getElementById("rem"+d);
+    if(rem) rem.textContent = left>0 ? left : "";
+    padEl.children[d-1].className = "num" + (left<=0 ? " done":"");
+  }
+  document.getElementById("vDiff").textContent = diffOf(diff).name;
+  document.getElementById("vErr").textContent = errs;
+  document.getElementById("vTime").textContent = fmt(secs);
+}
+function fmt(s){ var m=(s/60)|0; return m+":"+("0"+(s%60)).slice(-2); }
+
+/* ---------------- input ---------------- */
+var notesMode=false;
+function pick(i){
+  if(done) return;
+  sel = (sel===i) ? -1 : i;
+  paintAll();
+  if(window.GGA) GGA.haptic("light");
+}
+function pushUndo(){
+  undoStack.push({g:grid.slice(), n:notes.slice(), e:errs});
+  if(undoStack.length>80) undoStack.shift();
+}
+function enter(v){
+  if(done || sel<0 || puzzle[sel]) return;
+  pushUndo();
+  if(notesMode){
+    if(grid[sel]){ grid[sel]=0; }
+    notes[sel] ^= (1<<v);
+    beep(520,.05,"sine",.05);
+  }else{
+    if(grid[sel]===v){ grid[sel]=0; }
+    else{
+      grid[sel]=v; notes[sel]=0;
+      if(v===solution[sel]){
+        /* clear this digit from the notes of every peer */
+        var pr=peersOf(sel);
+        for(var k in pr) if(+k!==sel) notes[+k] &= ~(1<<v);
+        cels[sel].classList.add("pop");
+        beep(660,.08,"triangle",.06,880);
+        if(window.GGA) GGA.haptic("light");
+      }else{
+        errs++;
+        beep(220,.22,"sawtooth",.06,150);
+        if(window.GGA) GGA.haptic("error");
+      }
+    }
+  }
+  paintAll(); persist(); checkWin();
+}
+document.getElementById("tErase").onclick=function(){
+  if(done||sel<0||puzzle[sel]) return;
+  pushUndo(); grid[sel]=0; notes[sel]=0; paintAll(); persist();
+};
+document.getElementById("tUndo").onclick=function(){
+  if(done||!undoStack.length) return;
+  var s=undoStack.pop(); grid=s.g; notes=s.n; errs=s.e;
+  paintAll(); persist(); beep(380,.06,"sine",.05);
+};
+var notesBtn=document.getElementById("tNotes");
+notesBtn.onclick=function(){
+  notesMode=!notesMode;
+  notesBtn.className="tool"+(notesMode?" on":"");
+  beep(notesMode?620:460,.06,"sine",.05);
+};
+document.getElementById("tHint").onclick=function(){
+  if(done) return;
+  var blanks=[];
+  for(var i=0;i<81;i++) if(grid[i]!==solution[i]) blanks.push(i);
+  if(!blanks.length) return;
+  var pickI = (sel>=0 && grid[sel]!==solution[sel]) ? sel : blanks[(Math.random()*blanks.length)|0];
+  pushUndo();
+  grid[pickI]=solution[pickI]; notes[pickI]=0;
+  var pr=peersOf(pickI);
+  for(var k in pr) if(+k!==pickI) notes[+k] &= ~(1<<solution[pickI]);
+  hintsUsed++; sel=pickI;
+  paintAll();
+  cels[pickI].classList.add("flash");
+  beep(780,.16,"sine",.07,1180);
+  persist(); checkWin();
+};
+document.addEventListener("keydown",function(e){
+  if(done) return;
+  if(e.key>="1"&&e.key<="9") enter(+e.key);
+  else if(e.key==="Backspace"||e.key==="Delete") document.getElementById("tErase").onclick();
+  else if(sel>=0){
+    var r=(sel/9)|0,c=sel%9;
+    if(e.key==="ArrowUp"&&r>0) pick(sel-9);
+    else if(e.key==="ArrowDown"&&r<8) pick(sel+9);
+    else if(e.key==="ArrowLeft"&&c>0) pick(sel-1);
+    else if(e.key==="ArrowRight"&&c<8) pick(sel+1);
+  }
+});
+
+/* ---------------- timer + win ---------------- */
+timer=setInterval(function(){
+  if(running && !done && started){ secs++; document.getElementById("vTime").textContent=fmt(secs);
+    if(secs%10===0) persist(); }
+},1000);
+
+function checkWin(){
+  for(var i=0;i<81;i++) if(grid[i]!==solution[i]) return;
+  done=true; running=false;
+  save("cur", null);
+  var key="best_"+diff, prev=load(key,0);
+  var isBest = !prev || secs<prev;
+  if(isBest) save(key, secs);
+  save("wins_"+diff, load("wins_"+diff,0)+1);
+  if(window.GGA){
+    GGA.award("sud_win");
+    if(errs===0 && hintsUsed===0) GGA.award("sud_clean");
+    if(diff==="hard"||diff==="expert") GGA.award("sud_hard");
+    if(diff==="expert") GGA.award("sud_expert");
+    if(diff!=="easy" && secs<300) GGA.award("sud_fast");
+    var allD=true;
+    for(var d=0;d<DIFFS.length;d++) if(!load("wins_"+DIFFS[d].id,0)) allD=false;
+    if(allD) GGA.award("sud_alldiff");
+    GGA.haptic("success");
+  }
+  beep(660,.13,"triangle",.08);
+  setTimeout(function(){ beep(880,.13,"triangle",.08); },130);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },270);
+  setTimeout(function(){ winScreen(isBest); }, 620);
+}
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card"), started=false;
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var c=load("cur",null);
+  var hasSave = !!(c && c.g && c.g.length===81);
+  var h='<h2>SUDOKU</h2><p>Fill every row, column and box with 1 to 9.</p><div class="diffs">';
+  for(var i=0;i<DIFFS.length;i++){
+    var d=DIFFS[i], best=load("best_"+d.id,0);
+    h+='<div class="diff '+d.cls+'" data-d="'+d.id+'"><div class="dn">'+d.name+'</div>'+
+       '<div class="dt">'+(best?("best "+fmt(best)):d.tag)+'</div></div>';
+  }
+  h+='</div>';
+  if(hasSave) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+diffOf(c.d).name+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".diff"), function(el){
+    el.onclick=function(){ started=true; fresh(el.getAttribute("data-d")); persist(); closeOvl(); sizeBoard(); paintAll(); };
+  });
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){ started=true; if(!restore()) fresh("easy"); persist(); closeOvl(); sizeBoard(); paintAll(); };
+  card.querySelector("#bRules").onclick=rulesScreen;
+}
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Every <b>row</b>, every <b>column</b> and every <b>3&times;3 box</b> must contain 1 to 9, once each.<br><br>'+
+    '&#9642; Tap a square, then tap a number. Tap the same number again to take it back out.<br><br>'+
+    '&#9642; <b>Notes</b> lets you pencil in the possibilities for a square. They clear themselves as you fill the grid.<br><br>'+
+    '&#9642; A wrong number turns <b>red</b> straight away, so you never build on a mistake.<br><br>'+
+    '&#9642; Every puzzle has exactly <b>one</b> answer and can always be worked out by logic. No guessing needed.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=titleScreen;
+}
+function winScreen(isBest){
+  var best=load("best_"+diff,0);
+  openOvl('<h2>'+(isBest?"NEW BEST TIME!":"SOLVED!")+'</h2>'+
+    '<p>'+(errs===0&&hintsUsed===0
+      ? "Not one slip and no hints. Beautifully done."
+      : "Nice work on the "+diffOf(diff).name+" grid.")+'</p>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+      '<div class="stat"><div class="sk">BEST</div><div class="sv">'+fmt(best)+'</div></div>'+
+      '<div class="stat"><div class="sk">SLIPS</div><div class="sv">'+errs+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER '+diffOf(diff).name.toUpperCase()+'</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE LEVEL</button>');
+  card.querySelector("#bAgain").onclick=function(){ fresh(diff); persist(); closeOvl(); sizeBoard(); paintAll(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(done){ titleScreen(); return; }
+  running=false;
+  openOvl('<h2>PAUSED</h2><p>Your grid is safe. Take your time.</p>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="sk">LEVEL</div><div class="sv">'+diffOf(diff).name+'</div></div>'+
+      '<div class="stat"><div class="sk">TIME</div><div class="sv">'+fmt(secs)+'</div></div>'+
+      '<div class="stat"><div class="sk">SLIPS</div><div class="sv">'+errs+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE LEVEL</button>');
+  card.querySelector("#bGo").onclick=function(){ running=true; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+fresh("easy");
+started=false; running=false;
+titleScreen();
+setTimeout(function(){ sizeBoard(); paintAll(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(function(){ sizeBoard(); paintAll(); },220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+})();
+</script>
+</body>
+</html>
