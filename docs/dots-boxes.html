@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Dots and Boxes</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 8% -8%, #d7a2ff 0%, transparent 55%),
+      radial-gradient(120% 80% at 94% 105%, #ffc0f0 0%, transparent 55%),
+      linear-gradient(160deg, #a35cf0 0%, #c86ae0 48%, #f0c9ff 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#8341c9;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(100,40,150,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.2px;line-height:1;
+    font-size:clamp(13px,4.2vw,19px);text-shadow:0 2px 0 #9450d8,0 4px 12px rgba(80,30,120,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#8341c9;
+    box-shadow:0 4px 0 rgba(130,60,190,.35),0 6px 14px rgba(100,40,150,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(130,60,190,.35)}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(95,40,150,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#fdf3ff);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#7a5c93;box-shadow:0 20px 50px rgba(90,35,140,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#9450d8;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#a888c0;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-p{background:linear-gradient(180deg,#c79bf5,#8b4ee0)}
+  .z-a{background:linear-gradient(180deg,#8fe0a8,#2fae6b)}
+  .z-b{background:linear-gradient(180deg,#7fc4ff,#2a72d4)}
+  .z-c{background:linear-gradient(180deg,#ffab6b,#f0722a)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#c79bf5,#9450d8);color:#fff;
+    box-shadow:0 5px 0 #7735b8,0 8px 18px rgba(140,70,200,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #7735b8}
+  .btn-alt{background:#f7ecff;color:#8341c9;border:1.5px solid #e6d3f5}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#a888c0;margin:10px 2px}
+  .rules b{color:#9450d8}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#f7ecff;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#cbb0e0}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#9450d8}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">DOTS AND BOXES</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">PURPLE</div><div class="v" id="vPurple">0</div></div>
+    <div class="chip"><div class="k">TO PLAY</div><div class="v" id="vTurn">PURPLE</div></div>
+    <div class="chip"><div class="k">ORANGE</div><div class="v" id="vOrange">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tHint"><div class="ti">&#9758;</div><div class="tl">HINT</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Dots and Boxes - the rules and the computer opponent, with no drawing and no
+   input in them.  Every move goes through play(), so the same code that runs on
+   screen can be run headless for thousands of games in Node - and the computer
+   picks its move by playing candidate games out through this very same code.
+
+   The lattice: a board of cols x rows BOXES has (cols+1) x (rows+1) dots.
+   Horizontal edge (r,c) joins dot (c,r) to dot (c+1,r).
+   Vertical edge   (r,c) joins dot (c,r) to dot (c,r+1).
+   Edges are numbered horizontals first, then verticals, so one integer names
+   any edge on the board. */
+function makeBoxes(){
+  "use strict";
+
+  var SIZES=[
+    { id:"small", name:"Small",  cols:4, rows:5, tag:"20 boxes &middot; a quick one" },
+    { id:"med",   name:"Medium", cols:5, rows:7, tag:"35 boxes &middot; room to scheme" },
+    { id:"big",   name:"Big",    cols:6, rows:9, tag:"54 boxes &middot; the long game" }
+  ];
+  function sizeOf(id){ for(var i=0;i<SIZES.length;i++) if(SIZES[i].id===id) return SIZES[i]; return SIZES[1]; }
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+
+  function create(cfg){
+    cfg=cfg||{};
+    var sz=sizeOf(cfg.size||"med");
+    var cols=sz.cols, rows=sz.rows;
+    var nh=(rows+1)*cols, nv=rows*(cols+1);
+    var st={
+      size:sz.id, cols:cols, rows:rows,
+      nh:nh, nv:nv, nEdges:nh+nv,
+      edge:new Array(nh+nv),      /* -1 unclaimed, else who drew it */
+      box:new Array(cols*rows),   /* -1 unowned, else who closed it */
+      turn:0, score:[0,0], moves:0,
+      last:-1, lastBoxes:[],
+      over:false, winner:-1,      /* -1 with over === true means a dead heat */
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    for(var i=0;i<st.edge.length;i++) st.edge[i]=-1;
+    for(i=0;i<st.box.length;i++) st.box[i]=-1;
+    return st;
+  }
+
+  /* ---- naming the parts ---- */
+  function hId(st,r,c){ return r*st.cols+c; }
+  function vId(st,r,c){ return st.nh + r*(st.cols+1)+c; }
+  function edgeAt(st,id){
+    if(id<st.nh) return { type:0, r:Math.floor(id/st.cols), c:id%st.cols };
+    var k=id-st.nh;
+    return { type:1, r:Math.floor(k/(st.cols+1)), c:k%(st.cols+1) };
+  }
+  /* where an edge sits, in dot units - dot (c,r) is at (c, r) */
+  function edgeMid(st,id){
+    var e=edgeAt(st,id);
+    return e.type===0 ? { x:e.c+0.5, y:e.r } : { x:e.c, y:e.r+0.5 };
+  }
+  function boxId(st,r,c){ return r*st.cols+c; }
+  /* the four edges of box (r,c) */
+  function boxEdges(st,r,c){
+    return [ hId(st,r,c), hId(st,r+1,c), vId(st,r,c), vId(st,r,c+1) ];
+  }
+  /* the one or two boxes an edge borders */
+  function edgeBoxes(st,id){
+    var e=edgeAt(st,id), out=[];
+    if(e.type===0){
+      if(e.r>0) out.push(boxId(st,e.r-1,e.c));
+      if(e.r<st.rows) out.push(boxId(st,e.r,e.c));
+    }else{
+      if(e.c>0) out.push(boxId(st,e.r,e.c-1));
+      if(e.c<st.cols) out.push(boxId(st,e.r,e.c));
+    }
+    return out;
+  }
+  function sidesOfBox(st,b){
+    var r=Math.floor(b/st.cols), c=b%st.cols;
+    var e=boxEdges(st,r,c), n=0;
+    for(var i=0;i<4;i++) if(st.edge[e[i]]>=0) n++;
+    return n;
+  }
+  function legal(st,id){
+    return !st.over && id>=0 && id<st.nEdges && st.edge[id]<0;
+  }
+  function legalMoves(st){
+    var out=[];
+    for(var i=0;i<st.nEdges;i++) if(st.edge[i]<0) out.push(i);
+    return out;
+  }
+
+  /* draw an edge; closing a box scores it and keeps you on */
+  function play(st,id){
+    if(!legal(st,id)) return { ok:false };
+    var me=st.turn;
+    st.edge[id]=me;
+    st.moves++;
+    st.last=id;
+    var closed=[], bs=edgeBoxes(st,id), i;
+    for(i=0;i<bs.length;i++){
+      if(sidesOfBox(st,bs[i])===4 && st.box[bs[i]]<0){
+        st.box[bs[i]]=me;
+        st.score[me]++;
+        closed.push(bs[i]);
+      }
+    }
+    st.lastBoxes=closed;
+    var ev={ ok:true, by:me, boxes:closed, again:closed.length>0, over:false, turnPassed:false };
+    if(st.moves>=st.nEdges){
+      st.over=true;
+      st.winner = st.score[0]===st.score[1] ? -1 : (st.score[0]>st.score[1] ? 0 : 1);
+      ev.over=true;
+    }else if(!ev.again){
+      st.turn = me===0 ? 1 : 0;
+      ev.turnPassed=true;
+    }
+    return ev;
+  }
+
+  /* The nearest edge to a point given in dot units, if it is close enough.
+     Edges that are already drawn are still considered, and finding one means
+     the answer is "nothing": skipping them instead makes a tap on a line that
+     is already there quietly draw some OTHER line nearby, which is about the
+     most annoying thing a board game can do. */
+  function nearestEdge(st, x, y, maxDist){
+    var best=-1, bd=1e9;
+    for(var i=0;i<st.nEdges;i++){
+      var m=edgeMid(st,i);
+      var dx=x-m.x, dy=y-m.y;
+      /* an edge is a line, not a point: distance along it costs less than
+         distance across it, or the gaps between midpoints swallow the taps */
+      var e=edgeAt(st,i);
+      if(e.type===0) dx*=0.62; else dy*=0.62;
+      var d=Math.sqrt(dx*dx+dy*dy);
+      if(d<bd){ bd=d; best=i; }
+    }
+    if(best<0 || bd>(maxDist==null?0.62:maxDist)) return -1;
+    if(st.edge[best]>=0) return -1;
+    return best;
+  }
+
+  /* ---- move classes ---- */
+  /* an edge that closes a box right now */
+  function freeMoves(st){
+    var out=[];
+    for(var i=0;i<st.nEdges;i++){
+      if(st.edge[i]>=0) continue;
+      var bs=edgeBoxes(st,i);
+      for(var k=0;k<bs.length;k++) if(sidesOfBox(st,bs[k])===3){ out.push(i); break; }
+    }
+    return out;
+  }
+  /* an edge that leaves no box of its own on three sides - safe to give away */
+  function safeMoves(st){
+    var out=[];
+    for(var i=0;i<st.nEdges;i++){
+      if(st.edge[i]>=0) continue;
+      var bs=edgeBoxes(st,i), ok=true;
+      for(var k=0;k<bs.length;k++){
+        var s=sidesOfBox(st,bs[k]);
+        if(s===3||s===2){ ok=false; break; }   /* 3: free, not safe. 2: hands one over */
+      }
+      if(ok) out.push(i);
+    }
+    return out;
+  }
+
+  function clone(st){
+    var c={
+      size:st.size, cols:st.cols, rows:st.rows,
+      nh:st.nh, nv:st.nv, nEdges:st.nEdges,
+      edge:st.edge.slice(), box:st.box.slice(),
+      turn:st.turn, score:[st.score[0],st.score[1]], moves:st.moves,
+      last:st.last, lastBoxes:[], over:st.over, winner:st.winner,
+      rand:rng(1)
+    };
+    return c;
+  }
+
+  /* how many boxes the other side takes in one greedy run after this move */
+  function giftOf(st,id){
+    var c=clone(st);
+    var them=c.turn===0?1:0;
+    play(c,id);
+    if(c.turn!==them) return 0;              /* it closed a box, nothing given */
+    var before=c.score[them], guard=0;
+    while(!c.over && c.turn===them && guard++<400){
+      var f=freeMoves(c);
+      if(!f.length) break;
+      play(c,f[0]);
+    }
+    return c.score[them]-before;
+  }
+
+  /* A whole game played out from here with both sides using the same plain
+     policy, so one candidate move can be compared with another.  Deterministic
+     on purpose: a noisy rollout makes the computer choose differently every
+     time it is asked the same question. */
+  function rollout(st){
+    var c=clone(st), guard=0;
+    while(!c.over && guard++<1000){
+      var f=freeMoves(c);
+      if(f.length){ play(c,f[0]); continue; }
+      var s=safeMoves(c);
+      if(s.length){ play(c,s[0]); continue; }
+      var moves=legalMoves(c);
+      var best=moves[0], bg=1e9;
+      for(var i=0;i<moves.length;i++){
+        var g=giftOf(c,moves[i]);
+        if(g<bg){ bg=g; best=moves[i]; }
+      }
+      play(c,best);
+    }
+    return c;
+  }
+
+  function pickRand(list, rand){ return list[Math.floor(rand()*list.length)%list.length]; }
+
+  /* level 0 gentle, 1 tricky, 2 fiendish */
+  function think(st, level){
+    if(st.over) return -1;
+    var moves=legalMoves(st);
+    if(!moves.length) return -1;
+    var free=freeMoves(st), safe=safeMoves(st), i;
+
+    if(level<=0){
+      /* takes the obvious box most of the time and is otherwise careless */
+      if(free.length && st.rand()<0.72) return pickRand(free, st.rand);
+      return pickRand(moves, st.rand);
+    }
+
+    if(level===1){
+      if(free.length) return pickRand(free, st.rand);
+      if(safe.length) return pickRand(safe, st.rand);
+      /* forced to open something: open the smallest thing going */
+      var best=moves[0], bg=1e9;
+      for(i=0;i<moves.length;i++){
+        var g=giftOf(st,moves[i]);
+        if(g<bg){ bg=g; best=moves[i]; }
+      }
+      return best;
+    }
+
+    /* Fiendish: play each candidate out to the end and keep the best margin.
+       This is what finds the double-cross - declining the last two boxes of a
+       chain scores worse on the next move and better on the last one, and only
+       playing it out shows that. */
+    var me=st.turn;
+    var cand=free.slice();
+    for(i=0;i<safe.length;i++) cand.push(safe[i]);
+    if(!cand.length) cand=moves.slice();
+    else {
+      /* always consider giving something away too - sometimes it is right */
+      var opens=[];
+      for(i=0;i<moves.length;i++) if(cand.indexOf(moves[i])<0) opens.push(moves[i]);
+      opens.sort(function(a,b){ return giftOf(st,a)-giftOf(st,b); });
+      for(i=0;i<opens.length && i<10;i++) cand.push(opens[i]);
+    }
+    /* Thinking about every single edge is not worth the wait: each candidate
+       is a whole game played out, so the big board costs three times what the
+       small one does per candidate as well as offering more of them.  The free
+       moves always survive the trim - they are the ones that matter most. */
+    var CAP = st.nEdges>90 ? 18 : 34;
+    if(cand.length>CAP){
+      var trimmed=free.slice(0, CAP);
+      for(i=0;i<cand.length && trimmed.length<CAP;i++)
+        if(trimmed.indexOf(cand[i])<0) trimmed.push(cand[i]);
+      cand=trimmed;
+    }
+    var pick=cand[0], bestMargin=-1e9;
+    for(i=0;i<cand.length;i++){
+      var c=clone(st);
+      play(c,cand[i]);
+      var end=rollout(c);
+      var margin=end.score[me]-end.score[1-me];
+      if(margin>bestMargin){ bestMargin=margin; pick=cand[i]; }
+    }
+    return pick;
+  }
+
+  /* a suggestion for the player, at the middling level */
+  function hint(st){ return think(st, 1); }
+
+  /* every promise the game makes, checked from the outside */
+  function audit(st){
+    var i, drawn=0;
+    for(i=0;i<st.nEdges;i++){
+      var e=st.edge[i];
+      if(e!==-1&&e!==0&&e!==1) return "an edge has a nonsense owner ("+e+")";
+      if(e>=0) drawn++;
+    }
+    if(drawn!==st.moves) return "the move count does not match the edges drawn ("+st.moves+" vs "+drawn+")";
+    var owned=[0,0];
+    for(i=0;i<st.box.length;i++){
+      var b=st.box[i], s=sidesOfBox(st,i);
+      if(b!==-1&&b!==0&&b!==1) return "a box has a nonsense owner ("+b+")";
+      if(b>=0){
+        owned[b]++;
+        if(s!==4) return "a box is owned but is not closed ("+s+" sides)";
+      }else if(s===4) return "a box is closed but nobody owns it";
+    }
+    if(owned[0]!==st.score[0]||owned[1]!==st.score[1])
+      return "the score does not match the boxes ("+st.score+" vs "+owned+")";
+    if(st.turn!==0&&st.turn!==1) return "nobody's turn";
+    if(st.over!==(st.moves>=st.nEdges)) return "the game is over at the wrong moment";
+    if(st.over){
+      var w = st.score[0]===st.score[1] ? -1 : (st.score[0]>st.score[1]?0:1);
+      if(st.winner!==w) return "the wrong winner ("+st.winner+" should be "+w+")";
+      if(st.score[0]+st.score[1]!==st.cols*st.rows) return "the boxes do not add up at the end";
+    }
+    return null;
+  }
+
+  return { SIZES:SIZES, sizeOf:sizeOf, rng:rng,
+           create:create, play:play, legal:legal, legalMoves:legalMoves,
+           edgeAt:edgeAt, edgeMid:edgeMid, edgeBoxes:edgeBoxes, boxEdges:boxEdges,
+           hId:hId, vId:vId, boxId:boxId, sidesOfBox:sidesOfBox,
+           nearestEdge:nearestEdge, freeMoves:freeMoves, safeMoves:safeMoves,
+           giftOf:giftOf, think:think, hint:hint, audit:audit };
+}
+if(typeof module!=='undefined') module.exports = makeBoxes;
+</script>
+<script>
+(function(){
+"use strict";
+var DB=makeBoxes();
+var LS="gg_dots-boxes_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"two",  name:"Two Players", cls:"z-p", tag:"Share the phone &middot; take turns", ai:null},
+  {id:"easy", name:"Gentle",      cls:"z-a", tag:"Against the computer &middot; takes what it sees", ai:0},
+  {id:"med",  name:"Tricky",      cls:"z-b", tag:"Against the computer &middot; plays it safe", ai:1},
+  {id:"hard", name:"Fiendish",    cls:"z-c", tag:"Against the computer &middot; counts the chains", ai:2}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+
+var PURPLE="#8b4ee0", PURPLE_D="#6a2fb8", PURPLE_F="rgba(139,78,224,.24)";
+var ORANGE="#f5872e", ORANGE_D="#c2620e", ORANGE_F="rgba(245,135,46,.26)";
+var PAPER="#fffaff", DOT="#9a76c0", GHOST="rgba(140,100,180,.15)";
+function colOf(p){ return p===0?PURPLE:ORANGE; }
+function darkOf(p){ return p===0?PURPLE_D:ORANGE_D; }
+function fillOf(p){ return p===0?PURPLE_F:ORANGE_F; }
+
+/* ---------------- state ---------------- */
+var mId, S, started, sizeId, thinking, aiTimer=null;
+var runBoxes=0, flash=[], hintEdge=-1, hintAt=0, preview=-1, lastT=0;
+/* Only the test hook ever sets this. It stops the computer's timer and nothing
+   else, so a test can step the game itself instead of racing a setTimeout.
+   With the hook stripped out it stays false for good. */
+var frozen=false;
+
+function newGame(id){
+  mId=id; save("mode",id);
+  S=DB.create({size:sizeId});
+  started=started||false;
+  thinking=false; runBoxes=0; flash=[]; hintEdge=-1; preview=-1;
+  if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,SC=0,OX=0,OY=0;
+var PAD=0.72;                    /* margin around the outer dots, in cell units */
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40||!S) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  var wUnits=S.cols+PAD*2, hUnits=S.rows+PAD*2;
+  SC=Math.min((aw-6)/wUnits, (ah-6)/hUnits);
+  OX=Math.round((aw-SC*wUnits)/2 + SC*PAD);
+  OY=Math.round((ah-SC*hUnits)/2 + SC*PAD);
+}
+window.addEventListener("resize", function(){ layout(); });
+function px(x){ return OX+x*SC; }
+function py(y){ return OY+y*SC; }
+function rr(x,y,w,h,r){
+  if(r>w/2) r=w/2; if(r>h/2) r=h/2;
+  ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function edgeLine(id){
+  var e=DB.edgeAt(S,id);
+  if(e.type===0) return { x0:e.c, y0:e.r, x1:e.c+1, y1:e.r };
+  return { x0:e.c, y0:e.r, x1:e.c, y1:e.r+1 };
+}
+function stroke(id, style, w){
+  var L=edgeLine(id);
+  ctx.strokeStyle=style; ctx.lineWidth=w; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(px(L.x0),py(L.y0)); ctx.lineTo(px(L.x1),py(L.y1)); ctx.stroke();
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!SC){ layout(); if(!SC) return; }
+  if(!S) return;
+  var now=ts||0;
+  lastT=now;
+
+  ctx.clearRect(0,0,VW,VH);
+
+  /* The paper is cut to the size of the grid and floats on the background.
+     Stretching it to fill the stage was tried and looked worse: a small board
+     on a tall phone became a big empty sheet with a grid lost in the middle. */
+  var pr=Math.max(8,SC*0.30);
+  var pw=SC*(S.cols+PAD*2), ph2=SC*(S.rows+PAD*2);
+  ctx.fillStyle="rgba(90,35,140,.20)";
+  rr(px(-PAD)+1, py(-PAD)+6, pw, ph2, pr); ctx.fill();
+  ctx.fillStyle=PAPER;
+  rr(px(-PAD), py(-PAD), pw, ph2, pr); ctx.fill();
+
+  var i, r, c;
+
+  /* boxes already won */
+  for(i=0;i<S.box.length;i++){
+    if(S.box[i]<0) continue;
+    r=Math.floor(i/S.cols); c=i%S.cols;
+    var pop=1;
+    for(var f=0;f<flash.length;f++) if(flash[f].b===i){
+      var age=(now-flash[f].t)/260;
+      if(age<1) pop=0.55+0.45*age;
+    }
+    ctx.fillStyle=fillOf(S.box[i]);
+    var m=SC*(0.5-0.5*pop)+SC*0.09;
+    rr(px(c)+m, py(r)+m, SC-m*2, SC-m*2, Math.max(2,SC*0.18)); ctx.fill();
+    ctx.fillStyle=darkOf(S.box[i]);
+    ctx.font="900 "+Math.round(SC*0.44)+"px -apple-system,Helvetica,Arial";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.globalAlpha=0.75*pop;
+    ctx.fillText(S.box[i]===0?"P":"O", px(c+0.5), py(r+0.5)+SC*0.02);
+    ctx.globalAlpha=1;
+  }
+
+  /* the lines nobody has drawn yet, so it is clear where a tap can go */
+  var thin=Math.max(1,SC*0.055);
+  for(i=0;i<S.nEdges;i++) if(S.edge[i]<0) stroke(i, GHOST, thin);
+
+  /* the hint, while it lasts */
+  if(hintEdge>=0 && now-hintAt<2600 && S.edge[hintEdge]<0){
+    var pulse=0.55+0.40*Math.sin(now/150);
+    stroke(hintEdge, "rgba(30,190,110,"+pulse.toFixed(3)+")", Math.max(4,SC*0.26));
+  }
+
+  /* what the finger is about to draw */
+  if(preview>=0 && S.edge[preview]<0 && myTurn() && !S.over){
+    stroke(preview, S.turn===0?"rgba(139,78,224,.45)":"rgba(245,135,46,.5)", Math.max(4,SC*0.20));
+  }
+
+  /* the lines that have been drawn */
+  var thick=Math.max(2.5,SC*0.155);
+  for(i=0;i<S.nEdges;i++){
+    if(S.edge[i]<0) continue;
+    stroke(i, colOf(S.edge[i]), thick);
+  }
+  /* the newest one, picked out so you can see what just happened */
+  if(S.last>=0 && S.edge[S.last]>=0){
+    stroke(S.last, "rgba(255,255,255,.85)", Math.max(1,SC*0.05));
+  }
+
+  /* the dots */
+  ctx.fillStyle=DOT;
+  for(r=0;r<=S.rows;r++) for(c=0;c<=S.cols;c++){
+    ctx.beginPath(); ctx.arc(px(c), py(r), Math.max(1.5,SC*0.088), 0, 6.284); ctx.fill();
+  }
+
+  /* whose turn, along the top of the paper */
+  if(started && !S.over){
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.round(Math.min(24,SC*0.62))+"px -apple-system,Helvetica,Arial";
+    var msg = thinking ? "THINKING" : null;
+    if(msg){
+      var tw=ctx.measureText(msg).width, ph=Math.min(34,SC*0.95);
+      ctx.translate(px(S.cols/2), py(S.rows/2));
+      ctx.fillStyle="rgba(80,30,120,.86)";
+      rr(-tw/2-SC*0.35, -ph/2, tw+SC*0.7, ph, ph/2); ctx.fill();
+      ctx.fillStyle="#ffffff";
+      ctx.fillText(msg, 0, 1);
+    }
+    ctx.restore();
+  }
+
+  if(flash.length && now-flash[0].t>400) flash=[];
+}
+
+/* ---------------- moves ---------------- */
+function myTurn(){
+  var m=modeOf(mId);
+  return m.ai===null || S.turn===0;
+}
+function doMove(id){
+  if(!DB.legal(S,id)) return false;
+  var who=S.turn;
+  var ev=DB.play(S,id);
+  hintEdge=-1; preview=-1;
+  if(ev.boxes.length){
+    for(var i=0;i<ev.boxes.length;i++) flash.push({b:ev.boxes[i], t:lastT});
+    runBoxes+=ev.boxes.length;
+    beep(660+ev.boxes.length*110,.09,"triangle",.06);
+    if(window.GGA){
+      GGA.haptic("light");
+      if(S.score[0]>0) GGA.award("db_first");
+      if(who===0 && runBoxes>=5) GGA.award("db_chain");
+    }
+  }else{
+    beep(340,.05,"sine",.04);
+  }
+  if(ev.turnPassed) runBoxes=0;
+  paintHUD();
+  persist();
+  if(ev.over) finish();
+  else scheduleAI();
+  return true;
+}
+function scheduleAI(){
+  var m=modeOf(mId);
+  if(m.ai===null || S.turn!==1 || S.over || frozen) return;
+  if(aiTimer) clearTimeout(aiTimer);
+  thinking=true;
+  paintHUD();
+  aiTimer=setTimeout(function(){
+    aiTimer=null;
+    if(!S || S.over || S.turn!==1){ thinking=false; paintHUD(); return; }
+    var id=DB.think(S, m.ai);
+    thinking=false;
+    if(id<0){ paintHUD(); return; }
+    doMove(id);
+  }, 420);
+}
+
+function finish(){
+  save("cur",null);
+  var m=modeOf(mId);
+  var played=load("played",0)+1; save("played",played);
+  if(window.GGA){
+    if(m.ai===null) GGA.award("db_2p");
+    if(played>=10) GGA.award("db_10");
+    if(S.winner===0){
+      GGA.award("db_win");
+      if(sizeId==="big") GGA.award("db_big");
+      if(mId==="hard") GGA.award("db_hard");
+    }
+    GGA.haptic(S.winner===0?"success":(S.winner<0?"light":"error"));
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  setTimeout(function(){ winScreen(); },620);
+}
+
+function paintHUD(){
+  document.getElementById("vPurple").textContent=S.score[0];
+  document.getElementById("vOrange").textContent=S.score[1];
+  var t=document.getElementById("vTurn");
+  if(S.over) t.textContent="DONE";
+  else if(thinking) t.textContent="...";
+  else t.textContent = S.turn===0 ? "PURPLE" : "ORANGE";
+}
+
+/* ---------------- save ---------------- */
+function encode(a){
+  var s="";
+  for(var i=0;i<a.length;i++) s += a[i]<0 ? "." : (a[i]===0 ? "a" : "b");
+  return s;
+}
+function decode(s,n){
+  var a=new Array(n);
+  for(var i=0;i<n;i++){
+    var ch=s.charAt(i);
+    a[i] = ch==="a" ? 0 : (ch==="b" ? 1 : -1);
+  }
+  return a;
+}
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started) return;
+  if(S.over || S.moves===0){ save("cur",null); return; }
+  save("cur",{ m:mId, z:sizeId, t:S.turn, s:[S.score[0],S.score[1]],
+    mv:S.moves, e:encode(S.edge), b:encode(S.box) });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||!c.e||!c.b) return false;
+  var sz=DB.sizeOf(c.z);
+  if(sz.id!==c.z) return false;
+  sizeId=c.z; save("size",sizeId);
+  newGame(c.m);
+  if(c.e.length!==S.nEdges || c.b.length!==S.box.length){ newGame(c.m); return false; }
+  S.edge=decode(c.e, S.nEdges);
+  S.box=decode(c.b, S.box.length);
+  S.turn=(c.t===1)?1:0;
+  S.score=[c.s[0]|0, c.s[1]|0];
+  S.moves=c.mv|0;
+  S.last=-1;
+  S.over=false; S.winner=-1;
+  if(DB.audit(S)){ newGame(c.m); return false; }
+  paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function unitsOf(clientX, clientY){
+  var b=cv.getBoundingClientRect();
+  return { x:(clientX-b.left-OX)/SC, y:(clientY-b.top-OY)/SC };
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+var down=false;
+function aim(e){
+  var u=unitsOf(pt(e).clientX, pt(e).clientY);
+  preview=DB.nearestEdge(S, u.x, u.y, 0.62);
+}
+function onDown(e){
+  if(!started||S.over||thinking||!myTurn()) return;
+  e.preventDefault();
+  down=true; aim(e);
+}
+function onMove(e){
+  if(!down) return;
+  if(e.cancelable) e.preventDefault();
+  aim(e);
+}
+function onUp(e){
+  if(!down) return;
+  down=false;
+  if(e) aim(e);
+  var id=preview;
+  preview=-1;
+  if(id>=0 && myTurn() && !thinking) doMove(id);
+}
+cv.addEventListener("touchstart",onDown,{passive:false});
+cv.addEventListener("touchmove",onMove,{passive:false});
+cv.addEventListener("touchend",onUp);
+cv.addEventListener("touchcancel",function(){ down=false; preview=-1; });
+cv.addEventListener("mousedown",onDown);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",function(e){ onUp(e); });
+cv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+document.getElementById("tHint").onclick=function(){
+  if(!started||S.over||thinking||!myTurn()) return;
+  hintEdge=DB.hint(S); hintAt=lastT;
+  beep(880,.07,"sine",.04);
+};
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ newGame(mId); persist(); closeOvl(); return; }
+  openOvl('<h2>START AGAIN?</h2><p>This game will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW GAME</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){ newGame(mId); persist(); closeOvl(); scheduleAI(); };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>DOTS AND BOXES</h2><p>Draw a line between two dots. Close a box and you go again.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bSize">BOARD &middot; '+DB.sizeOf(sizeId).name.toUpperCase()+'</button>';
+  if(cur&&cur.e) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+
+    (cur.s[0]|0)+' &ndash; '+(cur.s[1]|0)+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newGame(el.getAttribute("data-m"));
+      persist(); closeOvl(); layout(); scheduleAI();
+    };
+  });
+  card.querySelector("#bSize").onclick=function(){
+    var k=0;
+    for(var j=0;j<DB.SIZES.length;j++) if(DB.SIZES[j].id===sizeId) k=j;
+    sizeId=DB.SIZES[(k+1)%DB.SIZES.length].id;
+    save("size",sizeId);
+    if(!started){ newGame(mId||load("mode","two")); }
+    /* textContent, not innerHTML, so the entity would show up literally - and
+       the source stays ASCII, which is the rule for every file here */
+    this.textContent="BOARD \u00B7 "+DB.sizeOf(sizeId).name.toUpperCase();
+  };
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newGame(load("mode","two"));
+    persist(); closeOvl(); layout(); scheduleAI();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; <b>Tap between two dots</b> to draw the line. Slide your finger to move the line before you let go.<br><br>'+
+    '&#9642; Draw the <b>fourth side of a box</b> and it is yours &ndash; and you go again straight away.<br><br>'+
+    '&#9642; One line can close <b>two boxes at once</b>. A whole row of them can fall in a single turn.<br><br>'+
+    '&#9642; So the trick is to avoid drawing the <b>third</b> side of anything, and leave your opponent no safe line to play.<br><br>'+
+    '&#9642; HINT will point at a sensible move if you are stuck.<br><br>'+
+    '&#9642; When the board is full, whoever has the most boxes wins.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function winScreen(){
+  var m=modeOf(mId);
+  var head;
+  if(S.winner<0) head="DEAD HEAT";
+  else if(m.ai===null) head = S.winner===0 ? "PURPLE WINS!" : "ORANGE WINS!";
+  else head = S.winner===0 ? "YOU WIN!" : "COMPUTER WINS";
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+(m.ai===null?"Two players":m.name)+' &middot; '+DB.sizeOf(sizeId).name.toLowerCase()+' board.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">PURPLE</div><div class="sv">'+S.score[0]+'</div></div>'+
+      '<div class="st"><div class="sk">ORANGE</div><div class="sv">'+S.score[1]+'</div></div>'+
+      '<div class="st"><div class="sk">LINES</div><div class="sv">'+S.moves+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER GAME</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE OPPONENT</button>');
+  card.querySelector("#bAgain").onclick=function(){ newGame(mId); persist(); closeOvl(); layout(); scheduleAI(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.over){ titleScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">PURPLE</div><div class="sv">'+S.score[0]+'</div></div>'+
+      '<div class="st"><div class="sk">ORANGE</div><div class="sv">'+S.score[1]+'</div></div>'+
+      '<div class="st"><div class="sk">LINES</div><div class="sv">'+S.moves+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE OPPONENT</button>');
+  card.querySelector("#bGo").onclick=function(){ closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+sizeId=load("size","med");
+if(DB.sizeOf(sizeId).id!==sizeId) sizeId="med";
+newGame(load("mode","two"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+
+})();
+</script>
+</body>
+</html>

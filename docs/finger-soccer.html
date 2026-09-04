@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Finger Soccer</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 8% -8%, #b6f36e 0%, transparent 55%),
+      radial-gradient(120% 80% at 94% 105%, #8fe86a 0%, transparent 55%),
+      linear-gradient(160deg, #35c85f 0%, #6fd93f 48%, #d3f4a2 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#2c8b3c;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(30,110,40,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 0 #2fa84a,0 4px 12px rgba(20,90,30,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#2c8b3c;
+    box-shadow:0 4px 0 rgba(40,130,50,.35),0 6px 14px rgba(30,110,40,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(40,130,50,.35)}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(30,110,45,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#f4ffe9);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#4b7a4f;box-shadow:0 20px 50px rgba(25,95,35,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#2fa84a;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#7ba881;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-p{background:linear-gradient(180deg,#8fe0a8,#35a85f)}
+  .z-a{background:linear-gradient(180deg,#ffd166,#f0a020)}
+  .z-b{background:linear-gradient(180deg,#7fc4ff,#2a72d4)}
+  .z-c{background:linear-gradient(180deg,#f59ad0,#c2379b)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#7fe19a,#2fa84a);color:#fff;
+    box-shadow:0 5px 0 #24853a,0 8px 18px rgba(40,150,60,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #24853a}
+  .btn-alt{background:#effbe4;color:#2c8b3c;border:1.5px solid #d6ecc4}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#7ba881;margin:10px 2px}
+  .rules b{color:#2fa84a}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#effbe4;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#a8cfa8}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#2fa84a}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">FINGER SOCCER</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">BLUE</div><div class="v" id="vBlue">0</div></div>
+    <div class="chip"><div class="k">TO PLAY</div><div class="v" id="vTurn">BLUE</div></div>
+    <div class="chip"><div class="k">YELLOW</div><div class="v" id="vYellow">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tPass"><div class="ti">&#8631;</div><div class="tl">PASS TURN</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW MATCH</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Finger Soccer - the rules and the physics, with no drawing and no input in
+   them.  The whole world moves in step(), so the same code that runs on screen
+   can be run headless for thousands of matches in Node - and the computer
+   opponent picks its flick by playing candidate flicks through this very same
+   physics.
+
+   The pitch is W x H units with a goal mouth cut into each end line.  Discs
+   always bounce off the end line; only the BALL is allowed through a mouth, and
+   when it goes through, that is a goal. */
+function makeSoccer(){
+  "use strict";
+
+  var W=10, H=15;
+  var MAN_R=0.46, BALL_R=0.30;
+  var GOAL_W=3.4;                  /* the mouth, centred on x = W/2 */
+  var GX0=(W-GOAL_W)/2, GX1=(W+GOAL_W)/2;
+  var FRICTION=0.10;               /* velocity multiplier per second */
+  var BALL_FRICTION=0.30;          /* the ball runs on further than the men */
+  var CUSHION=0.68;
+  var RESTITUTION=0.92;
+  var MAX_STEP=0.09;               /* substep distance, so nothing tunnels */
+  var MAX_SPEED=46, MIN_SPEED=0.24;
+  var MAN_M=2.4, BALL_M=1;
+  var TOUCHES=3;                   /* flicks in a turn, while you keep hitting the ball */
+  var CENTRE=[W/2, H/2];
+
+  /* 0 plays up the pitch from the bottom, 1 plays down from the top */
+  function formation(side){
+    var f=[[5.0,14.1],[2.5,11.7],[7.5,11.7],[3.5,9.4],[6.5,9.4]];
+    if(side===0) return f.map(function(p){ return [p[0], p[1]]; });
+    return f.map(function(p){ return [W-p[0], H-p[1]]; });
+  }
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+  function len(x,y){ return Math.sqrt(x*x+y*y); }
+
+  function create(cfg){
+    cfg=cfg||{};
+    var st={
+      W:W, H:H, cfg:cfg,
+      men:[],                      /* {c:0|1, x,y,vx,vy,r,m} - never leave the pitch */
+      ball:{ x:CENTRE[0], y:CENTRE[1], vx:0, vy:0, r:BALL_R, m:BALL_M, isBall:true },
+      turn:0,
+      score:[0,0],
+      target:cfg.target||3,
+      touches:TOUCHES,
+      moving:false,
+      shots:0,
+      kickoff:true,                /* nobody has flicked since the last goal */
+      over:false, winner:-1,
+      lastEvent:"",
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    place(st, 0);
+    return st;
+  }
+
+  /* put both sides back in their formation and the ball on the centre spot */
+  function place(st, kickFor){
+    st.men=[];
+    for(var side=0;side<2;side++){
+      var f=formation(side);
+      for(var i=0;i<f.length;i++)
+        st.men.push({ c:side, x:f[i][0], y:f[i][1], vx:0, vy:0, r:MAN_R, m:MAN_M });
+    }
+    st.ball.x=CENTRE[0]; st.ball.y=CENTRE[1];
+    st.ball.vx=0; st.ball.vy=0;
+    st.moving=false;
+    st.kickoff=true;
+    st.turn=kickFor;
+    st.touches=TOUCHES;
+  }
+
+  function all(st){
+    var out=st.men.slice();
+    out.push(st.ball);
+    return out;
+  }
+  function menOf(st, side){
+    var out=[];
+    for(var i=0;i<st.men.length;i++) if(st.men[i].c===side) out.push(st.men[i]);
+    return out;
+  }
+  /* which of your men is nearest this point, if any is close enough to grab */
+  function pick(st, x, y, side, reach){
+    var best=null, bd=1e9;
+    for(var i=0;i<st.men.length;i++){
+      var m=st.men[i];
+      if(m.c!==side) continue;
+      var d=len(x-m.x, y-m.y);
+      if(d<bd){ bd=d; best=m; }
+    }
+    if(best && bd <= (reach||MAN_R*1.9)) return best;
+    return null;
+  }
+
+  /* power is 0..1 */
+  function flick(st, man, angle, power){
+    if(st.moving||st.over||!man||man.c!==st.turn) return false;
+    var p=Math.max(0.06, Math.min(1, power));
+    var sp=MAX_SPEED*p;
+    man.vx=Math.cos(angle)*sp;
+    man.vy=Math.sin(angle)*sp;
+    st.moving=true;
+    st.kickoff=false;
+    st.shots++;
+    st.shotInfo={ touchedBall:false, goal:-1, ownGoal:false };
+    return true;
+  }
+
+  function collide(a,b,st){
+    var dx=b.x-a.x, dy=b.y-a.y, d=len(dx,dy), rs=a.r+b.r;
+    if(d>=rs) return false;
+    if(d<1e-9){ dx=1; dy=0; d=1; }
+    var nx=dx/d, ny=dy/d;
+    var invA=1/a.m, invB=1/b.m, tot=invA+invB;
+    var push=(rs-d);
+    a.x-=nx*push*(invA/tot); a.y-=ny*push*(invA/tot);
+    b.x+=nx*push*(invB/tot); b.y+=ny*push*(invB/tot);
+    var rvn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+    if(rvn<0){
+      var j=-(1+RESTITUTION)*rvn/tot;
+      a.vx-=nx*j*invA; a.vy-=ny*j*invA;
+      b.vx+=nx*j*invB; b.vy+=ny*j*invB;
+    }
+    /* a man of the side that is on has touched the ball: the turn goes on */
+    if(st && st.shotInfo && (a.isBall||b.isBall)){
+      var man = a.isBall ? b : a;
+      if(man.c===st.turn) st.shotInfo.touchedBall=true;
+    }
+    return true;
+  }
+
+  /* keep a man inside the pitch - men never go through a goal mouth */
+  function clampMan(m){
+    if(m.x<m.r){ m.x=m.r; m.vx=Math.abs(m.vx)*CUSHION; }
+    else if(m.x>W-m.r){ m.x=W-m.r; m.vx=-Math.abs(m.vx)*CUSHION; }
+    if(m.y<m.r){ m.y=m.r; m.vy=Math.abs(m.vy)*CUSHION; }
+    else if(m.y>H-m.r){ m.y=H-m.r; m.vy=-Math.abs(m.vy)*CUSHION; }
+  }
+  function insideMouth(x){ return x>GX0+BALL_R*0.35 && x<GX1-BALL_R*0.35; }
+
+  function settle(st){
+    /* nothing may be left overlapping when the pitch comes to rest */
+    var list=all(st), pass, i, k;
+    for(pass=0;pass<8;pass++){
+      var any=false;
+      for(i=0;i<list.length;i++) for(k=i+1;k<list.length;k++){
+        var a=list[i], b=list[k];
+        var d=len(b.x-a.x, b.y-a.y), rs=a.r+b.r;
+        if(d>=rs-1e-9) continue;
+        any=true;
+        if(d<1e-9){ b.x+=1e-3; d=1e-3; }
+        var nx=(b.x-a.x)/d, ny=(b.y-a.y)/d, push=(rs-d)/2+1e-6;
+        a.x-=nx*push; a.y-=ny*push;
+        b.x+=nx*push; b.y+=ny*push;
+      }
+      for(i=0;i<list.length;i++){
+        var p=list[i];
+        if(p.x<p.r) p.x=p.r;
+        if(p.x>W-p.r) p.x=W-p.r;
+        if(p.y<p.r) p.y=p.r;
+        if(p.y>H-p.r) p.y=H-p.r;
+      }
+      if(!any) return;
+    }
+  }
+
+  function step(st, dt){
+    var ev={ rest:false, goal:-1, turnPassed:false, over:false, touched:false, bounce:0 };
+    if(st.over||!st.moving) return ev;
+    if(dt>0.05) dt=0.05;
+    var list=all(st), i, k;
+
+    var fastest=0;
+    for(i=0;i<list.length;i++) fastest=Math.max(fastest, len(list[i].vx,list[i].vy));
+    var steps=Math.max(1, Math.ceil(fastest*dt/MAX_STEP));
+    var sdt=dt/steps;
+
+    var goal=-1;
+    for(var s=0;s<steps && goal<0;s++){
+      for(i=0;i<st.men.length;i++){
+        var m=st.men[i];
+        m.x+=m.vx*sdt; m.y+=m.vy*sdt;
+        clampMan(m);
+      }
+      var b=st.ball;
+      b.x+=b.vx*sdt; b.y+=b.vy*sdt;
+      if(b.x<b.r){ b.x=b.r; b.vx=Math.abs(b.vx)*CUSHION; ev.bounce++; }
+      else if(b.x>W-b.r){ b.x=W-b.r; b.vx=-Math.abs(b.vx)*CUSHION; ev.bounce++; }
+      /* the only way out of the pitch is through a mouth, and that is a goal */
+      /* Side 0 defends the bottom and attacks the top, so a ball through the TOP
+         mouth is a goal to 0.  Getting this the wrong way round does not look
+         like a bug from the outside - the match still runs, the scores still
+         add up - it just quietly credits every goal to the wrong side. */
+      if(b.y<b.r){
+        if(insideMouth(b.x)){ goal=0; }        /* into the top net: 0 has scored */
+        else { b.y=b.r; b.vy=Math.abs(b.vy)*CUSHION; ev.bounce++; }
+      }else if(b.y>H-b.r){
+        if(insideMouth(b.x)){ goal=1; }        /* into the bottom net: 1 has scored */
+        else { b.y=H-b.r; b.vy=-Math.abs(b.vy)*CUSHION; ev.bounce++; }
+      }
+
+      for(i=0;i<list.length;i++) for(k=i+1;k<list.length;k++) collide(list[i], list[k], st);
+      /* separating two discs can shove one through a touchline, so put
+         everything back inside the pitch before anything else looks at it */
+      for(i=0;i<st.men.length;i++){
+        var c=st.men[i];
+        if(c.x<c.r) c.x=c.r; else if(c.x>W-c.r) c.x=W-c.r;
+        if(c.y<c.r) c.y=c.r; else if(c.y>H-c.r) c.y=H-c.r;
+      }
+      if(goal<0){
+        if(b.x<b.r) b.x=b.r; else if(b.x>W-b.r) b.x=W-b.r;
+        if(b.y<b.r && !insideMouth(b.x)) b.y=b.r;
+        else if(b.y>H-b.r && !insideMouth(b.x)) b.y=H-b.r;
+      }
+    }
+
+    if(goal>=0){
+      /* goal scored BY `goal`, which may be an own goal by the side that is on */
+      st.shotInfo.goal=goal;
+      st.shotInfo.ownGoal=(goal!==st.turn);
+      st.moving=false;
+      for(i=0;i<st.men.length;i++){ st.men[i].vx=0; st.men[i].vy=0; }
+      st.ball.vx=0; st.ball.vy=0;
+      ev.rest=true;
+      ev.goal=goal;
+      resolveShot(st, ev);
+      return ev;
+    }
+
+    var fm=Math.pow(FRICTION, dt), fb=Math.pow(BALL_FRICTION, dt);
+    var still=true;
+    for(i=0;i<list.length;i++){
+      var r=list[i];
+      var f = r.isBall ? fb : fm;
+      r.vx*=f; r.vy*=f;
+      var sp=len(r.vx,r.vy);
+      if(sp<MIN_SPEED){ r.vx=0; r.vy=0; }
+      else { still=false; if(sp>MAX_SPEED){ r.vx=r.vx/sp*MAX_SPEED; r.vy=r.vy/sp*MAX_SPEED; } }
+    }
+
+    if(still){
+      st.moving=false;
+      settle(st);
+      ev.rest=true;
+      ev.touched=!!(st.shotInfo && st.shotInfo.touchedBall);
+      resolveShot(st, ev);
+    }
+    return ev;
+  }
+
+  function resolveShot(st, ev){
+    var me=st.turn, si=st.shotInfo||{touchedBall:false, goal:-1};
+
+    if(si.goal>=0){
+      st.score[si.goal]++;
+      ev.ownGoal=si.ownGoal;
+      st.lastEvent = si.ownGoal ? "own" : "goal";
+      if(st.score[si.goal]>=st.target){
+        st.over=true; st.winner=si.goal; ev.over=true;
+        st.moving=false;
+        st.shotInfo=null;
+        return;
+      }
+      /* whoever conceded kicks off */
+      place(st, si.goal===0 ? 1 : 0);
+      ev.turnPassed=true;
+      st.shotInfo=null;
+      return;
+    }
+
+    if(!si.touchedBall){
+      st.lastEvent="miss";
+      passTurn(st, ev);
+    }else{
+      st.touches--;
+      if(st.touches<=0){ st.lastEvent="used"; passTurn(st, ev); }
+      else st.lastEvent="again";
+    }
+    st.shotInfo=null;
+  }
+  function passTurn(st, ev){
+    st.turn = st.turn===0 ? 1 : 0;
+    st.touches=TOUCHES;
+    ev.turnPassed=true;
+  }
+
+  /* ---- the computer: try flicks through this same physics and keep the best ---- */
+  function clone(st){
+    var c={
+      W:W, H:H, cfg:st.cfg,
+      men:st.men.map(function(m){ return {c:m.c,x:m.x,y:m.y,vx:0,vy:0,r:m.r,m:m.m}; }),
+      ball:{x:st.ball.x,y:st.ball.y,vx:0,vy:0,r:BALL_R,m:BALL_M,isBall:true},
+      turn:st.turn, score:[st.score[0],st.score[1]], target:st.target,
+      touches:st.touches, moving:false, shots:0, kickoff:st.kickoff,
+      over:false, winner:-1, lastEvent:"",
+      rand:rng(1)
+    };
+    return c;
+  }
+  /* the far goal line, from the point of view of `me` */
+  function theirLine(me){ return me===0 ? 0 : H; }
+
+  function scoreShot(before, after, me){
+    var s=0;
+    s += (after.score[me]-before.score[me])*200;
+    s -= (after.score[1-me]-before.score[1-me])*260;   /* never nudge it into your own net */
+    /* missing the ball hands the turn straight over, so it costs real points */
+    if(after.lastEvent==="miss") s-=25;
+    /* otherwise: get the ball nearer their goal than it was */
+    var line=theirLine(me), mine=theirLine(1-me);
+    var was=Math.abs(before.ball.y-line), now=Math.abs(after.ball.y-line);
+    s += (was-now)*2.4;
+    /* and keep it away from your own end */
+    s += Math.min(Math.abs(after.ball.y-mine), 7)*0.7;
+    /* and nearer the middle of the mouth once it is up that end */
+    if(now<5.5) s += (2.4-Math.min(2.4, Math.abs(after.ball.x-W/2)))*1.6;
+    return s;
+  }
+  /* Where a man has to be aimed for the BALL to set off towards (gx,gy): the
+     ghost spot just behind the ball on that line.  Aiming straight at the ball
+     only ever pushes it the way the man happens to be facing. */
+  function ghostAngle(man, ball, gx, gy){
+    var dx=gx-ball.x, dy=gy-ball.y, d=len(dx,dy);
+    if(d<1e-6) return Math.atan2(ball.y-man.y, ball.x-man.x);
+    var hx=ball.x-dx/d*(MAN_R+BALL_R)*0.92;
+    var hy=ball.y-dy/d*(MAN_R+BALL_R)*0.92;
+    return Math.atan2(hy-man.y, hx-man.x);
+  }
+  function think(st, tries, wobble){
+    if(st.over||st.moving) return null;
+    var mine=menOf(st, st.turn);
+    if(!mine.length) return null;
+    var line=theirLine(st.turn);
+    var best=null, bestScore=-1e9, t;
+    for(t=0;t<tries;t++){
+      var idx=Math.floor(st.rand()*mine.length);
+      if(idx>=mine.length) idx=mine.length-1;
+      var man=mine[idx];
+      var ang, roll=st.rand();
+      if(roll<0.62){
+        /* cut the ball towards a point across the mouth */
+        var gx=W/2 + (st.rand()-0.5)*GOAL_W*0.7;
+        ang=ghostAngle(man, st.ball, gx, line) + (st.rand()-0.5)*0.35;
+      }else if(roll<0.86){
+        ang=Math.atan2(st.ball.y-man.y, st.ball.x-man.x) + (st.rand()-0.5)*0.8;
+      }else{
+        ang=st.rand()*Math.PI*2;
+      }
+      var pow=0.25+st.rand()*0.75;
+      var sim=clone(st);
+      var simMan=sim.men[st.men.indexOf(man)];
+      sim.shotInfo={touchedBall:false, goal:-1, ownGoal:false};
+      sim.moving=true;
+      simMan.vx=Math.cos(ang)*MAX_SPEED*pow;
+      simMan.vy=Math.sin(ang)*MAX_SPEED*pow;
+      var guard=0;
+      while(sim.moving && guard++<900) step(sim, 1/60);
+      var sc=scoreShot(st, sim, st.turn);
+      if(sc>bestScore){ bestScore=sc; best={ man:man, index:st.men.indexOf(man),
+                                             angle:ang, power:pow, score:sc }; }
+    }
+    if(!best) return null;
+    /* a computer that always plays its best find is no fun either */
+    best.angle += (st.rand()-0.5)*wobble;
+    best.power = Math.max(0.12, Math.min(1, best.power+(st.rand()-0.5)*wobble*0.5));
+    return best;
+  }
+
+  /* every promise the game makes, checked from the outside */
+  function audit(st){
+    var list=all(st), i, k;
+    for(i=0;i<list.length;i++){
+      var p=list[i];
+      if(!isFinite(p.x)||!isFinite(p.y)||!isFinite(p.vx)||!isFinite(p.vy)) return "a piece went to infinity";
+      if(len(p.vx,p.vy)>MAX_SPEED+1e-3) return "a piece is going faster than the cap";
+    }
+    for(i=0;i<st.men.length;i++){
+      var m=st.men[i];
+      if(m.x<m.r-1e-3||m.x>W-m.r+1e-3||m.y<m.r-1e-3||m.y>H-m.r+1e-3) return "a man left the pitch";
+    }
+    var b=st.ball;
+    if(b.x<b.r-1e-3||b.x>W-b.r+1e-3) return "the ball left the pitch sideways";
+    if((b.y<b.r-1e-3||b.y>H-b.r+1e-3) && !insideMouth(b.x)) return "the ball left the pitch through a touchline";
+    if(!st.moving){
+      for(i=0;i<list.length;i++) for(k=i+1;k<list.length;k++){
+        var a=list[i], c=list[k];
+        if(len(c.x-a.x, c.y-a.y) < a.r+c.r-1e-2) return "two pieces are overlapping at rest";
+      }
+    }
+    if(menOf(st,0).length!==5||menOf(st,1).length!==5) return "somebody has the wrong number of men";
+    if(st.turn!==0&&st.turn!==1) return "nobody's turn";
+    if(st.touches<1||st.touches>TOUCHES) return "the touch count is out of range ("+st.touches+")";
+    if(st.score[0]<0||st.score[1]<0) return "a negative score";
+    if(!st.over && (st.score[0]>=st.target||st.score[1]>=st.target))
+      return "somebody reached the target but the match is not over";
+    if(st.over && st.winner!==0 && st.winner!==1) return "the match is over with no winner";
+    return null;
+  }
+
+  return { W:W, H:H, MAN_R:MAN_R, BALL_R:BALL_R, GOAL_W:GOAL_W, GX0:GX0, GX1:GX1,
+           CENTRE:CENTRE, MAX_SPEED:MAX_SPEED, TOUCHES:TOUCHES,
+           rng:rng, len:len, formation:formation,
+           create:create, place:place, step:step, flick:flick, pick:pick,
+           think:think, audit:audit, all:all, menOf:menOf };
+}
+if(typeof module!=='undefined') module.exports = makeSoccer;
+</script>
+<script>
+(function(){
+"use strict";
+var FS=makeSoccer();
+var LS="gg_finger-soccer_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"two",  name:"Two Players", cls:"z-p", tag:"Share the phone &middot; take turns", ai:null},
+  {id:"easy", name:"Gentle",      cls:"z-a", tag:"Against the computer &middot; rough and ready", ai:{tries:8,  wobble:0.34}},
+  {id:"med",  name:"Tricky",      cls:"z-b", tag:"Against the computer &middot; picks its pass", ai:{tries:26, wobble:0.12}},
+  {id:"hard", name:"Fiendish",    cls:"z-c", tag:"Against the computer &middot; finds the corner", ai:{tries:64, wobble:0.03}}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+var TARGETS=[3,5,7,10];
+
+var BLUE="#2a6fe0", BLUE_E="#17458f", YELL="#ffc93c", YELL_E="#c08800";
+var BALL="#ffffff", BALL_E="#5b6470";
+var GRASS="#43ad55", GRASS2="#3ea24f", PAINT="rgba(255,255,255,.82)", NET="rgba(255,255,255,.55)";
+
+/* ---------------- state ---------------- */
+var mId, S, started, lastT, thinking, target, celebrate, celebrateMsg="";
+var concededFirst, goalsThisMatch;
+/* Only the test hook ever sets this. It stops the clock and nothing else, so a
+   test can advance the world a frame at a time instead of racing the animation
+   loop. With the hook stripped out it stays false for good. */
+var frozen=false;
+
+function newGame(id){
+  mId=id; save("mode",id);
+  S=FS.create({target:target});
+  started=started||false;
+  lastT=0; thinking=false; celebrate=0;
+  concededFirst=false; goalsThisMatch=0;
+  held=null; aiming=false;
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,SC=0,OX=0,OY=0;
+var NETD=0.8;                   /* how far the nets stick out past each end line */
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  /* room for the nets at both ends is part of the picture, not an afterthought */
+  SC=Math.min((aw-8)/FS.W, (ah-8)/(FS.H+NETD*2));
+  OX=Math.round((aw-SC*FS.W)/2);
+  OY=Math.round((ah-SC*(FS.H+NETD*2))/2 + SC*NETD);
+}
+window.addEventListener("resize", function(){ layout(); });
+function px(x){ return OX+x*SC; }
+function py(y){ return OY+y*SC; }
+function rr(x,y,w,h,r){
+  if(r>w/2) r=w/2; if(r>h/2) r=h/2;
+  ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function disc(x,y,r,fill,edge,ring){
+  ctx.fillStyle="rgba(20,70,25,.26)";
+  ctx.beginPath(); ctx.arc(px(x), py(y)+r*SC*0.18, r*SC, 0, 6.284); ctx.fill();
+  ctx.fillStyle=fill;
+  ctx.beginPath(); ctx.arc(px(x), py(y), r*SC, 0, 6.284); ctx.fill();
+  ctx.strokeStyle=edge; ctx.lineWidth=Math.max(1,r*SC*0.15);
+  ctx.beginPath(); ctx.arc(px(x), py(y), r*SC*0.87, 0, 6.284); ctx.stroke();
+  ctx.fillStyle="rgba(255,255,255,.34)";
+  ctx.beginPath(); ctx.arc(px(x)-r*SC*0.28, py(y)-r*SC*0.30, r*SC*0.24, 0, 6.284); ctx.fill();
+  if(ring){
+    ctx.strokeStyle="rgba(255,255,255,.95)"; ctx.lineWidth=Math.max(2,SC*0.09);
+    ctx.beginPath(); ctx.arc(px(x), py(y), r*SC*1.28, 0, 6.284); ctx.stroke();
+  }
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!SC){ layout(); if(!SC) return; }
+  if(!S) return;
+  if(!lastT) lastT=ts||0;
+  var dt=Math.min(50,(ts||0)-lastT)/1000; lastT=ts||0;
+  if(started && !frozen && S.moving) advance(dt);
+  if(celebrate>0) celebrate-=dt*1000;
+
+  ctx.clearRect(0,0,VW,VH);
+  var PW=SC*FS.W, PH=SC*FS.H, i;
+
+  /* nets, behind the pitch so the posts sit on top of them */
+  for(i=0;i<2;i++){
+    var ny = i===0 ? py(0)-SC*NETD : py(FS.H);
+    ctx.fillStyle="rgba(255,255,255,.30)";
+    rr(px(FS.GX0), ny, SC*FS.GOAL_W, SC*NETD, Math.max(2,SC*0.12)); ctx.fill();
+    ctx.strokeStyle=NET; ctx.lineWidth=1;
+    for(var g=1;g<7;g++){
+      var gx=px(FS.GX0)+SC*FS.GOAL_W*g/7;
+      ctx.beginPath(); ctx.moveTo(gx,ny); ctx.lineTo(gx,ny+SC*NETD); ctx.stroke();
+    }
+    for(g=1;g<3;g++){
+      var gy=ny+SC*NETD*g/3;
+      ctx.beginPath(); ctx.moveTo(px(FS.GX0),gy); ctx.lineTo(px(FS.GX1),gy); ctx.stroke();
+    }
+  }
+
+  /* the grass, with mown stripes */
+  ctx.save();
+  rr(OX, OY, PW, PH, Math.max(3,SC*0.16)); ctx.clip();
+  ctx.fillStyle=GRASS; ctx.fillRect(OX,OY,PW,PH);
+  ctx.fillStyle=GRASS2;
+  for(i=0;i<8;i+=2) ctx.fillRect(OX, OY+PH*i/8, PW, PH/8);
+  ctx.restore();
+
+  /* the paint */
+  ctx.strokeStyle=PAINT; ctx.lineWidth=Math.max(1.5,SC*0.055);
+  var in1=SC*0.30;
+  ctx.strokeRect(OX+in1, OY+in1, PW-in1*2, PH-in1*2);
+  ctx.beginPath(); ctx.moveTo(OX+in1, py(FS.H/2)); ctx.lineTo(OX+PW-in1, py(FS.H/2)); ctx.stroke();
+  ctx.beginPath(); ctx.arc(px(FS.W/2), py(FS.H/2), SC*1.7, 0, 6.284); ctx.stroke();
+  ctx.fillStyle=PAINT;
+  ctx.beginPath(); ctx.arc(px(FS.W/2), py(FS.H/2), Math.max(1.5,SC*0.11), 0, 6.284); ctx.fill();
+  /* the boxes */
+  var boxW=6.0, boxD=2.2;
+  ctx.strokeRect(px((FS.W-boxW)/2), OY+in1, SC*boxW, SC*boxD-in1);
+  ctx.strokeRect(px((FS.W-boxW)/2), py(FS.H-boxD), SC*boxW, SC*boxD-in1);
+
+  /* the posts, drawn last along the end lines so the mouth reads as a gap */
+  ctx.strokeStyle="#ffffff"; ctx.lineWidth=Math.max(2,SC*0.11);
+  for(i=0;i<2;i++){
+    var ly = i===0 ? py(0) : py(FS.H);
+    ctx.beginPath(); ctx.moveTo(px(FS.GX0), ly); ctx.lineTo(px(FS.GX0), ly+(i===0?-SC*NETD:SC*NETD)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px(FS.GX1), ly); ctx.lineTo(px(FS.GX1), ly+(i===0?-SC*NETD:SC*NETD)); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(px(FS.GX0), ly+(i===0?-SC*NETD:SC*NETD));
+    ctx.lineTo(px(FS.GX1), ly+(i===0?-SC*NETD:SC*NETD)); ctx.stroke();
+  }
+
+  /* whose end is live */
+  ctx.fillStyle = S.turn===0 ? "rgba(42,111,224,.16)" : "rgba(255,201,60,.20)";
+  var bandY = S.turn===0 ? py(FS.H)-SC*3.0 : py(0);
+  ctx.fillRect(OX, bandY, PW, SC*3.0);
+
+  /* Touches left, as pips at the live end - off to one side, because the middle
+     of the goal area is exactly where a keeper sits.  The two spots are mirror
+     images through the centre, so they land in the same place for whoever is
+     looking at that end. */
+  var pipY = S.turn===0 ? py(FS.H)-SC*0.55 : py(0)+SC*0.55;
+  var pipC = S.turn===0 ? px(8.2) : px(1.8);
+  for(i=0;i<FS.TOUCHES;i++){
+    var pipX=pipC+(i-(FS.TOUCHES-1)/2)*SC*0.5;
+    ctx.beginPath(); ctx.arc(pipX, pipY, SC*0.16, 0, 6.284);
+    if(i<S.touches){ ctx.fillStyle="rgba(255,255,255,.92)"; ctx.fill(); }
+    else { ctx.strokeStyle="rgba(255,255,255,.55)"; ctx.lineWidth=Math.max(1,SC*0.05); ctx.stroke(); }
+  }
+
+  /* the men, then the ball on top */
+  for(i=0;i<S.men.length;i++){
+    var m=S.men[i];
+    disc(m.x, m.y, m.r, m.c===0?BLUE:YELL, m.c===0?BLUE_E:YELL_E, m===held);
+  }
+  ctx.fillStyle="rgba(20,70,25,.26)";
+  ctx.beginPath(); ctx.arc(px(S.ball.x), py(S.ball.y)+S.ball.r*SC*0.2, S.ball.r*SC, 0, 6.284); ctx.fill();
+  ctx.fillStyle=BALL;
+  ctx.beginPath(); ctx.arc(px(S.ball.x), py(S.ball.y), S.ball.r*SC, 0, 6.284); ctx.fill();
+  ctx.fillStyle="#2f3640";
+  ctx.beginPath(); ctx.arc(px(S.ball.x), py(S.ball.y)+S.ball.r*SC*0.08, S.ball.r*SC*0.27, 0, 6.284); ctx.fill();
+  ctx.strokeStyle=BALL_E; ctx.lineWidth=Math.max(1,S.ball.r*SC*0.14);
+  ctx.beginPath(); ctx.arc(px(S.ball.x), py(S.ball.y), S.ball.r*SC*0.88, 0, 6.284); ctx.stroke();
+  ctx.fillStyle="rgba(255,255,255,.9)";
+  ctx.beginPath();
+  ctx.arc(px(S.ball.x)-S.ball.r*SC*0.34, py(S.ball.y)-S.ball.r*SC*0.36, S.ball.r*SC*0.22, 0, 6.284);
+  ctx.fill();
+
+  /* aim */
+  if(aiming && held && !S.moving && !S.over && myTurn()){
+    var sx=px(held.x), sy=py(held.y);
+    var reach=SC*3.4*aimPower;
+    ctx.strokeStyle="rgba(255,255,255,.85)";
+    ctx.lineWidth=Math.max(2,SC*0.08);
+    ctx.setLineDash([SC*0.24, SC*0.18]);
+    ctx.beginPath(); ctx.moveTo(sx,sy);
+    ctx.lineTo(sx+Math.cos(aimAngle)*reach, sy+Math.sin(aimAngle)*reach);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle="rgba(255,255,255,.95)";
+    ctx.beginPath();
+    ctx.arc(sx+Math.cos(aimAngle)*reach, sy+Math.sin(aimAngle)*reach, SC*0.17, 0, 6.284);
+    ctx.fill();
+    /* power bar along the live end line */
+    var by2 = S.turn===0 ? py(FS.H)-SC*1.5 : py(0)+SC*1.5;
+    ctx.fillStyle="rgba(255,255,255,.45)";
+    rr(px(2), by2-SC*0.11, SC*6, SC*0.22, SC*0.11); ctx.fill();
+    ctx.fillStyle = S.turn===0 ? BLUE : YELL;
+    rr(px(2), by2-SC*0.11, SC*6*aimPower, SC*0.22, SC*0.11); ctx.fill();
+  }
+
+  /* prompts */
+  if(started && !S.over){
+    /* A goal is the thing worth shouting about, so it wins over THINKING - the
+       other way round, the computer's turn swallowed every celebration. */
+    var msg=null;
+    if(celebrate>0) msg=celebrateMsg;
+    else if(thinking) msg="THINKING";
+    if(msg){
+      ctx.save();
+      ctx.translate(px(FS.W/2), py(FS.H/2));
+      if(S.turn===1 && modeOf(mId).ai===null) ctx.rotate(Math.PI);
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.font="900 "+Math.round(Math.min(26,SC*1.05))+"px -apple-system,Helvetica,Arial";
+      /* on a pill, or it is unreadable the moment it lands on top of the men */
+      var tw=ctx.measureText(msg).width, ph=Math.min(38,SC*1.6);
+      ctx.fillStyle="rgba(22,88,34,.86)";
+      rr(-tw/2-SC*0.55, -ph/2, tw+SC*1.1, ph, ph/2); ctx.fill();
+      ctx.fillStyle="#ffffff";
+      ctx.fillText(msg, 0, 1);
+      ctx.restore();
+    }
+  }
+}
+
+/* ---------------- the one place the world moves ---------------- */
+function advance(dt){
+  var ev=FS.step(S, dt);
+  if(ev.bounce) beep(300,.04,"square",.03);
+  if(ev.rest){
+    if(ev.goal>=0){
+      goalsThisMatch++;
+      if(ev.goal===1) concededFirst=true;
+      celebrate=1500; celebrateMsg = ev.ownGoal ? "OWN GOAL" : "GOAL!";
+      beep(660,.1,"triangle",.07);
+      setTimeout(function(){ beep(880,.16,"triangle",.07); },110);
+      if(window.GGA){
+        GGA.haptic(ev.goal===0?"success":"error");
+        if(S.score[0]>0) GGA.award("fs_first");
+        if(S.score[0]>=3) GGA.award("fs_hat");
+      }
+    }else if(ev.turnPassed){
+      celebrate=800; celebrateMsg = S.lastEvent==="miss" ? "MISSED IT" : "TURN OVER";
+      beep(280,.1,"sine",.04);
+    }else{
+      beep(760,.06,"triangle",.05);
+      if(window.GGA) GGA.haptic("light");
+    }
+    if(ev.over) finish();
+    else scheduleAI();
+    persist();
+  }
+  paintHUD();
+  return ev;
+}
+
+function myTurn(){
+  var m=modeOf(mId);
+  return m.ai===null || S.turn===0;
+}
+function scheduleAI(){
+  var m=modeOf(mId);
+  if(m.ai===null || S.turn!==1 || S.over || S.moving) return;
+  thinking=true;
+  held=null; aiming=false;
+  paintHUD();
+  setTimeout(function(){
+    if(!S || S.over || S.turn!==1 || S.moving){ thinking=false; return; }
+    var plan=FS.think(S, m.ai.tries, m.ai.wobble);
+    thinking=false;
+    if(!plan) return;
+    FS.flick(S, plan.man, plan.angle, plan.power);
+    lastT=0;
+    beep(520,.06,"square",.05);
+  }, 440);
+}
+
+function finish(){
+  save("cur",null);
+  var m=modeOf(mId);
+  var played=load("played",0)+1; save("played",played);
+  if(window.GGA){
+    if(m.ai===null) GGA.award("fs_2p");
+    if(played>=10) GGA.award("fs_10");
+    if(S.winner===0){
+      GGA.award("fs_win");
+      if(!concededFirst) GGA.award("fs_clean");
+      if(mId==="hard") GGA.award("fs_hard");
+    }
+    GGA.haptic(S.winner===0?"success":"error");
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  setTimeout(function(){ winScreen(); },700);
+}
+
+function paintHUD(){
+  document.getElementById("vBlue").textContent=S.score[0];
+  document.getElementById("vYellow").textContent=S.score[1];
+  var t=document.getElementById("vTurn");
+  if(S.over) t.textContent="FULL TIME";
+  else if(thinking) t.textContent="...";
+  else t.textContent = S.turn===0 ? "BLUE" : "YELLOW";
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started) return;
+  if(S.over || S.shots===0){ save("cur",null); return; }
+  save("cur",{ m:mId, tg:S.target, t:S.turn, u:S.touches,
+    s:[S.score[0],S.score[1]], sh:S.shots, cf:concededFirst?1:0,
+    b:[Math.round(S.ball.x*1000)/1000, Math.round(S.ball.y*1000)/1000],
+    men:S.men.map(function(q){ return [q.c, Math.round(q.x*1000)/1000, Math.round(q.y*1000)/1000]; }) });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||!c.men||c.men.length!==10||!c.b) return false;
+  target=TARGETS.indexOf(c.tg)>=0 ? c.tg : 3;
+  newGame(c.m);
+  S.men=c.men.map(function(a){
+    return { c:a[0], x:a[1], y:a[2], vx:0, vy:0, r:FS.MAN_R, m:2.4 };
+  });
+  S.ball.x=c.b[0]; S.ball.y=c.b[1]; S.ball.vx=0; S.ball.vy=0;
+  S.turn=(c.t===1)?1:0;
+  S.touches=Math.max(1, Math.min(FS.TOUCHES, c.u|0));
+  S.score=[c.s[0]|0, c.s[1]|0];
+  S.shots=c.sh|0;
+  S.kickoff=false;
+  concededFirst=!!c.cf;
+  S.moving=false; S.over=false; S.winner=-1;
+  if(FS.audit(S)){ newGame(c.m); return false; }
+  paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function unitsOf(clientX, clientY){
+  var b=cv.getBoundingClientRect();
+  return { x:(clientX-b.left-OX)/SC, y:(clientY-b.top-OY)/SC };
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+var held=null, aiming=false, aimAngle=0, aimPower=0;
+var MAXPULL=3.4, REACH=2.0;
+function onDown(e){
+  if(!started||S.over||S.moving||thinking||!myTurn()) return;
+  e.preventDefault();
+  var u=unitsOf(pt(e).clientX, pt(e).clientY);
+  var man=FS.pick(S, u.x, u.y, S.turn, REACH);
+  if(!man){ held=null; aiming=false; return; }
+  held=man; aiming=false; aimAngle=0; aimPower=0;
+}
+function updateAim(u){
+  if(!held) return;
+  var dx=held.x-u.x, dy=held.y-u.y;
+  var d=FS.len(dx,dy);
+  if(d<0.22){ aiming=false; return; }
+  aimAngle=Math.atan2(dy,dx);
+  aimPower=Math.max(0.06, Math.min(1, d/MAXPULL));
+  aiming=true;
+}
+function onMove(e){
+  if(!held) return;
+  if(e.cancelable) e.preventDefault();
+  updateAim(unitsOf(pt(e).clientX, pt(e).clientY));
+}
+function onUp(){
+  if(!held) return;
+  if(aiming){
+    FS.flick(S, held, aimAngle, aimPower);
+    lastT=0;
+    beep(520,.06,"square",.05);
+    if(window.GGA) GGA.haptic("medium");
+  }
+  held=null; aiming=false;
+}
+cv.addEventListener("touchstart",onDown,{passive:false});
+cv.addEventListener("touchmove",onMove,{passive:false});
+cv.addEventListener("touchend",onUp);
+cv.addEventListener("touchcancel",function(){ held=null; aiming=false; });
+cv.addEventListener("mousedown",onDown);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",onUp);
+cv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+document.getElementById("tPass").onclick=function(){
+  if(!started||S.over||S.moving||thinking||!myTurn()) return;
+  S.turn = S.turn===0 ? 1 : 0;
+  S.touches=FS.TOUCHES;
+  held=null; aiming=false;
+  celebrate=800; celebrateMsg="TURN OVER";
+  beep(300,.09,"sine",.04);
+  paintHUD(); persist(); scheduleAI();
+};
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ newGame(mId); persist(); closeOvl(); return; }
+  openOvl('<h2>START AGAIN?</h2><p>This match will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW MATCH</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){ newGame(mId); persist(); closeOvl(); scheduleAI(); };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>FINGER SOCCER</h2><p>Flick your men into the ball and score. Blue shoots up the pitch.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bTarget">FIRST TO '+target+'</button>';
+  if(cur&&cur.men) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+
+    (cur.s[0]|0)+' &ndash; '+(cur.s[1]|0)+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newGame(el.getAttribute("data-m"));
+      persist(); closeOvl(); layout(); scheduleAI();
+    };
+  });
+  card.querySelector("#bTarget").onclick=function(){
+    var k=TARGETS.indexOf(target);
+    target=TARGETS[(k+1)%TARGETS.length];
+    save("target",target);
+    if(S && !started){ S.target=target; }
+    this.textContent="FIRST TO "+target;
+  };
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newGame(load("mode","two"));
+    persist(); closeOvl(); layout(); scheduleAI();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; <b>Touch one of your men</b> and pull back from it like a catapult. The further you pull, the harder it goes. Let go to flick.<br><br>'+
+    '&#9642; <b>Blue shoots up the pitch, yellow shoots down.</b> Put the ball in the far net.<br><br>'+
+    '&#9642; You get <b>three flicks a turn</b> &ndash; but only while you keep hitting the ball. Miss it and your turn ends there.<br><br>'+
+    '&#9642; The pips at your end show the flicks you have left. PASS TURN hands over early.<br><br>'+
+    '&#9642; The ball bounces off the touchlines. Only the goal mouths let it out.<br><br>'+
+    '&#9642; Whoever concedes kicks off. First to the target wins.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function winScreen(){
+  var m=modeOf(mId);
+  var youWon=(S.winner===0);
+  var head = m.ai===null ? (S.winner===0?"BLUE WINS!":"YELLOW WINS!") : (youWon?"YOU WIN!":"COMPUTER WINS");
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+(m.ai===null?"Two players":m.name)+' &middot; first to '+S.target+'.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">BLUE</div><div class="sv">'+S.score[0]+'</div></div>'+
+      '<div class="st"><div class="sk">YELLOW</div><div class="sv">'+S.score[1]+'</div></div>'+
+      '<div class="st"><div class="sk">FLICKS</div><div class="sv">'+S.shots+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER MATCH</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE OPPONENT</button>');
+  card.querySelector("#bAgain").onclick=function(){ newGame(mId); persist(); closeOvl(); layout(); scheduleAI(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.over){ titleScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">BLUE</div><div class="sv">'+S.score[0]+'</div></div>'+
+      '<div class="st"><div class="sk">YELLOW</div><div class="sv">'+S.score[1]+'</div></div>'+
+      '<div class="st"><div class="sk">FLICKS</div><div class="sv">'+S.shots+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE OPPONENT</button>');
+  card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+target=load("target",3);
+if(TARGETS.indexOf(target)<0) target=3;
+newGame(load("mode","two"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+
+})();
+</script>
+</body>
+</html>

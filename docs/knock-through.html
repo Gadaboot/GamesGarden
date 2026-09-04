@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Knock Through</title>
+<style>
+  :root{ --ink:#0a6b7a; --soft:#4f9aa6; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 10% -8%, #9df2e6 0%, transparent 55%),
+      radial-gradient(120% 80% at 92% 105%, #d8f7ee 0%, transparent 55%),
+      linear-gradient(160deg, #0eb3c9 0%, #3ed6c4 46%, #bdf3e0 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#0a7f90;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(8,90,100,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(13px,4.4vw,19px);text-shadow:0 2px 0 #10a0b4,0 4px 12px rgba(6,70,80,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#0a7f90;
+    box-shadow:0 4px 0 rgba(15,120,135,.35),0 6px 14px rgba(8,90,100,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(15,120,135,.35)}
+  .tool .ti{font-size:20px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(10,95,110,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#effcfa);
+    border:2px solid #fff;border-radius:22px;padding:20px 18px 16px;text-align:center;
+    color:#3d7079;box-shadow:0 20px 50px rgba(6,70,80,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:24px;font-weight:900;letter-spacing:1px;color:#0f9fae;margin-bottom:3px}
+  .card p{font-size:14px;line-height:1.55;color:#5f959e;margin:8px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:9px;margin-top:13px}
+  .sz{border-radius:16px;padding:12px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:15px}
+  .sz .stg{font-size:10.5px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-a{background:linear-gradient(180deg,#7fe6b8,#22b183)}
+  .z-b{background:linear-gradient(180deg,#5fdfe0,#0f9fae)}
+  .z-c{background:linear-gradient(180deg,#6fb6f0,#1f6ec4)}
+  .btn{display:block;width:100%;margin-top:9px;padding:13px;border:none;border-radius:15px;
+    font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#5fe0d4,#0f9fae);color:#fff;
+    box-shadow:0 5px 0 #0a7d8a,0 8px 18px rgba(15,150,170,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #0a7d8a}
+  .btn-alt{background:#e8fbf8;color:#0a7f90;border:1.5px solid #cdeee9}
+  .rules{text-align:left;font-size:13px;line-height:1.7;color:#5a8f98;margin:11px 2px}
+  .rules b{color:#0f9fae}
+  .stats{display:flex;gap:8px;margin-top:12px}
+  .st{flex:1;background:#e8fbf8;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#9dc6cc}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#0f9fae}
+  @media (max-height:700px){
+    .card{padding:15px 15px 12px}.card h2{font-size:20px}
+    .rules{font-size:11.7px;line-height:1.5}.btn{padding:11px;font-size:14px;margin-top:7px}
+    .sz{padding:10px}.sz .sn{font-size:14px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">KNOCK THROUGH</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">SCORE</div><div class="v" id="vScore">0</div></div>
+    <div class="chip"><div class="k">WALL</div><div class="v" id="vLevel">1</div></div>
+    <div class="chip"><div class="k">BALLS</div><div class="v" id="vLives">3</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tLeft"><div class="ti">&#9664;</div><div class="tl">LEFT</div></div>
+    <div class="tool" id="tRight"><div class="ti">&#9654;</div><div class="tl">RIGHT</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Knock Through - the rules, with no drawing and no input in them.
+   The whole world lives in step(), so the same code that runs on screen can be
+   run headless for a few hundred thousand frames in Node. */
+function makeBricks(){
+  "use strict";
+
+  var COLS=9, ROWS=6;
+  var PW=9, PH=14;                    /* the play area is always 9 x 14 units */
+  var BRICK_TOP=1.2, BRICK_H=0.52;
+  var PADDLE_Y=12.85, PADDLE_H=0.36;
+  var BALL_R=0.17;
+  var MIN_VY=0.30;                    /* as a fraction of speed - stops flat rallies */
+  var MAX_STEP=0.11;                  /* substep distance, so nothing tunnels */
+  var PU_FALL=3.4, PU_R=0.34;
+  var PU_TYPES=["wide","slow","multi","life"];
+
+  /* '.' empty  '1' plain  '2' takes two hits  '#' will not break */
+  var LAYOUTS=[
+    ["111111111","111111111","111111111","111111111",".........","........."],
+    ["1.1.1.1.1",".1.1.1.1.","1.1.1.1.1",".1.1.1.1.","1.1.1.1.1","........."],
+    ["....1....","...111...","..11111..",".1111111.","111111111","........."],
+    [".1111111.","1.......1","1.......1","1.......1",".1111111.","........."],
+    ["111111111",".........","222222222",".........","111111111","........."],
+    ["....1....","...212...","..21112..","...212...","....1....","........."],
+    ["##11111##","#1111111#","111111111","111111111","#1111111#","##11111##"],
+    ["1.1.1.1.1","1.1.1.1.1","1.1.1.1.1","1.1.1.1.1","1.1.1.1.1","........."],
+    ["1..1..1..",".1..1..1.","..1..1..1","1..1..1..",".1..1..1.","..1..1..1"],
+    [".11...11.","111111111",".1111111.","..11111..","...111...","....1...."],
+    ["111111111","122222221","12#####21","122222221","111111111","........."],
+    ["111111111","1.......1","111111111","1.......1","111111111","........."],
+    ["11.....11","11.....11","11.....11","111111111","11.....11","11.....11"],
+    ["..1...1..",".1.1.1.1.","1...1...1",".1.1.1.1.","..1...1..","........."],
+    ["111111111","222222222","111111111","222222222","111111111","........."],
+    ["111111111",".1111111.","..11111..","..11111..",".1111111.","111111111"],
+    ["111111111","1#1#1#1#1","111111111","1#1#1#1#1","111111111","........."],
+    ["2.......2",".2.....2.","..2...2..","...2.2...","....2....","111111111"],
+    ["1111.1111","1..1.1..1","1..1.1..1","1..1.1..1","1111.1111","........."],
+    ["....#....","...222...","..21112..",".2111112.","221111122","111111111"]
+  ];
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+
+  /* ---- layout checks: shape, and that a ball can actually get to every brick ---- */
+  function reachable(rows){
+    var seen=[], q=[], r, c, i;
+    for(r=0;r<ROWS;r++){ seen.push([]); for(c=0;c<COLS;c++) seen[r].push(false); }
+    /* the ball comes from below, so seed every non-solid square on the bottom row */
+    for(c=0;c<COLS;c++) if(rows[ROWS-1].charAt(c)!=="#"){ seen[ROWS-1][c]=true; q.push([ROWS-1,c]); }
+    while(q.length){
+      var cell=q.pop(); r=cell[0]; c=cell[1];
+      var nb=[[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+      for(i=0;i<4;i++){
+        var nr=nb[i][0], nc=nb[i][1];
+        if(nr<0||nc<0||nr>=ROWS||nc>=COLS) continue;
+        if(seen[nr][nc]) continue;
+        if(rows[nr].charAt(nc)==="#") continue;   /* cannot pass an unbreakable brick */
+        seen[nr][nc]=true; q.push([nr,nc]);
+      }
+    }
+    for(r=0;r<ROWS;r++) for(c=0;c<COLS;c++){
+      var ch=rows[r].charAt(c);
+      if((ch==="1"||ch==="2") && !seen[r][c]) return false;
+    }
+    return true;
+  }
+  function validate(){
+    var bad=[], i, r;
+    for(i=0;i<LAYOUTS.length;i++){
+      var L=LAYOUTS[i];
+      if(L.length!==ROWS){ bad.push("layout "+(i+1)+": "+L.length+" rows, expected "+ROWS); continue; }
+      var breakables=0, ok=true;
+      for(r=0;r<ROWS;r++){
+        if(L[r].length!==COLS){ bad.push("layout "+(i+1)+" row "+(r+1)+": "+L[r].length+" wide, expected "+COLS); ok=false; break; }
+        for(var c=0;c<COLS;c++){
+          var ch=L[r].charAt(c);
+          if(".12#".indexOf(ch)<0){ bad.push("layout "+(i+1)+" row "+(r+1)+": odd character "+ch); ok=false; break; }
+          if(ch==="1"||ch==="2") breakables++;
+        }
+        if(!ok) break;
+      }
+      if(!ok) continue;
+      if(breakables<8) bad.push("layout "+(i+1)+": only "+breakables+" breakable bricks");
+      if(!reachable(L)) bad.push("layout "+(i+1)+": a breakable brick is walled in and can never be hit");
+    }
+    return bad;
+  }
+
+  /* ---- world ---- */
+  function gridFor(level){
+    var L=LAYOUTS[(level-1)%LAYOUTS.length];
+    var g=new Int8Array(COLS*ROWS);
+    for(var r=0;r<ROWS;r++) for(var c=0;c<COLS;c++){
+      var ch=L[r].charAt(c);
+      g[r*COLS+c] = ch==="1" ? 1 : ch==="2" ? 2 : ch==="#" ? 9 : 0;
+    }
+    return g;
+  }
+  function bricksLeft(st){
+    var n=0;
+    for(var i=0;i<st.grid.length;i++) if(st.grid[i]===1||st.grid[i]===2) n++;
+    return n;
+  }
+
+  function create(cfg){
+    var st={
+      W:PW, H:PH, cols:COLS, rows:ROWS,
+      cfg:cfg,
+      grid:null,
+      balls:[],
+      paddle:{ x:PW/2, w:cfg.paddle, y:PADDLE_Y, h:PADDLE_H },
+      targetX:PW/2,
+      pus:[],
+      wide:0, slow:0,
+      lives:cfg.lives, score:0, level:1,
+      waiting:true, over:false, cleared:false,
+      lostThisLevel:false, maxBalls:1,
+      speed:cfg.speed,
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    loadLevel(st,1);
+    return st;
+  }
+  function loadLevel(st,level){
+    st.level=level;
+    st.grid=gridFor(level);
+    st.speed=st.cfg.speed*Math.pow(1.04,level-1);
+    st.balls=[];
+    st.pus=[];
+    st.wide=0; st.slow=0;
+    st.paddle.w=st.cfg.paddle;
+    st.waiting=true; st.cleared=false; st.lostThisLevel=false; st.maxBalls=1;
+    restBall(st);
+  }
+  function restBall(st){
+    st.balls=[{ x:st.paddle.x, y:PADDLE_Y-PADDLE_H/2-BALL_R-0.01, vx:0, vy:0, r:BALL_R }];
+    st.waiting=true;
+  }
+  function launch(st){
+    if(!st.waiting||st.over) return false;
+    var b=st.balls[0];
+    var ang=(-Math.PI/2) + (st.rand()-0.5)*0.7;    /* up, with a little spread */
+    b.vx=Math.cos(ang); b.vy=Math.sin(ang);
+    normalise(st,b);
+    st.waiting=false;
+    return true;
+  }
+  function speedOf(st){ return st.speed * (st.slow>0 ? 0.75 : 1); }
+  function normalise(st,b){
+    var sp=speedOf(st);
+    var m=Math.sqrt(b.vx*b.vx+b.vy*b.vy);
+    if(m<1e-6){ b.vx=0; b.vy=-1; m=1; }
+    b.vx=b.vx/m*sp; b.vy=b.vy/m*sp;
+    /* never let it settle into a flat rally along the top or the paddle */
+    var minv=sp*MIN_VY;
+    if(Math.abs(b.vy)<minv){
+      b.vy = (b.vy<0 || (b.vy===0 && st.rand()<0.5)) ? -minv : minv;
+      var rem=sp*sp-b.vy*b.vy;
+      b.vx = (b.vx<0?-1:1)*Math.sqrt(Math.max(0,rem));
+    }
+  }
+
+  function brickRect(idx){
+    var r=(idx/COLS)|0, c=idx%COLS;
+    return { x:c*1, y:BRICK_TOP+r*BRICK_H, w:1, h:BRICK_H };
+  }
+
+  function hitBrick(st,b,ev){
+    /* only the cells the ball could possibly overlap */
+    var c0=Math.floor((b.x-b.r)/1), c1=Math.floor((b.x+b.r)/1);
+    var r0=Math.floor((b.y-b.r-BRICK_TOP)/BRICK_H), r1=Math.floor((b.y+b.r-BRICK_TOP)/BRICK_H);
+    for(var r=r0;r<=r1;r++){
+      if(r<0||r>=ROWS) continue;
+      for(var c=c0;c<=c1;c++){
+        if(c<0||c>=COLS) continue;
+        var idx=r*COLS+c, v=st.grid[idx];
+        if(!v) continue;
+        var q=brickRect(idx);
+        var cx=q.x+q.w/2, cy=q.y+q.h/2;
+        var ox=(q.w/2+b.r)-Math.abs(b.x-cx);
+        var oy=(q.h/2+b.r)-Math.abs(b.y-cy);
+        if(ox<=0||oy<=0) continue;
+        if(ox<oy){
+          b.vx=-b.vx;
+          b.x += (b.x<cx? -ox : ox);
+        }else{
+          b.vy=-b.vy;
+          b.y += (b.y<cy? -oy : oy);
+        }
+        if(v===9){ ev.solid++; }
+        else if(v===2){ st.grid[idx]=1; st.score+=5; ev.chip++; }
+        else{
+          st.grid[idx]=0; st.score+=10; ev.broke++;
+          if(st.rand()<0.12) dropPU(st,cx,cy);
+        }
+        normalise(st,b);
+        return true;         /* one brick per substep keeps the bounce honest */
+      }
+    }
+    return false;
+  }
+  function dropPU(st,x,y){
+    st.pus.push({ x:x, y:y, t:PU_TYPES[(st.rand()*PU_TYPES.length)|0] });
+  }
+
+  function clampPaddle(st){
+    var half=st.paddle.w/2;
+    if(st.paddle.x<half) st.paddle.x=half;
+    if(st.paddle.x>PW-half) st.paddle.x=PW-half;
+  }
+
+  function applyPU(st,type,ev){
+    if(type==="wide"){ st.wide=15; st.paddle.w=st.cfg.paddle*1.35; clampPaddle(st); }
+    else if(type==="slow"){ st.slow=12; for(var i=0;i<st.balls.length;i++) normalise(st,st.balls[i]); }
+    else if(type==="life"){ st.lives++; }
+    else if(type==="multi"){
+      var add=[];
+      for(var j=0;j<st.balls.length && st.balls.length+add.length<9;j++){
+        var b=st.balls[j];
+        for(var k=-1;k<=1;k+=2){
+          var ang=Math.atan2(b.vy,b.vx)+k*0.45;
+          add.push({ x:b.x, y:b.y, vx:Math.cos(ang), vy:Math.sin(ang), r:BALL_R });
+        }
+      }
+      for(j=0;j<add.length;j++){ normalise(st,add[j]); st.balls.push(add[j]); }
+      if(st.balls.length>st.maxBalls) st.maxBalls=st.balls.length;
+    }
+    st.score+=50;
+    ev.pu=type;
+  }
+
+  /* one frame. dt in seconds. */
+  function step(st,dt){
+    var ev={ broke:0, chip:0, solid:0, paddle:0, lost:false, cleared:false, over:false, pu:null };
+    if(st.over||st.cleared) return ev;
+    if(dt>0.05) dt=0.05;                 /* a long stall must not teleport the ball */
+
+    if(st.wide>0){ st.wide-=dt; if(st.wide<=0){ st.wide=0; st.paddle.w=st.cfg.paddle; clampPaddle(st); } }
+    if(st.slow>0){ st.slow-=dt; if(st.slow<=0){ st.slow=0; for(var q=0;q<st.balls.length;q++) normalise(st,st.balls[q]); } }
+
+    /* paddle chases the finger, at the same feel whatever the frame rate */
+    var half=st.paddle.w/2;
+    var want=Math.max(half,Math.min(PW-half,st.targetX));
+    var ease=1-Math.pow(0.001,dt);
+    st.paddle.x += (want-st.paddle.x)*ease;
+    clampPaddle(st);
+
+    if(st.waiting){
+      var b0=st.balls[0];
+      b0.x=st.paddle.x; b0.y=PADDLE_Y-PADDLE_H/2-BALL_R-0.01;
+      return ev;
+    }
+
+    var i;
+    for(i=st.balls.length-1;i>=0;i--){
+      var b=st.balls[i];
+      var dist=Math.sqrt(b.vx*b.vx+b.vy*b.vy)*dt;
+      var steps=Math.max(1,Math.ceil(dist/MAX_STEP));
+      var sdt=dt/steps;
+      for(var s=0;s<steps;s++){
+        b.x+=b.vx*sdt; b.y+=b.vy*sdt;
+
+        /* every bounce goes through normalise, so a ball can never come off a
+           surface flat - the one stall a player has no way to steer out of */
+        if(b.x<b.r){ b.x=b.r; b.vx=Math.abs(b.vx); normalise(st,b); }
+        else if(b.x>PW-b.r){ b.x=PW-b.r; b.vx=-Math.abs(b.vx); normalise(st,b); }
+        if(b.y<b.r){ b.y=b.r; b.vy=Math.abs(b.vy); normalise(st,b); }
+
+        hitBrick(st,b,ev);
+
+        /* paddle */
+        var pTop=PADDLE_Y-PADDLE_H/2;
+        if(b.vy>0 && b.y+b.r>=pTop && b.y-b.r<=PADDLE_Y+PADDLE_H/2){
+          var hw=st.paddle.w/2;
+          if(b.x>=st.paddle.x-hw-b.r && b.x<=st.paddle.x+hw+b.r){
+            b.y=pTop-b.r;
+            var off=(b.x-st.paddle.x)/hw;
+            if(off<-1) off=-1; if(off>1) off=1;
+            var ang=-Math.PI/2 + off*1.05;
+            b.vx=Math.cos(ang); b.vy=Math.sin(ang);
+            normalise(st,b);
+            ev.paddle++;
+          }
+        }
+        if(b.y-b.r>PH){ st.balls.splice(i,1); break; }
+      }
+    }
+
+    /* power-ups fall and are caught by the paddle */
+    for(i=st.pus.length-1;i>=0;i--){
+      var p=st.pus[i];
+      p.y+=PU_FALL*dt;
+      var hw2=st.paddle.w/2;
+      if(p.y>=PADDLE_Y-PADDLE_H/2-PU_R && p.y<=PADDLE_Y+PADDLE_H && Math.abs(p.x-st.paddle.x)<=hw2+PU_R){
+        applyPU(st,p.t,ev);
+        st.pus.splice(i,1);
+        continue;
+      }
+      if(p.y-PU_R>PH) st.pus.splice(i,1);
+    }
+
+    if(!st.balls.length){
+      st.lives--; st.lostThisLevel=true; ev.lost=true;
+      st.pus=[];
+      st.wide=0; st.slow=0; st.paddle.w=st.cfg.paddle; clampPaddle(st);
+      if(st.lives<=0){ st.over=true; ev.over=true; }
+      else restBall(st);
+      return ev;
+    }
+    if(bricksLeft(st)===0){
+      st.cleared=true; ev.cleared=true; st.score+=100;
+    }
+    return ev;
+  }
+
+  function nextLevel(st){ loadLevel(st, st.level+1); }
+
+  /* every promise the game makes, checked from the outside */
+  function audit(st){
+    var i;
+    if(st.lives<0) return "lives went negative";
+    if(st.score<0) return "score went negative";
+    if(st.paddle.x<st.paddle.w/2-1e-6 || st.paddle.x>PW-st.paddle.w/2+1e-6) return "paddle left the play area";
+    for(i=0;i<st.balls.length;i++){
+      var b=st.balls[i];
+      if(b.x<-1e-3 || b.x>PW+1e-3) return "ball "+i+" left the play area sideways";
+      if(b.y<-1e-3) return "ball "+i+" went out through the top";
+      if(!isFinite(b.x)||!isFinite(b.y)||!isFinite(b.vx)||!isFinite(b.vy)) return "ball "+i+" went to infinity";
+      if(!st.waiting){
+        var sp=Math.sqrt(b.vx*b.vx+b.vy*b.vy), want=speedOf(st);
+        if(Math.abs(sp-want)>want*0.02) return "ball "+i+" is going "+sp.toFixed(2)+" not "+want.toFixed(2);
+        if(Math.abs(b.vy)<want*MIN_VY*0.98) return "ball "+i+" has flattened out";
+      }
+    }
+    if(!st.over && !st.balls.length) return "no ball and not over";
+    return null;
+  }
+
+  return { COLS:COLS, ROWS:ROWS, PW:PW, PH:PH, BRICK_TOP:BRICK_TOP, BRICK_H:BRICK_H,
+           PADDLE_Y:PADDLE_Y, PADDLE_H:PADDLE_H, BALL_R:BALL_R, PU_R:PU_R,
+           PU_TYPES:PU_TYPES, LAYOUTS:LAYOUTS,
+           rng:rng, validate:validate, reachable:reachable, gridFor:gridFor,
+           bricksLeft:bricksLeft, create:create, loadLevel:loadLevel, nextLevel:nextLevel,
+           clampPaddle:clampPaddle,
+           launch:launch, step:step, audit:audit, speedOf:speedOf, brickRect:brickRect };
+}
+if(typeof module!=='undefined') module.exports = makeBricks;
+</script>
+<script>
+(function(){
+"use strict";
+var BK=makeBricks();
+var LS="gg_knockthrough_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"easy", name:"Gentle",   cls:"z-a", speed:8.5,  paddle:2.4, lives:5, tag:"Slow ball &middot; wide bat &middot; 5 balls"},
+  {id:"med",  name:"Tricky",   cls:"z-b", speed:10.5, paddle:1.8, lives:3, tag:"Brisk ball &middot; 3 balls"},
+  {id:"hard", name:"Fiendish", cls:"z-c", speed:12.5, paddle:1.4, lives:2, tag:"Fast ball &middot; narrow bat &middot; 2 balls"}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+
+var ROWCOL=["#ef476f","#f78c1f","#ffd166","#06d6a0","#4cc9f0","#b892ff"];
+var TOUGH="#8d99ae", SOLID="#5c6b83";
+var PUCOL={wide:"#06d6a0", slow:"#4cc9f0", multi:"#f78c1f", life:"#ef476f"};
+var PULAB={wide:"W", slow:"S", multi:"M", life:"+"};
+
+/* ---------------- state ---------------- */
+var mId, S, started, running, lastT, over, clearedShown, holdL, holdR;
+var lastWasBest=false, bestAtStart=0;
+/* Only the test hook ever sets this. It stops the clock and nothing else, so a
+   test can advance the world a frame at a time instead of racing the animation
+   loop. With the hook stripped out it stays false for good. */
+var frozen=false;
+
+function newGame(id, level, score, lives){
+  mId=id; save("mode",id);
+  var m=modeOf(id);
+  S=BK.create({speed:m.speed, paddle:m.paddle, lives:m.lives});
+  if(level&&level>1) BK.loadLevel(S, level);
+  if(score) S.score=score|0;
+  if(lives) S.lives=lives|0;
+  running=true; over=false; clearedShown=false; lastT=0; holdL=false; holdR=false;
+  /* the best is banked as walls fall, so the game's own starting best is what
+     the end screen has to beat - otherwise NEW BEST could never appear */
+  bestAtStart=load("best_"+id,0); lastWasBest=false;
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,SC=0,OX=0,OY=0;
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  /* the play area is always 9 x 14 units, so the game is the same on every phone */
+  SC=Math.min((aw-6)/BK.PW, (ah-6)/BK.PH);
+  OX=Math.round((aw-SC*BK.PW)/2); OY=Math.round((ah-SC*BK.PH)/2);
+}
+window.addEventListener("resize", function(){ layout(); });
+
+function px(x){ return OX+x*SC; }
+function py(y){ return OY+y*SC; }
+function rr(x,y,w,h,r){
+  if(r>w/2) r=w/2; if(r>h/2) r=h/2;
+  ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!SC){ layout(); if(!SC) return; }
+  if(!S) return;
+
+  if(!lastT) lastT=ts||0;
+  var dt=Math.min(50,(ts||0)-lastT)/1000; lastT=ts||0;
+  if(started && running && !frozen && !over && !S.cleared){
+    if(holdL) S.targetX-=9*dt;
+    if(holdR) S.targetX+=9*dt;
+    advance(dt);
+  }
+
+  ctx.clearRect(0,0,VW,VH);
+  var W=SC*BK.PW, H=SC*BK.PH;
+
+  ctx.fillStyle="#f7fdfd";
+  rr(OX-3,OY-3,W+6,H+6,Math.max(10,SC*0.5)); ctx.fill();
+  ctx.strokeStyle="rgba(15,159,174,.30)"; ctx.lineWidth=2;
+  rr(OX-1,OY-1,W+2,H+2,Math.max(9,SC*0.45)); ctx.stroke();
+
+  /* bricks */
+  var gap=SC*0.055;
+  for(var i=0;i<S.grid.length;i++){
+    var v=S.grid[i];
+    if(!v) continue;
+    var q=BK.brickRect(i);
+    var bx=px(q.x)+gap, by=py(q.y)+gap, bw=q.w*SC-gap*2, bh=q.h*SC-gap*2;
+    var r=(i/BK.COLS)|0;
+    ctx.fillStyle = v===9 ? SOLID : v===2 ? TOUGH : ROWCOL[r%ROWCOL.length];
+    rr(bx,by,bw,bh,Math.max(2,SC*0.10)); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.35)";
+    rr(bx+bw*0.08,by+bh*0.14,bw*0.84,bh*0.26,Math.max(1.5,SC*0.06)); ctx.fill();
+    if(v===9){
+      ctx.strokeStyle="rgba(255,255,255,.30)"; ctx.lineWidth=Math.max(1.2,SC*0.035);
+      ctx.beginPath();
+      ctx.moveTo(bx+bw*0.22,by+bh*0.78); ctx.lineTo(bx+bw*0.78,by+bh*0.22);
+      ctx.stroke();
+    }
+  }
+
+  /* power-ups */
+  for(i=0;i<S.pus.length;i++){
+    var p=S.pus[i];
+    var cxp=px(p.x), cyp=py(p.y), rad=BK.PU_R*SC;
+    ctx.fillStyle=PUCOL[p.t]||"#888";
+    rr(cxp-rad*1.25,cyp-rad*0.75,rad*2.5,rad*1.5,rad*0.7); ctx.fill();
+    ctx.fillStyle="#fff";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.round(rad*1.15)+"px -apple-system,Helvetica,Arial";
+    ctx.fillText(PULAB[p.t]||"?", cxp, cyp+rad*0.04);
+  }
+
+  /* paddle */
+  var pw=S.paddle.w*SC, ph=BK.PADDLE_H*SC;
+  var pxx=px(S.paddle.x)-pw/2, pyy=py(BK.PADDLE_Y)-ph/2;
+  ctx.fillStyle = S.wide>0 ? "#06d6a0" : "#0f9fae";
+  rr(pxx,pyy,pw,ph,ph/2); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.45)";
+  rr(pxx+pw*0.06,pyy+ph*0.16,pw*0.88,ph*0.30,ph*0.2); ctx.fill();
+
+  /* balls */
+  for(i=0;i<S.balls.length;i++){
+    var b=S.balls[i];
+    ctx.fillStyle="#123b47";
+    ctx.beginPath(); ctx.arc(px(b.x),py(b.y),b.r*SC,0,6.284); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.45)";
+    ctx.beginPath(); ctx.arc(px(b.x)-b.r*SC*0.32,py(b.y)-b.r*SC*0.34,b.r*SC*0.30,0,6.284); ctx.fill();
+  }
+
+  /* prompt */
+  if(started && S.waiting && !over && !S.cleared){
+    ctx.fillStyle="rgba(15,159,174,.92)";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.round(Math.min(22,SC*0.95))+"px -apple-system,Helvetica,Arial";
+    ctx.fillText("TAP TO LAUNCH", OX+W/2, OY+H*0.62);
+    ctx.font="800 "+Math.round(Math.min(13,SC*0.6))+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="rgba(90,143,152,.9)";
+    ctx.fillText("drag anywhere to move the bat", OX+W/2, OY+H*0.62+Math.min(28,SC*1.2));
+  }
+}
+
+/* ---------------- the one place the world moves ---------------- */
+function advance(dt){
+  var ev=BK.step(S,dt);
+  if(ev.broke||ev.chip) beep(ev.broke?720:520,.05,"square",.04);
+  if(ev.solid) beep(300,.05,"square",.035);
+  if(ev.paddle) beep(430,.05,"sine",.045);
+  if(ev.pu){
+    beep(880,.10,"triangle",.06,1320);
+    if(window.GGA){
+      GGA.haptic("success");
+      if(S.balls.length>=3) GGA.award("kt_multi");
+    }
+  }
+  if(ev.broke||ev.chip){
+    if(window.GGA && S.score>=1000) GGA.award("kt_1000");
+  }
+  if(ev.lost){
+    beep(260,.30,"sawtooth",.06,110);
+    if(window.GGA) GGA.haptic("error");
+  }
+  if(ev.over){ endGame(); }
+  else if(ev.cleared && !clearedShown){ clearedShown=true; wallDown(); }
+  paintHUD();
+  return ev;
+}
+
+function wallDown(){
+  running=false;
+  var m=modeOf(mId);
+  if(window.GGA){
+    GGA.award("kt_first");
+    if(!S.lostThisLevel) GGA.award("kt_nolose");
+    if(mId==="hard") GGA.award("kt_hard");
+    if(S.level>=5) GGA.award("kt_l5");
+    if(S.level>=10) GGA.award("kt_l10");
+    GGA.haptic("success");
+  }
+  var best=load("best_"+mId,0);
+  if(S.score>best) save("best_"+mId,S.score);
+  persist();
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  setTimeout(function(){
+    openOvl('<h2>WALL DOWN!</h2><p>Wall '+S.level+' is rubble.</p>'+
+      '<div class="stats">'+
+        '<div class="st"><div class="sk">SCORE</div><div class="sv">'+S.score+'</div></div>'+
+        '<div class="st"><div class="sk">BALLS</div><div class="sv">'+S.lives+'</div></div>'+
+        '<div class="st"><div class="sk">CLEAN</div><div class="sv">'+(S.lostThisLevel?"no":"yes")+'</div></div>'+
+      '</div>'+
+      '<button class="btn btn-go" id="bNext">NEXT WALL</button>'+
+      '<button class="btn btn-alt" id="bMenu5">CHANGE LEVEL</button>');
+    card.querySelector("#bNext").onclick=function(){
+      BK.nextLevel(S); clearedShown=false; running=true; lastT=0;
+      persist(); closeOvl(); paintHUD();
+    };
+    card.querySelector("#bMenu5").onclick=titleScreen;
+  },420);
+}
+
+function endGame(){
+  over=true; running=false;
+  save("cur",null);
+  var best=load("best_"+mId,0);
+  lastWasBest = (S.score>bestAtStart && S.score>0);
+  if(S.score>best) save("best_"+mId,S.score);
+  save("runs_"+mId, load("runs_"+mId,0)+1);
+  paintHUD();
+  beep(300,.5,"sawtooth",.07,90);
+  if(window.GGA) GGA.haptic("error");
+  setTimeout(function(){
+    openOvl('<h2>'+(lastWasBest?"NEW BEST!":"OUT OF BALLS")+'</h2>'+
+      '<p>You got through '+(S.level-1)+' wall'+((S.level-1)===1?"":"s")+'.</p>'+
+      '<div class="stats">'+
+        '<div class="st"><div class="sk">SCORE</div><div class="sv">'+S.score+'</div></div>'+
+        '<div class="st"><div class="sk">WALL</div><div class="sv">'+S.level+'</div></div>'+
+        '<div class="st"><div class="sk">BEST</div><div class="sv">'+load("best_"+mId,0)+'</div></div>'+
+      '</div>'+
+      '<button class="btn btn-go" id="bAgain">ANOTHER GO</button>'+
+      '<button class="btn btn-alt" id="bMenu">CHANGE LEVEL</button>');
+    card.querySelector("#bAgain").onclick=function(){ started=true; newGame(mId); persist(); closeOvl(); layout(); };
+    card.querySelector("#bMenu").onclick=titleScreen;
+  },620);
+}
+
+function paintHUD(){
+  document.getElementById("vScore").textContent=S.score;
+  document.getElementById("vLevel").textContent=S.level;
+  document.getElementById("vLives").textContent=S.lives;
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started) return;
+  if(over || (S.level===1 && S.score===0)){ save("cur",null); return; }
+  save("cur",{ m:mId, lv:S.level, sc:S.score, li:S.lives,
+               g:Array.prototype.slice.call(S.grid), bs:bestAtStart });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||!c.g||!c.g.length) return false;
+  if(!modeOf(c.m)) return false;
+  newGame(c.m, c.lv|0, c.sc|0, c.li|0);
+  if(c.g.length!==S.grid.length) return false;
+  for(var i=0;i<c.g.length;i++) S.grid[i]=c.g[i];
+  if(BK.bricksLeft(S)===0) return false;
+  if(c.bs!=null) bestAtStart=c.bs|0;
+  /* the ball goes back on the bat rather than back in mid-air, so nobody comes
+     back from a locked phone to a ball already past them */
+  S.balls=[]; S.pus=[];
+  S.wide=0; S.slow=0; S.paddle.w=modeOf(c.m).paddle;
+  S.waiting=true; S.cleared=false;
+  S.balls=[{x:S.paddle.x, y:BK.PADDLE_Y-BK.PADDLE_H/2-BK.BALL_R-0.01, vx:0, vy:0, r:BK.BALL_R}];
+  paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function toUnits(clientX){
+  var b=cv.getBoundingClientRect();
+  return (clientX-b.left-OX)/SC;
+}
+function pt(e){
+  var t=(e.touches&&e.touches.length)?e.touches[0]:((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+  return t;
+}
+var dragging=false;
+function onDown(e){
+  if(!started||over) return;
+  e.preventDefault();
+  dragging=true;
+  S.targetX=toUnits(pt(e).clientX);
+  if(S.waiting && running) BK.launch(S);
+}
+function onMove(e){
+  if(!dragging||!started||over) return;
+  if(e.cancelable) e.preventDefault();
+  S.targetX=toUnits(pt(e).clientX);
+}
+function onUp(){ dragging=false; }
+cv.addEventListener("touchstart",onDown,{passive:false});
+cv.addEventListener("touchmove",onMove,{passive:false});
+cv.addEventListener("touchend",onUp);
+cv.addEventListener("touchcancel",onUp);
+cv.addEventListener("mousedown",onDown);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",onUp);
+cv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+window.addEventListener("keydown",function(e){
+  if(!started||over) return;
+  if(e.key==="ArrowLeft"){ S.targetX-=0.7; if(S.waiting&&running) BK.launch(S); e.preventDefault(); }
+  else if(e.key==="ArrowRight"){ S.targetX+=0.7; if(S.waiting&&running) BK.launch(S); e.preventDefault(); }
+  else if(e.key===" "){ if(S.waiting&&running) BK.launch(S); e.preventDefault(); }
+});
+
+function holdBtn(el, set){
+  function on(e){ if(!started||over) return; e.preventDefault(); set(true); if(S.waiting&&running) BK.launch(S); }
+  function off(){ set(false); }
+  el.addEventListener("touchstart",on,{passive:false});
+  el.addEventListener("touchend",off);
+  el.addEventListener("touchcancel",off);
+  el.addEventListener("mousedown",on);
+  window.addEventListener("mouseup",off);
+  el.addEventListener("mouseleave",off);
+}
+holdBtn(document.getElementById("tLeft"), function(v){ holdL=v; });
+holdBtn(document.getElementById("tRight"), function(v){ holdR=v; });
+
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(over){ newGame(mId); persist(); closeOvl(); return; }
+  running=false;
+  openOvl('<h2>START AGAIN?</h2><p>This game will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW GAME</button>'+
+    '<button class="btn btn-alt" id="n">KEEP GOING</button>');
+  card.querySelector("#y").onclick=function(){ newGame(mId); persist(); closeOvl(); };
+  card.querySelector("#n").onclick=function(){ running=true; lastT=0; closeOvl(); };
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  running=false;
+  var cur=load("cur",null);
+  var h='<h2>KNOCK THROUGH</h2><p>Bounce the ball off the bat and take the whole wall down.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i], b=load("best_"+m.id,0);
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div>'+
+       '<div style="font-size:12px;font-weight:900">'+(b?b:"")+'</div></div>';
+  }
+  h+='</div>';
+  if(cur&&cur.g) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+
+    modeOf(cur.m).name+' wall '+(cur.lv|0)+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      var id=el.getAttribute("data-m");
+      started=true; newGame(id);
+      persist(); closeOvl(); layout();
+    };
+  });
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newGame(load("mode","easy"));
+    persist(); closeOvl(); layout();
+  };
+  card.querySelector("#bRules").onclick=rulesScreen;
+}
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; <b>Drag anywhere</b> on the board to slide the bat, or hold <b>Left</b> and <b>Right</b> at the bottom. Tap to launch.<br><br>'+
+    '&#9642; Where the ball hits the bat is what steers it: the middle sends it straight back, the ends send it out at an angle.<br><br>'+
+    '&#9642; <b>Grey bricks</b> take two hits. <b>Slate bricks</b> never break &mdash; work around them.<br><br>'+
+    '&#9642; Some bricks drop a capsule. <b>W</b> widens the bat, <b>S</b> slows the ball, <b>M</b> splits it into three, <b>+</b> is a spare ball.<br><br>'+
+    '&#9642; You lose a ball only when the last one goes past you. Run out and that is the game.<br><br>'+
+    '&#9642; Every wall has been checked so that every brick on it can actually be reached. The board is never the problem.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||over){ titleScreen(); return; }
+  running=false; persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">SCORE</div><div class="sv">'+S.score+'</div></div>'+
+      '<div class="st"><div class="sk">WALL</div><div class="sv">'+S.level+'</div></div>'+
+      '<div class="st"><div class="sk">BALLS</div><div class="sv">'+S.lives+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE LEVEL</button>');
+  card.querySelector("#bGo").onclick=function(){ running=true; lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+newGame(load("mode","easy"));
+started=false; running=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden){ running=false; persist(); }   /* never lose a ball in your pocket */
+});
+window.addEventListener("pagehide", persist);
+
+
+})();
+</script>
+</body>
+</html>

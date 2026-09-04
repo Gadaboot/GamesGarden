@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Air Hockey</title>
+<style>
+  :root{ --ink:#a8362a; --soft:#d8836f; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 10% -8%, #ffb59c 0%, transparent 55%),
+      radial-gradient(120% 80% at 92% 105%, #ffe0b8 0%, transparent 55%),
+      linear-gradient(160deg, #ff6b5a 0%, #ff9f45 46%, #ffd9a8 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#c0402c;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(150,50,30,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.5px;line-height:1;
+    font-size:clamp(14px,4.6vw,20px);text-shadow:0 2px 0 #e2593f,0 4px 12px rgba(130,40,20,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#c0402c;
+    box-shadow:0 4px 0 rgba(180,60,40,.35),0 6px 14px rgba(150,50,30,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(180,60,40,.35)}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(160,55,35,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#fff5f0);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#8a5347;box-shadow:0 20px 50px rgba(130,40,20,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#e2593f;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#b47c6c;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-p{background:linear-gradient(180deg,#ffb36b,#f07c1e)}
+  .z-a{background:linear-gradient(180deg,#8fe0a8,#2fae6b)}
+  .z-b{background:linear-gradient(180deg,#7fc4ff,#2a72d4)}
+  .z-c{background:linear-gradient(180deg,#ff8f7f,#e8483f)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ffa87f,#e2593f);color:#fff;
+    box-shadow:0 5px 0 #b8402a,0 8px 18px rgba(200,80,50,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #b8402a}
+  .btn-alt{background:#fff0ea;color:#c0402c;border:1.5px solid #fadbcf}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#a8776a;margin:10px 2px}
+  .rules b{color:#e2593f}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#fff0ea;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#d8a999}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#e2593f}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">AIR HOCKEY</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">RED</div><div class="v" id="vRed">0</div></div>
+    <div class="chip"><div class="k">FIRST TO</div><div class="v" id="vTarget">5</div></div>
+    <div class="chip"><div class="k">BLUE</div><div class="v" id="vBlue">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tReset"><div class="ti">&#9678;</div><div class="tl">CENTRE PUCK</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW MATCH</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Air Hockey - the rules and the physics, with no drawing and no input in them.
+   The whole world moves in step(), so the same code that runs on screen can be
+   run headless for a few hundred thousand frames in Node. */
+function makeHockey(){
+  "use strict";
+
+  var W=9, H=16;                 /* the table is always 9 x 16 units */
+  var PUCK_R=0.38, MALLET_R=0.52;
+  var GOAL_HALF=2.00;            /* goal mouth is 4.0 wide, centred */
+  var MAX_PUCK=34;               /* units per second */
+  var MIN_AFTER_HIT=4.5;
+  var FRICTION=0.68;             /* velocity multiplier per second */
+  var WALL_BOUNCE=0.94;
+  var RESTITUTION=0.92;
+  var MAX_STEP=0.16;             /* substep distance, so nothing tunnels */
+  var STALL_SPEED=1.2, STALL_TIME=3.0;
+  var MID=H/2;
+  var POST_R=0.11;
+  var POSTS=[[W/2-GOAL_HALF,0],[W/2+GOAL_HALF,0],[W/2-GOAL_HALF,H],[W/2+GOAL_HALF,H]];
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+  function len(x,y){ return Math.sqrt(x*x+y*y); }
+
+  /* side 0 = bottom (blue, the human), side 1 = top (red) */
+  function homeOf(side){ return { x:W/2, y: side===0 ? H-2.4 : 2.4 }; }
+  function clampMallet(m, side){
+    var lo = side===0 ? MID+MALLET_R : MALLET_R;
+    var hi = side===0 ? H-MALLET_R : MID-MALLET_R;
+    if(m.x<MALLET_R) m.x=MALLET_R;
+    if(m.x>W-MALLET_R) m.x=W-MALLET_R;
+    if(m.y<lo) m.y=lo;
+    if(m.y>hi) m.y=hi;
+  }
+
+  function create(cfg){
+    var st={
+      W:W, H:H, cfg:cfg,
+      puck:{ x:W/2, y:MID, vx:0, vy:0, r:PUCK_R },
+      mallets:[ {x:W/2, y:H-2.4, vx:0, vy:0, r:MALLET_R, tx:W/2, ty:H-2.4},
+                {x:W/2, y:2.4,   vx:0, vy:0, r:MALLET_R, tx:W/2, ty:2.4} ],
+      score:[0,0],
+      target:cfg.target||5,
+      serving:1,                 /* which side the puck is placed in front of */
+      waiting:true,
+      over:false, winner:-1,
+      stall:0, rally:0, clock:0, hist:[],
+      lastTouch:-1,              /* who hit the puck last */
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    placePuck(st,1);
+    return st;
+  }
+
+  function placePuck(st, side){
+    st.puck.x=W/2;
+    st.puck.y = side===0 ? MID+2.2 : MID-2.2;
+    st.puck.vx=0; st.puck.vy=0;
+    st.serving=side; st.waiting=true; st.stall=0; st.lastTouch=-1;
+    /* a mallet may well be standing exactly where the puck is being put back */
+    separate(st);
+  }
+  function serve(st){
+    if(!st.waiting||st.over) return false;
+    st.waiting=false;
+    /* a gentle drift towards whoever is serving, so nobody is caught out */
+    var dir = st.serving===0 ? 1 : -1;
+    st.puck.vy = dir*2.4;
+    st.puck.vx = (st.rand()-0.5)*2.0;
+    return true;
+  }
+
+  function capPuck(st){
+    var p=st.puck, s=len(p.vx,p.vy);
+    if(s>MAX_PUCK){ p.vx=p.vx/s*MAX_PUCK; p.vy=p.vy/s*MAX_PUCK; }
+  }
+
+  /* Where the puck ends up once a mallet has pushed it clear.
+     Pushing straight out along the normal shoves it through the wall when the
+     mallet has it pinned, so when that happens it is slid ALONG the wall to the
+     nearest point that is genuinely clear - which is what being squeezed into a
+     cushion actually does. */
+  function resolveOut(st, m){
+    var p=st.puck, rsum=p.r+m.r;
+    var dx=p.x-m.x, dy=p.y-m.y, d=len(dx,dy);
+    if(d<1e-6){ dx=0; dy=(m.y>MID?-1:1); d=1; }
+    var tx=m.x+dx/d*rsum, ty=m.y+dy/d*rsum;
+    var minX=p.r, maxX=W-p.r, rem, off, a, b;
+    for(var pass=0; pass<3; pass++){
+      var moved=false;
+      if(tx<minX-1e-9 || tx>maxX+1e-9){
+        var wx = tx<minX ? minX : maxX;
+        rem = rsum*rsum-(wx-m.x)*(wx-m.x);
+        if(rem>1e-9){
+          off=Math.sqrt(rem); a=m.y+off; b=m.y-off;
+          ty = Math.abs(a-p.y)<Math.abs(b-p.y) ? a : b;
+        }
+        tx=wx; moved=true;
+      }
+      /* Being shoved clear must never put the puck through a goal mouth: goals
+         are scored by the puck travelling, never by a mallet posting it. */
+      if(ty<p.r-1e-9 || ty>H-p.r+1e-9){
+        var wy = ty<p.r ? p.r : H-p.r;
+        rem = rsum*rsum-(wy-m.y)*(wy-m.y);
+        if(rem>1e-9){
+          off=Math.sqrt(rem); a=m.x+off; b=m.x-off;
+          tx = Math.abs(a-p.x)<Math.abs(b-p.x) ? a : b;
+        }
+        ty=wy; moved=true;
+      }
+      if(!moved) break;
+    }
+    if(tx<minX) tx=minX; if(tx>maxX) tx=maxX;
+    if(ty<p.r) ty=p.r; if(ty>H-p.r) ty=H-p.r;
+    return {x:tx, y:ty, nx:dx/d, ny:dy/d};
+  }
+
+  function hitMallet(st, m, ev){
+    var p=st.puck;
+    var dx=p.x-m.x, dy=p.y-m.y;
+    var d=len(dx,dy), rsum=p.r+m.r;
+    if(d>=rsum) return false;
+    var out=resolveOut(st,m);
+    var nx=out.nx, ny=out.ny;
+    p.x=out.x; p.y=out.y;
+    var rvx=p.vx-m.vx, rvy=p.vy-m.vy;
+    var along=rvx*nx+rvy*ny;
+    if(along<0){
+      p.vx-=(1+RESTITUTION)*along*nx;
+      p.vy-=(1+RESTITUTION)*along*ny;
+    }
+    var s=len(p.vx,p.vy);
+    if(s<MIN_AFTER_HIT){
+      if(s<1e-6){ p.vx=nx*MIN_AFTER_HIT; p.vy=ny*MIN_AFTER_HIT; }
+      else { p.vx=p.vx/s*MIN_AFTER_HIT; p.vy=p.vy/s*MIN_AFTER_HIT; }
+    }
+    capPuck(st);
+    st.stall=0; st.rally++;
+    ev.hit++;
+    return true;
+  }
+
+  /* Nothing may be left overlapping at the end of a frame.
+     Pushing the puck clear handles almost everything, but a puck held between
+     BOTH mallets at the halfway line cannot be solved by moving the puck at all
+     - the two constraints point straight at each other. So when that happens the
+     mallet gives way instead: it is the thing a finger is holding, it has no
+     constraint against the other mallet, and a frame of it hovering at the edge
+     of the puck is exactly what being blocked should look like. */
+  function separate(st){
+    var p=st.puck, i, pass, m, d;
+    for(pass=0; pass<4; pass++){
+      var any=false;
+      for(i=0;i<2;i++){
+        m=st.mallets[i];
+        d=len(p.x-m.x, p.y-m.y);
+        if(d>=p.r+m.r-1e-9) continue;
+        any=true;
+        var out=resolveOut(st,m);
+        p.x=out.x; p.y=out.y;
+      }
+      if(!any) return;
+    }
+    for(pass=0; pass<4; pass++){
+      var stuck=false;
+      for(i=0;i<2;i++){
+        m=st.mallets[i];
+        var ex=m.x-p.x, ey=m.y-p.y, e=len(ex,ey), rs=p.r+m.r;
+        if(e>=rs-1e-9) continue;
+        stuck=true;
+        if(e<1e-6){ ex=0; ey=(i===0?1:-1); e=1; }
+        m.x=p.x+ex/e*rs; m.y=p.y+ey/e*rs;
+        clampMallet(m,i);
+      }
+      if(!stuck) return;
+    }
+  }
+
+  /* the goalposts are real: a shot can rattle off one and stay out */
+  function hitPost(st, gx, gy, ev){
+    var p=st.puck;
+    var dx=p.x-gx, dy=p.y-gy, d=len(dx,dy), rsum=p.r+POST_R;
+    if(d>=rsum) return false;
+    if(d<1e-9){ dx=0; dy=(gy<MID?1:-1); d=1; }
+    var nx=dx/d, ny=dy/d;
+    p.x=gx+nx*rsum; p.y=gy+ny*rsum;
+    var along=p.vx*nx+p.vy*ny;
+    if(along<0){ p.vx-=(1+WALL_BOUNCE)*along*nx; p.vy-=(1+WALL_BOUNCE)*along*ny; }
+    ev.post++;
+    return true;
+  }
+
+  /* Where the puck will cross a given line, side-wall bounces included.
+     A defender who knows this can be beaten by an angle it reads wrong; a
+     defender that simply sits on the puck cannot be beaten at all. */
+  /* Where the puck is heading, read as a straight line.
+     A defender that folds the cushion bounce into its prediction is literally
+     unbeatable - measured at nought goals conceded in thirty games - so the
+     computer reads the shot the way a person does and gets wrong-footed by a
+     bank. That is where goals come from. */
+  function predictX(p, lineY){
+    if(Math.abs(p.vy)<1e-4) return p.x;
+    var t=(lineY-p.y)/p.vy;
+    if(t<0) return p.x;
+    var raw=p.x+p.vx*t;
+    return Math.max(PUCK_R, Math.min(W-PUCK_R, raw));
+  }
+
+  /* The computer mallet plays like a person: hold a line in front of your own
+     goal and read where the puck is going, then step out and strike when the
+     puck is yours and not a threat.  An earlier version simply chased the puck
+     and sat on it, which made it literally unbeatable - 500 seconds of rally
+     without a single goal. */
+  /* what the computer can see: the puck as it was one reaction ago */
+  function seen(st, react){
+    var h=st.hist;
+    if(!h.length) return st.puck;
+    var want=st.clock-react;
+    for(var i=0;i<h.length;i++) if(h[i].t>=want) return h[i];
+    return h[h.length-1];
+  }
+
+  function think(st, side, dt){
+    var m=st.mallets[side];
+    var c=st.cfg.ai;
+    /* a computer with no reaction time is a wall, not an opponent - difficulty
+       here is mostly how long it takes to notice, which is what separates
+       people too */
+    var p=seen(st, c.react||0);
+    var line = side===0 ? H-1.5 : 1.5;
+    var toward = side===0 ? (p.vy>0.5) : (p.vy<-0.5);
+    var mine = side===0 ? (p.y>MID) : (p.y<MID);
+    var tx, ty;
+    if(toward && !st.waiting){
+      m.aim=null;
+      tx=predictX(p, line)+(st.rand()-0.5)*c.wobble;
+      ty=line;
+    }else if(mine && !st.waiting){
+      /* pick a spot in the far goal and stick to it for the whole strike -
+         re-rolling it every frame just averages back to the middle, which is
+         the easiest shot in the game to save */
+      if(m.aim==null){
+        var spot=W/2+(st.rand()-0.5)*2*GOAL_HALF*(c.aimSpread||0);
+        /* Sometimes go off the cushion. Since neither side reads a bank shot in
+           advance, this is the one way to beat a defender who is otherwise
+           always in the right place - it is how people score, too. */
+        if(st.rand()<(c.bankShot||0)) spot = (st.rand()<0.5) ? -spot : 2*W-spot;
+        m.aim=spot;
+      }
+      var gy = side===0 ? 0 : H;
+      var ax=st.puck.x-m.aim, ay=st.puck.y-gy;
+      var al=len(ax,ay)||1;
+      var stand=(PUCK_R+m.r)*1.02;
+      tx=p.x+ax/al*stand+(st.rand()-0.5)*c.wobble;
+      ty=p.y+ay/al*stand;
+    }else{
+      m.aim=null;
+      tx=W/2+(p.x-W/2)*0.3;
+      ty=line;
+    }
+    m.tx=tx; m.ty=ty;
+    var dx=tx-m.x, dy=ty-m.y;
+    var d=len(dx,dy);
+    if(d>1e-6){
+      var step=Math.min(d, c.speed*dt);
+      m.x+=dx/d*step; m.y+=dy/d*step;
+    }
+    clampMallet(m, side);
+  }
+
+  /* move a human mallet towards where the finger is, at a human speed */
+  function drive(st, side, dt){
+    var m=st.mallets[side];
+    var dx=m.tx-m.x, dy=m.ty-m.y;
+    var d=len(dx,dy);
+    var maxStep=st.cfg.humanSpeed*dt;
+    if(d>maxStep && d>1e-6){ m.x+=dx/d*maxStep; m.y+=dy/d*maxStep; }
+    else { m.x=m.tx; m.y=m.ty; }
+    clampMallet(m, side);
+  }
+
+  function setTarget(st, side, x, y){
+    var m=st.mallets[side];
+    m.tx=x; m.ty=y;
+    var lo = side===0 ? MID+m.r : m.r;
+    var hi = side===0 ? H-m.r : MID-m.r;
+    if(m.tx<m.r) m.tx=m.r;
+    if(m.tx>W-m.r) m.tx=W-m.r;
+    if(m.ty<lo) m.ty=lo;
+    if(m.ty>hi) m.ty=hi;
+  }
+
+  function step(st, dt){
+    var ev={ hit:0, wall:0, post:0, goal:-1, over:false, served:false, stalled:false };
+    if(st.over) return ev;
+    if(dt>0.05) dt=0.05;
+    var i, m;
+    st.clock+=dt;
+    st.hist.push({t:st.clock, x:st.puck.x, y:st.puck.y, vx:st.puck.vx, vy:st.puck.vy});
+    while(st.hist.length && st.hist[0].t < st.clock-0.8) st.hist.shift();
+
+    /* mallets first, remembering how fast they were going so they can shove */
+    for(i=0;i<2;i++){
+      m=st.mallets[i];
+      var ox=m.x, oy=m.y;
+      if(st.cfg.ai && i===1) think(st,i,dt); else drive(st,i,dt);
+      m.vx=(m.x-ox)/Math.max(dt,1e-4);
+      m.vy=(m.y-oy)/Math.max(dt,1e-4);
+    }
+
+    if(st.waiting){
+      /* even sitting still the mallets must not be left inside the puck */
+      separate(st);
+      return ev;
+    }
+
+    var p=st.puck;
+    var dist=len(p.vx,p.vy)*dt;
+    var steps=Math.max(1, Math.ceil(dist/MAX_STEP));
+    var sdt=dt/steps;
+    for(var s=0;s<steps;s++){
+      p.x+=p.vx*sdt; p.y+=p.vy*sdt;
+
+      /* over the line is a goal before anything else gets a say */
+      var inMouth = Math.abs(p.x-W/2) < GOAL_HALF;
+      if(inMouth && p.y<0){ ev.goal=0; break; }          /* bottom player scores */
+      if(inMouth && p.y>H){ ev.goal=1; break; }          /* top player scores */
+
+      for(var q=0;q<POSTS.length;q++) hitPost(st, POSTS[q][0], POSTS[q][1], ev);
+
+      if(p.x<p.r){ p.x=p.r; p.vx=Math.abs(p.vx)*WALL_BOUNCE; ev.wall++; }
+      else if(p.x>W-p.r){ p.x=W-p.r; p.vx=-Math.abs(p.vx)*WALL_BOUNCE; ev.wall++; }
+
+      inMouth = Math.abs(p.x-W/2) < GOAL_HALF;
+      if(p.y<p.r && !inMouth){ p.y=p.r; p.vy=Math.abs(p.vy)*WALL_BOUNCE; ev.wall++; }
+      else if(p.y>H-p.r && !inMouth){ p.y=H-p.r; p.vy=-Math.abs(p.vy)*WALL_BOUNCE; ev.wall++; }
+
+      for(i=0;i<2;i++){
+        if(hitMallet(st, st.mallets[i], ev)) st.lastTouch=i;
+      }
+    }
+
+    if(ev.goal<0) separate(st);
+
+    /* friction */
+    var f=Math.pow(FRICTION, dt);
+    p.vx*=f; p.vy*=f;
+    if(len(p.vx,p.vy)<0.05){ p.vx=0; p.vy=0; }
+    capPuck(st);
+
+    if(ev.goal>=0){
+      st.score[ev.goal]++;
+      st.rally=0;
+      placePuck(st, ev.goal===0 ? 1 : 0);        /* the one who conceded serves */
+      if(st.score[ev.goal]>=st.target){ st.over=true; st.winner=ev.goal; ev.over=true; }
+      return ev;
+    }
+
+    /* a puck crawling in a corner is nobody's idea of a game */
+    if(len(p.vx,p.vy)<STALL_SPEED){
+      st.stall+=dt;
+      if(st.stall>=STALL_TIME){
+        placePuck(st, st.lastTouch===0 ? 1 : 0);
+        ev.stalled=true;
+      }
+    }else st.stall=0;
+
+    return ev;
+  }
+
+  /* every promise the game makes, checked from the outside */
+  function audit(st){
+    var p=st.puck, i;
+    if(!isFinite(p.x)||!isFinite(p.y)||!isFinite(p.vx)||!isFinite(p.vy)) return "puck went to infinity";
+    if(p.x<p.r-1e-6 || p.x>W-p.r+1e-6) return "puck left the table sideways";
+    if(p.y<-1e-6 || p.y>H+1e-6) return "puck left the table through an end";
+    if(st.waiting && len(p.vx,p.vy)>1e-6) return "puck is moving while waiting to be served";
+    if(len(p.vx,p.vy)>MAX_PUCK+1e-3) return "puck is going faster than the cap";
+    for(i=0;i<2;i++){
+      var m=st.mallets[i];
+      if(m.x<m.r-1e-6 || m.x>W-m.r+1e-6) return "mallet "+i+" left the table sideways";
+      var lo = i===0 ? MID+m.r : m.r;
+      var hi = i===0 ? H-m.r : MID-m.r;
+      if(m.y<lo-1e-6 || m.y>hi+1e-6) return "mallet "+i+" left its own half";
+      var d=len(p.x-m.x, p.y-m.y);
+      if(d < p.r+m.r-1e-3) return "puck is overlapping mallet "+i;
+    }
+    if(st.score[0]<0||st.score[1]<0) return "a score went negative";
+    if(st.score[0]>st.target||st.score[1]>st.target) return "a score went past the target";
+    if(!st.over && (st.score[0]>=st.target||st.score[1]>=st.target)) return "target reached but not over";
+    return null;
+  }
+
+  return { W:W, H:H, MID:MID, PUCK_R:PUCK_R, MALLET_R:MALLET_R, GOAL_HALF:GOAL_HALF,
+           MAX_PUCK:MAX_PUCK, STALL_TIME:STALL_TIME,
+           rng:rng, create:create, step:step, serve:serve, placePuck:placePuck,
+           setTarget:setTarget, audit:audit, homeOf:homeOf, len:len, predictX:predictX,
+           POSTS:POSTS, POST_R:POST_R };
+}
+if(typeof module!=='undefined') module.exports = makeHockey;
+</script>
+<script>
+(function(){
+"use strict";
+var AH=makeHockey();
+var LS="gg_airhockey_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"two",  name:"Two Players", cls:"z-p", tag:"Share the phone &middot; one at each end", ai:null},
+  {id:"easy", name:"Gentle",      cls:"z-a", tag:"Against the computer &middot; takes its time",
+   ai:{speed:5.5, wobble:2.4, react:0.44, aimSpread:0.15, bankShot:0.04}},
+  {id:"med",  name:"Tricky",      cls:"z-b", tag:"Against the computer &middot; a proper contest",
+   ai:{speed:10, wobble:1.1, react:0.26, aimSpread:0.55, bankShot:0.28}},
+  {id:"hard", name:"Fiendish",    cls:"z-c", tag:"Against the computer &middot; reads you quickly",
+   ai:{speed:15, wobble:0.5, react:0.12, aimSpread:0.95, bankShot:0.60}}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+
+var BLUE="#2a72d4", RED="#e8483f", ICE="#fdfbf7";
+
+/* ---------------- state ---------------- */
+var mId, S, started, running, lastT, wallsSince, celebrate;
+/* Only the test hook ever sets this. It stops the clock and nothing else, so a
+   test can advance the world a frame at a time instead of racing the animation
+   loop. With the hook stripped out it stays false for good. */
+var frozen=false;
+
+function newMatch(id, sc){
+  mId=id; save("mode",id);
+  var m=modeOf(id);
+  S=AH.create({ humanSpeed:22, target:load("target",5), ai:m.ai });
+  if(sc){ S.score[0]=sc[0]|0; S.score[1]=sc[1]|0; }
+  running=true; lastT=0; wallsSince=0; celebrate=0;
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,SC=0,OX=0,OY=0;
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  /* the table is always 9 x 16 units, so it plays the same on every phone */
+  SC=Math.min((aw-6)/AH.W, (ah-6)/AH.H);
+  OX=Math.round((aw-SC*AH.W)/2); OY=Math.round((ah-SC*AH.H)/2);
+}
+window.addEventListener("resize", function(){ layout(); });
+function px(x){ return OX+x*SC; }
+function py(y){ return OY+y*SC; }
+function rr(x,y,w,h,r){
+  if(r>w/2) r=w/2; if(r>h/2) r=h/2;
+  ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+function drawMallet(m, col){
+  var cx=px(m.x), cy=py(m.y), r=m.r*SC;
+  ctx.fillStyle="rgba(120,50,30,.18)";
+  ctx.beginPath(); ctx.arc(cx, cy+r*0.16, r, 0, 6.284); ctx.fill();
+  ctx.fillStyle=col;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.284); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.30)";
+  ctx.beginPath(); ctx.arc(cx, cy, r*0.66, 0, 6.284); ctx.fill();
+  ctx.fillStyle=col;
+  ctx.beginPath(); ctx.arc(cx, cy, r*0.44, 0, 6.284); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.45)";
+  ctx.beginPath(); ctx.arc(cx-r*0.26, cy-r*0.30, r*0.20, 0, 6.284); ctx.fill();
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!SC){ layout(); if(!SC) return; }
+  if(!S) return;
+
+  if(!lastT) lastT=ts||0;
+  var dt=Math.min(50,(ts||0)-lastT)/1000; lastT=ts||0;
+  if(started && running && !frozen && !S.over) advance(dt);
+  if(celebrate>0) celebrate-=dt*1000;
+
+  ctx.clearRect(0,0,VW,VH);
+  var TW=SC*AH.W, TH=SC*AH.H;
+
+  /* table */
+  ctx.fillStyle=ICE;
+  rr(OX-3,OY-3,TW+6,TH+6,Math.max(12,SC*0.9)); ctx.fill();
+  ctx.strokeStyle="rgba(226,89,63,.35)"; ctx.lineWidth=2.5;
+  rr(OX-1,OY-1,TW+2,TH+2,Math.max(11,SC*0.85)); ctx.stroke();
+
+  /* markings */
+  ctx.strokeStyle="rgba(226,89,63,.28)"; ctx.lineWidth=Math.max(1.5,SC*0.06);
+  ctx.beginPath(); ctx.moveTo(px(0),py(AH.MID)); ctx.lineTo(px(AH.W),py(AH.MID)); ctx.stroke();
+  ctx.beginPath(); ctx.arc(px(AH.W/2),py(AH.MID),SC*1.7,0,6.284); ctx.stroke();
+  ctx.beginPath(); ctx.arc(px(AH.W/2),py(AH.MID),SC*0.28,0,6.284); ctx.stroke();
+  for(var e=0;e<2;e++){
+    var yy = e===0 ? py(2.6) : py(AH.H-2.6);
+    ctx.beginPath(); ctx.moveTo(px(0),yy); ctx.lineTo(px(AH.W),yy); ctx.stroke();
+  }
+
+  /* goals */
+  var gh=Math.max(5,SC*0.34);
+  ctx.fillStyle=RED;
+  rr(px(AH.W/2-AH.GOAL_HALF), OY-gh*0.7, AH.GOAL_HALF*2*SC, gh, gh*0.4); ctx.fill();
+  ctx.fillStyle=BLUE;
+  rr(px(AH.W/2-AH.GOAL_HALF), OY+TH-gh*0.3, AH.GOAL_HALF*2*SC, gh, gh*0.4); ctx.fill();
+  ctx.fillStyle="rgba(232,72,63,.10)";
+  rr(px(AH.W/2-AH.GOAL_HALF), OY, AH.GOAL_HALF*2*SC, SC*1.1, 4); ctx.fill();
+  ctx.fillStyle="rgba(42,114,212,.10)";
+  rr(px(AH.W/2-AH.GOAL_HALF), OY+TH-SC*1.1, AH.GOAL_HALF*2*SC, SC*1.1, 4); ctx.fill();
+
+  /* posts */
+  ctx.fillStyle="rgba(120,60,40,.55)";
+  for(var q=0;q<AH.POSTS.length;q++){
+    ctx.beginPath();
+    ctx.arc(px(AH.POSTS[q][0]), py(AH.POSTS[q][1]), Math.max(2,AH.POST_R*SC), 0, 6.284);
+    ctx.fill();
+  }
+
+  /* the score, big and faint, the right way up for whoever is looking at it */
+  ctx.save();
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font="900 "+Math.round(SC*2.6)+"px -apple-system,Helvetica,Arial";
+  ctx.fillStyle="rgba(42,114,212,.14)";
+  ctx.fillText(String(S.score[0]), px(AH.W/2), py(AH.H*0.70));
+  ctx.translate(px(AH.W/2), py(AH.H*0.30));
+  ctx.rotate(Math.PI);
+  ctx.fillStyle="rgba(232,72,63,.14)";
+  ctx.fillText(String(S.score[1]), 0, 0);
+  ctx.restore();
+
+  drawMallet(S.mallets[1], RED);
+  drawMallet(S.mallets[0], BLUE);
+
+  /* puck */
+  var p=S.puck;
+  ctx.fillStyle="rgba(120,50,30,.20)";
+  ctx.beginPath(); ctx.arc(px(p.x), py(p.y)+p.r*SC*0.20, p.r*SC, 0, 6.284); ctx.fill();
+  ctx.fillStyle="#2f2a2e";
+  ctx.beginPath(); ctx.arc(px(p.x), py(p.y), p.r*SC, 0, 6.284); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.30)";
+  ctx.beginPath(); ctx.arc(px(p.x)-p.r*SC*0.28, py(p.y)-p.r*SC*0.30, p.r*SC*0.34, 0, 6.284); ctx.fill();
+
+  /* prompts */
+  if(started && S.waiting && !S.over){
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    var msg = celebrate>0 ? "GOAL!" : "TAP TO SERVE";
+    var yPos = S.serving===0 ? AH.H*0.62 : AH.H*0.38;
+    ctx.font="900 "+Math.round(Math.min(26,SC*1.15))+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle = celebrate>0 ? "rgba(226,89,63,.95)" : "rgba(226,89,63,.85)";
+    if(S.serving===1 && modeOf(mId).ai===null){
+      ctx.translate(px(AH.W/2), py(yPos)); ctx.rotate(Math.PI);
+      ctx.fillText(msg, 0, 0);
+    }else{
+      ctx.fillText(msg, px(AH.W/2), py(yPos));
+    }
+    ctx.restore();
+  }
+}
+
+/* ---------------- the one place the world moves ---------------- */
+function advance(dt){
+  var ev=AH.step(S, dt);
+  if(ev.hit){ beep(520,.04,"square",.035); wallsSince=0; }
+  if(ev.wall){ beep(340,.03,"square",.025); wallsSince+=ev.wall; }
+  if(ev.post) beep(760,.05,"square",.04);
+  if(ev.goal>=0){
+    celebrate=1100;
+    beep(660,.14,"triangle",.08);
+    setTimeout(function(){ beep(880,.14,"triangle",.08); },130);
+    if(window.GGA){
+      GGA.haptic("success");
+      if(ev.goal===0) GGA.award("ah_first");
+      if(wallsSince>0 && S.lastTouch===ev.goal) GGA.award("ah_bank");
+    }
+    wallsSince=0;
+    persist();
+  }
+  if(ev.stalled) beep(300,.10,"sine",.04);
+  if(ev.over) finish();
+  paintHUD();
+  return ev;
+}
+
+function finish(){
+  running=false;
+  save("cur",null);
+  var m=modeOf(mId);
+  var played=load("played",0)+1; save("played",played);
+  if(window.GGA){
+    if(m.ai===null) GGA.award("ah_2p");
+    if(played>=10) GGA.award("ah_10");
+    if(S.winner===0){
+      GGA.award("ah_win");
+      if(S.score[1]===0) GGA.award("ah_clean");
+      if(mId==="hard") GGA.award("ah_hard");
+    }
+    GGA.haptic(S.winner===0?"success":"error");
+  }
+  if(S.winner===0){ save("wins", load("wins",0)+1); }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  setTimeout(function(){ winScreen(); },560);
+}
+
+function paintHUD(){
+  document.getElementById("vRed").textContent=S.score[1];
+  document.getElementById("vBlue").textContent=S.score[0];
+  document.getElementById("vTarget").textContent=S.target;
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started) return;
+  if(S.over || (S.score[0]===0 && S.score[1]===0)){ save("cur",null); return; }
+  save("cur",{ m:mId, s:[S.score[0],S.score[1]], t:S.target });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||!c.s) return false;
+  if(!modeOf(c.m)) return false;
+  if(c.t) save("target", c.t);
+  newMatch(c.m, c.s);
+  if(S.score[0]>=S.target || S.score[1]>=S.target) return false;
+  paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function unitsOf(clientX, clientY){
+  var b=cv.getBoundingClientRect();
+  return { x:(clientX-b.left-OX)/SC, y:(clientY-b.top-OY)/SC };
+}
+function sideFor(u){
+  var side = u.y>AH.MID ? 0 : 1;
+  if(modeOf(mId).ai && side===1) return -1;   /* that mallet belongs to the computer */
+  return side;
+}
+var claimed={};                                /* touch identifier -> side */
+function onStart(e){
+  if(!started||S.over||!running) return;
+  e.preventDefault();
+  var list=e.changedTouches||[e];
+  for(var i=0;i<list.length;i++){
+    var t=list[i];
+    var u=unitsOf(t.clientX, t.clientY);
+    var side=sideFor(u);
+    if(side<0) continue;
+    claimed[t.identifier==null?"m":t.identifier]=side;
+    AH.setTarget(S, side, u.x, u.y);
+  }
+  if(S.waiting) AH.serve(S);
+}
+function onMove(e){
+  if(!started||S.over) return;
+  var list=e.changedTouches||[e];
+  var used=false;
+  for(var i=0;i<list.length;i++){
+    var t=list[i];
+    var key=t.identifier==null?"m":t.identifier;
+    if(!(key in claimed)) continue;
+    var u=unitsOf(t.clientX, t.clientY);
+    AH.setTarget(S, claimed[key], u.x, u.y);
+    used=true;
+  }
+  if(used && e.cancelable) e.preventDefault();
+}
+function onEnd(e){
+  var list=e.changedTouches||[e];
+  for(var i=0;i<list.length;i++){
+    var t=list[i];
+    delete claimed[t.identifier==null?"m":t.identifier];
+  }
+}
+cv.addEventListener("touchstart",onStart,{passive:false});
+cv.addEventListener("touchmove",onMove,{passive:false});
+cv.addEventListener("touchend",onEnd);
+cv.addEventListener("touchcancel",onEnd);
+cv.addEventListener("mousedown",onStart);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",onEnd);
+cv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+document.getElementById("tReset").onclick=function(){
+  if(!started||S.over) return;
+  AH.placePuck(S, S.lastTouch===0 ? 1 : 0);
+  beep(420,.08,"sine",.04);
+  paintHUD();
+};
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ newMatch(mId); persist(); closeOvl(); return; }
+  running=false;
+  openOvl('<h2>START AGAIN?</h2><p>This match will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW MATCH</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){ newMatch(mId); persist(); closeOvl(); };
+  card.querySelector("#n").onclick=function(){ running=true; lastT=0; closeOvl(); };
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  running=false;
+  var cur=load("cur",null);
+  var tgt=load("target",5);
+  var h='<h2>AIR HOCKEY</h2><p>Slide your mallet with a finger. First to '+tgt+' wins.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bTarget">FIRST TO '+tgt+' &middot; TAP TO CHANGE</button>';
+  if(cur&&cur.s) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+
+    cur.s[1]+' &ndash; '+cur.s[0]+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newMatch(el.getAttribute("data-m"));
+      persist(); closeOvl(); layout();
+    };
+  });
+  card.querySelector("#bTarget").onclick=function(){
+    var opts=[3,5,7,9], t=load("target",5);
+    save("target", opts[(opts.indexOf(t)+1)%opts.length]);
+    titleScreen();
+  };
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newMatch(load("mode","two"));
+    persist(); closeOvl(); layout();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Put a finger on your half and the mallet follows it. <b>Blue is the bottom end, red is the top.</b><br><br>'+
+    '&#9642; In <b>Two Players</b> both of you hold the phone between you and play at the same time &mdash; a finger each, one at each end.<br><br>'+
+    '&#9642; You cannot reach past the halfway line, and neither can they.<br><br>'+
+    '&#9642; Tap anywhere to serve. Whoever let the last one in serves the next.<br><br>'+
+    '&#9642; The <b>cushions are live</b>: the computer reads a straight shot but gets wrong-footed off the side wall, so bank it in.<br><br>'+
+    '&#9642; A puck left crawling for three seconds is put back on the spot.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function winScreen(){
+  var m=modeOf(mId);
+  var youWon=(S.winner===0);
+  var head = m.ai===null ? (S.winner===0?"BLUE WINS!":"RED WINS!") : (youWon?"YOU WIN!":"COMPUTER WINS");
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+(m.ai===null?"Two players":m.name)+' &middot; first to '+S.target+'.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">RED</div><div class="sv">'+S.score[1]+'</div></div>'+
+      '<div class="st"><div class="sk">BLUE</div><div class="sv">'+S.score[0]+'</div></div>'+
+      '<div class="st"><div class="sk">PLAYED</div><div class="sv">'+load("played",0)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER MATCH</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE OPPONENT</button>');
+  card.querySelector("#bAgain").onclick=function(){ newMatch(mId); persist(); closeOvl(); layout(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.over){ titleScreen(); return; }
+  running=false; persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">RED</div><div class="sv">'+S.score[1]+'</div></div>'+
+      '<div class="st"><div class="sk">BLUE</div><div class="sv">'+S.score[0]+'</div></div>'+
+      '<div class="st"><div class="sk">FIRST TO</div><div class="sv">'+S.target+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE OPPONENT</button>');
+  card.querySelector("#bGo").onclick=function(){ running=true; lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+newMatch(load("mode","two"));
+started=false; running=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden){ running=false; persist(); }   /* never concede in your pocket */
+});
+window.addEventListener("pagehide", persist);
+
+
+})();
+</script>
+</body>
+</html>

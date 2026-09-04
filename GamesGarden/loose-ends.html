@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Loose Ends</title>
+<style>
+  :root{ --ink:#22407e; --soft:#5a7ab5; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 10% -8%, #bcd6ff 0%, transparent 55%),
+      radial-gradient(120% 80% at 92% 105%, #ffe58a 0%, transparent 55%),
+      linear-gradient(160deg, #5a8bf0 0%, #7fa8ff 46%, #ffd85e 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#2f5bb5;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(20,50,120,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.6px;line-height:1;
+    font-size:clamp(15px,4.8vw,21px);text-shadow:0 2px 0 #3f6fd8,0 4px 12px rgba(15,40,100,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#2f5bb5;
+    box-shadow:0 4px 0 rgba(45,80,160,.35),0 6px 14px rgba(20,50,120,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(45,80,160,.35)}
+  .tool .ti{font-size:18px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(25,55,125,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#f2f6ff);
+    border:2px solid #fff;border-radius:22px;padding:20px 18px 16px;text-align:center;
+    color:#3c5a92;box-shadow:0 20px 50px rgba(15,40,100,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:24px;font-weight:900;letter-spacing:1px;color:#3a6ad0;margin-bottom:3px}
+  .card p{font-size:14px;line-height:1.55;color:#5a7ab5;margin:8px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:9px;margin-top:13px}
+  .sz{border-radius:16px;padding:12px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:15px}
+  .sz .stg{font-size:10.5px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-a{background:linear-gradient(180deg,#9fd8ff,#3f9fe0)}
+  .z-b{background:linear-gradient(180deg,#ffd97a,#f0ac25)}
+  .z-c{background:linear-gradient(180deg,#93a2f2,#4a55c8)}
+  .btn{display:block;width:100%;margin-top:9px;padding:13px;border:none;border-radius:15px;
+    font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#8fb6ff,#3a6ad0);color:#fff;
+    box-shadow:0 5px 0 #2a4fa8,0 8px 18px rgba(40,80,180,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #2a4fa8}
+  .btn-alt{background:#eef3ff;color:#3a6ad0;border:1.5px solid #d8e3fa}
+  .rules{text-align:left;font-size:13px;line-height:1.7;color:#5a7ab5;margin:11px 2px}
+  .rules b{color:#3a6ad0}
+  .stats{display:flex;gap:8px;margin-top:12px}
+  .st{flex:1;background:#eef3ff;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#9db2d8}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#3a6ad0}
+  .lvgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:12px;
+    max-height:44vh;overflow:auto;padding:2px}
+  .lv{aspect-ratio:1;border-radius:10px;background:#eef3ff;border:1.5px solid #d8e3fa;
+    color:#5a7ab5;font-size:12px;font-weight:900;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center}
+  .lv.done{background:linear-gradient(180deg,#8fb6ff,#3a6ad0);border-color:#3a6ad0;color:#fff}
+  .lv.at{outline:3px solid #ffb703;outline-offset:1px}
+  .lv:active{transform:scale(.94)}
+  @media (max-height:700px){
+    .card{padding:15px 15px 12px}.card h2{font-size:20px}
+    .rules{font-size:11.7px;line-height:1.5}.btn{padding:11px;font-size:14px;margin-top:7px}
+    .sz{padding:10px}.sz .sn{font-size:14px}.lvgrid{max-height:38vh}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">LOOSE ENDS</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">LEVEL</div><div class="v" id="vLevel">1/60</div></div>
+    <div class="chip"><div class="k">JOINED</div><div class="v" id="vPipes">0/5</div></div>
+    <div class="chip"><div class="k">FILLED</div><div class="v" id="vFill">0%</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tHint"><div class="ti">&#128161;</div><div class="tl">HINT</div></div>
+    <div class="tool" id="tClear"><div class="ti">&#8635;</div><div class="tl">CLEAR</div></div>
+    <div class="tool" id="tLevels"><div class="ti">&#9783;</div><div class="tl">LEVELS</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Loose Ends - runtime helpers.
+   The same solver that verified every level offline ships inside the game and
+   powers the hint.  In play it only ever has to FIND a solution (stopAt 1), not
+   exhaust the search, so it returns in a few hundred nodes. */
+function makeLoose(){
+  "use strict";
+
+  function neighbours(W,H){
+    var NB=[], i, r, c, out;
+    for(i=0;i<W*H;i++){
+      r=(i/W)|0; c=i%W; out=[];
+      if(r>0) out.push(i-W);
+      if(r<H-1) out.push(i+W);
+      if(c>0) out.push(i-1);
+      if(c<W-1) out.push(i+1);
+      NB.push(out);
+    }
+    return NB;
+  }
+
+  /* Count solutions up to stopAt and keep the first one.  Prunes, cheapest first:
+       1. a pipe may not run alongside itself;
+       2. every empty square needs two neighbours that could still join a pipe;
+       3. every unfinished colour must still reach its own far end;
+       4. every empty square must be reachable by somebody. */
+  function solve(W,H,NB,pairs,stopAt,budget){
+    var N=W*H, K=pairs.length, k, i;
+    var cell=new Int32Array(N), target=new Int32Array(K), head=new Int32Array(K);
+    for(i=0;i<N;i++) cell[i]=-1;
+    for(k=0;k<K;k++){
+      cell[pairs[k][0]]=k; cell[pairs[k][1]]=k;
+      head[k]=pairs[k][0]; target[k]=pairs[k][1];
+    }
+    var solutions=0, nodes=0, blown=false, snapshot=null;
+    var seen=new Int32Array(N), stack=new Int32Array(N), reach=new Int32Array(N);
+    var live=new Uint8Array(N), stamp=0, rstamp=0;
+
+    function touchOk(k,v){
+      var nb=NB[v], n=0, j, u;
+      for(j=0;j<nb.length;j++){
+        u=nb[j];
+        if(u===target[k]) continue;
+        if(cell[u]===k) n++;
+      }
+      return n===1;
+    }
+    function besideTarget(k,v){
+      var nb=NB[v], j;
+      for(j=0;j<nb.length;j++) if(nb[j]===target[k]) return true;
+      return false;
+    }
+    function degreeOk(from){
+      var i,j,v,d,nb,q;
+      for(i=0;i<N;i++) live[i]=0;
+      for(q=from;q<K;q++){ live[head[q]]=1; live[target[q]]=1; }
+      for(i=0;i<N;i++){
+        if(cell[i]!==-1) continue;
+        nb=NB[i]; d=0;
+        for(j=0;j<nb.length;j++){ v=nb[j]; if(cell[v]===-1||live[v]) d++; }
+        if(d<2) return false;
+      }
+      return true;
+    }
+    function feasible(from){
+      var i,j,v,q,top,cur,nb,hit,anyFree=false;
+      rstamp++;
+      for(i=0;i<N;i++) if(cell[i]===-1){ anyFree=true; break; }
+      for(q=from;q<K;q++){
+        stamp++; top=0;
+        stack[top++]=head[q]; seen[head[q]]=stamp; hit=false;
+        while(top>0){
+          cur=stack[--top]; nb=NB[cur];
+          for(j=0;j<nb.length;j++){
+            v=nb[j];
+            if(seen[v]===stamp) continue;
+            if(v===target[q]){ hit=true; seen[v]=stamp; continue; }
+            if(cell[v]!==-1) continue;
+            seen[v]=stamp; reach[v]=rstamp; stack[top++]=v;
+          }
+        }
+        if(!hit) return false;
+      }
+      if(anyFree) for(i=0;i<N;i++) if(cell[i]===-1 && reach[i]!==rstamp) return false;
+      return true;
+    }
+    function full(){ for(var i=0;i<N;i++) if(cell[i]===-1) return false; return true; }
+
+    function go(k){
+      if(blown||solutions>=stopAt) return;
+      if(++nodes>budget){ blown=true; return; }
+      if(k===K){
+        if(full()){
+          solutions++;
+          if(!snapshot){ snapshot=new Int32Array(N); for(var z=0;z<N;z++) snapshot[z]=cell[z]; }
+        }
+        return;
+      }
+      var cur=head[k], nb=NB[cur], j, v, forced=besideTarget(k,cur);
+      for(j=0;j<nb.length;j++){
+        v=nb[j];
+        if(v===target[k]){
+          head[k]=v;
+          if(degreeOk(k+1)&&feasible(k+1)) go(k+1);
+          head[k]=cur;
+          if(solutions>=stopAt||blown) return;
+          continue;
+        }
+        if(forced) continue;                 /* beside our own end: finish or nothing */
+        if(cell[v]!==-1) continue;
+        cell[v]=k;
+        if(!touchOk(k,v)){ cell[v]=-1; continue; }
+        head[k]=v;
+        if(degreeOk(k)&&feasible(k)) go(k);
+        cell[v]=-1; head[k]=cur;
+        if(solutions>=stopAt||blown) return;
+      }
+    }
+
+    if(degreeOk(0)&&feasible(0)) go(0);
+    return {solutions:solutions, blown:blown, nodes:nodes, snapshot:snapshot};
+  }
+
+  /* One route per colour, read straight off the solved board.  A pipe never
+     runs alongside itself, so each square has exactly one unvisited same-colour
+     neighbour and the walk is never ambiguous. */
+  function routesFor(W,H,NB,pairs,budget){
+    var res=solve(W,H,NB,pairs,1,budget||500000);
+    if(!res.snapshot) return null;
+    var own=res.snapshot, N=W*H, K=pairs.length;
+    var seen=new Uint8Array(N), routes=[], k, j;
+    for(k=0;k<K;k++){
+      var a=pairs[k][0], b=pairs[k][1], route=[a], cur=a, guard=0;
+      seen[a]=1;
+      while(cur!==b && guard++<=N){
+        var nb=NB[cur], moved=false;
+        for(j=0;j<nb.length;j++){
+          var v=nb[j];
+          if(seen[v]||own[v]!==k) continue;
+          seen[v]=1; route.push(v); cur=v; moved=true;
+          break;
+        }
+        if(!moved) break;
+      }
+      if(cur!==b) return null;
+      routes.push(route);
+    }
+    return routes;
+  }
+
+  return { neighbours:neighbours, solve:solve, routesFor:routesFor };
+}
+if(typeof module!=='undefined') module.exports = makeLoose;
+</script>
+<script>
+var LEVELS = {"easy":{"w":6,"h":6,"levels":["050n000i0o0y0z0g040f030r0l08","0u0n0s040a020800060e0f0p0o0k","0z0o000i0502010a0b0f0e0t0n0k","0004050z0a0y090x060u0v0e080p","0u00050y0v0m0p0g0j0a0407","000n0z0g0y0i0a0r0c0k0q0d","000w0p0n0s0105020e0a0f0b","0003040n0t0w0v0c060q0k0m0f0s","0z0h050s040c0y0u0o08090k0p0l","000305090b0y0x0u060s0r0d0q0c","000n0t0w0a0q0u0j0o0f0l0d","0501000i0o0x070q0z0k0t0e080h","0z0i0p0s0t04000g0m060k0c","050z0u0a040l0r000k07010e","050x0u0s040l0p02030e080k","0u03040t0z0m0g0j0f0q0p0l","050z0u0g0r04030i0o0e080j","0u0c0v070608050z0e0x0y09030m","050z0y0v0u0a04060l0d0e0c","0u0n0o06000p0h0e0q0a0r0g","000i0u030v0y0z0q0k09050l0m0b","000o0u0j010h0n0k0r070l0d","000x0y0b05070a0d0p0g0m0q","0z0h0y06000q0s0k0m040905","050t0z040x0i0c030p0l0e0r","0z0w0v01020t070q0k0m0s0f","0z03020u0a0j0v0k0w0g0e0r","0u0y0z05040o030k0e0c0i07","05000b080h0u0o06070q0l0p","000o0u0d0z0k05070t0b0s0e080m","000x050t0z0d040m010l0f02","0z0i0501000r070b0e0t0n0f","050w000v040s0p0f0j03020d","000o0u01020b0w0h080g0a0l","0u01050y070w0x080s090g02","0z0o00050b07060r0d0t0f0n","0z0v0u0s0t06000h070f0g08","0004050c0i0w0z0q0p0t0k0s","0u000z0d010r020l0s05040m","000n0z090y060u0j0d0p","0u06000p0v02030n0z0g0a0y","000o0u02080y0z0l050m0a0n","0z0u0t02010o0s090p080k07","0z0403060c0y0p0s0a0l0m0e","000x01050p0a0b0f0e0z0l0t","0u0n0h040s0c03060m090e0a","0u000v0b050p080g0a0l","0u01020b0a0p0v0t0s0g0l0h","0z0u050c070o0p0s0t0a0f0b","05020b0z0u01070y0q0m0s0f","0u010z0d070b0e0g0m0a","000w010n070q0a0r0x0t0s0f","0u01020t0z08070l0f0q","0u0h0b01000m0s0e0f0j","050n0z0m0y0i0c04070g0a0k","0u0z0t01000s0r0e0j0f","000h0z0a060y0s0j0p0e","0z050u03040v0e0m0g0r","0501000o0u0a0b0x0l0y0m0z","0z0v0u0h000g0f040805"]},"med":{"w":8,"h":8,"levels":["1k1p1q05040w1c0p1d0h09171f0e0d100l18","1r0o1d1i1j0p0g0z10070u050d0r080c0k09","001l1d03040n0v1r1q0c0b160l1e1f0s170k","1r071q0g0600080e1i150h0u0t0x0y190z1a","1k1p1r1d1c051j06150c0i191a0l0d0s","071o1k1g1h0m1c1714100w05060s0i18","001l071b1r0e1q1506191h0p180i0s0a0h0c","1k02091n071b061r1q1e1h04030s0a100q18","1k00071b1l011r0u1q0i0m0a0b191h0r180j","1k080013091j1r0j1p1d1g15170i0h0z","1k1q1r0w1b03020o1a0h09100y0t0q0l","071p1k011i0h090u0d0i1e12160k0z0l","00131k081b0x1i0a09160i1e0k191h0s","1r0f070u001o051q1p02011e1g0i0z0a","0703020g1r0d1k0u0m1f180c0b14150i0w0a","001401151c1q1d0q1r0j0i040b1911131b0e","07031r0v0f1q0e111k0b090c1l1h1p170z1n","1k1b07031i1c130a021709121a0p110q","001o010f0e0a091g1p1b0i0s0z1a0u1i","070100131b1m1k121c0h190j0y0l0m10","000n080d0e0j1k130v0q0i1e0p11190y","071j1r03021409110h1c1k0s1g0i0k17","1r0500121a0w081g1h0k0s0h0z09","0006070w141n0h0n1r0q0p1o1p0y161h","001c1k1o1r1f01071d1a150d1i0e120l0m0r","001k1r0x1e13070y0106090d0e0p0h0s","1r0605080g1c1k0p1m1q1i0m0e1e0c0i0h0z","071r1k001l04051q1p0q0d0i0j0t0l18","071q1k0o001o1p0m0e01091g10161e0r","0701000v131n0g0m1m0p0x1g1i0u0z1a","001m07011n0v0n0b0m1e1d0j09100h0z","07021r1m1k131c191a08000r0s0a0i0m","070w090v0h0u1k0t1d1b131h171i","1k13071i1c001h1d010t0d19180x0i15","001k071r011i1q1m1l0a0i19110z170k","070g1r0e09141k0d1l171f0l1h0r0j19","000v1k0a0b12130t0l1i1j1o1n1d1l0q","0700080c1r1l1k1i1j0e0d140k110p0t","070w1r1n141i1d1j0x0v0p0f0e0i0c0h","1r1c140203131b1509180x170s16","1k02070h0c0v1r1l131g0p1a160j0t0i","071b1r041q0g1h0c001g010y0a0z","1k130v050e1h19001g0b081c0r09160a","1r1m001l070x1d0f1e0l170k110j","07131k1o1p0u1i08000x150s10040r05060k","070o091n1d0f1e0r0j1r1o1i111q","070g0o1m090v0h131d1b1e1j1r17","1r0o0g03091j160v0y0f070b0j05","1r0v1k00070p1q0x0f120e1e1f1i0s1h","001c1k0h1m1b1e1a0907190d0f130n0s","1r0o0007081g09100z0n0k0v1a0l","1k03041j1r151i0b0l0x17090h0z","071p061n051m040z001l1d090x0a","1k011r0v0n0h0p1q1i0c0e12100m","070o0w1m1d0c0d1o1n0m0r181719","1k1o1c131i08000x120i0a070v0e0k0f","0006070c1k0b1l0h0n1p1m121o1a101i","0006071q1i0a0l1k081e0g1d0y1c","00071r0w080v0o0m0u1d1j121317","00071k1r1j0a0m080g1h191f1g15"]},"hard":{"w":9,"h":9,"levels":["08271y0y0p09260b0a21251j1w0k121m1n0v0w0u","20002125261q011j1s0b020q0c1y170l1x1c131e141f","0024250h08111s0t0k0p0o0u1k1p0y1n0x1l1c0w","281r1z08070r101u1a0g1v0p0o1o0n1n1m1b1k0u","200900080h0j211q1h0o1y0l0k1s0v1x1o1d1e1c","28050g0w0015270o0x1d0c200j261t1o1n0t0k1c","282008020018090y170s0r151h191g1a1b1f","08271y0700222611060j0s0e0f1f0n1w1c0w1x15","0022080a0b1z281t1s0l1y0n0m1l0w1d1c1n","200i211q081y0905070j0g1t1s150x110w12141a","081h1q200702000y090n0o0t1y131x0r0s1f1o1a","20281r1w1x071i17190x0y010o0a0012150j140s","28191s100r081z0f0e0t0k171g1k1o120x141315","000z1828200a0b1g0o1p0j23241y1x1b0k121d0t","001r200208030b1t22130h140m1z28241v1d1m16","000q09180i0x200u28150w1a1f1j1s251t1y271v","00102821201u1v07191n011b0g1o061d1e0v0m14","081028200h1h0a0g191w0j1k1q1l1p0n1f0x0u16","0007080r10280q1a1j0z0y121p131o1c1n1b","082500211y070123240k060b0f1w1c1e0m1n","080300230h010a1j1s181k161o0l0z130y14","20090022230h081v1t161k0b02131c0d0e14","2818080y17222110001j1s0j0a070b0p0l1u1v1o1x0w","080009202822210e1t1z0f1q1p1k1b17160p0u0y","000z2823181v0g1i1r1u1s0n1p1k1g0o130p","28101s1q000q1h0f091j1k0e1f0a0j141d0t","08030010010g0h1z280k0a21261j0x1k0w1d131m","28231z08071y200r0i05060s0k1v1n211s0t141a","000h2024091r0a1t1k0g0l1h0y1w1y13151l1e1u","0022280h08261s020b251l05061x1n0x0o1e","081z2807201f160100151w0v0m1r1s1m1v12","28101z1v1u010j0q0z1n0g0c1m0p1g0x140y","0024281s1x05040j1p0t0s160l1b1c0x0o14","2024000z25170y0c0b1s0j1x1y0l0k151o13121m","202627081r011y111p0g071m0s151e0c1k0u0l1b","081q200207170a0o1z22210x1o0d0j141b0v120m","001008251y05241r1s1f1i031j0e040v0w13","0018090e281g2026270g0f1e1x140n1v0l0r0i1j","0007080c200b212528111z1m1q0p0y1k1b0j0s0w","0007081q0920280y270x211e1v1a110p0o14151c","081q0007090p280k270r0i15161v1s141t1n1k1e","001r200a011t2227280l081o031n04171g0n0e16","281r1z1u1s1q08040h090a1g0y1j1i0j0x12110v","2003041h1q1a1y0y0g1v0f0b0a0m0n11121u1t1d","0828271r1y0i1a0a091n1o0p071f060c1403","08271y07202606100a161x0s1n1i191l1j13","2806271i1904050y1s1g170s1b0o0n0b0a0u0t0v","001r200203070826250c0l170y1m1o0w0n1f","082524001s1p1j0307171g0c16060l050414","080i0r211s0g0h0n0k0y0z130u1z281o1p1u","0827261r07001y1s0g1j1i0e0d090i150s0m0t0n","281r001v0107081w1p1k1g0j0k0x1f1c1e12","2010081z28070r04051o0e1x260s0d0j1v1t1u0u","280807090a17270l260r0i1n1o1u0s1k1c1t","2820001i1r031t0z0b1o1p040q0v140f160g","0022011s280k1v0h080y021l031o1p0f1f06","280z081y270706020120210e0a1m1k0t1b0l","002208110b0h0k1z280t231x121u1e1t1c1s","28201r09001w021n08181h0l1p0g07030w04","2824231910080h1j1s1y1z0t0k0q1h0z1418"]}};
+</script>
+<script>
+(function(){
+"use strict";
+var LE=makeLoose();
+var LS="gg_looseends_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var BOARDS=[
+  {id:"easy", name:"Gentle",   cls:"z-a", tag:"6 &times; 6 &middot; 5 to 7 pipes"},
+  {id:"med",  name:"Tricky",   cls:"z-b", tag:"8 &times; 8 &middot; 7 to 9 pipes"},
+  {id:"hard", name:"Fiendish", cls:"z-c", tag:"9 &times; 9 &middot; 9 to 11 pipes"}
+];
+function boardOf(id){ for(var i=0;i<BOARDS.length;i++) if(BOARDS[i].id===id) return BOARDS[i]; return BOARDS[0]; }
+var COUNT=60;
+
+var COL=["#e63946","#1d7fe8","#f97316","#16a34a","#9333ea","#ec4899",
+         "#06b6d4","#84cc16","#8b5e34","#eab308","#0f766e"];
+
+/* ---------------- state ---------------- */
+var bId, W, H, N, K, lvl, EP, EPOF, route, owner, NB, moves, started, won, helps, solCache;
+
+function parseLevel(str){
+  var pairs=[];
+  for(var i=0;i<str.length;i+=4){
+    pairs.push([parseInt(str.substr(i,2),36), parseInt(str.substr(i+2,2),36)]);
+  }
+  return pairs;
+}
+function doneStr(id){
+  var s=load("done_"+id,"");
+  while(s.length<COUNT) s+="0";
+  return s;
+}
+function doneCount(id){
+  var s=doneStr(id), n=0;
+  for(var i=0;i<s.length;i++) if(s.charAt(i)==="1") n++;
+  return n;
+}
+function markDone(id,i){
+  var s=doneStr(id);
+  s=s.substr(0,i)+"1"+s.substr(i+1);
+  save("done_"+id,s);
+}
+
+function init(id, level){
+  bId=id; lvl=level;
+  save("board",id); save("lvl_"+id, level);
+  var pack=LEVELS[id];
+  W=pack.w; H=pack.h; N=W*H;
+  NB=LE.neighbours(W,H);
+  EP=parseLevel(pack.levels[level]);
+  K=EP.length;
+  EPOF=new Int32Array(N); for(var i=0;i<N;i++) EPOF[i]=-1;
+  owner=new Int32Array(N); for(i=0;i<N;i++) owner[i]=-1;
+  route=[];
+  for(var c=0;c<K;c++){
+    EPOF[EP[c][0]]=c; EPOF[EP[c][1]]=c;
+    owner[EP[c][0]]=c; owner[EP[c][1]]=c;
+    route.push([]);
+  }
+  moves=0; won=false; helps=0; solCache=null; drawC=-1;
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- routes ---------------- */
+function isEp(c,i){ return EP[c][0]===i || EP[c][1]===i; }
+function otherEnd(c,i){ return EP[c][0]===i ? EP[c][1] : EP[c][0]; }
+function truncate(c, keep){
+  var r=route[c];
+  for(var k=keep;k<r.length;k++) if(!isEp(c,r[k])) owner[r[k]]=-1;
+  r.length=keep;
+}
+function clearRoute(c){ truncate(c,0); }
+function connected(c){
+  var r=route[c];
+  return r.length>=2 && isEp(c,r[0]) && isEp(c,r[r.length-1]) && r[0]!==r[r.length-1];
+}
+function joinedCount(){ var n=0; for(var c=0;c<K;c++) if(connected(c)) n++; return n; }
+function filled(){ var n=0; for(var i=0;i<N;i++) if(owner[i]>=0) n++; return n; }
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,CS=0,OX=0,OY=0;
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40||!N) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  CS=Math.max(8, Math.floor(Math.min((aw-10)/W, (ah-10)/H)));
+  OX=Math.round((aw-CS*W)/2); OY=Math.round((ah-CS*H)/2);
+}
+window.addEventListener("resize", function(){ layout(); });
+
+function rr(x,y,w,h,r){
+  ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function mid(i){ return { x:OX+(i%W)*CS+CS/2, y:OY+((i/W)|0)*CS+CS/2 }; }
+
+function frame(){
+  requestAnimationFrame(frame);
+  if(!N||!CS){ layout(); if(!CS) return; }
+  ctx.clearRect(0,0,VW,VH);
+  var GW=CS*W, GH=CS*H;
+
+  ctx.fillStyle="rgba(255,255,255,.95)";
+  rr(OX-4, OY-4, GW+8, GH+8, Math.max(10,CS*0.30)); ctx.fill();
+
+  ctx.strokeStyle="#dde6f7"; ctx.lineWidth=1;
+  for(var g=1;g<W;g++){ ctx.beginPath(); ctx.moveTo(OX+g*CS,OY); ctx.lineTo(OX+g*CS,OY+GH); ctx.stroke(); }
+  for(g=1;g<H;g++){ ctx.beginPath(); ctx.moveTo(OX,OY+g*CS); ctx.lineTo(OX+GW,OY+g*CS); ctx.stroke(); }
+
+  /* pipes */
+  ctx.lineCap="round"; ctx.lineJoin="round";
+  for(var c=0;c<K;c++){
+    var r=route[c];
+    if(r.length<2) continue;
+    ctx.strokeStyle=COL[c%COL.length];
+    ctx.lineWidth=CS*(c===drawC?0.46:0.40);
+    ctx.beginPath();
+    var p0=mid(r[0]); ctx.moveTo(p0.x,p0.y);
+    for(var k=1;k<r.length;k++){ var p=mid(r[k]); ctx.lineTo(p.x,p.y); }
+    ctx.stroke();
+  }
+
+  /* endpoints */
+  for(c=0;c<K;c++){
+    for(var e=0;e<2;e++){
+      var m=mid(EP[c][e]);
+      ctx.fillStyle=COL[c%COL.length];
+      ctx.beginPath(); ctx.arc(m.x,m.y,CS*0.31,0,6.284); ctx.fill();
+      if(connected(c)){
+        ctx.strokeStyle="rgba(255,255,255,.92)"; ctx.lineWidth=Math.max(1.6,CS*0.075);
+        ctx.beginPath(); ctx.arc(m.x,m.y,CS*0.17,0,6.284); ctx.stroke();
+      }
+    }
+  }
+
+  /* the head you are dragging */
+  if(drawC>=0 && route[drawC].length){
+    var h=mid(route[drawC][route[drawC].length-1]);
+    ctx.strokeStyle="rgba(255,255,255,.9)"; ctx.lineWidth=Math.max(2,CS*0.09);
+    ctx.beginPath(); ctx.arc(h.x,h.y,CS*0.20,0,6.284); ctx.stroke();
+  }
+}
+
+/* ---------------- play ---------------- */
+var drawC=-1;
+function cellAt(x,y){
+  var c=Math.floor((x-OX)/CS), r=Math.floor((y-OY)/CS);
+  if(c<0||r<0||c>=W||r>=H) return -1;
+  return r*W+c;
+}
+function pos(e){
+  var b=cv.getBoundingClientRect();
+  var t=(e.touches&&e.touches.length)?e.touches[0]:((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+  return {x:t.clientX-b.left, y:t.clientY-b.top};
+}
+function head(){ var r=route[drawC]; return r.length?r[r.length-1]:-1; }
+function adjacent(a,b){
+  var ar=(a/W)|0, ac=a%W, br=(b/W)|0, bc=b%W;
+  return Math.abs(ar-br)+Math.abs(ac-bc)===1;
+}
+
+/* try to move the drawn pipe one square onto v */
+function step(v){
+  var c=drawC, r=route[c], h=r[r.length-1];
+  if(!adjacent(h,v)) return false;
+  var idx=r.indexOf(v);
+  if(idx>=0){ truncate(c, idx+1); return true; }        /* retrace back along yourself */
+  if(isEp(c,h) && r.length>1) return false;             /* already home - nothing past it */
+  if(EPOF[v]>=0 && EPOF[v]!==c) return false;           /* never through another pipe's end */
+  if(v===otherEnd(c,r[0])){
+    r.push(v); owner[v]=c;
+    beep(720,.07,"triangle",.05,980);
+    if(window.GGA) GGA.haptic("light");
+    return true;
+  }
+  if(owner[v]>=0 && owner[v]!==c){                      /* cut the pipe that was here */
+    var d=owner[v], di=route[d].indexOf(v);
+    if(di<0) return false;
+    truncate(d, di);
+  }
+  r.push(v); owner[v]=c;
+  return true;
+}
+function walkTo(t){
+  var guard=0;
+  while(head()!==t && guard++<24){
+    var h=head();
+    var hr=(h/W)|0, hc=h%W, tr=(t/W)|0, tc=t%W;
+    var dr=tr-hr, dc=tc-hc;
+    if(!dr && !dc) break;
+    var first, second;
+    if(Math.abs(dr)>=Math.abs(dc)){
+      first = dr>0 ? h+W : h-W;
+      second = dc===0 ? -1 : (dc>0 ? h+1 : h-1);
+    }else{
+      first = dc>0 ? h+1 : h-1;
+      second = dr===0 ? -1 : (dr>0 ? h+W : h-W);
+    }
+    if(step(first)) continue;
+    if(second>=0 && step(second)) continue;
+    break;
+  }
+}
+
+function onDown(e){
+  if(won||!started) return;
+  e.preventDefault();
+  var p=pos(e), i=cellAt(p.x,p.y);
+  if(i<0) return;
+  if(EPOF[i]>=0){
+    drawC=EPOF[i];
+    clearRoute(drawC);
+    route[drawC]=[i]; owner[i]=drawC;
+    moves++;
+    if(window.GGA) GGA.haptic("light");
+    beep(430,.05,"sine",.04);
+    return;
+  }
+  if(owner[i]>=0){
+    var c=owner[i], idx=route[c].indexOf(i);
+    if(idx<0) return;
+    drawC=c;
+    truncate(c, idx+1);
+    moves++;
+    beep(430,.05,"sine",.04);
+  }
+}
+function onMove(e){
+  if(drawC<0||won) return;
+  if(e.cancelable) e.preventDefault();
+  var p=pos(e);
+  var c=Math.max(0,Math.min(W-1,Math.floor((p.x-OX)/CS)));
+  var r=Math.max(0,Math.min(H-1,Math.floor((p.y-OY)/CS)));
+  walkTo(r*W+c);
+  paintHUD();
+}
+function onUp(){
+  if(drawC<0) return;
+  drawC=-1;
+  paintHUD(); persist(); checkEnd();
+}
+cv.addEventListener("touchstart",onDown,{passive:false});
+cv.addEventListener("touchmove",onMove,{passive:false});
+cv.addEventListener("touchend",onUp);
+cv.addEventListener("touchcancel",function(){ drawC=-1; });
+cv.addEventListener("mousedown",onDown);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",onUp);
+cv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+function paintHUD(){
+  document.getElementById("vLevel").textContent=(lvl+1)+"/"+COUNT;
+  document.getElementById("vPipes").textContent=joinedCount()+"/"+K;
+  document.getElementById("vFill").textContent=Math.round(filled()*100/N)+"%";
+}
+
+function checkEnd(){
+  if(won) return;
+  if(joinedCount()<K || filled()<N) return;
+  won=true;
+  save("cur",null);
+  markDone(bId,lvl);
+  var perfect=(moves===K && helps===0);
+  var total=load("wins_total",0)+1; save("wins_total",total);
+  if(window.GGA){
+    GGA.award("le_first");
+    if(total>=10) GGA.award("le_l10");
+    if(total>=30) GGA.award("le_l30");
+    if(perfect) GGA.award("le_perfect");
+    if(bId==="hard") GGA.award("le_hard");
+    if(doneCount(bId)>=COUNT) GGA.award("le_board");
+    var all=true;
+    for(var i=0;i<BOARDS.length;i++) if(!doneCount(BOARDS[i].id)) all=false;
+    if(all) GGA.award("le_allsizes");
+    GGA.haptic("success");
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  paintHUD();
+  setTimeout(function(){ winScreen(perfect); },520);
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started) return;
+  if(won){ save("cur",null); return; }
+  var any=false;
+  for(var c=0;c<K;c++) if(route[c].length>1) any=true;
+  if(!any){ save("cur",null); return; }
+  save("cur", {b:bId, l:lvl, m:moves, h:helps, r:route.map(function(x){ return x.slice(); })});
+}
+function restore(){
+  var s=load("cur",null);
+  if(!s||!s.r) return false;
+  if(!LEVELS[s.b] || s.l<0 || s.l>=COUNT) return false;
+  init(s.b, s.l);
+  if(s.r.length!==K) return false;
+  for(var c=0;c<K;c++){
+    var r=s.r[c];
+    if(!r||r.length<2) continue;
+    if(!isEp(c,r[0])) continue;
+    var okr=true;
+    for(var k=0;k<r.length;k++){
+      if(r[k]<0||r[k]>=N){ okr=false; break; }
+      if(k>0 && !adjacent(r[k-1],r[k])){ okr=false; break; }
+      if(owner[r[k]]>=0 && owner[r[k]]!==c){ okr=false; break; }
+    }
+    if(!okr) continue;
+    route[c]=r.slice();
+    for(k=0;k<r.length;k++) owner[r[k]]=c;
+  }
+  moves=s.m|0; helps=s.h|0;
+  paintHUD();
+  return true;
+}
+
+/* ---------------- tools ---------------- */
+function solution(){
+  if(solCache) return solCache;
+  solCache=LE.routesFor(W,H,NB,EP,600000);
+  return solCache;
+}
+document.getElementById("tHint").onclick=function(){
+  if(won||!started) return;
+  var sol=solution();
+  if(!sol){ beep(240,.1,"sine",.04); return; }
+  /* the first pipe that is not already sitting exactly where it belongs */
+  var pick=-1;
+  for(var c=0;c<K;c++){
+    var same = route[c].length===sol[c].length;
+    if(same) for(var k=0;k<sol[c].length;k++) if(route[c][k]!==sol[c][k]){ same=false; break; }
+    if(!same){ pick=c; break; }
+  }
+  if(pick<0){ beep(240,.1,"sine",.04); return; }
+  clearRoute(pick);
+  var path=sol[pick];
+  for(k=0;k<path.length;k++){
+    var v=path[k], d=owner[v];
+    if(d>=0 && d!==pick){
+      var di=route[d].indexOf(v);
+      if(di>=0) truncate(d, di);
+    }
+  }
+  route[pick]=path.slice();
+  for(k=0;k<path.length;k++) owner[path[k]]=pick;
+  helps++; moves++;
+  beep(760,.13,"sine",.06,1050);
+  if(window.GGA) GGA.haptic("light");
+  paintHUD(); persist(); checkEnd();
+};
+document.getElementById("tClear").onclick=function(){
+  if(won||!started) return;
+  for(var c=0;c<K;c++) clearRoute(c);
+  beep(300,.09,"sine",.04);
+  if(window.GGA) GGA.haptic("medium");
+  paintHUD(); persist();
+};
+document.getElementById("tLevels").onclick=function(){ if(started) levelScreen(); };
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>LOOSE ENDS</h2><p>Join every pair of dots and fill every square. Pipes may not cross.</p><div class="sizes">';
+  for(var i=0;i<BOARDS.length;i++){
+    var b=BOARDS[i];
+    h+='<div class="sz '+b.cls+'" data-b="'+b.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+b.name+'</div><div class="stg">'+b.tag+'</div></div>'+
+       '<div style="font-size:12px;font-weight:900">'+doneCount(b.id)+'/'+COUNT+'</div></div>';
+  }
+  h+='</div>';
+  if(cur&&cur.r) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+
+    boardOf(cur.b).name+' '+((cur.l|0)+1)+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      var id=el.getAttribute("data-b");
+      started=true;
+      init(id, Math.min(COUNT-1, load("lvl_"+id,0)|0));
+      persist(); closeOvl(); layout();
+    };
+  });
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) init(load("board","easy"), 0);
+    persist(); closeOvl(); layout();
+  };
+  card.querySelector("#bRules").onclick=rulesScreen;
+}
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Each colour has <b>two dots</b>. Drag from one to the other to lay a pipe between them.<br><br>'+
+    '&#9642; A level is done when every pair is joined <b>and every square is covered</b>. Joining them all up is the easy half.<br><br>'+
+    '&#9642; Drag across a pipe and you <b>cut it</b> where you crossed. Drag back along your own pipe to reel it in.<br><br>'+
+    '&#9642; A pipe never runs alongside itself, and never passes through another colour\'s dot.<br><br>'+
+    '&#9642; Every board has <b>exactly one</b> solution, checked before it shipped. Stuck is never the board\'s fault.<br><br>'+
+    '&#9642; <b>Hint</b> lays one pipe correctly. <b>Clear</b> wipes the board. <b>Levels</b> jumps to any of the 60.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=titleScreen;
+}
+function levelScreen(){
+  var s=doneStr(bId);
+  var h='<h2>'+boardOf(bId).name.toUpperCase()+'</h2><p>'+doneCount(bId)+' of '+COUNT+' done.</p><div class="lvgrid">';
+  for(var i=0;i<COUNT;i++){
+    h+='<button class="lv'+(s.charAt(i)==="1"?" done":"")+(i===lvl?" at":"")+'" data-l="'+i+'">'+(i+1)+'</button>';
+  }
+  h+='</div><button class="btn btn-alt" id="bBack2">BACK</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".lv"), function(el){
+    el.onclick=function(){
+      started=true;
+      init(bId, parseInt(el.getAttribute("data-l"),10));
+      persist(); closeOvl(); layout();
+    };
+  });
+  card.querySelector("#bBack2").onclick=function(){ closeOvl(); };
+}
+function winScreen(perfect){
+  var last=(lvl>=COUNT-1);
+  openOvl('<h2>'+(perfect?"STRAIGHT OFF!":"ALL JOINED UP!")+'</h2>'+
+    '<p>'+boardOf(bId).name+' level '+(lvl+1)+' is done.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">PIPES</div><div class="sv">'+K+'</div></div>'+
+      '<div class="st"><div class="sk">DRAWN</div><div class="sv">'+moves+'</div></div>'+
+      '<div class="st"><div class="sk">DONE</div><div class="sv">'+doneCount(bId)+'/'+COUNT+'</div></div>'+
+    '</div>'+
+    (last?'<button class="btn btn-go" id="bList">LEVEL LIST</button>'
+        :'<button class="btn btn-go" id="bNext">NEXT LEVEL</button>')+
+    '<button class="btn btn-alt" id="bMenu">CHANGE BOARD</button>');
+  var bn=card.querySelector("#bNext");
+  if(bn) bn.onclick=function(){ init(bId, lvl+1); persist(); closeOvl(); layout(); };
+  var bl=card.querySelector("#bList");
+  if(bl) bl.onclick=levelScreen;
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(won||!started){ titleScreen(); return; }
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">BOARD</div><div class="sv" style="font-size:13px">'+boardOf(bId).name+'</div></div>'+
+      '<div class="st"><div class="sk">LEVEL</div><div class="sv">'+(lvl+1)+'</div></div>'+
+      '<div class="st"><div class="sk">JOINED</div><div class="sv">'+joinedCount()+'/'+K+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bLv">LEVEL LIST</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE BOARD</button>');
+  card.querySelector("#bGo").onclick=closeOvl;
+  card.querySelector("#bLv").onclick=levelScreen;
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+var bootBoard=load("board","easy");
+if(!LEVELS[bootBoard]) bootBoard="easy";
+init(bootBoard, Math.min(COUNT-1, load("lvl_"+bootBoard,0)|0));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+
+})();
+</script>
+</body>
+</html>
