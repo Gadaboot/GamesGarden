@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Gin Rummy</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(115% 80% at 4% -10%, #efe4ff 0%, transparent 56%),
+      radial-gradient(120% 80% at 98% 106%, #d9f77c 0%, transparent 52%),
+      linear-gradient(158deg, #7b52d6 0%, #a583ee 44%, #f0e8ff 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#5c34ab;
+    background:rgba(255,255,255,.95);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(60,26,120,.30);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 0 #6b3fd4,0 4px 12px rgba(48,20,100,.42)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.38)}
+  .chip.hot{background:rgba(205,242,79,.42);border-color:#e6ff9a}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.88}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#5c34ab;
+    box-shadow:0 4px 0 rgba(72,34,145,.36),0 6px 14px rgba(60,26,120,.24)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(72,34,145,.36)}
+  .tool.off{opacity:.40}
+  .tool.go{background:linear-gradient(180deg,#e2fb92,#c2ec3c);border-color:#eeffbb;
+    color:#3d2470;box-shadow:0 4px 0 #8fbe12,0 6px 16px rgba(140,190,20,.42)}
+  .tool.go:active{box-shadow:0 1px 0 #8fbe12}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.8}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(70,36,140,.46);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#f5efff);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#8b7bb0;box-shadow:0 20px 50px rgba(48,20,100,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#7442d8;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#9c8ec0;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.95;font-weight:800;margin-top:2px;text-align:left}
+  .z-a{background:linear-gradient(180deg,#d7f77f,#8fc419)}
+  .z-b{background:linear-gradient(180deg,#c2a6f6,#7b52d6)}
+  .z-c{background:linear-gradient(180deg,#9b7ce8,#54269f)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#a681f0,#6b3fd4);color:#fff;
+    box-shadow:0 5px 0 #4f2ba3,0 8px 18px rgba(90,50,180,.34)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #4f2ba3}
+  .btn-lime{background:linear-gradient(180deg,#e2fb92,#bfe936);color:#3d2470;
+    box-shadow:0 5px 0 #8fbe12,0 8px 18px rgba(150,200,30,.36)}
+  .btn-lime:active{transform:translateY(3px);box-shadow:0 2px 0 #8fbe12}
+  .btn-alt{background:#f3ecff;color:#5c34ab;border:1.5px solid #ded0fa}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#9c8ec0;margin:10px 2px}
+  .rules b{color:#7442d8}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#f3ecff;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#bda9e6}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#7442d8}
+  .hands{margin-top:11px;text-align:left}
+  .hrow{margin:6px 0;font-size:11px;font-weight:900;letter-spacing:.6px;color:#bda9e6}
+  .cds{margin-top:3px;display:flex;flex-wrap:wrap;gap:4px}
+  .cd{display:inline-block;background:#fff;border:1.4px solid #ded0fa;border-radius:6px;
+    padding:2px 5px;font-size:12.5px;font-weight:900;color:#33265c;font-variant-numeric:tabular-nums}
+  .cd.r{color:#e0323c}
+  .cd.m{border-color:#bfe936;background:#f6ffdd}
+  .cd.l{border-color:#8fc419;background:#e8ffb0}
+  .cd.d{border-color:#e7dcfa;background:#f7f2ff;opacity:.9}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+    .hands{margin-top:8px}.cd{font-size:11.5px;padding:1px 4px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">GIN RUMMY</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">YOU</div><div class="v" id="vOne">0</div></div>
+    <div class="chip" id="cDead"><div class="k">DEADWOOD</div><div class="v" id="vDead">0</div></div>
+    <div class="chip"><div class="k">THEM</div><div class="v" id="vTwo">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool off" id="tKnock"><div class="ti">&#9873;</div><div class="tl">KNOCK</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Gin Rummy - the rules, the melding solver and the computer opponent, with no
+   drawing and no input anywhere in them.  Every move goes through
+   drawStock()/takeUp()/discard()/knock(), so the same code that runs on screen
+   runs headless for thousands of hands in Node, and the computer picks its play
+   through this very same module.
+
+   A card is a number 0..51.  suit = (c/13)|0 with 0 clubs, 1 diamonds,
+   2 hearts, 3 spades; rank = c%13 with 0 = ace and 12 = king.  Aces are low,
+   so a run may be A-2-3 but never Q-K-A, and the card ids of one suit are
+   consecutive, which is what makes run-finding a walk along the numbers.
+
+   Ten cards each, one turned up to start the pile, thirty-one in the stock.
+   On your turn you draw - from the stock or from the pile - and then discard.
+   The card you have just lifted off the pile may not go straight back on it.
+
+   THE SOLVER IS THE HEART OF THIS.  Melds are sets of three or four of a kind
+   and runs of three or more in a suit, and a card counts in only one of them,
+   so a hand like 7C 7D 7H 8C 9C has to choose: the set of sevens leaves 8C 9C
+   as deadwood (17), the run 7C 8C 9C leaves 7D 7H (14).  Greedy answers get
+   that wrong.  solveCards() is an exact minimiser: every possible meld is
+   enumerated as a bitmask and an exact-cover search over the mask of unused
+   cards finds the arrangement with the least deadwood.  Eleven cards is 2048
+   states, so it is instant, and sim_gr.js checks it against brute force.
+
+   Knock with ten or less; no deadwood at all is gin and pays a bonus; the
+   defender lays off onto the knocker's melds and, if their deadwood then comes
+   out equal or lower, undercuts for a bonus of their own.  Match to a hundred. */
+function makeGinRummy(){
+  "use strict";
+
+  var NC=52, HAND=10, TARGET=100, GIN=25, UNDERCUT=25, KNOCKMAX=10, STOCK_END=2;
+  var RANKS="A23456789TJQK";
+  var SUITL=["C","D","H","S"];
+
+  function suitOf(c){ return (c/13)|0; }
+  function rankOf(c){ return c%13; }
+  function valOf(c){ var r=(c%13)+1; return r>10?10:r; }
+  function isRed(c){ var s=(c/13)|0; return s===1||s===2; }
+  function cardName(c){ return RANKS.charAt(c%13)+SUITL[(c/13)|0]; }
+  function nameList(cs){
+    var o=[], i;
+    for(i=0;i<cs.length;i++) o.push(cardName(cs[i]));
+    return o.join(" ");
+  }
+  function sumVal(cs){ var n=0,i; for(i=0;i<cs.length;i++) n+=valOf(cs[i]); return n; }
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  The melding solver                                                *
+   * ------------------------------------------------------------------ */
+
+  /* every meld that can be made out of `cards`, as a bitmask over the indices
+     of that array.  Sets: all three-card subsets of a rank plus the four.
+     Runs: every window of three or more consecutive cards in one suit - the
+     sub-runs matter as well as the whole, because a five-run may be worth
+     splitting so that a card can go into a set instead. */
+  function meldMasksFor(cards){
+    var n=cards.length, out=[], i, j, k, r;
+    var byRank=[], pos={};
+    for(i=0;i<13;i++) byRank.push([]);
+    for(i=0;i<n;i++){ byRank[rankOf(cards[i])].push(i); pos[cards[i]]=i; }
+    for(r=0;r<13;r++){
+      var g=byRank[r];
+      if(g.length<3) continue;
+      for(i=0;i<g.length;i++) for(j=i+1;j<g.length;j++) for(k=j+1;k<g.length;k++)
+        out.push((1<<g[i])|(1<<g[j])|(1<<g[k]));
+      if(g.length===4) out.push((1<<g[0])|(1<<g[1])|(1<<g[2])|(1<<g[3]));
+    }
+    for(i=0;i<n;i++){
+      var c=cards[i], m=(1<<i), cur=c, len=1;
+      /* rankOf(cur)<12 stops the walk at the king, so it never steps over the
+         suit boundary from KC (12) to AD (13) */
+      while(rankOf(cur)<12 && pos[cur+1]!==undefined){
+        cur=cur+1; len++; m|=(1<<pos[cur]);
+        if(len>=3) out.push(m);
+      }
+    }
+    return out;
+  }
+
+  var SCACHE={}, SCOUNT=0;
+  function solveCards(cards){
+    var i;
+    var cs=cards.slice().sort(function(a,b){ return a-b; });
+    var key=cs.join(",");
+    var hit=SCACHE[key];
+    if(hit) return hit;
+    var n=cs.length;
+    var masks=meldMasksFor(cs);
+    var val=[];
+    for(i=0;i<n;i++) val.push(valOf(cs[i]));
+    var size=1<<n;
+    var memo=new Array(size), pick=new Array(size);
+    function lowIndex(lo){ var li=0, t=lo; while(t>1){ t>>=1; li++; } return li; }
+    function best(mask){
+      if(mask===0) return 0;
+      var got=memo[mask];
+      if(got!==undefined) return got;
+      var lo=mask&(-mask), li=lowIndex(lo);
+      var b=val[li]+best(mask&~lo), bp=-1, m, mm, v;
+      for(m=0;m<masks.length;m++){
+        mm=masks[m];
+        if(!(mm&lo)) continue;
+        if((mm&mask)!==mm) continue;
+        v=best(mask&~mm);
+        if(v<b){ b=v; bp=m; }
+      }
+      memo[mask]=b; pick[mask]=bp;
+      return b;
+    }
+    var full=size-1;
+    var dead=best(full);
+    var melds=[], deadC=[], mask=full;
+    while(mask){
+      var lo2=mask&(-mask), li2=lowIndex(lo2), bp2=pick[mask];
+      if(bp2===undefined||bp2<0){ deadC.push(cs[li2]); mask&=~lo2; }
+      else{
+        var mm2=masks[bp2], g=[];
+        for(i=0;i<n;i++) if(mm2&(1<<i)) g.push(cs[i]);
+        melds.push(g);
+        mask&=~mm2;
+      }
+    }
+    /* runs before sets, then by the card they start on: the same hand always
+       lays out the same way, which matters when the screen groups by it */
+    melds.sort(function(a,b){
+      var ka=(rankOf(a[0])===rankOf(a[1]))?1:0, kb=(rankOf(b[0])===rankOf(b[1]))?1:0;
+      if(ka!==kb) return ka-kb;
+      return a[0]-b[0];
+    });
+    deadC.sort(function(a,b){ return valOf(b)-valOf(a) || a-b; });
+    var res={ dead:dead, melds:melds, deadCards:deadC };
+    if(SCOUNT>20000){ SCACHE={}; SCOUNT=0; }
+    SCACHE[key]=res; SCOUNT++;
+    return res;
+  }
+  function deadwoodOf(cards){ return solveCards(cards).dead; }
+
+  /* A deliberately unclever arrangement, for audit() to measure the real
+     solver against: take the biggest sets it can see and then the longest
+     runs out of what is left, and the same the other way round.  The solver
+     may never come out worse than the better of the two. */
+  function naiveDead(cards){
+    function greedy(setsFirst){
+      var rest=cards.slice(), i;
+      function takeSets(){
+        var changed=true;
+        while(changed){
+          changed=false;
+          var byRank=[], bestG=null;
+          for(i=0;i<13;i++) byRank.push([]);
+          for(i=0;i<rest.length;i++) byRank[rankOf(rest[i])].push(rest[i]);
+          for(i=0;i<13;i++)
+            if(byRank[i].length>=3 && (!bestG||byRank[i].length>bestG.length)) bestG=byRank[i];
+          if(bestG){
+            for(i=0;i<bestG.length;i++) rest.splice(rest.indexOf(bestG[i]),1);
+            changed=true;
+          }
+        }
+      }
+      function takeRuns(){
+        var changed=true;
+        while(changed){
+          changed=false;
+          rest.sort(function(a,b){ return a-b; });
+          var bestR=null, j;
+          for(i=0;i<rest.length;i++){
+            var run=[rest[i]];
+            for(j=i+1;j<rest.length;j++){
+              var last=run[run.length-1];
+              if(rest[j]===last+1 && rankOf(last)<12) run.push(rest[j]); else break;
+            }
+            if(run.length>=3 && (!bestR||run.length>bestR.length)) bestR=run;
+          }
+          if(bestR){
+            for(i=0;i<bestR.length;i++) rest.splice(rest.indexOf(bestR[i]),1);
+            changed=true;
+          }
+        }
+      }
+      if(setsFirst){ takeSets(); takeRuns(); } else { takeRuns(); takeSets(); }
+      return sumVal(rest);
+    }
+    var a=greedy(true), b=greedy(false);
+    return a<b?a:b;
+  }
+
+  /* the arrangement the screen draws: melds in order, then the deadwood */
+  function arrange(cards){
+    var r=solveCards(cards), out=[], i, j;
+    for(i=0;i<r.melds.length;i++)
+      for(j=0;j<r.melds[i].length;j++)
+        out.push({ c:r.melds[i][j], g:i, dead:false, first:j===0, last:j===r.melds[i].length-1 });
+    for(i=0;i<r.deadCards.length;i++)
+      out.push({ c:r.deadCards[i], g:-1, dead:true, first:i===0, last:i===r.deadCards.length-1 });
+    return { cells:out, dead:r.dead, melds:r.melds, deadCards:r.deadCards };
+  }
+
+  /* ---- lay-offs, which use the very same solver ---- */
+  function meldInfo(m){
+    var s=m.slice().sort(function(a,b){ return a-b; });
+    if(rankOf(s[0])===rankOf(s[1])) return { kind:"set", rank:rankOf(s[0]), count:s.length };
+    return { kind:"run", suit:suitOf(s[0]), lo:rankOf(s[0]), hi:rankOf(s[s.length-1]) };
+  }
+  function canAttach(info, c){
+    if(info.kind==="set") return rankOf(c)===info.rank && info.count<4;
+    return suitOf(c)===info.suit && (rankOf(c)===info.lo-1 || rankOf(c)===info.hi+1);
+  }
+  function attach(info, c){
+    if(info.kind==="set"){ info.count++; return; }
+    if(rankOf(c)===info.lo-1) info.lo--; else info.hi++;
+  }
+  /* Every card that could conceivably end up laid off, worked out by letting
+     each meld swallow anything that fits, over and over.  It over-counts on
+     purpose - a card that could go on two different melds is listed once and
+     both melds grow - because the subsets are checked properly afterwards. */
+  function layoffPool(hand, kmelds){
+    var infos=[], done=[], i, j;
+    for(i=0;i<kmelds.length;i++){ infos.push(meldInfo(kmelds[i])); done.push({}); }
+    var pool=[], inPool={}, changed=true, guard=0;
+    while(changed && guard++<24){
+      changed=false;
+      for(i=0;i<hand.length;i++){
+        var c=hand[i];
+        for(j=0;j<infos.length;j++){
+          if(done[j][c]) continue;
+          if(!canAttach(infos[j], c)) continue;
+          done[j][c]=1; attach(infos[j], c);
+          if(!inPool[c]){ inPool[c]=1; pool.push(c); }
+          changed=true;
+        }
+      }
+    }
+    return pool;
+  }
+  /* can this exact set of cards all be laid off, in some order?  Laying one
+     card off can open the door for the next - a seven onto 8-9-10 lets the six
+     follow - and a card that fits two melds has to pick one, so this is a
+     small search rather than a sweep. */
+  function feasibleLayoff(sub, kmelds){
+    var infos=[], i;
+    for(i=0;i<kmelds.length;i++) infos.push(meldInfo(kmelds[i]));
+    var used=new Array(sub.length);
+    function go(left){
+      if(left===0) return true;
+      var a, b;
+      for(a=0;a<sub.length;a++){
+        if(used[a]) continue;
+        for(b=0;b<infos.length;b++){
+          if(!canAttach(infos[b], sub[a])) continue;
+          var inf=infos[b];
+          var sc=inf.count, sl=inf.lo, sh=inf.hi;
+          attach(inf, sub[a]); used[a]=1;
+          if(go(left-1)) return true;
+          used[a]=0;
+          inf.count=sc; inf.lo=sl; inf.hi=sh;
+        }
+      }
+      return false;
+    }
+    return go(sub.length);
+  }
+  /* the defender's best answer to a knock: which cards to lay off, and how to
+     arrange what is left.  Laying a card off is not always free - a five that
+     goes onto their run may be holding your own 5-6-7 together - so the two
+     decisions have to be taken together. */
+  function layoffBest(hand, kmelds){
+    var pool=layoffPool(hand, kmelds);
+    if(pool.length>10) pool=pool.slice(0,10);
+    var base=solveCards(hand);
+    var bestD=base.dead, bestSub=[], bestRes=base;
+    var n=pool.length, s, i;
+    for(s=1;s<(1<<n);s++){
+      var sub=[];
+      for(i=0;i<n;i++) if(s&(1<<i)) sub.push(pool[i]);
+      if(!feasibleLayoff(sub, kmelds)) continue;
+      var rest=[];
+      for(i=0;i<hand.length;i++) if(sub.indexOf(hand[i])<0) rest.push(hand[i]);
+      var r=solveCards(rest);
+      if(r.dead<bestD || (r.dead===bestD && sub.length>bestSub.length)){
+        bestD=r.dead; bestSub=sub; bestRes=r;
+      }
+    }
+    return { dead:bestD, lays:bestSub, melds:bestRes.melds, deadCards:bestRes.deadCards };
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Setting up and the shape of a turn                                *
+   * ------------------------------------------------------------------ */
+  function deal(st){
+    var bag=[], i, j, t;
+    for(i=0;i<NC;i++) bag.push(i);
+    for(i=bag.length-1;i>0;i--){
+      j=Math.floor(st.rand()*(i+1));
+      t=bag[i]; bag[i]=bag[j]; bag[j]=t;
+    }
+    st.hands=[bag.slice(0,HAND), bag.slice(HAND,HAND*2)];
+    st.disc=[bag[HAND*2]];
+    st.stock=bag.slice(HAND*2+1);
+    st.pub={ took:[[],[]], tossed:[[],[]] };
+    st.phase="draw"; st.tookUp=-1; st.turns=0;
+    st.roundOver=false; st.roundWinner=-1; st.result=""; st.points=0;
+    st.kdead=0; st.ddead=0; st.knocker=-1;
+    st.show=[blankShow(), blankShow()];
+  }
+  /* what each side turns out to be holding once the hand is over, indexed by
+     player, so the screen can lay both hands out the same way it lays yours
+     out during play */
+  function blankShow(){ return { melds:[], deadC:[], lays:[], dead:0 }; }
+  function showOf(r, lays){
+    return { melds:r.melds, deadC:r.deadCards, lays:lays||[], dead:r.dead };
+  }
+  function create(cfg){
+    cfg=cfg||{};
+    var first=cfg.first===1?1:0;
+    var st={
+      hands:[[],[]], stock:[], disc:[], pub:{ took:[[],[]], tossed:[[],[]] },
+      turn:first, first:first, phase:"draw", tookUp:-1, turns:0,
+      round:1, scores:[0,0], target:cfg.target||TARGET,
+      roundOver:false, roundWinner:-1, result:"", points:0,
+      kdead:0, ddead:0, knocker:-1, show:[blankShow(), blankShow()],
+      over:false, winner:-1,
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    deal(st);
+    return st;
+  }
+  function nextRound(st, first){
+    if(st.over) return false;
+    st.round++;
+    st.turn=first===1?1:0;
+    st.first=st.turn;
+    deal(st);
+    return true;
+  }
+  function clone(st){
+    var c={
+      hands:[st.hands[0].slice(), st.hands[1].slice()],
+      stock:st.stock.slice(), disc:st.disc.slice(),
+      pub:{ took:[st.pub.took[0].slice(), st.pub.took[1].slice()],
+            tossed:[st.pub.tossed[0].slice(), st.pub.tossed[1].slice()] },
+      turn:st.turn, first:st.first, phase:st.phase, tookUp:st.tookUp, turns:st.turns,
+      round:st.round, scores:[st.scores[0],st.scores[1]], target:st.target,
+      roundOver:st.roundOver, roundWinner:st.roundWinner, result:st.result, points:st.points,
+      kdead:st.kdead, ddead:st.ddead, knocker:st.knocker, show:st.show,
+      over:st.over, winner:st.winner, rand:st.rand
+    };
+    return c;
+  }
+
+  function topCard(st){ return st.disc.length ? st.disc[st.disc.length-1] : -1; }
+  function handOf(st,p){ return st.hands[p==null?st.turn:p]; }
+
+  /* the discard that leaves the least deadwood; ties go to shedding the dearest
+     card, because a big card in hand is the one that will hurt if they knock */
+  function bestDiscards(st, p){
+    p = (p==null) ? st.turn : p;
+    var hand=st.hands[p], out=[], i;
+    for(i=0;i<hand.length;i++){
+      var c=hand[i];
+      if(c===st.tookUp) continue;
+      var rest=hand.slice(); rest.splice(i,1);
+      out.push({ c:c, dead:solveCards(rest).dead });
+    }
+    out.sort(function(a,b){ return a.dead-b.dead || valOf(b.c)-valOf(a.c); });
+    return out;
+  }
+  function canKnock(st, p){
+    p = (p==null) ? st.turn : p;
+    if(st.roundOver||st.over) return false;
+    if(st.phase!=="discard"||st.turn!==p) return false;
+    var bd=bestDiscards(st,p);
+    return bd.length>0 && bd[0].dead<=KNOCKMAX;
+  }
+  /* would discarding this exact card make the knock legal? */
+  function knockWith(st, p, c){
+    p = (p==null) ? st.turn : p;
+    if(st.phase!=="discard"||st.turn!==p) return false;
+    if(c===st.tookUp) return false;
+    var hand=st.hands[p], k=hand.indexOf(c);
+    if(k<0) return false;
+    var rest=hand.slice(); rest.splice(k,1);
+    return solveCards(rest).dead<=KNOCKMAX;
+  }
+
+  /* ---- the three things a turn can be ---- */
+  function drawStock(st){
+    if(st.roundOver||st.over) return -1;
+    if(st.phase!=="draw") return -1;
+    if(!st.stock.length) return -1;
+    var c=st.stock.shift();
+    st.hands[st.turn].push(c);
+    st.phase="discard"; st.tookUp=-1;
+    return c;
+  }
+  function takeUp(st){
+    if(st.roundOver||st.over) return -1;
+    if(st.phase!=="draw") return -1;
+    if(!st.disc.length) return -1;
+    var c=st.disc.pop();
+    st.hands[st.turn].push(c);
+    st.pub.took[st.turn].push(c);
+    st.phase="discard"; st.tookUp=c;
+    return c;
+  }
+  function forget(list, c){
+    var k=list.indexOf(c);
+    if(k>=0) list.splice(k,1);
+  }
+  /* the shared tail of a discard and a knock: the card leaves the hand and
+     lands on the pile, and the public record is kept straight */
+  function shed(st, c){
+    var p=st.turn, k=st.hands[p].indexOf(c);
+    if(k<0) return false;
+    st.hands[p].splice(k,1);
+    st.disc.push(c);
+    forget(st.pub.took[p], c);
+    st.pub.tossed[p].push(c);
+    return true;
+  }
+  function discard(st, c){
+    if(st.roundOver||st.over) return { ok:false };
+    if(st.phase!=="discard") return { ok:false };
+    if(c===st.tookUp) return { ok:false };
+    if(!shed(st,c)) return { ok:false };
+    st.turns++;
+    var ev={ ok:true, by:st.turn, c:c, roundOver:false, over:false, wash:false };
+    /* two cards left in the stock and nobody has knocked: the hand is a wash */
+    if(st.stock.length<=STOCK_END){
+      endWash(st);
+      ev.roundOver=true; ev.wash=true;
+      return ev;
+    }
+    st.turn=1-st.turn; st.phase="draw"; st.tookUp=-1;
+    return ev;
+  }
+  function endWash(st){
+    st.roundOver=true; st.roundWinner=-1; st.result="wash"; st.points=0;
+    var a=solveCards(st.hands[0]), b=solveCards(st.hands[1]);
+    st.show=[showOf(a), showOf(b)];
+    st.kdead=a.dead; st.ddead=b.dead; st.knocker=-1;
+  }
+
+  /* Knocking.  The knocker discards, then lays their melds down.  Gin means no
+     deadwood at all and the defender may lay nothing off; otherwise the
+     defender puts what fits onto the knocker's melds and, if their deadwood
+     then comes out equal or lower, they undercut and take the bonus. */
+  function knock(st, c){
+    if(st.roundOver||st.over) return { ok:false };
+    if(st.phase!=="discard") return { ok:false };
+    var p=st.turn;
+    if(!knockWith(st, p, c)) return { ok:false };
+    if(!shed(st,c)) return { ok:false };
+    st.turns++;
+    var opp=1-p;
+    var kr=solveCards(st.hands[p]);
+    st.knocker=p;
+    st.kdead=kr.dead;
+    var dr, w, pts, kind;
+    if(kr.dead===0){
+      dr=solveCards(st.hands[opp]);
+      dr={ dead:dr.dead, melds:dr.melds, deadCards:dr.deadCards, lays:[] };
+      kind="gin"; w=p; pts=dr.dead+GIN;
+    }else{
+      dr=layoffBest(st.hands[opp], kr.melds);
+      dr.deadCards=dr.deadCards||[];
+      if(dr.dead<=kr.dead){ kind="undercut"; w=opp; pts=(kr.dead-dr.dead)+UNDERCUT; }
+      else{ kind="knock"; w=p; pts=dr.dead-kr.dead; }
+    }
+    st.ddead=dr.dead;
+    st.show=[];
+    st.show[p]=showOf(kr, []);
+    st.show[opp]={ melds:dr.melds, deadC:dr.deadCards, lays:dr.lays||[], dead:dr.dead };
+    st.roundOver=true; st.roundWinner=w; st.result=kind; st.points=pts;
+    st.scores[w]+=pts;
+    if(st.scores[w]>=st.target){ st.over=true; st.winner=w; }
+    return { ok:true, by:p, c:c, roundOver:true, over:st.over, result:kind,
+             winner:w, points:pts };
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  The computer                                                      *
+   *                                                                    *
+   *  There is no search past this turn, on purpose.  In a hidden-hand   *
+   *  game anything deeper is only a search of your own guesses about    *
+   *  the other hand.  What pays is reading and counting: which cards    *
+   *  they have lifted off the pile and what that says they are          *
+   *  collecting, which cards have gone for good so a pair of yours is   *
+   *  worth nothing, and when a knock in hand is better than a gin that  *
+   *  may never come.                                                    *
+   * ------------------------------------------------------------------ */
+
+  /* what this player may treat as still out there.  `count` is how much of the
+     pile it has actually remembered - 0 means it plays as if nothing had gone,
+     1 means it remembers the lot. */
+  function makeCtx(st, p, cfg){
+    var mark=new Array(NC), i;
+    for(i=0;i<st.hands[p].length;i++) mark[st.hands[p][i]]=1;
+    var count=cfg.count==null?1:cfg.count;
+    if(count>0){
+      var keep=Math.round(st.disc.length*count);
+      for(i=st.disc.length-keep;i<st.disc.length;i++) if(i>=0) mark[st.disc[i]]=1;
+      var k=st.pub.took[1-p];
+      for(i=0;i<k.length;i++) mark[k[i]]=1;
+    }
+    return { live:function(c){ return !mark[c]; },
+             partial:cfg.partial==null?1:cfg.partial };
+  }
+
+  /* How good is this ten-card hand?  Deadwood counts against it, and the pairs
+     and part-runs sitting in the deadwood count for it, but only as far as the
+     cards that would finish them are still live. */
+  function handValue(cards, ctx){
+    var r=solveCards(cards);
+    var v=-r.dead;
+    var d=r.deadCards, i, j, pairs=[];
+    for(i=0;i<d.length;i++) for(j=i+1;j<d.length;j++){
+      var a=d[i], b=d[j], need=[], ok=false, s, lo, hi;
+      if(rankOf(a)===rankOf(b)){
+        ok=true;
+        for(s=0;s<4;s++){ var cc=s*13+rankOf(a); if(cc!==a&&cc!==b) need.push(cc); }
+      }else if(suitOf(a)===suitOf(b)){
+        lo=Math.min(rankOf(a),rankOf(b)); hi=Math.max(rankOf(a),rankOf(b));
+        if(hi-lo===1){
+          ok=true;
+          if(lo-1>=0) need.push(suitOf(a)*13+lo-1);
+          if(hi+1<=12) need.push(suitOf(a)*13+hi+1);
+        }else if(hi-lo===2){
+          ok=true;
+          need.push(suitOf(a)*13+lo+1);
+        }
+      }
+      if(!ok) continue;
+      var liveN=0, k;
+      for(k=0;k<need.length;k++) if(ctx.live(need[k])) liveN++;
+      if(!liveN) continue;
+      var pc=1-Math.pow(0.86, liveN);
+      pairs.push({ i:i, j:j, b:(valOf(a)+valOf(b)+2)*pc*ctx.partial });
+    }
+    pairs.sort(function(x,y){ return y.b-x.b; });
+    var used={};
+    for(i=0;i<pairs.length;i++){
+      if(used[pairs[i].i]||used[pairs[i].j]) continue;
+      used[pairs[i].i]=1; used[pairs[i].j]=1;
+      v+=pairs[i].b;
+    }
+    return v;
+  }
+
+  /* How dangerous is it to hand this card over?  Two readings, added together:
+     what they have shown they are collecting by lifting cards off the pile
+     (and what they have shown they are not, by throwing cards away), and how
+     many of the cards that would pair with this one are still unaccounted
+     for.  Scaled by what the card is worth, because a king they can meld is a
+     king off their count. */
+  function risk(st, p, c){
+    var opp=1-p, took=st.pub.took[opp], toss=st.pub.tossed[opp], i, h=0, d;
+    for(i=0;i<took.length;i++){
+      var t=took[i];
+      if(rankOf(t)===rankOf(c)){ if(h<0.95) h=0.95; }
+      else if(suitOf(t)===suitOf(c)){
+        d=Math.abs(rankOf(t)-rankOf(c));
+        if(d===1){ if(h<0.9) h=0.9; }
+        else if(d===2){ if(h<0.6) h=0.6; }
+      }
+    }
+    for(i=0;i<toss.length;i++){
+      var q=toss[i];
+      if(rankOf(q)===rankOf(c)) h-=0.4;
+      else if(suitOf(q)===suitOf(c) && Math.abs(rankOf(q)-rankOf(c))<=1) h-=0.2;
+    }
+    var mark=new Array(NC), j;
+    for(j=0;j<st.hands[p].length;j++) mark[st.hands[p][j]]=1;
+    for(j=0;j<st.disc.length;j++) mark[st.disc[j]]=1;
+    var partners=0, tot=0, s, r2;
+    for(s=0;s<4;s++){ var cc=s*13+rankOf(c); if(cc!==c){ tot++; if(!mark[cc]) partners++; } }
+    for(r2=-2;r2<=2;r2++){
+      if(!r2) continue;
+      var rr=rankOf(c)+r2;
+      if(rr<0||rr>12) continue;
+      tot++;
+      if(!mark[suitOf(c)*13+rr]) partners++;
+    }
+    h += 0.35*(partners/(tot||1));
+    if(h<0) h=0;
+    if(h>1) h=1;
+    return h*(0.5+valOf(c)/20);
+  }
+
+  /* Every one of these numbers was measured against a fixed stand-in player
+     over hundreds of matches (tune_gr.js), not guessed, and two of them came
+     out the opposite way round from what was expected:
+
+     * Holding a knockable hand on in the hope of gin LOSES.  Measured at the
+       strongest settings, knocking the moment it legally can is worth about
+       four points of win rate over waiting for gin, because the other side
+       knocks first often enough to more than eat the bonus.  So the patient
+       knocker is the WEAK one here, and Fiendish is the greedy one.
+     * `partial` - how much a pair or a part-run in hand is worth holding on to
+       - is one of the strongest knobs there is, and it is a hill, not a slope:
+       0 gives the player 40%, 0.85 gives 30%, and 2.0 gives 60%.  Too keen on
+       part-melds is as bad as not caring at all.
+
+     `slip`, the chance of settling for something other than its best discard,
+     is again the knob that actually moves the numbers, exactly as it was for
+     Dominoes.  Reading the pile and counting what has gone are each worth
+     about four points on their own; they are what makes the levels feel
+     different rather than merely clumsier. */
+  var LEVELS=[
+    /* Gentle - remembers nothing, reads nothing, hardly ever lifts a card off
+       the pile, sits on a knockable hand hoping for a gin that rarely comes */
+    { slip:0.17, read:0.00, count:0.00, partial:0.30, takeEdge:4.0, reveal:0.0,
+      knockEarly:2, knockLate:8, patience:12 },
+    /* Tricky - counts about half of what has gone and takes some notice of
+       what you are collecting */
+    { slip:0.09, read:0.50, count:0.60, partial:0.70, takeEdge:2.0, reveal:0.4,
+      knockEarly:6, knockLate:10, patience:6 },
+    /* Fiendish - remembers every card, reads every pick-up, guards what it
+       throws, and knocks the moment it can */
+    { slip:0.00, read:1.00, count:1.00, partial:0.85, takeEdge:1.4, reveal:0.5,
+      knockEarly:10, knockLate:10, patience:0 }
+  ];
+  function cfgFor(level, opts){
+    if(opts) return opts;
+    return LEVELS[Math.min(LEVELS.length-1, Math.max(0, level|0))];
+  }
+
+  function knockThreshold(st, cfg){
+    if(st.stock.length<10) return KNOCKMAX;
+    return (st.turns < (cfg.patience||0)) ? cfg.knockEarly : cfg.knockLate;
+  }
+
+  /* the draw: take the up-card only when it earns its place, because taking it
+     tells the other side exactly what you are building */
+  function pickDraw(st, p, cfg){
+    var hand=st.hands[p], up=topCard(st);
+    if(up<0) return "stock";
+    var ctx=makeCtx(st,p,cfg);
+    var cur=handValue(hand, ctx);
+    var h2=hand.concat([up]), i, bestAfter=-1e9, bestDead=99;
+    for(i=0;i<h2.length;i++){
+      if(h2[i]===up) continue;
+      var rest=h2.slice(); rest.splice(i,1);
+      var r=solveCards(rest);
+      var v=handValue(rest, ctx);
+      if(v>bestAfter) bestAfter=v;
+      if(r.dead<bestDead) bestDead=r.dead;
+    }
+    if(bestDead===0) return "up";
+    if(bestDead<=knockThreshold(st,cfg)) return "up";
+    var gain=bestAfter-cur-(cfg.reveal||0);
+    return gain>cfg.takeEdge ? "up" : "stock";
+  }
+
+  function pickDiscard(st, p, cfg){
+    var hand=st.hands[p], ctx=makeCtx(st,p,cfg), out=[], i;
+    for(i=0;i<hand.length;i++){
+      var c=hand[i];
+      if(c===st.tookUp) continue;
+      var rest=hand.slice(); rest.splice(i,1);
+      var r=solveCards(rest);
+      var v=handValue(rest, ctx) - cfg.read*risk(st,p,c)*6;
+      out.push({ c:c, v:v, dead:r.dead });
+    }
+    out.sort(function(a,b){ return b.v-a.v; });
+    return out;
+  }
+
+  /* One turn's worth of thinking.  Returns {type:"draw", from:...} while the
+     hand is ten cards, and {type:"discard", c:..., knock:...} once it is
+     eleven.  Nothing in here looks at the other hand. */
+  function think(st, level, opts){
+    if(st.roundOver||st.over) return null;
+    var cfg=cfgFor(level, opts), p=st.turn;
+    if(st.phase==="draw"){
+      var from=pickDraw(st, p, cfg);
+      if(cfg.slip && st.rand()<cfg.slip*0.5) from = (from==="up") ? "stock" : "up";
+      if(from==="up" && topCard(st)<0) from="stock";
+      if(from==="stock" && !st.stock.length) from="up";
+      return { type:"draw", from:from };
+    }
+    var opts2=pickDiscard(st, p, cfg);
+    if(!opts2.length) return null;
+    var pickI=0;
+    if(opts2.length>1 && cfg.slip && st.rand()<cfg.slip)
+      pickI=1+Math.floor(st.rand()*(opts2.length-1))%(opts2.length-1);
+    var chosen=opts2[pickI];
+    /* the knock is judged on the best hand available, not on the one the slip
+       happened to leave, and gin is never turned down */
+    var bd=bestDiscards(st,p);
+    var thr=knockThreshold(st,cfg);
+    if(bd.length && bd[0].dead===0) return { type:"discard", c:bd[0].c, knock:true };
+    if(bd.length && bd[0].dead<=thr) return { type:"discard", c:bd[0].c, knock:true };
+    return { type:"discard", c:chosen.c, knock:false };
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Every promise the game makes, checked from the outside            *
+   * ------------------------------------------------------------------ */
+  function audit(st){
+    var seen={}, i, k, n=0;
+    function claim(c, where){
+      if(!(c>=0&&c<NC&&c===(c|0))) return "a card out of range in "+where;
+      if(seen[c]) return "the "+cardName(c)+" is in two places at once";
+      seen[c]=1;
+      return null;
+    }
+    var e;
+    for(k=0;k<2;k++){
+      if(!st.hands[k]) return "a missing hand";
+      for(i=0;i<st.hands[k].length;i++){
+        e=claim(st.hands[k][i], "hand "+k);
+        if(e) return e;
+      }
+    }
+    for(i=0;i<st.stock.length;i++){ e=claim(st.stock[i], "the stock"); if(e) return e; }
+    for(i=0;i<st.disc.length;i++){ e=claim(st.disc[i], "the pile"); if(e) return e; }
+    for(k in seen) if(seen.hasOwnProperty(k)) n++;
+    if(n!==NC) return "there are "+n+" cards in play, not "+NC;
+    /* said again on its own, because it is the one that would be quietest if
+       it broke: a card that has been thrown away must not still be in a hand */
+    for(i=0;i<st.disc.length;i++)
+      for(k=0;k<2;k++)
+        if(st.hands[k].indexOf(st.disc[i])>=0)
+          return "the "+cardName(st.disc[i])+" is on the pile and in hand "+k;
+
+    if(st.turn!==0&&st.turn!==1) return "nobody's turn";
+    if(st.phase!=="draw"&&st.phase!=="discard") return "an odd phase ("+st.phase+")";
+
+    if(!st.roundOver){
+      /* hand sizes for the point in the turn: ten each before the draw, and
+         eleven for whoever is holding after it */
+      var want=(st.phase==="draw")?HAND:HAND+1;
+      if(st.hands[st.turn].length!==want)
+        return "the player to go holds "+st.hands[st.turn].length+" cards, not "+want;
+      if(st.hands[1-st.turn].length!==HAND)
+        return "the other hand holds "+st.hands[1-st.turn].length+" cards, not "+HAND;
+      if(st.phase==="draw" && !st.disc.length && !st.stock.length)
+        return "nothing left to draw from";
+      if(st.phase==="draw" && st.tookUp>=0) return "a taken card left over from last turn";
+      if(st.tookUp>=0 && st.hands[st.turn].indexOf(st.tookUp)<0)
+        return "the card taken off the pile is not in the hand that took it";
+      if(st.stock.length<0) return "a negative stock";
+    }
+    /* the solver's own promise: it never reports more deadwood than a plain
+       greedy arrangement would leave */
+    for(k=0;k<2;k++){
+      var h=st.hands[k];
+      if(h.length<3||h.length>HAND+1) continue;
+      var d=solveCards(h).dead, nv=naiveDead(h);
+      if(d>nv) return "the solver left "+d+" deadwood where a naive one leaves "+nv;
+    }
+    if(st.scores[0]<0||st.scores[1]<0) return "a negative score";
+    if(st.roundOver){
+      if(st.result!=="knock"&&st.result!=="gin"&&st.result!=="undercut"&&st.result!=="wash")
+        return "an odd round result ("+st.result+")";
+      if(st.points<0) return "a negative score for the round";
+      if(st.result==="wash" && st.points!==0) return "a washed hand scored something";
+      if(st.result!=="wash" && st.roundWinner<0) return "a scored hand with no winner";
+    }
+    if(st.over){
+      if(st.winner!==0&&st.winner!==1) return "the match is over with no winner";
+      if(st.scores[st.winner]<st.target) return "the match is over below the target";
+    }else if(st.scores[0]>=st.target||st.scores[1]>=st.target){
+      return "somebody is past the target but the match goes on";
+    }
+    return null;
+  }
+
+  return {
+    NC:NC, HAND:HAND, TARGET:TARGET, GIN:GIN, UNDERCUT:UNDERCUT,
+    KNOCKMAX:KNOCKMAX, STOCK_END:STOCK_END, RANKS:RANKS, SUITL:SUITL, LEVELS:LEVELS,
+    suitOf:suitOf, rankOf:rankOf, valOf:valOf, isRed:isRed,
+    cardName:cardName, nameList:nameList, sumVal:sumVal, rng:rng,
+    solveCards:solveCards, deadwoodOf:deadwoodOf, naiveDead:naiveDead,
+    arrange:arrange, meldMasksFor:meldMasksFor, showOf:showOf,
+    meldInfo:meldInfo, canAttach:canAttach, layoffPool:layoffPool,
+    feasibleLayoff:feasibleLayoff, layoffBest:layoffBest,
+    create:create, deal:deal, nextRound:nextRound, clone:clone,
+    topCard:topCard, handOf:handOf,
+    bestDiscards:bestDiscards, canKnock:canKnock, knockWith:knockWith,
+    drawStock:drawStock, takeUp:takeUp, discard:discard, knock:knock,
+    makeCtx:makeCtx, handValue:handValue, risk:risk,
+    pickDraw:pickDraw, pickDiscard:pickDiscard, knockThreshold:knockThreshold,
+    think:think, audit:audit
+  };
+}
+</script>
+<script>
+(function(){
+"use strict";
+var D=makeGinRummy();
+var LS="gg_gin-rummy_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"easy", name:"Gentle",   cls:"z-a", ai:0,
+   tag:"Barely looks at the pile &middot; sits on a good hand"},
+  {id:"med",  name:"Tricky",   cls:"z-b", ai:1,
+   tag:"Half remembers what has gone &middot; an even contest"},
+  {id:"hard", name:"Fiendish", cls:"z-c", ai:2,
+   tag:"Reads every pick-up &middot; knocks the moment it can"}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+var STARTS=[{id:"you",lab:"YOU"},{id:"them",lab:"THEM"},{id:"swap",lab:"SWAP"}];
+function startsOf(id){ for(var i=0;i<STARTS.length;i++) if(STARTS[i].id===id) return STARTS[i]; return STARTS[0]; }
+
+/* ---------------- colours ----------------
+   Lilac mat, lime accents, and card faces kept white so that the hearts and
+   diamonds stay unmistakably red against a purple table. */
+var MAT="#8a63e0", MAT_D="#6b3fd4", RIM="#54269f", MAT_L="#a583ee";
+var FACE="#fffdf8", FACE_E="#d8cdee", FACE_DIM="#efe7f8";
+var RED="#e0323c", BLACK="#33265c";
+var BACK="#c2ec3c", BACK_D="#8fbe12", BACK_L="#e6ff9a", BACK_INK="#5c34ab";
+var LIME="#cdf24f", LIME_D="#8fbe12";
+/* the suits as escapes, not as characters: every file in this project is
+   plain ASCII on disk and the assembler fails the build if it is not */
+var SUIT=["\u2663","\u2666","\u2665","\u2660"];
+var SUITE=["clubs","diams","hearts","spades"];
+var RD=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+var MIDDOT="\u00B7";
+
+/* ---------------- state ---------------- */
+var mId, S, started, startId, lastStarter, thinking, aiTimer=null, turnTimer=null;
+var sel=-1, msg="", msgUntil=0, lastT=0, pulse=0;
+var wins=[0,0];
+/* Only the test hook ever sets this.  It stops the clock and the computer's
+   timers so a test can step the game itself instead of racing them.  With the
+   hook stripped out of the shipping build it stays false for good. */
+var frozen=false;
+
+function firstFor(){
+  if(startId==="you") return 0;
+  if(startId==="them") return 1;
+  return lastStarter===0 ? 1 : 0;
+}
+function clearTimers(){
+  if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+  if(turnTimer){ clearTimeout(turnTimer); turnTimer=null; }
+}
+function newGame(id, seed){
+  mId=id; save("mode",id);
+  var f=firstFor();
+  lastStarter=f; save("lastStarter",f);
+  S=D.create({first:f, seed:seed});
+  thinking=false; sel=-1; msg=""; msgUntil=0;
+  clearTimers();
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save,
+     and persisting here would eat the game CARRY ON is about to offer */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ----------------
+   Three bands: their hand face down along the top, the stock and the pile in
+   the middle, and your own hand along the bottom - laid out in the order the
+   solver arranged it, so the melds you are building sit together in their own
+   little trays and the deadwood is off to the right where you can see what it
+   is costing you. */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0, VH=0;
+var G={ ready:false, sig:"", top:0, bot:0, table:{x:0,y:0,w:0,h:0},
+        stock:{x:0,y:0,w:0,h:0}, disc:{x:0,y:0,w:0,h:0},
+        hand:[], trays:[], opp:[], oppTrays:[], cw:40, ch:56, dead:0 };
+
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  geom(true);
+}
+window.addEventListener("resize", function(){ layout(); });
+
+function rr(x,y,w,h,rad){
+  if(rad>w/2) rad=w/2; if(rad>h/2) rad=h/2; if(rad<0) rad=0;
+  ctx.beginPath(); ctx.moveTo(x+rad,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad);
+  ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath();
+}
+
+/* Lay a fan of cards out inside `availW`, keeping the solver's groups apart.
+   Cards inside a meld may overlap hard - the tray behind them says what they
+   are - while the deadwood is spread further so you can read every one. */
+function fanOut(cells, availW, maxW, x0, y0){
+  var i, units=1, gaps=0;
+  for(i=1;i<cells.length;i++){
+    if(cells[i].g!==cells[i-1].g){ gaps++; units+=0.86; }
+    else units += cells[i].dead ? 0.60 : 0.50;
+  }
+  var cw=(availW-gaps*10)/units;
+  if(cw>maxW) cw=maxW;
+  if(cw<15) cw=15;
+  var ch=Math.round(cw*1.42);
+  /* the deadwood sits a few pixels lower than the melds, so the eye finds the
+     break between them even before it notices the colour of the tray */
+  var drop=Math.max(3, Math.round(ch*0.07));
+  var out=[], x=0;
+  for(i=0;i<cells.length;i++){
+    if(i>0){
+      if(cells[i].g!==cells[i-1].g) x += cw*0.86 + 10;
+      else x += cw*(cells[i].dead?0.60:0.50);
+    }
+    out.push({ c:cells[i].c, g:cells[i].g, dead:cells[i].dead,
+               x:x, y:cells[i].dead?drop:0, w:cw, h:ch });
+  }
+  var total=x+cw;
+  var ox=x0+Math.max(0,(availW-total)/2);
+  for(i=0;i<out.length;i++){ out[i].x+=ox; out[i].y+=y0; }
+  /* one tray per group, drawn behind the cards */
+  var trays=[], k=0;
+  while(k<out.length){
+    var j=k;
+    while(j+1<out.length && out[j+1].g===out[k].g) j++;
+    trays.push({ x:out[k].x-4, y:out[k].y-4, w:(out[j].x+out[j].w)-out[k].x+8, h:ch+8,
+                 dead:out[k].dead, g:out[k].g });
+    k=j+1;
+  }
+  return { cards:out, trays:trays, cw:cw, ch:ch, total:total, drop:drop };
+}
+
+/* the cells of a fan: during play, whatever the solver makes of your ten (or
+   eleven) cards; once the hand is over, the arrangement that was actually
+   scored, lay-offs and all */
+function cellsFromShow(sh){
+  var cl=[], gi=0, i, j;
+  for(i=0;i<sh.melds.length;i++){
+    for(j=0;j<sh.melds[i].length;j++) cl.push({ c:sh.melds[i][j], g:gi, dead:false });
+    gi++;
+  }
+  if(sh.lays.length){
+    for(i=0;i<sh.lays.length;i++) cl.push({ c:sh.lays[i], g:gi, dead:false });
+    gi++;
+  }
+  for(i=0;i<sh.deadC.length;i++) cl.push({ c:sh.deadC[i], g:gi, dead:true });
+  return cl;
+}
+function myCells(){
+  if(S.roundOver && S.show && S.show[0]){
+    G.dead=S.show[0].dead;
+    G.myLays=S.show[0].lays;
+    return cellsFromShow(S.show[0]);
+  }
+  var a=D.arrange(S.hands[0]);
+  G.dead=a.dead;
+  G.myLays=[];
+  return a.cells;
+}
+
+function geom(force){
+  if(!S||VW<40) return;
+  var sig=VW+"/"+VH+"/"+S.hands[0].join(".")+"/"+S.hands[1].length+"/"+S.turn+
+          "/"+S.phase+"/"+S.disc.length+"/"+S.stock.length+"/"+mId+"/"+(S.roundOver?1:0)+
+          "/"+sel+"/"+(started?1:0)+"/"+S.scores[0]+"/"+S.scores[1];
+  if(!force && G.ready && G.sig===sig) return;
+  var wasReady=G.ready;
+  G.sig=sig;
+  var i;
+
+  /* --- your hand along the bottom --- */
+  var cells=myCells();
+  var maxCW=Math.min(66, Math.round(VH*0.125));
+  var f=fanOut(cells, VW-14, maxCW, 7, 0);
+  var bot=f.ch+f.drop+20;
+  G.bot=bot;
+  var hy=VH-bot+8;
+  for(i=0;i<f.cards.length;i++) f.cards[i].y+=hy;
+  for(i=0;i<f.trays.length;i++) f.trays[i].y+=hy;
+  G.hand=f.cards; G.trays=f.trays; G.cw=f.cw; G.ch=f.ch;
+
+  /* --- their hand along the top --- */
+  var top=Math.max(46, Math.min(70, Math.round(VH*0.135)));
+  G.top=top;
+  var on=S.hands[1].length;
+  var ow=Math.min(Math.round(top*0.46), Math.floor((VW-24)/Math.max(1,on))-2);
+  if(ow<9) ow=9;
+  var oh=Math.round(ow*1.42);
+  if(oh>top-12){ oh=top-12; ow=Math.round(oh/1.42); }
+  var totW=on*(ow+2)-2, sx=(VW-totW)/2, oy=Math.round((top-oh)/2)+2;
+  G.opp=[];
+  for(i=0;i<on;i++) G.opp.push({ x:sx+i*(ow+2), y:oy, w:ow, h:oh });
+
+  /* --- the table --- */
+  G.table={ x:3, y:top+2, w:VW-6, h:Math.max(60, VH-bot-top-6) };
+
+  /* --- the stock and the pile, side by side in the middle --- */
+  var pw=Math.min(116, Math.round(G.table.w*0.30), Math.round(G.table.h*0.40));
+  var ph=Math.round(pw*1.42);
+  var gap=Math.round(pw*0.50);
+  var cx=G.table.x+G.table.w/2;
+  var py=G.table.y+Math.round((G.table.h-ph)*0.42);
+  G.stock={ x:Math.round(cx-gap/2-pw), y:py, w:pw, h:ph };
+  G.disc ={ x:Math.round(cx+gap/2),    y:py, w:pw, h:ph };
+
+  /* --- at the end of a hand their cards come face up onto the table --- */
+  G.oppFan=null;
+  if(S.roundOver && S.show && S.show[1]){
+    G.oppFan=fanOut(cellsFromShow(S.show[1]), G.table.w-14, Math.min(46, maxCW),
+                    G.table.x+7, G.table.y+Math.round(G.table.h*0.22), 0);
+  }
+  G.ready=true;
+  /* Everything the chips and the KNOCK button say is worked out from the same
+     state this function has just re-read, so refresh them here rather than
+     hoping every caller remembered to.  A staged screenshot caught the chip
+     and the button disagreeing with the table. */
+  if(wasReady) paintHUD();
+}
+
+/* ---------------- drawing ---------------- */
+function cardFace(x,y,w,h,c,o){
+  o=o||{};
+  var rad=Math.max(3,w*0.14);
+  ctx.fillStyle="rgba(52,20,110,.26)";
+  rr(x, y+Math.max(1.5,h*0.035), w, h, rad); ctx.fill();
+  ctx.fillStyle=o.dim?FACE_DIM:FACE;
+  rr(x,y,w,h,rad); ctx.fill();
+  ctx.strokeStyle=o.ring?LIME_D:(o.mark?BACK_INK:FACE_E);
+  ctx.lineWidth=(o.ring||o.mark)?Math.max(2,w*0.075):Math.max(1,w*0.03);
+  rr(x,y,w,h,rad); ctx.stroke();
+  var ink=D.isRed(c)?RED:BLACK;
+  var rs=Math.max(8, w*0.36), ss=Math.max(8, w*0.30);
+  ctx.save();
+  ctx.textAlign="left"; ctx.textBaseline="middle";
+  ctx.fillStyle=ink;
+  ctx.font="900 "+rs.toFixed(1)+"px -apple-system,Helvetica,Arial";
+  ctx.fillText(RD[D.rankOf(c)], x+w*0.12, y+h*0.17);
+  ctx.font="900 "+ss.toFixed(1)+"px -apple-system,Helvetica,Arial";
+  ctx.fillText(SUIT[D.suitOf(c)], x+w*0.12, y+h*0.36);
+  /* The second pip sits in the LEFT half, not the middle.  In a fan only the
+     left strip of each card shows, and a pip in the middle of the card is a
+     pip nobody ever sees - which is exactly what the screenshots showed. */
+  ctx.textAlign="center";
+  ctx.font="900 "+(w*0.46).toFixed(1)+"px -apple-system,Helvetica,Arial";
+  ctx.globalAlpha=0.94;
+  ctx.fillText(SUIT[D.suitOf(c)], x+w*0.30, y+h*0.71);
+  ctx.restore();
+  if(o.lift){
+    ctx.fillStyle="rgba(255,255,255,.35)";
+    rr(x+w*0.08, y+h*0.05, w*0.84, h*0.18, rad*0.7); ctx.fill();
+  }
+}
+function cardBack(x,y,w,h){
+  var rad=Math.max(3,w*0.14), i;
+  ctx.fillStyle="rgba(52,20,110,.26)";
+  rr(x, y+Math.max(1.5,h*0.035), w, h, rad); ctx.fill();
+  ctx.fillStyle=BACK;
+  rr(x,y,w,h,rad); ctx.fill();
+  ctx.save();
+  rr(x+w*0.10,y+h*0.08,w*0.80,h*0.84,rad*0.6); ctx.clip();
+  ctx.strokeStyle=BACK_INK; ctx.lineWidth=Math.max(1,w*0.055); ctx.globalAlpha=.55;
+  var step=Math.max(5,w*0.30);
+  for(i=-h;i<w+h;i+=step){
+    ctx.beginPath(); ctx.moveTo(x+i, y); ctx.lineTo(x+i+h, y+h); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.strokeStyle=BACK_D; ctx.lineWidth=Math.max(1,w*0.05);
+  rr(x,y,w,h,rad); ctx.stroke();
+  ctx.strokeStyle=BACK_L; ctx.lineWidth=Math.max(1,w*0.04);
+  rr(x+w*0.10,y+h*0.08,w*0.80,h*0.84,rad*0.6); ctx.stroke();
+}
+function slot(x,y,w,h,txt){
+  var rad=Math.max(3,w*0.14);
+  ctx.save();
+  ctx.setLineDash([Math.max(3,w*0.13), Math.max(3,w*0.11)]);
+  ctx.strokeStyle="rgba(255,255,255,.6)"; ctx.lineWidth=2;
+  rr(x,y,w,h,rad); ctx.stroke();
+  ctx.restore();
+  if(txt){
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.max(8,w*0.16).toFixed(1)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="rgba(255,255,255,.8)";
+    ctx.fillText(txt, x+w/2, y+h/2);
+    ctx.restore();
+  }
+}
+function label(txt, cx, cy, size, bg, fg){
+  ctx.save();
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font="900 "+Math.round(size)+"px -apple-system,Helvetica,Arial";
+  var w=ctx.measureText(txt).width, h=size*1.55;
+  ctx.fillStyle=bg;
+  rr(cx-w/2-size*0.55, cy-h/2, w+size*1.1, h, h/2); ctx.fill();
+  ctx.fillStyle=fg;
+  ctx.fillText(txt, cx, cy+1);
+  ctx.restore();
+}
+/* A tray behind each group the solver found.  Lime means "this lot is a meld
+   and costs you nothing"; the darker one means "this lot is deadwood".  The
+   two are also at different heights, so it reads even at a glance. */
+function tray(t, glow){
+  var rad=Math.max(5,t.h*0.16);
+  if(t.dead){
+    ctx.fillStyle="rgba(58,26,112,.62)";
+    rr(t.x,t.y,t.w,t.h,rad); ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.30)"; ctx.lineWidth=1.5;
+    rr(t.x,t.y,t.w,t.h,rad); ctx.stroke();
+  }else{
+    ctx.fillStyle="rgba(199,240,60,"+(0.72+0.20*(glow||0))+")";
+    rr(t.x,t.y,t.w,t.h,rad); ctx.fill();
+    ctx.strokeStyle="#eaffb0"; ctx.lineWidth=2.5;
+    rr(t.x,t.y,t.w,t.h,rad); ctx.stroke();
+  }
+}
+
+function statusText(){
+  if(!started) return null;
+  if(S.roundOver||S.over) return "";
+  if(thinking) return "THEIR GO";
+  if(S.turn!==0) return "THEIR GO";
+  if(S.phase==="draw") return "TAKE THE PILE OR THE STOCK";
+  return sel<0 ? "PICK A CARD TO THROW" : "TAP THE PILE TO THROW IT";
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!S) return;
+  if(!G.ready||!VW){ layout(); if(!G.ready) return; }
+  geom();
+  var now=ts||0;
+  var dt=lastT?Math.min(120,now-lastT):0;
+  lastT=now;
+  if(!frozen) pulse=(pulse+dt/620)%1;
+  var glow=0.5+0.5*Math.sin(pulse*6.283);
+  var i, k;
+
+  ctx.clearRect(0,0,VW,VH);
+
+  /* the mat */
+  ctx.fillStyle=RIM;
+  rr(G.table.x, G.table.y, G.table.w, G.table.h, 17); ctx.fill();
+  ctx.fillStyle=MAT;
+  rr(G.table.x+3, G.table.y+3, G.table.w-6, G.table.h-6, 14); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.07)";
+  rr(G.table.x+3, G.table.y+3, G.table.w-6, (G.table.h-6)*0.42, 14); ctx.fill();
+  ctx.strokeStyle="rgba(205,242,79,.30)"; ctx.lineWidth=1.5;
+  rr(G.table.x+11, G.table.y+11, G.table.w-22, G.table.h-22, 10); ctx.stroke();
+
+  var myDraw = started && !S.roundOver && S.turn===0 && S.phase==="draw" && !busy();
+  var myThrow= started && !S.roundOver && S.turn===0 && S.phase==="discard" && !busy();
+
+  /* their hand, face down along the top - or face up once the hand is over */
+  if(S.roundOver && G.oppFan){
+    for(i=0;i<G.oppFan.trays.length;i++) tray(G.oppFan.trays[i], 0);
+    var lays=(S.show&&S.show[1].lays)||[];
+    for(i=0;i<G.oppFan.cards.length;i++){
+      var oc=G.oppFan.cards[i];
+      cardFace(oc.x, oc.y, oc.w, oc.h, oc.c, { dim:oc.dead, ring:lays.indexOf(oc.c)>=0 });
+    }
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.max(9,VW*0.028).toFixed(1)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="rgba(255,255,255,.9)";
+    ctx.fillText("THEIR HAND", VW/2, G.table.y+Math.round(G.table.h*0.22)-12);
+    ctx.restore();
+  }else{
+    for(i=0;i<G.opp.length;i++){
+      var o=G.opp[i];
+      cardBack(o.x, o.y, o.w, o.h);
+    }
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.max(8,VW*0.025).toFixed(1)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="rgba(255,255,255,.72)";
+    ctx.fillText("THEM "+MIDDOT+" "+S.hands[1].length+" CARDS", VW/2, G.top-5);
+    ctx.restore();
+  }
+
+  /* the stock */
+  if(!(S.roundOver && G.oppFan)){
+    var sn=S.stock.length;
+    if(myDraw && sn){
+      ctx.fillStyle="rgba(230,255,154,"+(0.16+0.26*glow)+")";
+      rr(G.stock.x-6, G.stock.y-6, G.stock.w+12, G.stock.h+12, 12); ctx.fill();
+    }
+    for(k=Math.min(3,sn)-1;k>=0;k--)
+      cardBack(G.stock.x+k*2, G.stock.y-k*2, G.stock.w, G.stock.h);
+    if(!sn) slot(G.stock.x, G.stock.y, G.stock.w, G.stock.h, "");
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="top";
+    ctx.font="900 "+Math.max(10,G.stock.w*0.24).toFixed(1)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="#fff";
+    ctx.fillText(String(sn), G.stock.x+G.stock.w/2, G.stock.y+G.stock.h+6);
+    ctx.font="900 "+Math.max(7,G.stock.w*0.15).toFixed(1)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="rgba(255,255,255,.75)";
+    ctx.fillText("IN THE STOCK", G.stock.x+G.stock.w/2, G.stock.y+G.stock.h+6+Math.max(11,G.stock.w*0.27));
+    ctx.restore();
+
+    /* the pile */
+    var up=D.topCard(S);
+    if((myDraw && up>=0) || myThrow){
+      ctx.fillStyle="rgba(230,255,154,"+(0.16+0.26*glow)+")";
+      rr(G.disc.x-6, G.disc.y-6, G.disc.w+12, G.disc.h+12, 12); ctx.fill();
+    }
+    if(up>=0) cardFace(G.disc.x, G.disc.y, G.disc.w, G.disc.h, up, {});
+    else slot(G.disc.x, G.disc.y, G.disc.w, G.disc.h, "PILE");
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="top";
+    ctx.font="900 "+Math.max(7,G.disc.w*0.15).toFixed(1)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="rgba(255,255,255,.75)";
+    ctx.fillText("THE PILE", G.disc.x+G.disc.w/2, G.disc.y+G.disc.h+6+Math.max(11,G.disc.w*0.27));
+    ctx.restore();
+  }
+
+  /* a word about what is going on */
+  var say=statusText();
+  if(now<msgUntil && msg) say=msg;
+  if(started && say){
+    var fs=Math.min(19, Math.max(11, VW*0.042));
+    label(say, VW/2, G.table.y+G.table.h-fs*1.35, fs, "rgba(60,26,120,.90)", "#ffffff");
+  }
+
+  /* your hand.  The dark band under it matters: without one the trays sit on
+     the pale bottom of the page gradient and the lime one all but vanishes,
+     which is exactly what the first set of screenshots showed. */
+  ctx.fillStyle="rgba(76,34,150,.92)";
+  rr(1, VH-G.bot+1, VW-2, G.bot-2, 15); ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.34)"; ctx.lineWidth=1.5;
+  rr(1.5, VH-G.bot+1.5, VW-3, G.bot-3, 15); ctx.stroke();
+  for(i=0;i<G.trays.length;i++) tray(G.trays[i], glow);
+  var myLays=G.myLays||[];
+  for(i=0;i<G.hand.length;i++){
+    var t=G.hand[i];
+    var lift=(sel===t.c)?Math.round(t.h*0.13):0;
+    /* the card that came off the pile this turn wears a violet ring, because
+       it is the one card that may not go straight back and there is no way to
+       tell by looking otherwise */
+    var just = (t.c===S.tookUp) && S.turn===0 && S.phase==="discard" && !S.roundOver;
+    cardFace(t.x, t.y-lift, t.w, t.h, t.c,
+             { ring:(sel===t.c)||myLays.indexOf(t.c)>=0, dim:S.roundOver&&t.dead,
+               mark:just, lift:sel===t.c });
+  }
+}
+
+/* ---------------- turns ---------------- */
+function busy(){ return thinking || turnTimer!==null; }
+
+function beginTurn(){
+  if(!S||S.roundOver||S.over) return;
+  sel=-1;
+  paintHUD();
+  runTurn();
+}
+function runTurn(){
+  if(!S||S.roundOver||S.over) return;
+  paintHUD();
+  if(S.turn===1){ scheduleAI(frozen?0:620); return; }
+}
+function scheduleAI(delay){
+  if(S.turn!==1||S.roundOver||S.over||frozen) return;
+  if(aiTimer) clearTimeout(aiTimer);
+  thinking=true; paintHUD();
+  aiTimer=setTimeout(aiStep, delay==null?520:delay);
+}
+/* One half-turn of the computer's play: the draw, then after a pause the
+   discard.  The state changes at the instant the decision is taken - the
+   timers only pace what is drawn - so a reload landing between the two halves
+   restores a hand that is genuinely mid-turn. */
+function aiStep(){
+  aiTimer=null;
+  if(!S||S.roundOver||S.over||S.turn!==1){ thinking=false; paintHUD(); return; }
+  var act=D.think(S, modeOf(mId).ai);
+  if(!act){ thinking=false; paintHUD(); return; }
+  if(act.type==="draw"){
+    if(act.from==="up"){
+      var got=D.topCard(S);
+      D.takeUp(S);
+      msg="THEY TOOK THE "+RD[D.rankOf(got)]+SUIT[D.suitOf(got)];
+      beep(430,.07,"triangle",.05);
+    }else{
+      D.drawStock(S);
+      msg="THEY DREW FROM THE STOCK";
+      beep(330,.07,"sine",.045);
+    }
+    msgUntil=lastT+1300;
+    persist(); geom(true); paintHUD();
+    if(frozen){ aiStep(); return; }
+    aiTimer=setTimeout(aiStep, 620);
+    return;
+  }
+  thinking=false;
+  if(act.knock){
+    doKnock(act.c, true);
+    return;
+  }
+  var ev=D.discard(S, act.c);
+  if(!ev.ok){
+    /* should never happen; fall back to something legal rather than stalling */
+    var bd=D.bestDiscards(S,1);
+    if(bd.length) ev=D.discard(S, bd[0].c);
+    if(!ev.ok){ paintHUD(); return; }
+  }
+  beep(300,.07,"square",.04);
+  msg="THEY THREW THE "+RD[D.rankOf(act.c)]+SUIT[D.suitOf(act.c)];
+  msgUntil=lastT+1300;
+  persist(); geom(true); paintHUD();
+  if(ev.roundOver){ roundEnd(); return; }
+  handedOver(true);
+}
+function handedOver(byAI){
+  sel=-1;
+  persist(); paintHUD();
+  if(frozen){ beginTurn(); return; }
+  if(turnTimer) clearTimeout(turnTimer);
+  turnTimer=setTimeout(function(){ turnTimer=null; beginTurn(); }, byAI?300:260);
+}
+
+/* ---------------- your moves ---------------- */
+function doDraw(from){
+  if(!S||S.roundOver||S.over||S.turn!==0||S.phase!=="draw"||busy()) return false;
+  var got = from==="up" ? D.takeUp(S) : D.drawStock(S);
+  if(got<0) return false;
+  sel=-1;
+  beep(from==="up"?470:360,.07,"triangle",.05);
+  if(window.GGA) GGA.haptic("light");
+  msg="YOU TOOK THE "+RD[D.rankOf(got)]+SUIT[D.suitOf(got)];
+  msgUntil=lastT+1100;
+  geom(true); paintHUD(); persist();
+  return true;
+}
+function doDiscard(c){
+  if(!S||S.roundOver||S.over||S.turn!==0||S.phase!=="discard"||busy()) return false;
+  if(c===S.tookUp){
+    msg="NOT THE ONE YOU JUST TOOK"; msgUntil=lastT+1300;
+    beep(180,.10,"square",.04);
+    if(window.GGA) GGA.haptic("error");
+    return false;
+  }
+  var ev=D.discard(S, c);
+  if(!ev.ok) return false;
+  sel=-1;
+  beep(320,.07,"square",.045);
+  if(window.GGA) GGA.haptic("light");
+  geom(true); paintHUD();
+  if(ev.roundOver){ roundEnd(); return true; }
+  handedOver(false);
+  return true;
+}
+function doKnock(c, byAI){
+  if(!S||S.roundOver||S.over) return false;
+  var ev=D.knock(S, c);
+  if(!ev.ok) return false;
+  sel=-1;
+  beep(660,.10,"triangle",.07);
+  setTimeout(function(){ beep(880,.14,"triangle",.07); },110);
+  if(window.GGA) GGA.haptic(ev.winner===0?"success":"warning");
+  geom(true); paintHUD();
+  roundEnd();
+  return true;
+}
+
+/* ---------------- the end of a hand ---------------- */
+function roundEnd(){
+  clearTimers();
+  thinking=false; sel=-1;
+  geom(true);
+  var played=load("played",0)+1; save("played",played);
+  if(window.GGA){
+    if(played>=10) GGA.award("gr_10");
+    if(S.knocker===0 && S.result==="gin") GGA.award("gr_gin");
+    if(S.roundWinner===0 && S.result==="knock") GGA.award("gr_knock");
+    if(S.roundWinner===0 && S.result==="undercut") GGA.award("gr_undercut");
+    if(S.roundWinner===0 && S.points>=40) GGA.award("gr_big");
+  }
+  if(S.over){
+    if(S.winner>=0){ wins[S.winner]++; save("wins",wins); }
+    save("cur",null);
+    if(window.GGA){
+      if(S.winner===0){
+        GGA.award("gr_first");
+        if(mId==="hard") GGA.award("gr_hard");
+        if(S.scores[1]<25) GGA.award("gr_sweep");
+      }
+      GGA.haptic(S.winner===0?"success":"error");
+    }
+    beep(660,.12,"triangle",.08);
+    setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+    setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  }else{
+    persist();
+  }
+  paintHUD();
+  if(frozen) return;
+  setTimeout(function(){ if(S.over) winScreen(); else roundScreen(); }, 1500);
+}
+function nextHandNow(){
+  D.nextRound(S, 1-S.first);
+  sel=-1; thinking=false; msg=""; msgUntil=0;
+  clearTimers(); geom(true); paintHUD(); persist();
+  closeOvl();
+  beginTurn();
+}
+
+function knockable(){
+  return started && S && !S.roundOver && !S.over && S.turn===0 &&
+         S.phase==="discard" && !busy() && D.canKnock(S,0);
+}
+/* the card the knock will go out on: the one you have picked up, if that is a
+   legal knock, and otherwise the one that leaves the least behind */
+function knockCard(){
+  if(sel>=0 && D.knockWith(S,0,sel)) return sel;
+  var bd=D.bestDiscards(S,0);
+  return (bd.length && bd[0].dead<=D.KNOCKMAX) ? bd[0].c : -1;
+}
+
+function paintHUD(){
+  document.getElementById("vOne").textContent = S.scores[0];
+  document.getElementById("vTwo").textContent = S.scores[1];
+  var dw=document.getElementById("vDead"), ch=document.getElementById("cDead");
+  var n=G.dead;
+  if(started && S.turn===0 && S.phase==="discard" && sel>=0){
+    var rest=S.hands[0].slice();
+    var k=rest.indexOf(sel);
+    if(k>=0){ rest.splice(k,1); n=D.solveCards(rest).dead; }
+  }
+  dw.textContent = !started ? "-" : (n===0 ? "GIN" : String(n));
+  if(started && n<=D.KNOCKMAX) ch.classList.add("hot"); else ch.classList.remove("hot");
+  var kb=document.getElementById("tKnock");
+  var can=knockable();
+  if(can){ kb.classList.remove("off"); kb.classList.add("go"); }
+  else{ kb.classList.add("off"); kb.classList.remove("go"); }
+  var kl=kb.querySelector(".tl");
+  /* G.dead is the count of the whole hand, which still has the card you are
+     about to throw in it - so gin is judged on the best discard, never on it */
+  var bd = can ? D.bestDiscards(S,0) : null;
+  kl.textContent = (bd && bd.length && bd[0].dead===0) ? "GIN!" : "KNOCK";
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started||!S) return;
+  if(S.over){ save("cur",null); return; }
+  if(S.round===1 && S.turns===0 && S.phase==="draw" &&
+     !S.scores[0] && !S.scores[1] && !S.roundOver){ save("cur",null); return; }
+  if(S.roundOver){
+    save("cur",{ v:1, m:mId, sc:[S.scores[0],S.scores[1]], rd:S.round, bt:1,
+                 ld:1-S.first });
+    return;
+  }
+  save("cur",{ v:1, m:mId, sc:[S.scores[0],S.scores[1]], rd:S.round, bt:0,
+               t:S.turn, f:S.first, ph:S.phase, tu:S.tookUp, tn:S.turns,
+               h0:S.hands[0].slice(), h1:S.hands[1].slice(),
+               sk:S.stock.slice(), dc:S.disc.slice(),
+               pt:[S.pub.took[0].slice(), S.pub.took[1].slice()],
+               ps:[S.pub.tossed[0].slice(), S.pub.tossed[1].slice()] });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||c.v!==1||!c.sc) return false;
+  newGame(c.m);
+  S.scores=[c.sc[0]|0, c.sc[1]|0];
+  S.round=c.rd|0||1;
+  if(c.bt){
+    /* saved between hands: deal the next one and get on with it */
+    S.turn=(c.ld===1)?1:0; S.first=S.turn;
+    D.deal(S);
+    if(D.audit(S)){ newGame(c.m); return false; }
+    geom(true); paintHUD();
+    return true;
+  }
+  if(!c.h0||!c.h1||!c.sk||!c.dc) return false;
+  S.hands=[c.h0.slice(), c.h1.slice()];
+  S.stock=c.sk.slice(); S.disc=c.dc.slice();
+  S.pub={ took:[(c.pt&&c.pt[0]||[]).slice(), (c.pt&&c.pt[1]||[]).slice()],
+          tossed:[(c.ps&&c.ps[0]||[]).slice(), (c.ps&&c.ps[1]||[]).slice()] };
+  S.turn=(c.t===1)?1:0; S.first=(c.f===1)?1:0;
+  S.phase=(c.ph==="discard")?"discard":"draw";
+  S.tookUp=(c.tu==null)?-1:(c.tu|0);
+  S.turns=c.tn|0;
+  S.roundOver=false; S.roundWinner=-1; S.result=""; S.points=0;
+  S.over=false; S.winner=-1;
+  if(D.audit(S)){ newGame(c.m); return false; }
+  sel=-1;
+  geom(true); paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function inRect(x,y,r,pad){
+  pad=pad||0;
+  return x>=r.x-pad && x<=r.x+r.w+pad && y>=r.y-pad && y<=r.y+r.h+pad;
+}
+/* the fan is hit-tested from the right, so the card lying on top of the one
+   next to it is the one that answers */
+function cardAt(lx,ly){
+  var i;
+  for(i=G.hand.length-1;i>=0;i--){
+    var t=G.hand[i];
+    var lift=(sel===t.c)?Math.round(t.h*0.13):0;
+    if(lx>=t.x && lx<=t.x+t.w && ly>=t.y-lift-4 && ly<=t.y+t.h+4) return t.c;
+  }
+  return -1;
+}
+function onTapAt(lx, ly){
+  if(!started||!S||S.over) return;
+  if(S.roundOver){
+    if(!ovl.classList.contains("on")){ if(S.over) winScreen(); else roundScreen(); }
+    return;
+  }
+  if(busy()||S.turn!==0) return;
+  geom(true);
+
+  if(S.phase==="draw"){
+    if(inRect(lx,ly,G.stock,8)){ doDraw("stock"); return; }
+    if(inRect(lx,ly,G.disc,8) && D.topCard(S)>=0){ doDraw("up"); return; }
+    var c0=cardAt(lx,ly);
+    if(c0>=0){
+      msg="DRAW A CARD FIRST"; msgUntil=lastT+1200;
+      beep(200,.08,"square",.04);
+    }
+    return;
+  }
+  /* the discard */
+  var c=cardAt(lx,ly);
+  if(c>=0){
+    if(c===S.tookUp){
+      msg="NOT THE ONE YOU JUST TOOK"; msgUntil=lastT+1300;
+      beep(180,.10,"square",.04);
+      if(window.GGA) GGA.haptic("error");
+      sel=-1; paintHUD();
+      return;
+    }
+    if(sel===c){ doDiscard(c); return; }
+    sel=c; beep(560,.05,"sine",.04);
+    paintHUD();
+    return;
+  }
+  if(sel>=0 && inRect(lx,ly,G.disc,10)){ doDiscard(sel); return; }
+  if(sel>=0){ sel=-1; paintHUD(); }
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+function onTap(e){
+  if(e.cancelable) e.preventDefault();
+  var q=pt(e), b=cv.getBoundingClientRect();
+  onTapAt(q.clientX-b.left, q.clientY-b.top);
+}
+cv.addEventListener("touchend", onTap, {passive:false});
+cv.addEventListener("touchstart", function(e){ if(e.cancelable) e.preventDefault(); }, {passive:false});
+cv.addEventListener("mouseup", onTap);
+cv.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+document.getElementById("tKnock").onclick=function(){
+  if(!knockable()) return;
+  var c=knockCard();
+  if(c<0) return;
+  doKnock(c, false);
+};
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ newGame(mId); persist(); closeOvl(); started=true; beginTurn(); return; }
+  openOvl('<h2>START AGAIN?</h2><p>This match will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW MATCH</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){
+    newGame(mId); persist(); closeOvl(); started=true; beginTurn();
+  };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function cardHTML(c, cls){
+  return '<span class="cd '+(D.isRed(c)?"r ":"")+(cls||"")+'">'+
+         RD[D.rankOf(c)]+"&"+SUITE[D.suitOf(c)]+";</span>";
+}
+function showHand(title, sh){
+  var h='<div class="hrow">'+title+'</div><div class="cds">', i, j;
+  for(i=0;i<sh.melds.length;i++)
+    for(j=0;j<sh.melds[i].length;j++) h+=cardHTML(sh.melds[i][j], "m");
+  for(i=0;i<sh.lays.length;i++) h+=cardHTML(sh.lays[i], "l");
+  for(i=0;i<sh.deadC.length;i++) h+=cardHTML(sh.deadC[i], "d");
+  if(!sh.melds.length && !sh.lays.length && !sh.deadC.length) h+='<span class="cd d">-</span>';
+  h+='</div>';
+  return h;
+}
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>GIN RUMMY</h2><p>Draw, throw, and build sets and runs until what is left in your hand is small enough to knock.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bStart">FIRST GO &middot; '+startsOf(startId).lab+'</button>';
+  if(cur&&cur.v===1&&cur.sc) h+='<button class="btn btn-lime" id="bResume">CARRY ON &middot; '+
+    (cur.sc[0]|0)+' &ndash; '+(cur.sc[1]|0)+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newGame(el.getAttribute("data-m"));
+      persist(); closeOvl(); layout(); beginTurn();
+    };
+  });
+  card.querySelector("#bStart").onclick=function(){
+    var k=0;
+    for(var j=0;j<STARTS.length;j++) if(STARTS[j].id===startId) k=j;
+    startId=STARTS[(k+1)%STARTS.length].id;
+    save("starts",startId);
+    /* textContent, not innerHTML, so an entity would show up literally - and
+       the source stays ASCII, which is the rule for every file here */
+    this.textContent="FIRST GO "+MIDDOT+" "+startsOf(startId).lab;
+  };
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newGame(load("mode","easy"));
+    closeOvl(); layout(); beginTurn();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; You each hold <b>ten cards</b>. One is turned up to start the pile and the rest are the stock.<br><br>'+
+    '&#9642; On your go, <b>take the top of the pile or the top of the stock</b>, then throw one card away. The card you have just taken off the pile wears a <b>violet ring</b>: it may not go straight back.<br><br>'+
+    '&#9642; A <b>set</b> is three or four of the same rank. A <b>run</b> is three or more in a row in one suit. Aces are low, so A-2-3 counts but Q-K-A does not. A card can only be in one of them.<br><br>'+
+    '&#9642; Your cards are laid out in the best arrangement there is, melds in lime trays first and the <b>deadwood</b> at the right. The chip at the top keeps the count.<br><br>'+
+    '&#9642; Face cards are ten, aces are one. When your deadwood is <b>ten or less</b> the KNOCK button lights up.<br><br>'+
+    '&#9642; Knock and you score the difference between the two lots of deadwood. <b>Gin</b> - no deadwood at all - is worth <b>25 more</b>.<br><br>'+
+    '&#9642; The other side lays what fits onto your melds first. If their count then comes out <b>equal or lower they undercut you</b> and take 25 plus the difference.<br><br>'+
+    '&#9642; If the stock runs down to two cards nobody scores and the hand is dealt again. First to <b>100</b> wins.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+/* the headline and the sentence under it.  S.kdead is always the knocker's
+   count and S.ddead the defender's, whichever way round the two of you are. */
+function resultLine(){
+  var youK=S.knocker===0;
+  if(S.result==="wash")
+    return ["NO SCORE","The stock ran down to two cards with nobody knocking. Deal again."];
+  if(S.result==="gin")
+    return [ youK?"GIN!":"THEY WENT GIN",
+             (youK?"You went out with nothing left, against ":
+                   "They went out with nothing left, against ")+S.ddead+
+             ". "+S.points+" points, "+D.GIN+" of them the gin bonus." ];
+  if(S.result==="undercut")
+    return [ youK?"UNDERCUT!":"YOU UNDERCUT THEM!",
+             (youK ? "You knocked with "+S.kdead+" but they laid off and came down to "+S.ddead
+                   : "They knocked with "+S.kdead+" and you laid off and came down to "+S.ddead)+
+             ". "+S.points+" points, "+D.UNDERCUT+" of them the undercut bonus." ];
+  return [ youK?"YOU KNOCK":"THEY KNOCK",
+           (youK?"You knocked with ":"They knocked with ")+S.kdead+
+           " against "+S.ddead+". "+S.points+" point"+(S.points===1?"":"s")+"." ];
+}
+function roundScreen(){
+  var r=resultLine();
+  openOvl('<h2>'+r[0]+'</h2><p>'+r[1]+'</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">YOU</div><div class="sv">'+S.scores[0]+'</div></div>'+
+      '<div class="st"><div class="sk">TARGET</div><div class="sv">'+S.target+'</div></div>'+
+      '<div class="st"><div class="sk">THEM</div><div class="sv">'+S.scores[1]+'</div></div>'+
+    '</div>'+
+    '<div class="hands">'+
+      showHand("YOUR HAND &middot; "+S.show[0].dead+" DEADWOOD", S.show[0])+
+      showHand("THEIR HAND &middot; "+S.show[1].dead+" DEADWOOD", S.show[1])+
+    '</div>'+
+    '<button class="btn btn-lime" id="bNext">NEXT HAND</button>'+
+    '<button class="btn btn-alt" id="bMenu3">CHANGE LEVEL</button>');
+  card.querySelector("#bNext").onclick=nextHandNow;
+  card.querySelector("#bMenu3").onclick=titleScreen;
+}
+function winScreen(){
+  var m=modeOf(mId);
+  var head = S.winner===0 ? "YOU WIN!" : "COMPUTER WINS";
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+S.scores[0]+' &ndash; '+S.scores[1]+' after '+S.round+
+    ' hand'+(S.round===1?"":"s")+' &middot; '+m.name.toLowerCase()+'.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">YOU</div><div class="sv">'+wins[0]+'</div></div>'+
+      '<div class="st"><div class="sk">THEM</div><div class="sv">'+wins[1]+'</div></div>'+
+      '<div class="st"><div class="sk">HANDS</div><div class="sv">'+load("played",0)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-lime" id="bAgain">ANOTHER MATCH</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE LEVEL</button>');
+  card.querySelector("#bAgain").onclick=function(){
+    newGame(mId); persist(); closeOvl(); layout(); started=true; beginTurn();
+  };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.over){ titleScreen(); return; }
+  if(S.roundOver){ roundScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">HAND</div><div class="sv">'+S.round+'</div></div>'+
+      '<div class="st"><div class="sk">SCORE</div><div class="sv">'+S.scores[0]+'-'+S.scores[1]+'</div></div>'+
+      '<div class="st"><div class="sk">STOCK</div><div class="sv">'+S.stock.length+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE LEVEL</button>');
+  card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+startId=load("starts","you");
+if(startsOf(startId).id!==startId) startId="you";
+lastStarter=load("lastStarter",1);
+wins=load("wins",[0,0]);
+if(!wins||wins.length!==2) wins=[0,0];
+newGame(load("mode","easy"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+/* ---------------- the test hook ----------------
+   Stripped out of the shipping build by the assembler; nothing in the game
+   reads it, and `frozen` stays false without it. */
+
+})();
+</script>
+</body>
+</html>

@@ -254,7 +254,39 @@
     { id: 'cs_multi',    game: 'Circle Smash',  icon: '⚡', name: 'Three at Once',     desc: 'Have three balls going at once' },
     { id: 'cs_clean',    game: 'Circle Smash',  icon: '🧤', name: 'Not a Ball Lost',   desc: 'Clear a board without losing a ball' },
     { id: 'cs_hard',     game: 'Circle Smash',  icon: '🧠', name: 'Fiendish Cleared',  desc: 'Clear a board on Fiendish' },
-    { id: 'cs_10',       game: 'Circle Smash',  icon: '🔟', name: 'Ten Games',         desc: 'Play ten games of Circle Smash' }
+    { id: 'cs_10',       game: 'Circle Smash',  icon: '🔟', name: 'Ten Games',         desc: 'Play ten games of Circle Smash' },
+    { id: 'sb_first',    game: 'Shut the Box',  icon: '🎲', name: 'First Win',         desc: 'Win a match' },
+    { id: 'sb_shut',     game: 'Shut the Box',  icon: '📦', name: 'Shut the Box',      desc: 'Fold all nine flaps in one round' },
+    { id: 'sb_low',      game: 'Shut the Box',  icon: '🎯', name: 'Down to Three',     desc: 'Finish a round on three or less' },
+    { id: 'sb_sweep',    game: 'Shut the Box',  icon: '🧹', name: 'Clean Sweep',       desc: 'Win every round of a match' },
+    { id: 'sb_hard',     game: 'Shut the Box',  icon: '🧠', name: 'Fiendish Beaten',   desc: 'Beat the computer on Fiendish' },
+    { id: 'sb_streak3',  game: 'Shut the Box',  icon: '🔥', name: 'Hat Trick',         desc: 'Win three matches in a row' },
+    { id: 'sb_alldiff',  game: 'Shut the Box',  icon: '🏅', name: 'All Three',         desc: 'Win on Gentle, Tricky and Fiendish' },
+    { id: 'sb_10',       game: 'Shut the Box',  icon: '🔟', name: 'Ten Matches',       desc: 'Play ten matches of Shut the Box' },
+    { id: 'mg_first',    game: 'Mini Golf',     icon: '⛳', name: 'On the Card',       desc: 'Sink your first hole' },
+    { id: 'mg_ace',      game: 'Mini Golf',     icon: '🏌', name: 'Hole in One',       desc: 'Sink a hole in a single putt' },
+    { id: 'mg_birdie',   game: 'Mini Golf',     icon: '🐦', name: 'Under the Card',    desc: 'Finish a hole under par' },
+    { id: 'mg_streak',   game: 'Mini Golf',     icon: '🔥', name: 'Three on the Trot', desc: 'Three holes running at or under par' },
+    { id: 'mg_round',    game: 'Mini Golf',     icon: '🚩', name: 'Round Complete',    desc: 'Play all eighteen holes' },
+    { id: 'mg_under',    game: 'Mini Golf',     icon: '🏆', name: 'Under Par',         desc: 'Finish a round at or under par' },
+    { id: 'mg_hard',     game: 'Mini Golf',     icon: '🧠', name: 'Fiendish Par',      desc: 'Finish a Fiendish round at or under par' },
+    { id: 'mg_10',       game: 'Mini Golf',     icon: '🔟', name: 'Ten Rounds',        desc: 'Play ten rounds of Mini Golf' },
+    { id: 'ht_first',    game: 'Hearts',        icon: '🏆', name: 'Match Won',         desc: 'Win a match of Hearts' },
+    { id: 'ht_clean',    game: 'Hearts',        icon: '✨', name: 'Not a Point',       desc: 'Get through a hand without taking a point' },
+    { id: 'ht_queen',    game: 'Hearts',        icon: '👑', name: 'Here, Have Her',    desc: 'Hand the queen of spades to somebody else' },
+    { id: 'ht_moon',     game: 'Hearts',        icon: '🌙', name: 'Shot the Moon',     desc: 'Take all twenty-six points in one hand' },
+    { id: 'ht_streak',   game: 'Hearts',        icon: '🧤', name: 'Three Clean',       desc: 'Take no points in three hands running' },
+    { id: 'ht_low',      game: 'Hearts',        icon: '📉', name: 'Under Thirty',      desc: 'Win a match on thirty points or fewer' },
+    { id: 'ht_hard',     game: 'Hearts',        icon: '🧠', name: 'Beat Fiendish',     desc: 'Win a match of Hearts on Fiendish' },
+    { id: 'ht_10',       game: 'Hearts',        icon: '🔟', name: 'Ten Hands',         desc: 'Play ten hands of Hearts' },
+    { id: 'gr_knock',    game: 'Gin Rummy',     icon: '✊', name: 'Knock Knock',       desc: 'Win a hand of Gin Rummy by knocking' },
+    { id: 'gr_gin',      game: 'Gin Rummy',     icon: '🍸', name: 'Gin!',              desc: 'Go out with no deadwood at all' },
+    { id: 'gr_undercut', game: 'Gin Rummy',     icon: '✂️', name: 'Undercut',          desc: 'Undercut the computer after it knocks' },
+    { id: 'gr_big',      game: 'Gin Rummy',     icon: '💥', name: 'Big Hand',          desc: 'Take a single hand worth 40 or more' },
+    { id: 'gr_first',    game: 'Gin Rummy',     icon: '🏆', name: 'Match Winner',      desc: 'Win a match of Gin Rummy' },
+    { id: 'gr_sweep',    game: 'Gin Rummy',     icon: '🧹', name: 'Barely a Scratch',  desc: 'Win a match with the computer under 25' },
+    { id: 'gr_hard',     game: 'Gin Rummy',     icon: '🧠', name: 'Fiendish Beaten',   desc: 'Win a match on Fiendish' },
+    { id: 'gr_10',       game: 'Gin Rummy',     icon: '🔟', name: 'Ten Hands',         desc: 'Play ten hands of Gin Rummy' }
   ];
 
   var GAME_PAGES = [
@@ -267,7 +299,8 @@
     'picture-logic', 'spider', 'freecell', 'mine-hunt', 'word-search',
     'loose-ends', 'snake', 'knock-through', 'air-hockey', 'carrom', 'finger-soccer',
     'dots-boxes', 'connect4', 'mancala', 'reversi', 'backgammon', 'dominoes',
-    'last-letters', 'petal-words', 'circle-smash'
+    'last-letters', 'petal-words', 'circle-smash', 'shut-the-box', 'mini-golf',
+    'hearts', 'gin-rummy'
   ];
 
   var A_KEY = 'gg_ach', S_KEY = 'gg_streak', P_KEY = 'gg_played';

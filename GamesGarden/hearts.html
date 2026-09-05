@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Hearts</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 6% -10%, #ffd9a6 0%, transparent 54%),
+      radial-gradient(120% 80% at 98% 106%, #ffb063 0%, transparent 52%),
+      linear-gradient(160deg, #2a63dc 0%, #5f9bf3 46%, #e2eeff 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#1b48b0;
+    background:rgba(255,255,255,.95);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(12,40,110,.30);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.6px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 0 #1d4bb4,0 4px 12px rgba(10,34,96,.42)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.20);border:1px solid rgba(255,255,255,.38)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.96);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#1b48b0;
+    box-shadow:0 4px 0 rgba(16,52,132,.34),0 6px 14px rgba(12,40,110,.24)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(16,52,132,.34)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(20,58,150,.46);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#eef4ff);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#8399bd;box-shadow:0 20px 50px rgba(10,34,96,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#2159d4;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#93a8ca;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.95;font-weight:800;margin-top:2px;text-align:left}
+  .z-a{background:linear-gradient(180deg,#8ad2ff,#2f8fe0)}
+  .z-b{background:linear-gradient(180deg,#ffd07a,#f59022)}
+  .z-c{background:linear-gradient(180deg,#ff9d70,#e8512a)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ffb45e,#f2851a);color:#fff;
+    box-shadow:0 5px 0 #c96612,0 8px 18px rgba(226,128,26,.34)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #c96612}
+  .btn-alt{background:#e9f1ff;color:#1b48b0;border:1.5px solid #cfe0ff}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#93a8ca;margin:10px 2px}
+  .rules b{color:#2159d4}
+  .rules i{color:#e8770f;font-style:normal;font-weight:800}
+  .stats{display:flex;gap:6px;margin-top:11px}
+  .st{flex:1;background:#e9f1ff;border-radius:13px;padding:8px 2px}
+  .st.me{background:#ffe9cf}
+  .st .sk{font-size:8.5px;letter-spacing:.8px;font-weight:900;color:#a9bfe2}
+  .st.me .sk{color:#e09340}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#2159d4}
+  .st.me .sv{color:#e8770f}
+  .st .sd{font-size:9.5px;font-weight:900;color:#e8770f}
+  .st .sd.nil{color:#bfd0ea}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.2px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+    .stats{margin-top:8px}.st .sv{font-size:14px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">HEARTS</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">YOUR SCORE</div><div class="v" id="vYou">0</div></div>
+    <div class="chip"><div class="k">TO PLAY</div><div class="v" id="vTurn">YOU</div></div>
+    <div class="chip"><div class="k">HAND</div><div class="v" id="vHand">1</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tHint"><div class="ti">&#9788;</div><div class="tl">HINT</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Hearts - the rules and the three computer players, with no drawing and no
+   input anywhere in them.  Every change of state goes through pick()/unpick()/
+   doPass()/play(), so the same code that runs on screen runs headless in Node
+   for thousands of matches - and the computers choose their cards through this
+   very same code.
+
+   A card is a number 0..51.  suit = (c/13)|0 with 0=clubs, 1=diamonds,
+   2=spades, 3=hearts; rank = c%13 with 0=two ... 8=ten, 9=jack, 10=queen,
+   11=king, 12=ace.  So the two of clubs is 0 and the queen of spades is 36.
+
+   Seats run clockwise from the person holding the phone: 0 = you (bottom),
+   1 = west (left), 2 = north (top), 3 = east (right).  Play goes in that
+   order, so the seat on your left is seat 1 and "pass left" means (p+1)%4.
+
+   Every heart is a point and the queen of spades is thirteen, twenty-six in
+   all, and low is good.  Take every one of them and the twenty-six goes to
+   everybody else instead.  The match ends when somebody passes the target and
+   exactly one player is on the lowest score. */
+function makeHearts(){
+  "use strict";
+
+  var NC=52, NP=4, HAND=13, QS=36, C2=0, TARGET=100;
+  var SUITNAME=["CLUBS","DIAMONDS","SPADES","HEARTS"];
+  var PASSNAME=["LEFT","RIGHT","ACROSS","NOBODY"];
+
+  function suitOf(c){ return (c/13)|0; }
+  function rankOf(c){ return c%13; }
+  function cardOf(s,r){ return s*13+r; }
+  function pointsOf(c){ return c===QS ? 13 : (suitOf(c)===3 ? 1 : 0); }
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+  function byCard(a,b){ return a-b; }
+
+  /* how many of this suit I hold, and how many of them are under rank r */
+  function suitLen(st,p,s){
+    var n=0, i, h=st.hands[p];
+    for(i=0;i<h.length;i++) if(suitOf(h[i])===s) n++;
+    return n;
+  }
+  function handPoints(list){
+    var n=0, i;
+    for(i=0;i<list.length;i++) n+=pointsOf(list[i]);
+    return n;
+  }
+  function takenPoints(st,p){ return handPoints(st.taken[p]); }
+
+  /* ---------------- setting up ---------------- */
+  function passTo(st,p){
+    var d=st.passDir;
+    if(d===0) return (p+1)%NP;      /* left  */
+    if(d===1) return (p+3)%NP;      /* right */
+    if(d===2) return (p+2)%NP;      /* across */
+    return p;                       /* hold  */
+  }
+  function startPlay(st){
+    var i;
+    st.phase="play";
+    st.turn=0; st.lead=0;
+    for(i=0;i<NP;i++) if(st.hands[i].indexOf(C2)>=0){ st.turn=i; st.lead=i; }
+  }
+  function deal(st){
+    var bag=[], i, j, t;
+    for(i=0;i<NC;i++) bag.push(i);
+    for(i=NC-1;i>0;i--){
+      j=Math.floor(st.rand()*(i+1));
+      t=bag[i]; bag[i]=bag[j]; bag[j]=t;
+    }
+    st.hands=[];
+    for(i=0;i<NP;i++) st.hands.push(bag.slice(i*HAND,(i+1)*HAND).sort(byCard));
+    st.taken=[[],[],[],[]];
+    st.trick=[]; st.trickNo=0; st.heartsBroken=false;
+    st.voids=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+    st.sel=[[],[],[],[]];
+    st.got=[[],[],[],[]];
+    st.last=null; st.handOver=false; st.moonBy=-1;
+    st.delta=[0,0,0,0]; st.pts=[0,0,0,0];
+    st.passDir=(st.hand-1)%4;
+    if(st.passDir===3) startPlay(st);
+    else { st.phase="pass"; st.turn=0; st.lead=0; }
+  }
+  function create(cfg){
+    cfg=cfg||{};
+    var st={
+      hands:[[],[],[],[]], taken:[[],[],[],[]],
+      trick:[], lead:0, turn:0, trickNo:0,
+      heartsBroken:false, phase:"pass", passDir:0,
+      sel:[[],[],[],[]], got:[[],[],[],[]],
+      voids:[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
+      scores:[0,0,0,0], hand:1, target:cfg.target||TARGET,
+      handOver:false, moonBy:-1, delta:[0,0,0,0], pts:[0,0,0,0],
+      last:null, over:false, winner:-1,
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    deal(st);
+    return st;
+  }
+  function nextHand(st){
+    if(st.over) return false;
+    st.hand++;
+    deal(st);
+    return true;
+  }
+
+  /* ---------------- passing ---------------- */
+  function pick(st,p,c){
+    if(st.phase!=="pass") return false;
+    if(st.hands[p].indexOf(c)<0) return false;
+    var k=st.sel[p].indexOf(c);
+    if(k>=0){ st.sel[p].splice(k,1); return true; }
+    if(st.sel[p].length>=3) return false;
+    st.sel[p].push(c);
+    return true;
+  }
+  function unpick(st,p,c){
+    var k=st.sel[p].indexOf(c);
+    if(k<0) return false;
+    st.sel[p].splice(k,1);
+    return true;
+  }
+  function passReady(st){
+    var i;
+    if(st.phase!=="pass") return false;
+    for(i=0;i<NP;i++) if(st.sel[i].length!==3) return false;
+    return true;
+  }
+  function doPass(st){
+    if(!passReady(st)) return false;
+    var moved=[[],[],[],[]], i, j, c, k;
+    /* take every card out of every hand before any of them go back in, or a
+       card passed across could be handed straight on again */
+    for(i=0;i<NP;i++){
+      for(j=0;j<3;j++){
+        c=st.sel[i][j];
+        k=st.hands[i].indexOf(c);
+        if(k<0) return false;
+        st.hands[i].splice(k,1);
+        moved[passTo(st,i)].push(c);
+      }
+    }
+    for(i=0;i<NP;i++){
+      for(j=0;j<moved[i].length;j++) st.hands[i].push(moved[i][j]);
+      st.hands[i].sort(byCard);
+    }
+    st.got=moved;
+    st.sel=[[],[],[],[]];
+    startPlay(st);
+    return true;
+  }
+
+  /* ---------------- what may be played ---------------- */
+  function legalPlays(st,p){
+    var h=st.hands[p], out=[], i;
+    if(st.phase!=="play"||st.handOver||st.over) return [];
+    if(p!==st.turn) return [];
+    var first=(st.trickNo===0);
+    if(!st.trick.length){
+      if(first && h.indexOf(C2)>=0) return [C2];
+      if(!st.heartsBroken){
+        for(i=0;i<h.length;i++) if(suitOf(h[i])!==3) out.push(h[i]);
+        if(out.length) return out;         /* only hearts left: lead them */
+        out=[];
+      }
+      return h.slice();
+    }
+    var ls=suitOf(st.trick[0].c);
+    for(i=0;i<h.length;i++) if(suitOf(h[i])===ls) out.push(h[i]);
+    if(out.length) return out;
+    if(first){
+      var safe=[];
+      for(i=0;i<h.length;i++) if(pointsOf(h[i])===0) safe.push(h[i]);
+      if(safe.length) return safe;         /* a hand of nothing but points may dump */
+    }
+    return h.slice();
+  }
+  function isLegal(st,p,c){ return legalPlays(st,p).indexOf(c)>=0; }
+  /* said in words, so the player is told WHY rather than just refused */
+  function whyIllegal(st,p,c){
+    if(st.phase!=="play") return "NOT YET";
+    if(p!==st.turn) return "NOT YOUR TURN";
+    if(isLegal(st,p,c)) return null;
+    var i, held=false;
+    if(!st.trick.length){
+      if(st.trickNo===0) return "THE TWO OF CLUBS MUST LEAD";
+      if(suitOf(c)===3 && !st.heartsBroken) return "HEARTS ARE NOT BROKEN YET";
+      return "THAT ONE WILL NOT GO";
+    }
+    var ls=suitOf(st.trick[0].c);
+    if(suitOf(c)!==ls){
+      for(i=0;i<st.hands[p].length;i++) if(suitOf(st.hands[p][i])===ls) held=true;
+      if(held) return "YOU MUST FOLLOW "+SUITNAME[ls];
+    }
+    if(st.trickNo===0 && pointsOf(c)>0) return "NO POINTS ON THE FIRST TRICK";
+    return "THAT ONE WILL NOT GO";
+  }
+
+  /* who is winning the trick as it stands, and what it is worth */
+  function trickState(st){
+    var i, ls=-1, high=-1, who=-1, pts=0;
+    if(!st.trick.length) return { ls:-1, high:-1, who:-1, pts:0 };
+    ls=suitOf(st.trick[0].c);
+    for(i=0;i<st.trick.length;i++){
+      pts+=pointsOf(st.trick[i].c);
+      if(suitOf(st.trick[i].c)===ls && rankOf(st.trick[i].c)>high){
+        high=rankOf(st.trick[i].c); who=st.trick[i].p;
+      }
+    }
+    return { ls:ls, high:high, who:who, pts:pts };
+  }
+
+  /* ---------------- playing a card ---------------- */
+  function endHand(st){
+    var i, j, pts=[0,0,0,0], d=[0,0,0,0];
+    for(i=0;i<NP;i++) for(j=0;j<st.taken[i].length;j++) pts[i]+=pointsOf(st.taken[i][j]);
+    st.moonBy=-1;
+    for(i=0;i<NP;i++) if(pts[i]===26) st.moonBy=i;
+    if(st.moonBy>=0){ for(i=0;i<NP;i++) d[i]=(i===st.moonBy?0:26); }
+    else { for(i=0;i<NP;i++) d[i]=pts[i]; }
+    for(i=0;i<NP;i++) st.scores[i]+=d[i];
+    st.pts=pts; st.delta=d;
+    st.handOver=true; st.phase="done";
+    var mx=st.scores[0], mn=st.scores[0], cnt=0, w=-1;
+    for(i=1;i<NP;i++){ if(st.scores[i]>mx) mx=st.scores[i]; if(st.scores[i]<mn) mn=st.scores[i]; }
+    if(mx>=st.target){
+      for(i=0;i<NP;i++) if(st.scores[i]===mn){ cnt++; w=i; }
+      /* a tie for the lowest score is not a win - deal again */
+      if(cnt===1){ st.over=true; st.winner=w; }
+    }
+  }
+  function play(st,c){
+    if(st.phase!=="play"||st.handOver||st.over) return { ok:false };
+    var p=st.turn, i;
+    if(!isLegal(st,p,c)) return { ok:false };
+    var k=st.hands[p].indexOf(c);
+    st.hands[p].splice(k,1);
+    if(st.trick.length){
+      var ls0=suitOf(st.trick[0].c);
+      if(suitOf(c)!==ls0) st.voids[p][ls0]=1;
+    }
+    st.trick.push({ p:p, c:c });
+    if(suitOf(c)===3) st.heartsBroken=true;
+    var ev={ ok:true, by:p, c:c, trickDone:false, winner:-1, pts:0,
+             handOver:false, over:false };
+    if(st.trick.length===NP){
+      var ts=trickState(st);
+      for(i=0;i<NP;i++) st.taken[ts.who].push(st.trick[i].c);
+      st.last={ winner:ts.who, pts:ts.pts, cards:st.trick.slice(), no:st.trickNo };
+      ev.trickDone=true; ev.winner=ts.who; ev.pts=ts.pts;
+      st.trick=[]; st.trickNo++;
+      st.lead=ts.who; st.turn=ts.who;
+      if(!st.hands[ts.who].length){
+        endHand(st);
+        ev.handOver=true; ev.over=st.over;
+      }
+    }else{
+      st.turn=(p+1)%NP;
+    }
+    return ev;
+  }
+
+  /* ---------------- the computer ----------------
+     A hidden-hand game, so there is nothing to search: past one card you are
+     only searching your own guesses.  What pays is counting.  Every card that
+     is neither in my hand nor already played is in one of the other three
+     hands, and from that pool - together with a note of who has already shown
+     out of a suit - I can work out how likely it is that the card I am about
+     to play wins a trick I would rather not have. */
+  function unseen(st,p){
+    var mark={}, i, j, out=[];
+    for(i=0;i<st.hands[p].length;i++) mark[st.hands[p][i]]=1;
+    for(i=0;i<NP;i++) for(j=0;j<st.taken[i].length;j++) mark[st.taken[i][j]]=1;
+    for(i=0;i<st.trick.length;i++) mark[st.trick[i].c]=1;
+    for(i=0;i<NC;i++) if(!mark[i]) out.push(i);
+    return out;
+  }
+  function countOut(pool,s,above){
+    var n=0, i;
+    for(i=0;i<pool.length;i++)
+      if(suitOf(pool[i])===s && rankOf(pool[i])>above) n++;
+    return n;
+  }
+  /* the chance that a hand of k cards drawn from `pool` holds at least one of
+     the m cards that would beat me */
+  function pHas(pool,k,m){
+    if(k<=0||m<=0) return 0;
+    if(pool-m<k) return 1;
+    var pNone=1, i;
+    for(i=0;i<k;i++) pNone *= (pool-m-i)/(pool-i);
+    return 1-pNone;
+  }
+  function seatsAfter(st){
+    var out=[], n=NP-st.trick.length-1, p=st.turn, i;
+    for(i=1;i<=n;i++) out.push((p+i)%NP);
+    return out;
+  }
+  /* is somebody running away with every point in the hand? */
+  function moonThreat(st,p){
+    var i, tot=0, hi=-1, hv=0;
+    for(i=0;i<NP;i++){
+      var v=takenPoints(st,i);
+      tot+=v;
+      if(v>hv){ hv=v; hi=i; }
+    }
+    if(hi<0||hi===p) return -1;
+    if(hv>=8 && hv===tot) return hi;
+    return -1;
+  }
+
+  /* Levels are `track` - how much notice they take of who has shown out of a
+     suit - `qplay` - how hard they work to be rid of the queen and to duck
+     under her - `moon` - whether they notice somebody running away with every
+     point - and `pass`, the care they take over the three cards they hand on.
+     The dial that actually moves the numbers, as it always is in a hidden-hand
+     game, is `slip`: the chance of settling for something other than the best
+     card they can see.  Gentle also gets `rnd`, a chance of playing any legal
+     card at all.  Every number here was measured against a stand-in player
+     over hundreds of matches a level - see sim_ht.js. */
+  var LEVELS=[
+    { rnd:0.50, slip:0.50, track:0.00, qplay:0.20, moon:0, pass:0.20 },
+    { rnd:0.00, slip:0.40, track:0.60, qplay:0.85, moon:1, pass:0.80 },
+    { rnd:0.00, slip:0.15, track:1.00, qplay:1.00, moon:1, pass:1.00 }
+  ];
+  function lvl(level,opts){
+    if(opts) return opts;
+    var i=level|0;
+    if(i<0) i=0;
+    if(i>LEVELS.length-1) i=LEVELS.length-1;
+    return LEVELS[i];
+  }
+
+  /* ---- passing: what I most want to be rid of ---- */
+  function passWant(st,p,c){
+    var s=suitOf(c), r=rankOf(c), h=st.hands[p], i, cnt=0, below=0, w=0;
+    for(i=0;i<h.length;i++) if(suitOf(h[i])===s){ cnt++; if(rankOf(h[i])<r) below++; }
+    if(c===QS) w = 96 - (cnt-1)*15;              /* four small spades make her safe */
+    else if(s===2 && r>10) w = 80 - (cnt-1)*9;   /* ace and king catch her */
+    else if(s===2) w = -10 - below*2;            /* low spades are armour: keep them */
+    else if(s===3) w = r*3.4 - 8;                /* high hearts go, low ones stay */
+    else{
+      w = r*2.6;
+      if(cnt<=2) w += (3-cnt)*12;                /* shortening a suit towards a void */
+      if(r>=11) w += 10;
+      if(r<=2) w -= 8;                           /* a two or a three is a free duck */
+    }
+    return w;
+  }
+  function thinkPass(st,p,level,opts){
+    var cfg=lvl(level,opts), h=st.hands[p], arr=[], i;
+    for(i=0;i<h.length;i++)
+      arr.push({ c:h[i], w:passWant(st,p,h[i]) + (1-cfg.pass)*st.rand()*90 });
+    arr.sort(function(a,b){ return b.w-a.w; });
+    return [arr[0].c, arr[1].c, arr[2].c];
+  }
+
+  /* ---- leading ---- */
+  function scoreLead(st,p,c,cfg){
+    var s=suitOf(c), r=rankOf(c), pool=unseen(st,p), i;
+    var v=(12-r)*2.4;                            /* low is safe */
+    var higher=countOut(pool,s,r);
+    var qOut = pool.indexOf(QS)>=0;
+    /* holding the lowest card of the suit still out there means this trick
+       cannot come back to me, which is the whole art of leading in Hearts */
+    var lowest=true;
+    for(i=0;i<pool.length;i++) if(suitOf(pool[i])===s && rankOf(pool[i])<r) lowest=false;
+    if(lowest) v += 13;
+    if(s===2){
+      if(c===QS) v -= 70*cfg.qplay;              /* never lead her */
+      else if(r>10 && qOut) v -= 46*cfg.qplay;   /* the ace or king would eat her */
+      else if(qOut && r<10) v += 30*cfg.qplay;   /* smoke her out from underneath */
+    }
+    if(s===3) v -= 16;                           /* leading hearts is a gift */
+    if(higher===0 && st.hands[p].length>1) v -= 16;  /* this trick is mine whether I like it or not */
+    else v += (higher>4?4:higher)*2.2;
+    /* a suit somebody has already shown out of is a suit they will dump on */
+    var vd=0;
+    for(i=0;i<NP;i++) if(i!==p && st.voids[i][s]) vd++;
+    v -= vd*17*cfg.track;
+    /* being long in a suit means more chances to be stuck with it later */
+    v += (suitLen(st,p,s)>=5) ? 4 : 0;
+    return v;
+  }
+
+  /* ---- following ---- */
+  function scoreFollow(st,p,c,cfg){
+    var ts=trickState(st), s=suitOf(c), r=rankOf(c);
+    var after=seatsAfter(st), pool=unseen(st,p), i, j;
+    var poolN=pool.length;
+    var threat=cfg.moon ? moonThreat(st,p) : -1;
+    var v=0;
+
+    if(s===ts.ls){
+      var beatsNow = r>ts.high;
+      var pWin=0;
+      if(beatsNow){
+        pWin=1;
+        for(i=0;i<after.length;i++){
+          var q=after[i];
+          if(st.voids[q][ts.ls] && cfg.track>0.5) continue;    /* cannot beat me */
+          var m=countOut(pool,ts.ls,r);
+          pWin *= (1-pHas(poolN, st.hands[q].length, m));
+        }
+      }
+      /* what the players still to come are likely to throw on top */
+      var dump=0, qLoose=pool.indexOf(QS)>=0;
+      for(i=0;i<after.length;i++){
+        var q2=after[i];
+        dump += (st.voids[q2][ts.ls] ? (qLoose?4.8:2.6)*cfg.track : 0.45);
+      }
+      if(ts.ls===2 && qLoose && r>10) dump += 9*cfg.qplay;
+      var cost=(ts.pts+dump);
+      v = -pWin*cost*9;
+      v += (1-pWin)*(6+r*2.3);                   /* ducking high is free money */
+      if(pWin>0.5 && ts.pts===0 && !after.length) v += 5+r*1.6;  /* a free trick: shed a big one */
+      if(c===QS){
+        if(pWin<0.5) v += 60*cfg.qplay;          /* slide her under somebody */
+        else v -= 55*cfg.qplay;
+      }
+      if(s===2 && r>10 && pool.indexOf(QS)>=0) v -= 30*cfg.qplay*pWin;
+      if(threat>=0 && ts.pts>0) v += pWin*46;    /* somebody is shooting: stop them */
+      if(threat>=0 && ts.who===threat && ts.pts===0) v += pWin*10;
+    }else{
+      /* void in the led suit: nothing can win it, so this is pure discard */
+      /* early on the dangerous high cards go first and hearts are worth
+         holding; late on there is nothing left to fear but the hearts */
+      var late = st.trickNo>=7 ? 1 : 0;
+      v = 14;
+      if(c===QS) v += 84*cfg.qplay;
+      else if(s===2 && r>10) v += 34*cfg.qplay + r;
+      else if(s===3) v += (late?16:2) + r*2.7;
+      else v += r*2.0 + (late?0:5);
+      if(suitLen(st,p,s)===1 && s!==3) v += 13;  /* the last of a suit buys a void */
+      if(r<=1 && s!==3) v -= 14;                 /* a two or a three ducks for me later */
+      if(threat>=0 && ts.who===threat && pointsOf(c)>0) v -= 30;   /* do not feed the moon */
+      if(s===2 && r<10) v -= 12;                 /* low spades are worth keeping */
+    }
+    return v;
+  }
+
+  function scorePlay(st,p,c,cfg){
+    return st.trick.length ? scoreFollow(st,p,c,cfg) : scoreLead(st,p,c,cfg);
+  }
+  function think(st,level,opts){
+    var cfg=lvl(level,opts), p=st.turn;
+    var L=legalPlays(st,p);
+    if(!L.length) return -1;
+    if(L.length===1) return L[0];
+    if(cfg.rnd && st.rand()<cfg.rnd) return L[Math.floor(st.rand()*L.length)%L.length];
+    var arr=[], i;
+    for(i=0;i<L.length;i++) arr.push({ c:L[i], s:scorePlay(st,p,L[i],cfg) });
+    arr.sort(function(a,b){ return b.s-a.s; });
+    if(arr.length>1 && cfg.slip && st.rand()<cfg.slip){
+      var k=1+Math.floor(st.rand()*(arr.length-1));
+      if(k>=arr.length) k=arr.length-1;
+      return arr[k].c;
+    }
+    return arr[0].c;
+  }
+  /* the hint the player gets: always the best card the strongest level knows */
+  function hint(st){
+    return think(st, 2, { rnd:0, slip:0, track:1, qplay:1, moon:1, pass:1 });
+  }
+  function hintPass(st,p){
+    return thinkPass(st, p, 2, { rnd:0, slip:0, track:1, qplay:1, moon:1, pass:1 });
+  }
+
+  /* ---------------- every promise the game makes, checked from outside ----
+     Fifty-two distinct cards at all times across the four hands, the trick on
+     the table and the four piles; nobody holding a card they have discarded;
+     nobody following with the wrong suit while they still hold the right one;
+     and twenty-six points on the table every single hand.                   */
+  function audit(st){
+    var seen={}, i, j, c, n=0;
+    if(!st.hands||st.hands.length!==NP) return "the wrong number of hands";
+    for(i=0;i<NP;i++){
+      if(!st.hands[i]) return "a missing hand";
+      for(j=0;j<st.hands[i].length;j++){
+        c=st.hands[i][j];
+        if(!(c>=0&&c<NC)) return "a card out of range in hand "+i;
+        if(seen[c]) return "card "+c+" is in two places at once";
+        seen[c]=1;
+      }
+    }
+    for(i=0;i<NP;i++){
+      for(j=0;j<st.taken[i].length;j++){
+        c=st.taken[i][j];
+        if(!(c>=0&&c<NC)) return "a card out of range in pile "+i;
+        if(seen[c]) return "card "+c+" is both held and discarded";
+        seen[c]=1;
+      }
+      if(st.taken[i].length%NP!==0) return "pile "+i+" is not whole tricks";
+    }
+    for(i=0;i<st.trick.length;i++){
+      c=st.trick[i].c;
+      if(!(c>=0&&c<NC)) return "a card out of range on the table";
+      if(seen[c]) return "card "+c+" is on the table and somewhere else too";
+      seen[c]=1;
+      if(!(st.trick[i].p>=0&&st.trick[i].p<NP)) return "a card played by nobody";
+    }
+    /* twenty-six points, always, wherever they happen to be sitting.  This
+       comes before the head count on purpose: a card that has fallen out of
+       the game shows up here first, and the message names what was lost. */
+    var pts=0;
+    for(i=0;i<NP;i++){ pts+=handPoints(st.hands[i]); pts+=handPoints(st.taken[i]); }
+    for(i=0;i<st.trick.length;i++) pts+=pointsOf(st.trick[i].c);
+    if(pts!==26) return "there are "+pts+" points in the hand, not 26";
+
+    for(c in seen) if(seen.hasOwnProperty(c)) n++;
+    if(n!==NC) return "there are "+n+" cards in play, not "+NC;
+
+    if(st.trick.length>=NP) return "a trick of "+st.trick.length+" cards was left standing";
+    if(!(st.turn>=0&&st.turn<NP)) return "nobody's turn";
+    if(!(st.lead>=0&&st.lead<NP)) return "nobody led";
+    if(st.trickNo<0||st.trickNo>HAND) return "an impossible trick number";
+
+    /* the piles must add up to the tricks that have been played */
+    var tk=0;
+    for(i=0;i<NP;i++) tk+=st.taken[i].length;
+    if(tk!==st.trickNo*NP) return "the piles hold "+tk+" cards after "+st.trickNo+" tricks";
+
+    /* everybody has played the same number of cards, give or take this trick */
+    var played={};
+    for(i=0;i<st.trick.length;i++) played[st.trick[i].p]=1;
+    if(st.phase==="pass"){
+      for(i=0;i<NP;i++) if(st.hands[i].length!==HAND) return "a hand of "+st.hands[i].length+" before the pass";
+      for(i=0;i<NP;i++) if(st.sel[i].length>3) return "more than three cards picked to pass";
+      for(i=0;i<NP;i++) for(j=0;j<st.sel[i].length;j++)
+        if(st.hands[i].indexOf(st.sel[i][j])<0) return "a card picked to pass that is not held";
+    }else if(st.phase==="play"){
+      for(i=0;i<NP;i++){
+        var want=HAND-st.trickNo-(played[i]?1:0);
+        if(st.hands[i].length!==want)
+          return "hand "+i+" holds "+st.hands[i].length+" cards, not "+want;
+      }
+    }
+
+    /* the follow-suit rule, checked two ways.  Inside the trick on the table
+       every card either matches the led suit or its player is on record as
+       having shown out; and nobody on record as void may still be holding the
+       suit they claimed not to have. */
+    if(st.trick.length){
+      var ls=suitOf(st.trick[0].c);
+      for(i=1;i<st.trick.length;i++){
+        if(suitOf(st.trick[i].c)!==ls && !st.voids[st.trick[i].p][ls])
+          return "seat "+st.trick[i].p+" did not follow "+SUITNAME[ls];
+      }
+    }
+    for(i=0;i<NP;i++) for(j=0;j<4;j++){
+      if(!st.voids[i][j]) continue;
+      for(c=0;c<st.hands[i].length;c++)
+        if(suitOf(st.hands[i][c])===j)
+          return "seat "+i+" showed out of "+SUITNAME[j]+" but still holds one";
+    }
+
+    /* hearts cannot have been played before they were broken */
+    if(!st.heartsBroken){
+      for(i=0;i<NP;i++) for(j=0;j<st.taken[i].length;j++)
+        if(suitOf(st.taken[i][j])===3) return "a heart was played before hearts were broken";
+      for(i=0;i<st.trick.length;i++)
+        if(suitOf(st.trick[i].c)===3) return "a heart is on the table but hearts are not broken";
+    }
+
+    for(i=0;i<NP;i++) if(st.scores[i]<0) return "a negative score";
+    if(st.handOver){
+      var sum=0;
+      for(i=0;i<NP;i++) sum+=st.pts[i];
+      if(sum!==26) return "the hand scored "+sum+", not 26";
+      if(st.moonBy>=0 && st.pts[st.moonBy]!==26) return "a moon that was not all twenty-six";
+    }
+    if(st.over){
+      if(!(st.winner>=0&&st.winner<NP)) return "the match is over with no winner";
+      var mx=0, mn=1e9;
+      for(i=0;i<NP;i++){ if(st.scores[i]>mx) mx=st.scores[i]; if(st.scores[i]<mn) mn=st.scores[i]; }
+      if(mx<st.target) return "the match is over below the target";
+      if(st.scores[st.winner]!==mn) return "the match went to somebody who is not lowest";
+    }
+    return null;
+  }
+
+  return {
+    NC:NC, NP:NP, HAND:HAND, QS:QS, C2:C2, TARGET:TARGET,
+    SUITNAME:SUITNAME, PASSNAME:PASSNAME, LEVELS:LEVELS,
+    suitOf:suitOf, rankOf:rankOf, cardOf:cardOf, pointsOf:pointsOf,
+    rng:rng, create:create, deal:deal, nextHand:nextHand,
+    passTo:passTo, pick:pick, unpick:unpick, passReady:passReady, doPass:doPass,
+    legalPlays:legalPlays, isLegal:isLegal, whyIllegal:whyIllegal,
+    trickState:trickState, play:play, endHand:endHand, startPlay:startPlay,
+    suitLen:suitLen, handPoints:handPoints, takenPoints:takenPoints,
+    unseen:unseen, countOut:countOut, pHas:pHas, moonThreat:moonThreat,
+    passWant:passWant, thinkPass:thinkPass, scorePlay:scorePlay,
+    think:think, hint:hint, hintPass:hintPass, audit:audit
+  };
+}
+</script>
+<script>
+(function(){
+"use strict";
+var H=makeHearts();
+var LS="gg_hearts_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"easy", name:"Gentle",   cls:"z-a", tag:"They play what they fancy", ai:0},
+  {id:"med",  name:"Tricky",   cls:"z-b", tag:"They watch the queen and count the suits", ai:1},
+  {id:"hard", name:"Fiendish", cls:"z-c", tag:"They count everything and spot a moon", ai:2}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[1]; }
+
+/* ---------------- colours ---------------- */
+var FELT="#2f66d8", RIM="#1b47a8", FELT_L="#4d85ee";
+var SHERBET="#ff9f45", SHERBET_L="#ffc785", SHERBET_D="#e07216";
+var FACE="#fffdf7", FACE_E="#dfe6f2", INK="#1e2a44", RED="#e0243a";
+var GREY="#7a88a5";
+var RANKS=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+var NAMES=["YOU","WEST","NORTH","EAST"];
+
+/* ---------------- state ---------------- */
+var mId, S, started, target, thinking;
+var aiTimer=null, turnTimer=null, trickTimer=null;
+var sel=-1, msg="", msgUntil=0, lastT=0, pulse=0;
+var show=null;            /* the finished trick, held on the table for a moment */
+var gotHi=[], gotUntil=0; /* the three cards just passed to you, briefly aglow */
+var wins=0, cleanRun=0;
+/* Only the test hook ever sets this.  It stops the clock and the computers'
+   timers so a test can step the game itself instead of racing them.  With the
+   hook stripped out of the shipping build it stays false for good. */
+var frozen=false;
+
+function clearTimers(){
+  if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+  if(turnTimer){ clearTimeout(turnTimer); turnTimer=null; }
+  if(trickTimer){ clearTimeout(trickTimer); trickTimer=null; }
+}
+function newGame(id, seed){
+  mId=id; save("mode",id); save("target",target);
+  S=H.create({ seed:seed, target:target });
+  thinking=false; sel=-1; msg=""; msgUntil=0; show=null; gotHi=[]; gotUntil=0;
+  clearTimers();
+  aiPasses();
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ----------------
+   The table fills everything above the hand rail.  Four seat plates sit round
+   its edge - north at the top, west and east at the sides, and you along the
+   bottom - with the trick laid out as a diamond between them, so a card
+   always appears on the side of the table it was played from.
+
+   The hand rail underneath is the whole problem in portrait: thirteen cards
+   across 375 points.  They are fanned so that every card shows its index
+   corner, the one you are choosing lifts clear of its neighbours and is drawn
+   last so nothing overlaps it, and any card that is not legal right now sinks
+   into the rail and greys out. */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0, VH=0;
+var G={ ready:false, sig:"", table:{x:0,y:0,w:0,h:0}, rail:{x:0,y:0,w:0,h:0},
+        plates:[null,null,null,null], slots:[null,null,null,null],
+        hand:[], cw:10, ch:14, btn:null, msgY:0 };
+
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  geom(true);
+}
+window.addEventListener("resize", function(){ layout(); });
+
+function rr(x,y,w,h,rad){
+  if(rad>w/2) rad=w/2; if(rad>h/2) rad=h/2; if(rad<0) rad=0;
+  ctx.beginPath(); ctx.moveTo(x+rad,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad);
+  ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath();
+}
+
+function geom(force){
+  if(!S||VW<40) return;
+  var i;
+  var sig=VW+"/"+VH+"/"+S.hands[0].length+"/"+S.phase+"/"+S.sel[0].length+
+          "/"+S.trick.length+"/"+(show?1:0)+"/"+S.turn;
+  if(!force && G.ready && G.sig===sig) return;
+  G.sig=sig;
+
+  /* --- how much room the hand needs, before anything else gets any ---
+     A card may be no more than about three and a third times the width of the
+     slice of it that shows, or the rank and suit in the corner end up a speck
+     on a great white slab.  With thirteen cards that is what settles the size.
+     Work the rail out from that and give whatever is left to the table, so a
+     tall phone spends its extra height on the table rather than on empty
+     rail. --- */
+  var hand=S.hands[0], n=hand.length;
+  var gaps=0;
+  for(i=1;i<n;i++) if(H.suitOf(hand[i])!==H.suitOf(hand[i-1])) gaps++;
+  var gp=7, hpad=6;
+  var lift=Math.round(Math.min(26, VH*0.05));
+  var sink=Math.round(lift*0.5);
+  var availR=VW-12-gaps*gp;
+  var wMax=Math.min(104, VW*0.31, availR/(1+(n-1)/3.33));
+  var railH=Math.round(Math.max(112,
+    Math.min(VH*0.315, 212, wMax*1.4+lift+sink+hpad*2)));
+  G.rail={ x:1, y:VH-railH, w:VW-2, h:railH };
+  G.table={ x:1, y:0, w:VW-2, h:VH-railH-5 };
+
+  /* --- seat plates.  North and you get a wide plate along the top and the
+         bottom; west and east get narrow upright ones at the sides, because
+         every point of width they take is width the trick cannot have. --- */
+  var cx=G.table.x+G.table.w/2;
+  var ew=Math.round(Math.min(132, G.table.w*0.35));
+  var eh=Math.round(Math.max(34, Math.min(46, G.table.h*0.115)));
+  var sw=Math.round(Math.max(44, Math.min(62, G.table.w*0.155)));
+  var sh=Math.round(Math.max(44, Math.min(66, G.table.h*0.155)));
+  G.plates[2]={ x:cx-ew/2, y:G.table.y+7, w:ew, h:eh, narrow:false };
+  G.plates[0]={ x:cx-ew/2, y:G.table.y+G.table.h-7-eh, w:ew, h:eh, narrow:false };
+
+  /* --- the trick, laid out as a diamond between the plates --- */
+  var top=G.table.y+11+eh;
+  var bot=G.table.y+G.table.h-eh-34;
+  var cy=(top+bot)/2;
+  G.plates[1]={ x:G.table.x+6, y:cy-sh/2, w:sw, h:sh, narrow:true };
+  G.plates[3]={ x:G.table.x+G.table.w-6-sw, y:cy-sh/2, w:sw, h:sh, narrow:true };
+
+  var cw=Math.min((G.table.w-2*(sw+12))/2.66, (bot-top)/1.84/1.4, 116);
+  if(cw<34) cw=34;
+  var ch=cw*1.4;
+  G.cw=cw; G.ch=ch; G.cx=cx; G.cy=cy;
+  /* the diamond spreads out to fill whatever height is going: a tall phone
+     gets the four cards further apart rather than a bigger empty table */
+  var dx=cw*0.83, dy=Math.min(ch*0.62, Math.max(ch*0.42, (bot-top-ch)/2));
+  G.slots[2]={ x:cx-cw/2,    y:cy-dy-ch/2, w:cw, h:ch };
+  G.slots[0]={ x:cx-cw/2,    y:cy+dy-ch/2, w:cw, h:ch };
+  G.slots[1]={ x:cx-dx-cw/2, y:cy-ch/2,    w:cw, h:ch };
+  G.slots[3]={ x:cx+dx-cw/2, y:cy-ch/2,    w:cw, h:ch };
+  G.msgY=G.plates[0].y-15;
+
+  /* --- the pass button, in the middle of an otherwise empty table --- */
+  var bw=Math.min(230, G.table.w*0.66), bh=Math.min(46, G.table.h*0.13);
+  G.btn={ x:cx-bw/2, y:cy-bh/2+ch*0.34, w:bw, h:bh };
+
+  /* --- the fan --- */
+  var hch=railH-lift-sink-hpad*2;
+  var hcw=Math.min(hch/1.4, wMax);
+  hch=hcw*1.4;
+  var step=n>1 ? (availR-hcw)/(n-1) : 0;
+  if(step>hcw*1.06) step=hcw*1.06;
+  if(step<10) step=10;
+  var total=hcw+(n-1)*step+gaps*gp;
+  var x0=G.rail.x+(G.rail.w-total)/2;
+  /* the block of cards, its raised top and its sunken bottom, all centred in
+     the rail together */
+  var baseY=G.rail.y+railH/2+(lift-hch-sink)/2;
+  G.hand=[]; G.lift=lift; G.sink=sink;
+  var x=x0;
+  for(i=0;i<n;i++){
+    if(i>0 && H.suitOf(hand[i])!==H.suitOf(hand[i-1])) x+=gp;
+    var hw=(i===n-1)?hcw:step;
+    G.hand.push({ c:hand[i], x:x, y:baseY, w:hcw, h:hch, hw:hw, k:i });
+    x+=step;
+  }
+  G.ready=true;
+}
+
+/* ---------------- drawing the cards ----------------
+   The suit pips are drawn as paths rather than typed as characters, so they
+   are always the right size, always crisp, and never at the mercy of whatever
+   font the phone happens to have. */
+function pip(s,cx,cy,r,col){
+  ctx.fillStyle=col;
+  if(s===3){
+    ctx.beginPath();
+    ctx.moveTo(cx, cy+r*0.96);
+    ctx.bezierCurveTo(cx-r*1.42, cy-r*0.16, cx-r*0.60, cy-r*1.20, cx, cy-r*0.40);
+    ctx.bezierCurveTo(cx+r*0.60, cy-r*1.20, cx+r*1.42, cy-r*0.16, cx, cy+r*0.96);
+    ctx.closePath(); ctx.fill(); return;
+  }
+  if(s===1){
+    ctx.beginPath();
+    ctx.moveTo(cx, cy-r); ctx.lineTo(cx+r*0.76, cy);
+    ctx.lineTo(cx, cy+r); ctx.lineTo(cx-r*0.76, cy);
+    ctx.closePath(); ctx.fill(); return;
+  }
+  if(s===2){
+    ctx.beginPath();
+    ctx.moveTo(cx, cy-r);
+    ctx.bezierCurveTo(cx+r*1.30, cy+r*0.20, cx+r*0.40, cy+r*0.76, cx+r*0.13, cy+r*0.40);
+    ctx.lineTo(cx+r*0.34, cy+r);
+    ctx.lineTo(cx-r*0.34, cy+r);
+    ctx.lineTo(cx-r*0.13, cy+r*0.40);
+    ctx.bezierCurveTo(cx-r*0.40, cy+r*0.76, cx-r*1.30, cy+r*0.20, cx, cy-r);
+    ctx.closePath(); ctx.fill(); return;
+  }
+  ctx.beginPath();
+  ctx.moveTo(cx+r*0.30, cy+r);
+  ctx.lineTo(cx-r*0.30, cy+r);
+  ctx.quadraticCurveTo(cx, cy+r*0.50, cx-r*0.05, cy+r*0.02);
+  ctx.lineTo(cx+r*0.05, cy+r*0.02);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy-r*0.44, r*0.46, 0, 6.284); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx-r*0.54, cy+r*0.22, r*0.46, 0, 6.284); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+r*0.54, cy+r*0.22, r*0.46, 0, 6.284); ctx.fill();
+}
+function suitCol(s){ return (s===1||s===3) ? RED : INK; }
+
+/* The index corner: rank above, suit below.  Its width is the width of the
+   slice of the card that is actually showing, never more - a pip drawn wider
+   than the slice gets sliced in half by the next card along, which is exactly
+   the sort of thing that passes every test and looks wrong. */
+function index(c, x, y, w, col){
+  var s=H.suitOf(c), r=H.rankOf(c);
+  var lab=RANKS[r];
+  var fs=Math.min(w*0.95, 27);
+  if(lab.length>1) fs*=0.68;
+  ctx.save();
+  ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+  ctx.font="900 "+fs.toFixed(1)+"px -apple-system,Helvetica,Arial";
+  ctx.fillStyle=col;
+  ctx.fillText(lab, x+w/2, y+fs*0.96);
+  ctx.restore();
+  pip(s, x+w/2, y+fs*1.06+w*0.34, w*0.32, col);
+}
+
+function cardFace(x,y,w,h,c,o){
+  o=o||{};
+  var rad=Math.max(3,w*0.11);
+  var s=H.suitOf(c), col=suitCol(s);
+  var qs=(c===H.QS);
+  var slice=o.slice||w;
+  ctx.fillStyle="rgba(9,30,84,"+(o.flat?0.16:0.30)+")";
+  rr(x+1, y+Math.max(1.5,h*0.030), w, h, rad); ctx.fill();
+  ctx.fillStyle=FACE;
+  rr(x,y,w,h,rad); ctx.fill();
+  ctx.strokeStyle=qs?(o.dim?"#b9a08a":SHERBET):FACE_E;
+  ctx.lineWidth=qs?Math.max(1.6,w*0.045):1;
+  rr(x+0.5,y+0.5,w-1,h-1,rad); ctx.stroke();
+  var iw=Math.min(slice-5, w*0.44, h*0.30);
+  if(iw<7) iw=Math.max(5, slice-2);
+  /* one of the three cards that were just passed to you */
+  if(o.newly){
+    ctx.fillStyle="rgba(255,168,66,"+(0.30+0.35*o.newly)+")";
+    rr(x+1.5, y+1.5, Math.min(slice-3, iw+w*0.12), h*0.40, rad*0.8); ctx.fill();
+  }
+  index(c, x+w*0.045, y+h*0.035, iw, o.dim?GREY:(qs?SHERBET_D:col));
+  /* The big pip goes on only where the whole of it would show.  On a card
+     mostly hidden under the next one along it would be sliced in half, and a
+     half pip poking out of a gap is worse than no pip at all. */
+  var pr=Math.min(w*0.25, h*0.18, (slice-10)/2);
+  if(w>=40 && pr>=8){
+    pip(s, x+Math.min(w*0.64, slice-pr-5), y+h*0.68, pr, o.dim?GREY:col);
+  }
+  if(qs && w>=40 && slice>=w*0.92){
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.round(w*0.19)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle=o.dim?GREY:SHERBET_D;
+    ctx.fillText("13", x+w*0.78, y+h*0.16);
+    ctx.restore();
+  }
+  if(o.dim){
+    ctx.fillStyle="rgba(46,80,156,.26)";
+    rr(x,y,w,h,rad); ctx.fill();
+  }
+  if(o.glow){
+    ctx.strokeStyle="rgba(255,196,110,"+o.glow+")"; ctx.lineWidth=Math.max(2.5,w*0.09);
+    rr(x-2,y-2,w+4,h+4,rad+2); ctx.stroke();
+  }
+  if(o.ring){
+    ctx.strokeStyle=SHERBET; ctx.lineWidth=Math.max(2.5,w*0.075);
+    rr(x-2,y-2,w+4,h+4,rad+2); ctx.stroke();
+  }
+}
+function cardBack(x,y,w,h){
+  var rad=Math.max(2,w*0.14), i;
+  ctx.fillStyle="rgba(9,30,84,.28)";
+  rr(x+1,y+1.5,w,h,rad); ctx.fill();
+  ctx.fillStyle=RIM; rr(x,y,w,h,rad); ctx.fill();
+  ctx.fillStyle=FELT_L;
+  rr(x+w*0.10,y+h*0.08,w*0.80,h*0.84,rad*0.7); ctx.fill();
+  ctx.save();
+  rr(x+w*0.10,y+h*0.08,w*0.80,h*0.84,rad*0.7); ctx.clip();
+  ctx.strokeStyle="rgba(255,190,120,.55)"; ctx.lineWidth=Math.max(1,w*0.055);
+  for(i=-2;i<5;i++){
+    ctx.beginPath();
+    ctx.moveTo(x+i*w*0.34, y);
+    ctx.lineTo(x+i*w*0.34+h, y+h);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function pill(txt, cx, cy, size, bg, fg, sub, subcol){
+  ctx.save();
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font="900 "+Math.round(size)+"px -apple-system,Helvetica,Arial";
+  var w=ctx.measureText(txt).width, sw=0;
+  if(sub){
+    ctx.font="900 "+Math.round(size*1.06)+"px -apple-system,Helvetica,Arial";
+    sw=ctx.measureText(sub).width+size*0.5;
+  }
+  var h=size*1.75, tw=w+sw+size*1.2;
+  ctx.fillStyle=bg;
+  rr(cx-tw/2, cy-h/2, tw, h, h/2); ctx.fill();
+  ctx.font="900 "+Math.round(size)+"px -apple-system,Helvetica,Arial";
+  ctx.fillStyle=fg;
+  ctx.fillText(txt, cx-tw/2+size*0.6+w/2, cy+1);
+  if(sub){
+    ctx.font="900 "+Math.round(size*1.06)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle=subcol||SHERBET;
+    ctx.fillText(sub, cx+tw/2-size*0.6-sw/2+size*0.25, cy+1);
+  }
+  ctx.restore();
+}
+
+function plate(p, glow){
+  var r=G.plates[p];
+  if(!r) return;
+  var pts=H.takenPoints(S,p);
+  ctx.fillStyle="rgba(255,255,255,"+(p===0?0.30:0.22)+")";
+  rr(r.x,r.y,r.w,r.h,Math.min(r.w,r.h)*0.34); ctx.fill();
+  ctx.strokeStyle=glow>0 ? "rgba(255,190,110,"+(0.55+0.45*glow)+")" : "rgba(255,255,255,.42)";
+  ctx.lineWidth=glow>0?2.5:1.2;
+  rr(r.x+0.6,r.y+0.6,r.w-1.2,r.h-1.2,Math.min(r.w,r.h)*0.34); ctx.stroke();
+  ctx.save();
+  ctx.textBaseline="alphabetic";
+  if(r.narrow){
+    ctx.textAlign="center";
+    var mx=r.x+r.w/2;
+    ctx.font="900 "+Math.round(r.h*0.20)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="rgba(255,255,255,.86)";
+    ctx.fillText(NAMES[p], mx, r.y+r.h*0.31);
+    ctx.font="900 "+Math.round(r.h*0.36)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="#ffffff";
+    ctx.fillText(String(S.scores[p]), mx, r.y+r.h*0.66);
+    if(pts>0){
+      ctx.font="900 "+Math.round(r.h*0.25)+"px -apple-system,Helvetica,Arial";
+      ctx.fillStyle=SHERBET_L;
+      ctx.fillText("+"+pts, mx, r.y+r.h*0.93);
+    }
+  }else{
+    ctx.textAlign="left";
+    ctx.font="900 "+Math.round(r.h*0.26)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="rgba(255,255,255,.86)";
+    ctx.fillText(NAMES[p], r.x+r.h*0.34, r.y+r.h*0.42);
+    ctx.font="900 "+Math.round(r.h*0.48)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="#ffffff";
+    ctx.fillText(String(S.scores[p]), r.x+r.h*0.34, r.y+r.h*0.90);
+    if(pts>0){
+      ctx.textAlign="right";
+      ctx.font="900 "+Math.round(r.h*0.42)+"px -apple-system,Helvetica,Arial";
+      ctx.fillStyle=SHERBET_L;
+      ctx.fillText("+"+pts, r.x+r.w-r.h*0.30, r.y+r.h*0.76);
+    }
+  }
+  ctx.restore();
+}
+
+function statusText(){
+  if(!started||S.over) return null;
+  if(show) return null;
+  if(S.handOver) return null;
+  if(S.phase==="pass") return null;
+  if(thinking) return null;
+  if(S.turn!==0) return null;
+  if(!S.trick.length) return S.trickNo===0 ? "LEAD THE TWO OF CLUBS" : "YOUR LEAD";
+  var ls=H.suitOf(S.trick[0].c), i;
+  for(i=0;i<S.hands[0].length;i++)
+    if(H.suitOf(S.hands[0][i])===ls) return "FOLLOW "+H.SUITNAME[ls];
+  return "NONE LEFT - THROW ANYTHING";
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!S) return;
+  if(!G.ready||!VW){ layout(); if(!G.ready) return; }
+  geom();
+  var now=ts||0;
+  var dt=lastT?Math.min(120,now-lastT):0;
+  lastT=now;
+  if(!frozen) pulse=(pulse+dt/620)%1;
+  var glow=0.55+0.45*Math.sin(pulse*6.283);
+  var i, k, t;
+
+  ctx.clearRect(0,0,VW,VH);
+
+  /* the table */
+  ctx.fillStyle=RIM;
+  rr(G.table.x, G.table.y, G.table.w, G.table.h, 18); ctx.fill();
+  ctx.fillStyle=FELT;
+  rr(G.table.x+3, G.table.y+3, G.table.w-6, G.table.h-6, 15); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.07)";
+  rr(G.table.x+3, G.table.y+3, G.table.w-6, (G.table.h-6)*0.45, 15); ctx.fill();
+  ctx.strokeStyle="rgba(255,190,110,.20)"; ctx.lineWidth=1.5;
+  rr(G.table.x+11, G.table.y+11, G.table.w-22, G.table.h-22, 10); ctx.stroke();
+  /* a soft pool of light over the middle, so the felt is not a flat slab */
+  var lg=ctx.createRadialGradient(G.cx, G.cy, 4, G.cx, G.cy, Math.max(40,G.table.w*0.62));
+  lg.addColorStop(0,"rgba(255,255,255,.11)");
+  lg.addColorStop(1,"rgba(255,255,255,0)");
+  ctx.fillStyle=lg;
+  rr(G.table.x+4, G.table.y+4, G.table.w-8, G.table.h-8, 14); ctx.fill();
+
+  /* the seat plates.  The seat about to play is ringed; while the cards are
+     being passed the seat that is getting yours is ringed instead. */
+  var ringSeat=-1;
+  if(started && !S.over){
+    if(S.phase==="pass") ringSeat=H.passTo(S,0);
+    else if(!S.handOver && !show) ringSeat=S.turn;
+  }
+  for(i=0;i<4;i++) plate(i, i===ringSeat ? glow : 0);
+
+  /* the trick.  While a finished trick is still on the table it is drawn from
+     the record of what was played, with the winning card ringed, so you can
+     always see who took it and what it cost them.  The cards go down north
+     first and yours last, so the nearer a seat is to you the nearer the top of
+     the pile its card sits - which is how a real trick looks. */
+  var lay = show ? show.cards : S.trick;
+  /* a quiet medallion behind the trick, so the middle of the table is never a
+     flat slab and the trick count is always somewhere to be read */
+  if(S.phase==="play" && !S.handOver && started){
+    var rad=Math.min(G.cw*0.74, G.table.h*0.17);
+    var fade=lay.length?0.45:1;
+    ctx.save();
+    ctx.fillStyle="rgba(255,255,255,"+(0.055*fade)+")";
+    ctx.beginPath(); ctx.arc(G.cx, G.cy, rad, 0, 6.284); ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,"+(0.17*fade)+")"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(G.cx, G.cy, rad, 0, 6.284); ctx.stroke();
+    if(!lay.length){
+      pip(3, G.cx, G.cy-rad*0.22, rad*0.36, "rgba(255,190,120,.30)");
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.font="900 "+Math.round(rad*0.29)+"px -apple-system,Helvetica,Arial";
+      ctx.fillStyle="rgba(255,255,255,.72)";
+      ctx.fillText("TRICK "+(S.trickNo+1)+"/13", G.cx, G.cy+rad*0.52);
+    }
+    ctx.restore();
+  }
+  var order=[2,1,3,0], oi;
+  for(oi=0;oi<4;oi++){
+    for(i=0;i<lay.length;i++){
+      if(lay[i].p!==order[oi]) continue;
+      t=G.slots[lay[i].p];
+      cardFace(t.x, t.y, t.w, t.h, lay[i].c,
+               { glow: (show && lay[i].p===show.winner) ? (0.55+0.45*glow) : 0 });
+    }
+  }
+
+  /* who took it, and what it cost */
+  if(show){
+    var wr=G.plates[show.winner];
+    pill(NAMES[show.winner]+(show.winner===0?" TAKE IT":" TAKES IT"),
+         G.table.x+G.table.w/2, G.msgY,
+         Math.min(15, Math.max(10, VW*0.036)),
+         "rgba(12,42,110,.92)", "#ffffff",
+         show.pts>0 ? ("+"+show.pts) : null, SHERBET_L);
+    if(wr && show.pts>0){
+      ctx.save();
+      ctx.strokeStyle="rgba(255,190,110,"+(0.35+0.45*glow)+")"; ctx.lineWidth=3;
+      rr(wr.x-3,wr.y-3,wr.w+6,wr.h+6,wr.h*0.4); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  /* passing: say where they are going, and offer the button */
+  if(started && S.phase==="pass" && !S.over){
+    var dirTxt="PASS THREE "+(S.passDir===0?"TO THE LEFT":S.passDir===1?"TO THE RIGHT":"ACROSS");
+    pill(dirTxt, G.table.x+G.table.w/2, G.slots[2].y+G.ch*0.55,
+         Math.min(15, Math.max(10, VW*0.037)), "rgba(12,42,110,.92)", "#ffffff");
+    var ready=S.sel[0].length===3;
+    var b=G.btn;
+    ctx.fillStyle= ready ? SHERBET_D : "rgba(12,42,110,.42)";
+    rr(b.x, b.y+3, b.w, b.h, b.h/2); ctx.fill();
+    ctx.fillStyle= ready ? SHERBET : "rgba(255,255,255,.20)";
+    rr(b.x, b.y, b.w, b.h, b.h/2); ctx.fill();
+    ctx.strokeStyle= ready ? "#fff" : "rgba(255,255,255,.42)"; ctx.lineWidth=1.6;
+    rr(b.x+0.8, b.y+0.8, b.w-1.6, b.h-1.6, b.h/2); ctx.stroke();
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.round(Math.min(15,b.h*0.34))+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle= ready ? "#ffffff" : "rgba(255,255,255,.70)";
+    ctx.fillText(ready ? "PASS THESE THREE" : ("PICK "+(3-S.sel[0].length)+" MORE"),
+                 b.x+b.w/2, b.y+b.h/2+1);
+    ctx.restore();
+  }
+
+  /* the hand rail */
+  ctx.fillStyle="rgba(14,52,140,.24)";
+  rr(G.rail.x, G.rail.y, G.rail.w, G.rail.h-1, 14); ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.30)"; ctx.lineWidth=1;
+  rr(G.rail.x+0.5, G.rail.y+0.5, G.rail.w-1, G.rail.h-2, 14); ctx.stroke();
+
+  /* Draw the fan in two passes: everything sitting flat first, left to right,
+     then everything that is raised.  A raised card is therefore never covered
+     by its neighbour, which is the whole point of raising it. */
+  var myGo = started && !S.over && !S.handOver && !show && S.turn===0 && S.phase==="play" && !thinking;
+  var legal = myGo ? H.legalPlays(S,0) : [];
+  var picking = started && S.phase==="pass" && !S.over;
+  var up=[];
+  for(i=0;i<G.hand.length;i++){
+    var hc=G.hand[i];
+    if(raised(hc,picking)){ up.push(hc); continue; }
+    drawHandCard(hc, myGo, legal, picking, glow, now, hc.hw);
+  }
+  /* While three cards are picked to pass, a raised card is clipped to the
+     slice of itself that was showing anyway - it steps up out of the fan and
+     lights its index, but it does not blot out the four cards to its right.
+     The one card you have picked up to PLAY does get its whole face, because
+     seeing that card whole is the entire point of picking it up. */
+  for(i=0;i<up.length;i++){
+    var u=up[i];
+    var clip = picking && u.k<G.hand.length-1;
+    var slice = clip ? u.hw : u.w;
+    if(clip){
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(u.x-3, u.y-G.lift-4, slice+3, u.h+8);
+      ctx.clip();
+      drawHandCard(u, myGo, legal, picking, glow, now, slice);
+      ctx.restore();
+    }else{
+      drawHandCard(u, myGo, legal, picking, glow, now, slice);
+    }
+    if(picking) passBadge(u, i+1, slice);
+  }
+
+  /* a word about what is going on */
+  var say=statusText();
+  if(!say && now<msgUntil) say=msg;
+  if(started && say && !show){
+    var fs=Math.min(16, Math.max(11, VW*0.038));
+    pill(say, G.table.x+G.table.w/2, G.msgY, fs, "rgba(12,42,110,.90)", "#ffffff");
+  }
+}
+
+function raised(hc, picking){
+  if(hc.c===sel) return true;
+  return picking && S.sel[0].indexOf(hc.c)>=0;
+}
+function drawHandCard(hc, myGo, legal, picking, glow, now, slice){
+  var ok = picking ? true : (myGo ? legal.indexOf(hc.c)>=0 : true);
+  var up = raised(hc, picking);
+  var lift = up ? G.lift : 0;
+  var sink = (myGo && !ok) ? G.sink : 0;
+  var gl = 0;
+  if(now<gotUntil && gotHi.indexOf(hc.c)>=0) gl=0.4+0.6*glow;
+  cardFace(hc.x, hc.y-lift+sink, hc.w, hc.h, hc.c,
+           { dim: myGo && !ok, ring: up, newly: gl, flat: myGo && !ok,
+             slice: slice });
+}
+function passBadge(hc, n, slice){
+  var rd=Math.min(Math.max(9, hc.w*0.17), slice*0.42);
+  var bx=hc.x+slice/2, by=hc.y-G.lift+hc.h-rd*1.15;
+  ctx.save();
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillStyle=SHERBET_D;
+  ctx.beginPath(); ctx.arc(bx, by, rd, 0, 6.284); ctx.fill();
+  ctx.strokeStyle="#fff"; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.arc(bx, by, rd, 0, 6.284); ctx.stroke();
+  ctx.fillStyle="#fff";
+  ctx.font="900 "+Math.round(rd*1.2)+"px -apple-system,Helvetica,Arial";
+  ctx.fillText(String(n), bx, by+1);
+  ctx.restore();
+}
+
+/* ---------------- turns ---------------- */
+function busy(){ return thinking || turnTimer!==null || trickTimer!==null; }
+function aiLevel(){ return modeOf(mId).ai; }
+
+/* the three computers choose what to pass the moment the hand is dealt, so the
+   state is always complete and audit() has something whole to look at */
+function aiPasses(){
+  if(!S || S.phase!=="pass") return;
+  for(var p=1;p<4;p++){
+    if(S.sel[p].length===3) continue;
+    S.sel[p]=[];
+    var three=H.thinkPass(S,p,aiLevel());
+    for(var j=0;j<3;j++) H.pick(S,p,three[j]);
+  }
+}
+function confirmPass(){
+  if(S.phase!=="pass"||S.sel[0].length!==3) return false;
+  aiPasses();
+  if(!H.doPass(S)) return false;
+  gotHi=S.got[0].slice(); gotUntil=lastT+2600;
+  sel=-1;
+  beep(560,.09,"triangle",.05);
+  if(window.GGA) GGA.haptic("light");
+  msg="YOU WERE GIVEN THREE"; msgUntil=lastT+1600;
+  persist(); geom(true); paintHUD();
+  runTurn();
+  return true;
+}
+
+function runTurn(){
+  if(!S||S.over||S.handOver) return;
+  paintHUD();
+  if(S.phase!=="play") return;
+  if(S.turn!==0) scheduleAI(frozen?0:520);
+}
+function scheduleAI(delay){
+  if(!S||S.turn===0||S.over||S.handOver||frozen) return;
+  if(aiTimer) clearTimeout(aiTimer);
+  thinking=true; paintHUD();
+  aiTimer=setTimeout(aiStep, delay==null?460:delay);
+}
+function aiStep(){
+  aiTimer=null;
+  if(!S||S.over||S.handOver||S.turn===0||S.phase!=="play"){ thinking=false; paintHUD(); return; }
+  thinking=false;
+  var c=H.think(S, aiLevel());
+  if(c<0){ paintHUD(); return; }
+  doPlay(c, true);
+}
+
+function doPlay(c, byAI){
+  if(!S||S.over||S.handOver||S.phase!=="play") return false;
+  var ev=H.play(S,c);
+  if(!ev.ok) return false;
+  sel=-1;
+  gotHi=[]; gotUntil=0;      /* the pass is history the moment a card goes down */
+  beep(byAI?380:440, .06, "triangle", .045);
+  if(!byAI && window.GGA) GGA.haptic("light");
+  persist(); geom(true); paintHUD();
+  if(ev.trickDone){
+    show={ cards:S.last.cards.slice(), winner:ev.winner, pts:ev.pts };
+    /* did I just hand the queen to somebody else? */
+    var i, gaveQ=false;
+    for(i=0;i<show.cards.length;i++)
+      if(show.cards[i].c===H.QS && show.cards[i].p===0 && show.winner!==0) gaveQ=true;
+    if(gaveQ && window.GGA) GGA.award("ht_queen");
+    beep(ev.winner===0 ? (ev.pts>0?220:520) : (ev.pts>0?620:300), .10, "sine", .05);
+    if(ev.handOver){
+      if(frozen){ show=null; handEnd(); return true; }
+      trickTimer=setTimeout(function(){ trickTimer=null; show=null; handEnd(); }, 1150);
+      return true;
+    }
+    if(frozen){ show=null; runTurn(); return true; }
+    trickTimer=setTimeout(function(){ trickTimer=null; show=null; geom(true); runTurn(); }, 1150);
+    return true;
+  }
+  if(frozen){ runTurn(); return true; }
+  if(turnTimer) clearTimeout(turnTimer);
+  turnTimer=setTimeout(function(){ turnTimer=null; runTurn(); }, byAI?330:200);
+  return true;
+}
+
+/* ---------------- the end of a hand ---------------- */
+function handEnd(){
+  clearTimers();
+  thinking=false; sel=-1; show=null;
+  var played=load("played",0)+1; save("played",played);
+  if(S.pts[0]===0){ cleanRun=load("clean",0)+1; save("clean",cleanRun); }
+  else { cleanRun=0; save("clean",0); }
+  if(window.GGA){
+    if(played>=10) GGA.award("ht_10");
+    if(S.pts[0]===0) GGA.award("ht_clean");
+    if(cleanRun>=3) GGA.award("ht_streak");
+    if(S.moonBy===0) GGA.award("ht_moon");
+    GGA.haptic(S.pts[0]===0?"success":"warning");
+  }
+  if(S.over){
+    if(S.winner===0){ wins=load("wins",0)+1; save("wins",wins); }
+    save("cur",null);
+    if(window.GGA){
+      if(S.winner===0){
+        GGA.award("ht_first");
+        if(mId==="hard") GGA.award("ht_hard");
+        if(S.scores[0]<=30) GGA.award("ht_low");
+      }
+      GGA.haptic(S.winner===0?"success":"error");
+    }
+    beep(660,.12,"triangle",.08);
+    setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+    setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  }else{
+    beep(520,.10,"triangle",.06);
+    persist();
+  }
+  paintHUD();
+  if(frozen) return;
+  setTimeout(function(){ if(S.over) winScreen(); else handScreen(); }, 620);
+}
+function nextHandNow(){
+  H.nextHand(S);
+  sel=-1; thinking=false; msg=""; msgUntil=0; show=null; gotHi=[];
+  clearTimers(); aiPasses(); geom(true); paintHUD(); persist();
+  closeOvl();
+  runTurn();
+}
+
+function paintHUD(){
+  if(!S) return;
+  document.getElementById("vYou").textContent=S.scores[0];
+  document.getElementById("vHand").textContent=S.hand;
+  var t=document.getElementById("vTurn");
+  if(S.over) t.textContent=NAMES[S.winner]===undefined?"-":NAMES[S.winner];
+  else if(S.handOver) t.textContent="OVER";
+  else if(S.phase==="pass") t.textContent="PASS";
+  else if(thinking) t.textContent="...";
+  else t.textContent=NAMES[S.turn];
+  var hb=document.getElementById("tHint");
+  var can = started && !S.over && !S.handOver &&
+            ((S.phase==="pass") || (S.phase==="play" && S.turn===0 && !busy()));
+  if(can) hb.classList.remove("off"); else hb.classList.add("off");
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started||!S) return;
+  if(S.over){ save("cur",null); return; }
+  if(S.hand===1 && S.phase==="pass" && !S.sel[0].length){ save("cur",null); return; }
+  if(S.handOver){
+    save("cur",{ v:1, m:mId, tg:S.target, sc:S.scores.slice(), hd:S.hand, bt:1 });
+    return;
+  }
+  var tr=[], i;
+  for(i=0;i<S.trick.length;i++) tr.push([S.trick[i].p, S.trick[i].c]);
+  save("cur",{ v:1, m:mId, tg:S.target, sc:S.scores.slice(), hd:S.hand, bt:0,
+    ph:S.phase, pd:S.passDir, t:S.turn, ld:S.lead, tn:S.trickNo,
+    hb:S.heartsBroken?1:0,
+    h:[S.hands[0].slice(),S.hands[1].slice(),S.hands[2].slice(),S.hands[3].slice()],
+    tk:[S.taken[0].slice(),S.taken[1].slice(),S.taken[2].slice(),S.taken[3].slice()],
+    tr:tr, vd:S.voids, sl:[S.sel[0].slice(),S.sel[1].slice(),S.sel[2].slice(),S.sel[3].slice()] });
+}
+function restore(){
+  var c=load("cur",null), i, j;
+  if(!c||c.v!==1||!c.sc) return false;
+  target=c.tg||100;
+  newGame(c.m);
+  S.scores=[c.sc[0]|0,c.sc[1]|0,c.sc[2]|0,c.sc[3]|0];
+  S.hand=c.hd|0||1;
+  if(c.bt){
+    /* saved between hands: deal the next one and get on with it */
+    S.hand++;
+    H.deal(S);
+    aiPasses();
+    if(H.audit(S)){ newGame(c.m); return false; }
+    geom(true); paintHUD();
+    return true;
+  }
+  if(!c.h||!c.tk||!c.tr) return false;
+  S.passDir=c.pd|0;
+  S.phase=c.ph==="pass"?"pass":"play";
+  S.hands=[c.h[0].slice(),c.h[1].slice(),c.h[2].slice(),c.h[3].slice()];
+  S.taken=[c.tk[0].slice(),c.tk[1].slice(),c.tk[2].slice(),c.tk[3].slice()];
+  S.trick=[];
+  for(i=0;i<c.tr.length;i++) S.trick.push({ p:c.tr[i][0]|0, c:c.tr[i][1]|0 });
+  S.turn=c.t|0; S.lead=c.ld|0; S.trickNo=c.tn|0;
+  S.heartsBroken=!!c.hb;
+  S.voids=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  if(c.vd) for(i=0;i<4;i++) for(j=0;j<4;j++) S.voids[i][j]=c.vd[i]&&c.vd[i][j]?1:0;
+  S.sel=[[],[],[],[]];
+  if(c.sl) for(i=0;i<4;i++) S.sel[i]=(c.sl[i]||[]).slice();
+  S.handOver=false; S.over=false; S.winner=-1; S.moonBy=-1;
+  S.last=null; S.got=[[],[],[],[]];
+  if(H.audit(S)){ newGame(c.m); return false; }
+  sel=-1; show=null; gotHi=[];
+  if(S.phase==="pass") aiPasses();
+  geom(true); paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function inRect(x,y,r,pad){
+  pad=pad||0;
+  return x>=r.x-pad && x<=r.x+r.w+pad && y>=r.y-pad && y<=r.y+r.h+pad;
+}
+/* Hit the fan from the top down: the lifted card first, then right to left,
+   which is the order they are drawn in.  Each card only owns the slice of
+   itself that is actually showing, except the last one on the right. */
+function hitHand(lx,ly){
+  var i, hc, picking=(S.phase==="pass");
+  var myGo = S.turn===0 && S.phase==="play";
+  var legal = myGo ? H.legalPlays(S,0) : [];
+  function box(hc, full){
+    var lift=raised(hc,picking)?G.lift:0;
+    var sink=(myGo && legal.indexOf(hc.c)<0)?G.sink:0;
+    return { x:hc.x, y:hc.y-lift+sink, w:full?hc.w:hc.hw, h:hc.h };
+  }
+  /* raised cards are on top; a card picked up to play owns its whole face,
+     one merely picked to pass owns only the slice it is drawn in */
+  for(i=G.hand.length-1;i>=0;i--){
+    hc=G.hand[i];
+    if(!raised(hc,picking)) continue;
+    if(inRect(lx,ly,box(hc, !picking || i===G.hand.length-1),2)) return hc;
+  }
+  /* the rest own only the slice of themselves that is showing */
+  for(i=G.hand.length-1;i>=0;i--){
+    hc=G.hand[i];
+    if(raised(hc,picking)) continue;
+    if(inRect(lx,ly,box(hc,i===G.hand.length-1),2)) return hc;
+  }
+  return null;
+}
+function onTapAt(lx,ly){
+  if(!started||!S||S.over||S.handOver) return;
+  var hc;
+  if(S.phase==="pass"){
+    if(G.btn && inRect(lx,ly,G.btn,4)){
+      if(S.sel[0].length===3) confirmPass();
+      else{ msg="PICK THREE CARDS TO PASS"; msgUntil=lastT+1300; beep(200,.08,"square",.04); }
+      return;
+    }
+    hc=hitHand(lx,ly);
+    if(hc){
+      if(!H.pick(S,0,hc.c)){
+        msg="THREE IS ALL YOU MAY PASS"; msgUntil=lastT+1300;
+        beep(190,.09,"square",.04);
+        if(window.GGA) GGA.haptic("error");
+      }else{
+        beep(S.sel[0].indexOf(hc.c)>=0?600:330,.05,"sine",.04);
+        if(window.GGA) GGA.haptic("light");
+      }
+      geom(true);
+    }
+    return;
+  }
+  if(busy()||S.turn!==0||show) return;
+  hc=hitHand(lx,ly);
+  if(!hc){ if(sel>=0){ sel=-1; geom(true); } return; }
+  var why=H.whyIllegal(S,0,hc.c);
+  if(why){
+    sel=-1; geom(true);
+    msg=why; msgUntil=lastT+1500;
+    beep(180,.10,"square",.04);
+    if(window.GGA) GGA.haptic("error");
+    return;
+  }
+  if(sel===hc.c){ doPlay(hc.c,false); return; }
+  sel=hc.c;
+  beep(560,.05,"sine",.04);
+  geom(true);
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+function onTap(e){
+  if(e.cancelable) e.preventDefault();
+  var q=pt(e), b=cv.getBoundingClientRect();
+  onTapAt(q.clientX-b.left, q.clientY-b.top);
+}
+cv.addEventListener("touchend", onTap, {passive:false});
+cv.addEventListener("touchstart", function(e){ if(e.cancelable) e.preventDefault(); }, {passive:false});
+cv.addEventListener("mouseup", onTap);
+cv.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+document.getElementById("tHint").onclick=function(){
+  if(!started||!S||S.over||S.handOver) return;
+  if(S.phase==="pass"){
+    var three=H.hintPass(S,0), i;
+    S.sel[0]=[];
+    for(i=0;i<3;i++) H.pick(S,0,three[i]);
+    msg="THE THREE I WOULD LET GO"; msgUntil=lastT+1600;
+    beep(600,.07,"sine",.05);
+    geom(true); paintHUD();
+    return;
+  }
+  if(S.turn!==0||busy()) return;
+  var c=H.hint(S);
+  if(c<0) return;
+  sel=c;
+  msg="TAP IT AGAIN TO PLAY IT"; msgUntil=lastT+1600;
+  beep(600,.07,"sine",.05);
+  geom(true);
+};
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ newGame(mId); persist(); closeOvl(); started=true; runTurn(); return; }
+  openOvl('<h2>START AGAIN?</h2><p>This match will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW MATCH</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){
+    newGame(mId); persist(); closeOvl(); started=true; runTurn();
+  };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function scoreRow(){
+  var h='<div class="stats">', i;
+  for(i=0;i<4;i++){
+    h+='<div class="st'+(i===0?" me":"")+'"><div class="sk">'+NAMES[i]+'</div>'+
+       '<div class="sv">'+S.scores[i]+'</div>'+
+       '<div class="sd'+(S.delta[i]>0?"":" nil")+'">'+
+       (S.delta[i]>0?("+"+S.delta[i]):"none")+'</div></div>';
+  }
+  return h+'</div>';
+}
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>HEARTS</h2><p>Duck every trick you can. Every heart is a point, the queen of spades is thirteen, and low wins.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bTarget">GAME TO &middot; '+target+'</button>';
+  if(cur&&cur.v===1&&cur.sc) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; YOU '+
+    (cur.sc[0]|0)+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newGame(el.getAttribute("data-m"));
+      persist(); closeOvl(); layout(); runTurn();
+    };
+  });
+  card.querySelector("#bTarget").onclick=function(){
+    target = target===100 ? 50 : 100;
+    save("target",target);
+    /* textContent, not innerHTML, so the source stays ASCII and the entity
+       would otherwise show up literally */
+    this.textContent="GAME TO \u00B7 "+target;
+  };
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newGame(load("mode","med"));
+    closeOvl(); layout(); runTurn();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Four players, thirteen tricks. <b>Low is good</b> - every heart costs you <i>1</i> and the queen of spades costs you <i>13</i>.<br><br>'+
+    '&#9642; First, <b>pass three cards</b>. Tap three, then tap PASS THESE THREE. It goes left, then right, then across, then nobody at all.<br><br>'+
+    '&#9642; The <b>two of clubs</b> always leads. You must follow the suit that was led if you can; cards that will not go sink into the rail and grey out.<br><br>'+
+    '&#9642; <b>Tap a card once to lift it, again to play it.</b><br><br>'+
+    '&#9642; No hearts and no queen on the very first trick, and nobody may <b>lead</b> hearts until a heart has already been thrown.<br><br>'+
+    '&#9642; Highest card of the led suit takes the trick, and everything in it.<br><br>'+
+    '&#9642; Take <b>all twenty-six</b> points and you have <i>shot the moon</i>: you score nothing and everybody else scores 26.<br><br>'+
+    '&#9642; When somebody passes '+target+', the <b>lowest score wins</b>.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function handScreen(){
+  var head, sub;
+  if(S.moonBy>=0){
+    head = S.moonBy===0 ? "YOU SHOT THE MOON!" : NAMES[S.moonBy]+" SHOT THE MOON";
+    sub = S.moonBy===0 ? "All twenty-six of them. Everybody else takes 26."
+                       : "Every point in the pack. That is 26 to each of you.";
+  }else if(S.pts[0]===0){
+    head="NOT A POINT"; sub="A clean hand. Nothing at all to your name.";
+  }else{
+    head="HAND "+S.hand+" DONE";
+    sub="You took "+S.pts[0]+" point"+(S.pts[0]===1?"":"s")+" this hand.";
+  }
+  openOvl('<h2>'+head+'</h2><p>'+sub+'</p>'+scoreRow()+
+    '<button class="btn btn-go" id="bNext">NEXT HAND</button>'+
+    '<button class="btn btn-alt" id="bMenu3">CHANGE LEVEL</button>');
+  card.querySelector("#bNext").onclick=nextHandNow;
+  card.querySelector("#bMenu3").onclick=titleScreen;
+}
+function winScreen(){
+  var m=modeOf(mId);
+  var head = S.winner===0 ? "YOU WIN!" : NAMES[S.winner]+" WINS";
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+S.hand+' hand'+(S.hand===1?"":"s")+' &middot; '+m.name.toLowerCase()+
+    ' &middot; you finished on '+S.scores[0]+'.</p>'+
+    scoreRow()+
+    '<div class="stats"><div class="st"><div class="sk">MATCHES WON</div><div class="sv">'+wins+'</div></div>'+
+    '<div class="st"><div class="sk">HANDS PLAYED</div><div class="sv">'+load("played",0)+'</div></div></div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER MATCH</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE LEVEL</button>');
+  card.querySelector("#bAgain").onclick=function(){
+    newGame(mId); persist(); closeOvl(); layout(); started=true; runTurn();
+  };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||!S||S.over){ titleScreen(); return; }
+  if(S.handOver){ handScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+scoreRow()+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">HAND</div><div class="sv">'+S.hand+'</div></div>'+
+      '<div class="st"><div class="sk">TRICK</div><div class="sv">'+(S.trickNo+1)+'/13</div></div>'+
+      '<div class="st"><div class="sk">HEARTS</div><div class="sv">'+(S.heartsBroken?"OPEN":"SHUT")+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE LEVEL</button>');
+  card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+target=load("target",100);
+if(target!==50&&target!==100) target=100;
+wins=load("wins",0)|0;
+cleanRun=load("clean",0)|0;
+newGame(load("mode","med"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+/* ---------------- the test hook ----------------
+   Stripped out of the shipping build by the assembler; nothing in the game
+   reads it, and `frozen` stays false without it. */
+
+})();
+</script>
+</body>
+</html>

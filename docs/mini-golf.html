@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mini Golf</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 6% -8%, #a8f2cb 0%, transparent 55%),
+      radial-gradient(120% 80% at 96% 104%, #ffc4dc 0%, transparent 55%),
+      linear-gradient(160deg, #12945f 0%, #4fce93 46%, #fff0f6 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#12784f;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(0,0,0,.24);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 5px rgba(0,60,35,.45)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.42)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.88}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#12784f;
+    box-shadow:0 4px 0 rgba(0,0,0,.20),0 6px 14px rgba(0,0,0,.18)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.20)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(8,60,40,.50);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#f2fff8);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#7d9a8c;box-shadow:0 20px 50px rgba(0,40,25,.42);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#159a63;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#93b3a3;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.95;font-weight:800;margin-top:2px;text-align:left}
+  .z-a{background:linear-gradient(180deg,#84e6b0,#23ab6e)}
+  .z-b{background:linear-gradient(180deg,#ffb3d0,#f0609b)}
+  .z-c{background:linear-gradient(180deg,#ff9a86,#e0452f)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ffb0d0,#f2589a);color:#5c1236;
+    box-shadow:0 5px 0 #c33f77,0 8px 18px rgba(220,90,150,.30)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #c33f77}
+  .btn-alt{background:#e8fbf0;color:#12784f;border:1.5px solid #c8ecd8}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#93b3a3;margin:10px 2px}
+  .rules b{color:#159a63}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#e8fbf0;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#9ed3b8}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#159a63}
+  table.card9{width:100%;border-collapse:collapse;margin-top:9px;font-variant-numeric:tabular-nums}
+  table.card9 td,table.card9 th{padding:3px 1px;font-size:10.5px;text-align:center;
+    border-bottom:1px solid #e2f4ea;font-weight:800}
+  table.card9 th{color:#9ed3b8;font-size:8.5px;letter-spacing:.6px}
+  table.card9 td.hn{color:#9ed3b8}
+  table.card9 td.pv{color:#b9d8c9}
+  table.card9 td.sv{color:#159a63}
+  table.card9 td.under{color:#e0458c}
+  table.card9 td.over{color:#c0a24a}
+  table.card9 td.blank{color:#dcece4}
+  .tot{display:flex;gap:8px;margin-top:10px}
+  .tot div{flex:1;background:#e8fbf0;border-radius:12px;padding:7px 3px}
+  .tot .tk{font-size:8px;letter-spacing:1px;font-weight:900;color:#9ed3b8}
+  .tot .tv{font-size:17px;font-weight:900;color:#159a63;font-variant-numeric:tabular-nums}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+    table.card9 td,table.card9 th{padding:2px 1px;font-size:9.5px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">MINI GOLF</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">HOLE</div><div class="v" id="vHole">1/18</div></div>
+    <div class="chip"><div class="k">PAR</div><div class="v" id="vPar">2</div></div>
+    <div class="chip"><div class="k">SHOTS</div><div class="v" id="vShots">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tCard"><div class="ti">&#9636;</div><div class="tl">SCORECARD</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW ROUND</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Mini Golf - the course, the rules and the ball physics, with no drawing and
+   no input in them.  Everything the game can decide lives here, so the same
+   code that runs on screen runs headless in Node for a few hundred rounds.
+
+   THE WORLD.  Every hole is laid out in the same 100 x 160 box of "units", y
+   running DOWN the screen so the tee is at a big y and the cup at a small one.
+   Holding the box the same size for all eighteen means one scale factor for the
+   whole game: the ball, the cup and the walls are the same size on every hole,
+   which is what makes an eighteen-hole round feel like one course.
+
+   THE SHAPE OF A HOLE.  The playable green is a closed rectilinear polygon.
+   Every edge carries an inward normal worked out from the winding, so a wall is
+   a one-sided constraint and the ball is always pushed back into the green
+   rather than through it.  Everything else - blocks, bumpers, the windmill
+   blades - is an obstacle the ball must stay OUTSIDE of.  All four kinds of
+   collision reduce to the same two lines: find the closest point on the thing,
+   and if the ball overlaps it, put the ball back on the surface and reflect.
+
+   THE TIMESTEP IS FIXED.  step() takes whatever the animation frame gives it,
+   caps it, and runs whole FIXED-length ticks out of an accumulator.  Inside a
+   tick the ball is moved in substeps no longer than a third of its own radius,
+   so it cannot pass through a wall however hard it is hit, and the collision
+   pass is iterated so a ball in a corner is pushed out of both walls at once
+   rather than ping-ponging between them.
+
+   ENERGY ONLY GOES DOWN, and there are exactly two exceptions, both visible on
+   screen.  Restitution is below 1 everywhere, bumpers included; friction is a
+   constant deceleration that ends in an exact stop, so nothing crawls for ever
+   at 0.0001; and every slope is shallower than the friction, so a ball at rest
+   never sets off on its own.  The exceptions are a slope leaning into a ball
+   that is already moving, and a windmill blade sweeping into one - and a blade
+   can only reach the ball once every half turn, which friction easily
+   outlasts.  Everything is under VMAX, which audit() checks on every frame.  */
+function makeMiniGolf(){
+  "use strict";
+
+  var W=100, H=160;              /* every hole is laid out in this box */
+  var BALL_R=2.1;
+  var CUP_R=3.9;
+  var VMAX=400;                  /* nothing may ever go faster than this */
+  var VPUTT=158;                 /* speed of a full-power putt */
+  var FIXED=1/120;               /* the fixed physics tick */
+  var MAX_DT=0.1;                /* never simulate more than this per frame */
+  var SUB=BALL_R*0.33;           /* longest a substep may move the ball */
+  var WALL_E=0.66;               /* plain walls take the sting out of a shot */
+  /* A bumper is a wall that gives nearly everything back, and that is as far
+     as it goes.  The first cut had bumpers at 1.28, which is what a pinball
+     bumper does, and it is a trap: two bouncy faces looking at each other
+     across a gap wind the ball up until the speed cap, and the ball never
+     comes to rest, so the player never gets another shot.  Rate-limiting the
+     kick only slows the runaway down; capping the speed only puts a ceiling
+     on it.  Nothing short of "restitution is never above one" actually ends
+     it - and with it, "the ball never gains energy" becomes something audit()
+     can hold the whole course to, which is worth far more than a springier
+     bumper.  A ball keeping 98% of its pace off a bumper and 66% off a plain
+     wall still reads as night and day. */
+  var BOUNCE_E=0.98;
+  var CUP_DRAG=0.86;             /* over the hole the ball is dragged down */
+  var CUP_PULL=170;              /* and pulled towards the middle of it */
+  var CUP_HOLD=0.55;             /* sat over the hole this long, it drops - the
+                                    cure for a ball balanced on the lip */
+  var CAP_OVER=6;                /* stroke cap is par + this */
+  var MIN_POWER=0.06;            /* below this a drag is a cancel, not a putt */
+
+  var TAU=Math.PI*2;
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+  function len(x,y){ return Math.sqrt(x*x+y*y); }
+  function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+
+  /* ---------------- the course ----------------
+     Eighteen holes that build up in the order the player meets them: plain
+     rectangles, then bends and doglegs, then blocks, then bumpers, then
+     slopes, then the windmills.  `opt` on a piece of furniture means it is
+     only there on the harder levels - opt 1 appears from Tricky, opt 2 only
+     on Fiendish.  That is the "how much is the cup screened" difficulty knob,
+     and it is the only thing that differs between levels on the course itself.
+
+     A slope's (ax,ay) is an acceleration in units per second squared.  Every
+     one of them is deliberately SMALLER than the friction, so a ball standing
+     still on a slope stays still.  A green where the ball never settles is a
+     game that never gives you your next shot back. */
+  function bx(x0,y0,x1,y1){ return [[x0,y0],[x1,y0],[x1,y1],[x0,y1]]; }
+
+  var HOLES=[
+    /* 1-3: plain rectangles, so the first thing anyone learns is the drag */
+    { name:"Opening Drive", par:2, poly:bx(30,18,70,150), tee:[50,138], cup:[50,32] },
+    { name:"The Corridor",  par:2, poly:bx(36,12,64,152), tee:[50,142], cup:[50,24] },
+    { name:"Across the Lawn", par:2, poly:bx(14,18,86,150), tee:[24,138], cup:[76,32] },
+
+    /* 4-6: bends and doglegs - now you have to use a wall */
+    { name:"Right Bend", par:2,
+      poly:[[12,108],[52,108],[52,18],[88,18],[88,150],[12,150]],
+      tee:[26,132], cup:[70,34] },
+    { name:"Left Bend", par:2,
+      poly:[[12,18],[48,18],[48,108],[88,108],[88,150],[12,150]],
+      tee:[74,132], cup:[30,34] },
+    { name:"The Zigzag", par:2,
+      poly:[[10,116],[28,116],[28,20],[90,20],[90,58],[60,58],[60,152],[10,152]],
+      tee:[22,142], cup:[78,38] },
+
+    /* 7-9: blocks in the middle */
+    { name:"Two Gates", par:3, poly:bx(14,16,86,152), tee:[30,140], cup:[70,30],
+      blocks:[{x:14,y:96,w:44,h:7},{x:56,y:62,w:30,h:7},
+              {x:60,y:40,w:7,h:16,opt:1}] },
+    { name:"The Pillar", par:2, poly:bx(12,16,88,152), tee:[50,140], cup:[50,28],
+      blocks:[{x:38,y:64,w:24,h:22},{x:12,y:104,w:26,h:8},{x:74,y:104,w:14,h:8},
+              {x:38,y:40,w:24,h:7,opt:1}] },
+    { name:"Chicane", par:4, poly:bx(14,16,86,152), tee:[24,140], cup:[72,28],
+      blocks:[{x:14,y:116,w:48,h:7},{x:52,y:84,w:34,h:7},{x:14,y:52,w:44,h:7},
+              {x:66,y:40,w:20,h:7,opt:2}] },
+
+    /* 10-12: bumpers and bouncy walls */
+    { name:"Pinball", par:2, poly:bx(12,16,88,152), tee:[50,142], cup:[50,28],
+      bumpers:[{x:32,y:92,r:8},{x:68,y:92,r:8},{x:50,y:58,r:7}] },
+    { name:"Springboard", par:4, poly:bx(14,16,86,152), tee:[50,142], cup:[30,30],
+      blocks:[{x:14,y:90,w:26,h:8,bouncy:true},{x:60,y:90,w:26,h:8,bouncy:true},
+              {x:22,y:44,w:26,h:7,opt:2}],
+      bumpers:[{x:50,y:120,r:7}] },
+    { name:"Bumper Alley", par:4, poly:bx(12,16,88,152), tee:[22,142], cup:[78,28],
+      blocks:[{x:12,y:110,w:38,h:7},{x:50,y:74,w:38,h:7}],
+      bumpers:[{x:70,y:120,r:7},{x:26,y:52,r:7},{x:50,y:40,r:6,opt:1}] },
+
+    /* 13-15: slopes that lean the ball off its line */
+    { name:"The Camber", par:2, poly:bx(14,16,86,152), tee:[50,142], cup:[50,30],
+      slopes:[{x:14,y:56,w:72,h:58,ax:26,ay:0}] },
+    { name:"Double Break", par:2, poly:bx(12,16,88,152), tee:[50,142], cup:[50,28],
+      slopes:[{x:12,y:88,w:38,h:52,ax:22,ay:0},{x:50,y:36,w:38,h:52,ax:-22,ay:0}] },
+    { name:"Up the Hill", par:3, poly:bx(14,16,86,152), tee:[50,144], cup:[50,26],
+      blocks:[{x:14,y:100,w:30,h:7},{x:56,y:100,w:30,h:7}],
+      slopes:[{x:14,y:26,w:72,h:66,ax:0,ay:28}] },
+
+    /* 16-18: the windmills */
+    { name:"The Windmill", par:2, poly:bx(14,16,86,152), tee:[50,142], cup:[50,28],
+      spins:[{x:50,y:82,len:24,w:5,rate:1.4,phase:0}] },
+    { name:"Mill Bend", par:3,
+      poly:[[12,104],[44,104],[44,18],[90,18],[90,150],[12,150]],
+      tee:[26,132], cup:[70,32],
+      spins:[{x:67,y:80,len:14,w:5,rate:-1.6,phase:1.0}] },
+    { name:"The Long Home", par:4,
+      poly:[[12,110],[44,110],[44,20],[88,20],[88,152],[12,152]],
+      tee:[24,136], cup:[66,34],
+      blocks:[{x:54,y:92,w:22,h:7}],
+      bumpers:[{x:36,y:126,r:7},{x:74,y:118,r:6}],
+      slopes:[{x:44,y:40,w:44,h:20,ax:-12,ay:0}],
+      spins:[{x:66,y:68,len:14,w:5,rate:1.5,phase:0.4}] }
+  ];
+
+  function holeCount(){ return HOLES.length; }
+  function parOf(i){ return HOLES[i].par; }
+  function totalPar(){ var t=0,i; for(i=0;i<HOLES.length;i++) t+=HOLES[i].par; return t; }
+  function capOf(i){ return HOLES[i].par+CAP_OVER; }
+
+  /* Turn the raw hole data into something the physics can use: every polygon
+     edge gets a unit direction and an INWARD normal.  The winding tells us
+     which side is inside - with y running down the screen, a polygon whose
+     shoelace area comes out positive has its interior on the (-dy, dx) side of
+     each edge - and a hole written the wrong way round is simply reversed
+     rather than being a bug waiting to happen. */
+  function buildHole(i, opt){
+    var raw=HOLES[i], p=raw.poly.slice(), k;
+    opt=opt||0;
+    var area=0;
+    for(k=0;k<p.length;k++){
+      var q=p[(k+1)%p.length];
+      area+=p[k][0]*q[1]-q[0]*p[k][1];
+    }
+    if(area<0) p.reverse();
+    var edges=[];
+    for(k=0;k<p.length;k++){
+      var a=p[k], b=p[(k+1)%p.length];
+      var dx=b[0]-a[0], dy=b[1]-a[1], L=len(dx,dy);
+      if(L<1e-9) continue;
+      edges.push({ ax:a[0], ay:a[1], bx:b[0], by:b[1],
+                   ex:dx/L, ey:dy/L, L:L, nx:-dy/L, ny:dx/L });
+    }
+    function keep(list){
+      var out=[], j;
+      for(j=0;j<(list||[]).length;j++)
+        if((list[j].opt||0)<=opt) out.push(list[j]);
+      return out;
+    }
+    return { idx:i, name:raw.name, par:raw.par, cap:raw.par+CAP_OVER,
+             poly:p, edges:edges,
+             blocks:keep(raw.blocks), bumpers:keep(raw.bumpers),
+             slopes:keep(raw.slopes), spins:keep(raw.spins),
+             tee:{ x:raw.tee[0], y:raw.tee[1] },
+             cup:{ x:raw.cup[0], y:raw.cup[1] } };
+  }
+
+  function inPoly(p, x, y){
+    var inside=false, i, j;
+    for(i=0,j=p.length-1;i<p.length;j=i++){
+      var xi=p[i][0], yi=p[i][1], xj=p[j][0], yj=p[j][1];
+      if(((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    return inside;
+  }
+
+  /* where a spinner's blade is right now: a bar through its pivot */
+  function bladeAt(sp, clock){
+    var a=sp.phase+sp.rate*clock;
+    var cx=Math.cos(a)*sp.len, cy=Math.sin(a)*sp.len;
+    return { x0:sp.x-cx, y0:sp.y-cy, x1:sp.x+cx, y1:sp.y+cy, a:a, hw:sp.w/2 };
+  }
+
+  /* closest point on a segment to p, as a fraction along it */
+  function segT(ax,ay,bx2,by2,px,py){
+    var dx=bx2-ax, dy=by2-ay, dd=dx*dx+dy*dy;
+    if(dd<1e-12) return 0;
+    return clamp(((px-ax)*dx+(py-ay)*dy)/dd, 0, 1);
+  }
+
+  /* ---------------- collision ----------------
+     One shape for all of them: work out the closest point on the surface, and
+     if the ball overlaps, put it back exactly on the surface and reflect what
+     is left of its velocity.  `sx,sy` is how fast the surface itself is
+     moving, which is what lets a windmill blade knock the ball along instead
+     of just standing in the way. */
+  function bounce(b, nx, ny, e, sx, sy, ev){
+    var rvx=b.vx-(sx||0), rvy=b.vy-(sy||0);
+    var d=rvx*nx+rvy*ny;
+    if(d>=0) return;
+    rvx-=(1+e)*d*nx; rvy-=(1+e)*d*ny;
+    b.vx=rvx+(sx||0); b.vy=rvy+(sy||0);
+    var v=len(b.vx,b.vy);
+    if(v>VMAX){ b.vx=b.vx/v*VMAX; b.vy=b.vy/v*VMAX; }
+    ev.hit++;
+  }
+
+  /* A wall is a segment, and a segment is two different constraints depending
+     on where you are standing.  Opposite the middle of it, it is a half-plane:
+     the ball must be at least its own radius along the inward normal, and if
+     it has somehow got behind the wall the signed distance goes negative and
+     the same line of code pushes it back through.  Off the end of it, only the
+     end POINT is in the way, and the ball bounces off that corner radially.
+
+     Telling those two apart is the whole of it.  Treating a wall as a
+     half-plane everywhere is what broke the first cut of the doglegs: a ball
+     rolling happily round the outside of a reflex corner counts as "behind"
+     the wall it has just gone past, and got fired back across the green. */
+  function hitEdge(b, ed, ev){
+    var t=segT(ed.ax,ed.ay,ed.bx,ed.by,b.x,b.y);
+    var qx=ed.ax+(ed.bx-ed.ax)*t, qy=ed.ay+(ed.by-ed.ay)*t;
+    var dx=b.x-qx, dy=b.y-qy;
+    if(t>1e-9 && t<1-1e-9){
+      /* square on to the wall: q is the foot of the perpendicular, so the
+         offset is purely along the normal and its sign says which side */
+      var sd=dx*ed.nx+dy*ed.ny;
+      if(sd>=BALL_R-1e-12) return false;
+      b.x=qx+ed.nx*BALL_R; b.y=qy+ed.ny*BALL_R;
+      bounce(b, ed.nx, ed.ny, WALL_E, 0, 0, ev);
+      return true;
+    }
+    var d=len(dx,dy);
+    if(d>=BALL_R-1e-12) return false;
+    var nx, ny;
+    if(d<1e-9){ nx=ed.nx; ny=ed.ny; }
+    else { nx=dx/d; ny=dy/d; }
+    b.x=qx+nx*BALL_R; b.y=qy+ny*BALL_R;
+    bounce(b, nx, ny, WALL_E, 0, 0, ev);
+    return true;
+  }
+
+  function hitRect(b, r, ev){
+    var x0=r.x, y0=r.y, x1=r.x+r.w, y1=r.y+r.h;
+    var e=r.bouncy?BOUNCE_E:WALL_E;
+    if(b.x>x0 && b.x<x1 && b.y>y0 && b.y<y1){
+      /* centre inside the block - out through the nearest face */
+      var dl=b.x-x0, dr=x1-b.x, dt=b.y-y0, db=y1-b.y;
+      var m=Math.min(dl,Math.min(dr,Math.min(dt,db)));
+      var nx=0, ny=0;
+      if(m===dl){ nx=-1; b.x=x0-BALL_R; }
+      else if(m===dr){ nx=1; b.x=x1+BALL_R; }
+      else if(m===dt){ ny=-1; b.y=y0-BALL_R; }
+      else { ny=1; b.y=y1+BALL_R; }
+      bounce(b, nx, ny, e, 0, 0, ev);
+      if(r.bouncy) ev.bump++;
+      return true;
+    }
+    var qx=clamp(b.x,x0,x1), qy=clamp(b.y,y0,y1);
+    var dx=b.x-qx, dy=b.y-qy, d=len(dx,dy);
+    if(d>=BALL_R-1e-12) return false;
+    if(d<1e-9){ dx=0; dy=-1; d=1; }
+    var ux=dx/d, uy=dy/d;
+    b.x=qx+ux*BALL_R; b.y=qy+uy*BALL_R;
+    bounce(b, ux, uy, e, 0, 0, ev);
+    if(r.bouncy) ev.bump++;
+    return true;
+  }
+
+  function hitBumper(b, c, ev){
+    var dx=b.x-c.x, dy=b.y-c.y, d=len(dx,dy), rr=c.r+BALL_R;
+    if(d>=rr-1e-12) return false;
+    if(d<1e-9){ dx=1; dy=0; d=1; }
+    var ux=dx/d, uy=dy/d;
+    b.x=c.x+ux*rr; b.y=c.y+uy*rr;
+    bounce(b, ux, uy, BOUNCE_E, 0, 0, ev);
+    ev.bump++;
+    return true;
+  }
+
+  function hitBlade(b, sp, clock, ev){
+    var bl=bladeAt(sp, clock);
+    var t=segT(bl.x0,bl.y0,bl.x1,bl.y1,b.x,b.y);
+    var qx=bl.x0+(bl.x1-bl.x0)*t, qy=bl.y0+(bl.y1-bl.y0)*t;
+    var dx=b.x-qx, dy=b.y-qy, d=len(dx,dy), rr=bl.hw+BALL_R;
+    if(d>=rr-1e-12) return false;
+    if(d<1e-9){
+      /* dead on the blade's centre line - push out sideways from the pivot */
+      dx=b.x-sp.x; dy=b.y-sp.y; d=len(dx,dy);
+      if(d<1e-9){ dx=-Math.sin(bl.a); dy=Math.cos(bl.a); d=1; }
+    }
+    var ux=dx/d, uy=dy/d;
+    b.x=qx+ux*rr; b.y=qy+uy*rr;
+    /* the blade is turning, so the surface under the ball is moving */
+    var sx=-sp.rate*(qy-sp.y), sy=sp.rate*(qx-sp.x);
+    bounce(b, ux, uy, WALL_E, sx, sy, ev);
+    ev.blade++;
+    return true;
+  }
+
+  /* Resolve every overlap, several times over.  Once is not enough in a
+     corner: pushing the ball out of one wall can push it into the other, and
+     a single pass leaves it half inside.  Four passes settles every corner on
+     this course, and the loop stops early the moment nothing moved. */
+  function resolve(st, b, ev){
+    var h=st.hole, it, k, moved;
+    for(it=0; it<4; it++){
+      moved=false;
+      for(k=0;k<h.edges.length;k++) if(hitEdge(b,h.edges[k],ev)) moved=true;
+      for(k=0;k<h.blocks.length;k++) if(hitRect(b,h.blocks[k],ev)) moved=true;
+      for(k=0;k<h.bumpers.length;k++) if(hitBumper(b,h.bumpers[k],ev)) moved=true;
+      for(k=0;k<h.spins.length;k++) if(hitBlade(b,h.spins[k],st.clock,ev)) moved=true;
+      if(!moved) break;
+    }
+  }
+
+  function slopeAt(st, x, y){
+    var s=st.hole.slopes, k, ax=0, ay=0;
+    for(k=0;k<s.length;k++){
+      var z=s[k];
+      if(x>=z.x && x<=z.x+z.w && y>=z.y && y<=z.y+z.h){ ax+=z.ax; ay+=z.ay; }
+    }
+    return { ax:ax, ay:ay };
+  }
+
+  /* ---------------- one fixed tick ---------------- */
+  function tickFixed(st, ev){
+    st.clock+=FIXED;
+    var b=st.ball;
+    if(st.holeDone||st.done) return;
+
+    var g=slopeAt(st, b.x, b.y);
+    b.vx+=g.ax*FIXED; b.vy+=g.ay*FIXED;
+
+    var v=len(b.vx,b.vy);
+    /* constant deceleration, and it ENDS - a ball below one tick's worth of
+       friction is simply stopped, so nothing ever crawls for ever */
+    var dv=st.mu*FIXED;
+    if(v<=dv){ b.vx=0; b.vy=0; v=0; }
+    else { var f=(v-dv)/v; b.vx*=f; b.vy*=f; v-=dv; }
+    if(v>VMAX){ var s2=VMAX/v; b.vx*=s2; b.vy*=s2; v=VMAX; }
+
+    if(v>0){
+      var n=Math.max(1, Math.ceil(v*FIXED/SUB));
+      var sdt=FIXED/n, i;
+      for(i=0;i<n;i++){
+        b.x+=b.vx*sdt; b.y+=b.vy*sdt;
+        resolve(st, b, ev);
+        v=len(b.vx,b.vy);
+        if(v<=0) break;
+      }
+    }else{
+      /* even standing still, a blade can sweep into the ball */
+      resolve(st, b, ev);
+    }
+
+    /* the cup */
+    var cd=len(b.x-st.hole.cup.x, b.y-st.hole.cup.y);
+    if(cd<CUP_R){
+      b.over+=FIXED;
+      var sp=len(b.vx,b.vy);
+      if(sp<=st.capV || b.over>=CUP_HOLD){
+        st.holeDone=true; st.sunk=true;
+        st.scores[st.hi]=st.strokes;
+        b.vx=0; b.vy=0; b.x=st.hole.cup.x; b.y=st.hole.cup.y; b.rest=true;
+        ev.sunk=true; ev.holeDone=true;
+        return;
+      }
+      /* too quick to drop - it rims the hole, losing speed fast and being
+         pulled in, so it can never sit balanced on the lip */
+      b.vx*=CUP_DRAG; b.vy*=CUP_DRAG;
+      if(cd>1e-6){
+        b.vx+=(st.hole.cup.x-b.x)/cd*CUP_PULL*FIXED;
+        b.vy+=(st.hole.cup.y-b.y)/cd*CUP_PULL*FIXED;
+      }
+    }else b.over=0;
+
+    b.rest=(b.vx===0 && b.vy===0);
+    if(b.rest && st.strokes>=st.hole.cap){
+      st.holeDone=true; st.sunk=false;
+      st.scores[st.hi]=st.hole.cap;
+      ev.capped=true; ev.holeDone=true;
+    }
+  }
+
+  function step(st, dt){
+    var ev={ hit:0, bump:0, blade:0, sunk:false, capped:false,
+             holeDone:false, rested:false, roundDone:false };
+    if(st.done) return ev;
+    var was=st.ball.rest;
+    if(dt>MAX_DT) dt=MAX_DT;
+    if(dt<0) dt=0;
+    st.acc+=dt;
+    var guard=0;
+    while(st.acc>=FIXED && guard++<600){ st.acc-=FIXED; tickFixed(st, ev); }
+    if(!was && st.ball.rest && !st.holeDone) ev.rested=true;
+    return ev;
+  }
+
+  /* ---------------- the round ---------------- */
+  function placeTee(st){
+    var b=st.ball;
+    b.x=st.hole.tee.x; b.y=st.hole.tee.y;
+    b.vx=0; b.vy=0; b.rest=true; b.over=0;
+  }
+
+  function loadHole(st, i){
+    st.hi=i;
+    st.hole=buildHole(i, st.cfg.opt);
+    st.strokes=0;
+    st.holeDone=false; st.sunk=false;
+    st.acc=0; st.clock=0;
+    placeTee(st);
+  }
+
+  function create(cfg){
+    cfg=cfg||{};
+    var st={
+      cfg:cfg,
+      mu:(cfg.mu==null?40:cfg.mu),
+      capV:(cfg.capV==null?78:cfg.capV),
+      hi:0, strokes:0, scores:[],
+      ball:{ x:0, y:0, vx:0, vy:0, rest:true, over:0 },
+      hole:null, holeDone:false, sunk:false, done:false,
+      clock:0, acc:0
+    };
+    /* There is no random number anywhere in this module.  A hole is a fixed
+       piece of furniture and a putt is a fixed piece of arithmetic, so the
+       same shot from the same spot does the same thing every time - which is
+       what makes a putting game fair, and what lets the sim reproduce any
+       round from its seed alone (the seed only drives the stand-in's hands). */
+    /* Starting part-way round - which only ever happens in a test or when a
+       saved game is being rebuilt - the card still has to have a line for
+       every hole already behind you, or the invariant that the card matches
+       the hole you are standing on is meaningless.  Par is the placeholder;
+       restore() overwrites it with what was really scored. */
+    var start=cfg.hole||0, i;
+    for(i=0;i<start;i++) st.scores.push(HOLES[i].par);
+    loadHole(st, start);
+    return st;
+  }
+
+  /* strike the ball.  Returns false for a putt that was never committed to -
+     a drag that came back to the ball is a cancel, not a shot. */
+  function putt(st, ang, power){
+    if(st.done||st.holeDone) return false;
+    if(!st.ball.rest) return false;
+    if(st.strokes>=st.hole.cap) return false;
+    if(!(power>MIN_POWER)) return false;
+    if(power>1) power=1;
+    var v=power*VPUTT;
+    st.ball.vx=Math.cos(ang)*v;
+    st.ball.vy=Math.sin(ang)*v;
+    st.ball.rest=false;
+    st.ball.over=0;
+    st.strokes++;
+    return true;
+  }
+
+  /* move on once the hole is finished with */
+  function nextHole(st){
+    if(!st.holeDone||st.done) return false;
+    if(st.hi>=HOLES.length-1){ st.done=true; return true; }
+    loadHole(st, st.hi+1);
+    return true;
+  }
+
+  function totalScore(st){ var t=0,i; for(i=0;i<st.scores.length;i++) t+=st.scores[i]; return t; }
+  function parSoFar(st){ var t=0,i; for(i=0;i<st.scores.length;i++) t+=HOLES[i].par; return t; }
+  function toPar(st){ return totalScore(st)-parSoFar(st); }
+
+  /* ---------------- the aim line ----------------
+     Where the ball would go with nothing moving.  It is the same physics with
+     the cup, the friction stop and the spinners left out, run on a copy of the
+     ball, so what the player is shown is what the game will actually do.  How
+     many bounces get drawn is a difficulty setting. */
+  function predict(st, ang, power, bounces){
+    if(power>1) power=1;
+    var b={ x:st.ball.x, y:st.ball.y,
+            vx:Math.cos(ang)*power*VPUTT, vy:Math.sin(ang)*power*VPUTT,
+            rest:false, over:0 };
+    var pts=[[b.x,b.y]];
+    var ev={ hit:0, bump:0, blade:0 };
+    var hitsWant=(bounces==null?1:bounces);
+    var seen=0, guard=0;
+    var h=st.hole, k, it, moved;
+    while(guard++<1400){
+      var v=len(b.vx,b.vy);
+      var dv=st.mu*FIXED;
+      if(v<=dv) break;
+      var f=(v-dv)/v; b.vx*=f; b.vy*=f; v-=dv;
+      var g=slopeAt(st,b.x,b.y);
+      b.vx+=g.ax*FIXED; b.vy+=g.ay*FIXED;
+      var n=Math.max(1, Math.ceil(v*FIXED/SUB));
+      var sdt=FIXED/n, i;
+      for(i=0;i<n;i++){
+        b.x+=b.vx*sdt; b.y+=b.vy*sdt;
+        var before=ev.hit+ev.bump;
+        for(it=0;it<4;it++){
+          moved=false;
+          for(k=0;k<h.edges.length;k++) if(hitEdge(b,h.edges[k],ev)) moved=true;
+          for(k=0;k<h.blocks.length;k++) if(hitRect(b,h.blocks[k],ev)) moved=true;
+          for(k=0;k<h.bumpers.length;k++) if(hitBumper(b,h.bumpers[k],ev)) moved=true;
+          if(!moved) break;
+        }
+        if(ev.hit+ev.bump>before){
+          pts.push([b.x,b.y]);
+          seen++;
+          if(seen>hitsWant) return pts;
+        }
+      }
+      if(len(b.x-st.hole.cup.x, b.y-st.hole.cup.y)<CUP_R){ pts.push([b.x,b.y]); return pts; }
+    }
+    pts.push([b.x,b.y]);
+    return pts;
+  }
+
+  /* ---------------- every promise the game makes ----------------
+     Checked from the outside, and run after every single change of state in
+     the headless sim. */
+  function audit(st){
+    var b=st.ball, h=st.hole, k;
+    if(!isFinite(b.x)||!isFinite(b.y)||!isFinite(b.vx)||!isFinite(b.vy))
+      return "the ball went to infinity";
+    var v=len(b.vx,b.vy);
+    if(v>VMAX+1e-6) return "the ball is going "+v.toFixed(1)+", faster than the cap";
+    if(b.rest && v>0) return "a resting ball still has speed";
+    if(!inPoly(h.poly, b.x, b.y)) return "the ball is off the green";
+    for(k=0;k<h.edges.length;k++){
+      var ed=h.edges[k];
+      var t=segT(ed.ax,ed.ay,ed.bx,ed.by,b.x,b.y);
+      var qx=ed.ax+(ed.bx-ed.ax)*t, qy=ed.ay+(ed.by-ed.ay)*t;
+      if(len(b.x-qx,b.y-qy)<BALL_R-1e-6) return "the ball is inside a wall";
+      /* and square on to a wall it must be a full radius on the inside of it,
+         not merely a radius away from the line of it */
+      if(t>1e-9 && t<1-1e-9 &&
+         (b.x-qx)*ed.nx+(b.y-qy)*ed.ny < BALL_R-1e-6) return "the ball is behind a wall";
+    }
+    for(k=0;k<h.blocks.length;k++){
+      var r=h.blocks[k];
+      var cx=clamp(b.x,r.x,r.x+r.w), cy=clamp(b.y,r.y,r.y+r.h);
+      if(b.x>r.x&&b.x<r.x+r.w&&b.y>r.y&&b.y<r.y+r.h) return "the ball is inside a block";
+      if(len(b.x-cx,b.y-cy)<BALL_R-1e-6) return "the ball is inside a block";
+    }
+    for(k=0;k<h.bumpers.length;k++){
+      var c=h.bumpers[k];
+      if(len(b.x-c.x,b.y-c.y)<c.r+BALL_R-1e-6) return "the ball is inside a bumper";
+    }
+    for(k=0;k<h.spins.length;k++){
+      var bl=bladeAt(h.spins[k], st.clock);
+      var tt=segT(bl.x0,bl.y0,bl.x1,bl.y1,b.x,b.y);
+      var bxq=bl.x0+(bl.x1-bl.x0)*tt, byq=bl.y0+(bl.y1-bl.y0)*tt;
+      if(len(b.x-bxq,b.y-byq)<bl.hw+BALL_R-1e-6) return "the ball is inside a windmill blade";
+    }
+    if(st.hi<0||st.hi>=HOLES.length) return "there is no such hole";
+    if(st.strokes<0) return "a negative number of strokes";
+    if(st.strokes>h.cap) return "more strokes than the cap allows";
+    var want=st.hi+(st.holeDone?1:0);
+    if(st.scores.length!==want)
+      return "the card has "+st.scores.length+" holes on it, expected "+want;
+    for(k=0;k<st.scores.length;k++){
+      var s=st.scores[k];
+      if(!(s>=1 && s<=capOf(k) && s===Math.floor(s)))
+        return "hole "+(k+1)+" is written down as "+s;
+    }
+    if(st.done && st.scores.length!==HOLES.length) return "the round ended early";
+    if(st.holeDone && !st.sunk && st.scores[st.hi]!==h.cap)
+      return "a picked-up hole is not scored at the cap";
+    return null;
+  }
+
+  /* the course itself has to be sane too - checked once, not every frame */
+  function auditCourse(){
+    var i, k;
+    for(i=0;i<HOLES.length;i++){
+      for(var o=0;o<=2;o++){
+        var h=buildHole(i,o), tag="hole "+(i+1)+" opt "+o+": ";
+        if(!inPoly(h.poly,h.tee.x,h.tee.y)) return tag+"the tee is off the green";
+        if(!inPoly(h.poly,h.cup.x,h.cup.y)) return tag+"the cup is off the green";
+        var probe={ x:h.tee.x, y:h.tee.y };
+        for(k=0;k<h.edges.length;k++){
+          var ed=h.edges[k];
+          var t=segT(ed.ax,ed.ay,ed.bx,ed.by,probe.x,probe.y);
+          if(len(probe.x-(ed.ax+(ed.bx-ed.ax)*t), probe.y-(ed.ay+(ed.by-ed.ay)*t))<BALL_R*1.2)
+            return tag+"the tee is jammed against a wall";
+          var t2=segT(ed.ax,ed.ay,ed.bx,ed.by,h.cup.x,h.cup.y);
+          if(len(h.cup.x-(ed.ax+(ed.bx-ed.ax)*t2), h.cup.y-(ed.ay+(ed.by-ed.ay)*t2))<CUP_R*1.1)
+            return tag+"the cup is jammed against a wall";
+        }
+        for(k=0;k<h.blocks.length;k++){
+          var r=h.blocks[k];
+          /* nothing thinner than the ball, or a hard shot could pass through */
+          if(Math.min(r.w,r.h)<BALL_R*2) return tag+"a block is thinner than the ball";
+          if(h.tee.x>r.x-BALL_R*2&&h.tee.x<r.x+r.w+BALL_R*2&&
+             h.tee.y>r.y-BALL_R*2&&h.tee.y<r.y+r.h+BALL_R*2) return tag+"the tee is in a block";
+          if(h.cup.x>r.x-CUP_R&&h.cup.x<r.x+r.w+CUP_R&&
+             h.cup.y>r.y-CUP_R&&h.cup.y<r.y+r.h+CUP_R) return tag+"the cup is in a block";
+        }
+        for(k=0;k<h.bumpers.length;k++){
+          var c=h.bumpers[k];
+          if(len(h.tee.x-c.x,h.tee.y-c.y)<c.r+BALL_R*2) return tag+"the tee is on a bumper";
+          if(len(h.cup.x-c.x,h.cup.y-c.y)<c.r+CUP_R*1.5) return tag+"the cup is on a bumper";
+        }
+        for(k=0;k<h.spins.length;k++){
+          var sp=h.spins[k];
+          var reach=sp.len+sp.w/2+BALL_R;
+          if(len(h.cup.x-sp.x,h.cup.y-sp.y)<reach+CUP_R) return tag+"a blade sweeps the cup";
+          if(len(h.tee.x-sp.x,h.tee.y-sp.y)<reach+BALL_R) return tag+"a blade sweeps the tee";
+          /* the blade must not be able to pin the ball against a wall */
+          var j;
+          for(j=0;j<h.edges.length;j++){
+            var e2=h.edges[j];
+            var tt=segT(e2.ax,e2.ay,e2.bx,e2.by,sp.x,sp.y);
+            var d2=len(sp.x-(e2.ax+(e2.bx-e2.ax)*tt), sp.y-(e2.ay+(e2.by-e2.ay)*tt));
+            if(d2<reach+BALL_R*1.6) return tag+"a blade can pin the ball on a wall";
+          }
+          for(j=0;j<h.blocks.length;j++){
+            var rb=h.blocks[j];
+            var px2=clamp(sp.x,rb.x,rb.x+rb.w), py2=clamp(sp.y,rb.y,rb.y+rb.h);
+            if(len(sp.x-px2,sp.y-py2)<reach+BALL_R*1.6) return tag+"a blade can pin the ball on a block";
+          }
+          for(j=0;j<h.bumpers.length;j++){
+            var cb=h.bumpers[j];
+            if(len(sp.x-cb.x,sp.y-cb.y)<reach+cb.r+BALL_R*1.6) return tag+"a blade can pin the ball on a bumper";
+          }
+        }
+        for(k=0;k<h.slopes.length;k++){
+          /* a slope steeper than the friction means a ball that never settles */
+          if(len(h.slopes[k].ax,h.slopes[k].ay)>=32) return tag+"a slope is steeper than the friction";
+        }
+      }
+    }
+    return null;
+  }
+
+  return { W:W, H:H, BALL_R:BALL_R, CUP_R:CUP_R, VMAX:VMAX, VPUTT:VPUTT,
+           FIXED:FIXED, MIN_POWER:MIN_POWER, CAP_OVER:CAP_OVER,
+           WALL_E:WALL_E, BOUNCE_E:BOUNCE_E, TAU:TAU,
+           HOLES:HOLES, rng:rng, len:len, clamp:clamp, inPoly:inPoly,
+           segT:segT, bladeAt:bladeAt, slopeAt:slopeAt,
+           holeCount:holeCount, parOf:parOf, totalPar:totalPar, capOf:capOf,
+           buildHole:buildHole, create:create, loadHole:loadHole, placeTee:placeTee,
+           putt:putt, step:step, nextHole:nextHole, predict:predict,
+           totalScore:totalScore, parSoFar:parSoFar, toPar:toPar,
+           audit:audit, auditCourse:auditCourse };
+}
+</script>
+<script>
+(function(){
+"use strict";
+var MG=makeMiniGolf();
+var LS="gg_minigolf_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+/* ---------------- the three levels ----------------
+   Measured, not guessed.  These are the numbers sim_mg.js settled on against a
+   stand-in putter over 1300 rounds a level, across two independent seed sets:
+   80 / 48 / 31 per cent of rounds finished at or under par against a course
+   par of 47.  `guide` is how far ahead the aim line is
+   drawn - two bounces, one, or none - and it is the main thing the player
+   feels.  `mu` is how much the green holds the ball up, `capV` is how quick a
+   ball may still be going and still drop, and `opt` is how much extra
+   furniture is put in the way of the cup. */
+var MODES=[
+  {id:"easy", name:"Gentle",   cls:"z-a", tag:"Slow green, long aim line, kind cup",
+   cfg:{mu:46, capV:44, opt:0, guide:2}},
+  {id:"med",  name:"Tricky",   cls:"z-b", tag:"More roll, one bounce shown",
+   cfg:{mu:40, capV:32, opt:1, guide:1}},
+  {id:"hard", name:"Fiendish", cls:"z-c", tag:"Fast green, no aim line, fussy cup",
+   cfg:{mu:34, capV:26, opt:2, guide:0}}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[1]; }
+
+/* ---------------- the look ----------------
+   Emerald green course, blush pink everywhere the player has to notice
+   something: the walls, the blocks, the bumpers, the flag and the power bar. */
+var C={
+  surround:"#ffe6f0", surroundEdge:"#f6cfe0",
+  turf:"#35b877", turfLo:"#2ea96c", turfHi:"#3fc481",
+  wallDark:"#cf5187", wall:"#ff92be", wallLip:"#ffd0e2",
+  block:"#ff7fae", blockHi:"#ffc0d8", blockLo:"#cd5083",
+  springy:"#ff4f96", springyHi:"#ffd0e4",
+  bump:"#ff4f96", bumpHi:"#ffd8e8", bumpRing:"#ffffff",
+  slopeHi:"rgba(255,255,255,.20)", slopeLo:"rgba(0,70,45,.16)", chev:"rgba(255,255,255,.55)",
+  cupRim:"#0f6d47", cupIn:"#0a3d2a",
+  pole:"#ffffff", flag:"#ff4f96",
+  ball:"#ffffff", ballHi:"#ffffff", ballSh:"rgba(0,60,35,.34)",
+  mill:"#ff7fae", millHub:"#0f6d47", millHi:"#ffd0e2",
+  aim:"rgba(255,255,255,.95)", aim2:"rgba(255,255,255,.45)",
+  banner:"rgba(8,64,42,.86)", bannerTx:"#ffffff",
+  tee:"rgba(255,255,255,.42)"
+};
+
+/* ---------------- state ---------------- */
+var mId, S, started, running, lastT=0, best, pend=0, banner=null, puffs=[], trail=[];
+var runStreak=0;
+/* Only the test hook ever sets this.  It stops the clock and nothing else, so
+   a test can advance the world a frame at a time instead of racing the
+   animation loop.  With the hook stripped out it stays false for good. */
+var frozen=false;
+
+function newGame(id, hole){
+  mId=id; save("mode",id);
+  var m=modeOf(id);
+  S=MG.create({ mu:m.cfg.mu, capV:m.cfg.capV, opt:m.cfg.opt, hole:hole||0 });
+  running=true; lastT=0; pend=0; puffs=[]; trail=[]; runStreak=0;
+  aiming=false;
+  layout(); paintHUD();
+  showHoleBanner();
+  /* does not persist - boot calls this before the title screen reads the save,
+     and persisting here would eat the game CARRY ON is about to offer */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ----------------
+   The hole is always the same 100 x 160 box of units, so one scale factor
+   fits it to the stage and the ball, the cup and the walls are the same size
+   on every one of the eighteen. */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var bg=document.createElement("canvas"), bgx=bg.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0, VH=0, SC=0, OX=0, OY=0, MAXPULL=90, bgKey="";
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  bg.width=cv.width; bg.height=cv.height;
+  bgx.setTransform(DPR,0,0,DPR,0,0);
+  fitHole();
+  MAXPULL=Math.max(56, Math.min(aw,ah)*0.30);
+  bgKey="";
+}
+window.addEventListener("resize", function(){ layout(); });
+
+/* Fit the hole that is actually on screen, not the box it was drawn in.
+   Every hole is laid out in the same 100 x 160 box so that one scale factor
+   serves the whole course, but a hole that only fills part of that box would
+   otherwise leave a band of empty page - hole 18 left 120 blank pixels above
+   the flag on a big phone.  So the view centres on the hole's own bounds and
+   is allowed to zoom in a little, capped hard at 14 per cent, which uses the
+   slack without letting the ball visibly change size from hole to hole. */
+function fitHole(){
+  var pad=8;
+  var base=Math.min(VW/MG.W, VH/MG.H);
+  var x0=0, y0=0, x1=MG.W, y1=MG.H;
+  if(S&&S.hole){
+    var p=S.hole.poly, i;
+    x0=x1=p[0][0]; y0=y1=p[0][1];
+    for(i=1;i<p.length;i++){
+      if(p[i][0]<x0) x0=p[i][0];
+      if(p[i][0]>x1) x1=p[i][0];
+      if(p[i][1]<y0) y0=p[i][1];
+      if(p[i][1]>y1) y1=p[i][1];
+    }
+  }
+  var bw=(x1-x0)+pad, bh=(y1-y0)+pad;
+  SC=Math.min(VW/bw, VH/bh, base*1.14);
+  OX=(VW-(x1-x0)*SC)/2-x0*SC;
+  OY=(VH-(y1-y0)*SC)/2-y0*SC;
+}
+function tx(u){ return OX+u*SC; }
+function ty(u){ return OY+u*SC; }
+
+/* ---------------- the green, drawn once ----------------
+   Everything that does not move is painted into an off-screen canvas at the
+   exact display size and blitted 1:1 each frame.  Only the ball, the blades,
+   the aim line and the banners are redrawn. */
+function polyPath(g, p){
+  var i;
+  g.beginPath();
+  g.moveTo(tx(p[0][0]), ty(p[0][1]));
+  for(i=1;i<p.length;i++) g.lineTo(tx(p[i][0]), ty(p[i][1]));
+  g.closePath();
+}
+function paintGreen(){
+  var h=S.hole, g=bgx, i, k;
+  g.clearRect(0,0,VW,VH);
+
+  /* the ground the hole is cut out of */
+  var sg=g.createLinearGradient(0,0,VW,VH);
+  sg.addColorStop(0,C.surround); sg.addColorStop(1,C.surroundEdge);
+  g.fillStyle=sg; g.fillRect(0,0,VW,VH);
+
+  var wallW=Math.max(4, SC*3.0);
+  /* the wall straddles the boundary; filling the turf afterwards covers the
+     inner half, so what is left is a proper rail sitting outside the green */
+  polyPath(g,h.poly);
+  g.lineJoin="round";
+  g.strokeStyle=C.wallDark; g.lineWidth=wallW*2+Math.max(3,SC*1.1); g.stroke();
+  polyPath(g,h.poly);
+  g.strokeStyle=C.wall; g.lineWidth=wallW*2; g.stroke();
+
+  /* the turf, with mown stripes */
+  polyPath(g,h.poly);
+  g.save(); g.clip();
+  g.fillStyle=C.turf; g.fillRect(0,0,VW,VH);
+  var band=SC*9;
+  for(i=0;i*band<VH+band;i++){
+    g.fillStyle=(i%2===0)?C.turfHi:C.turfLo;
+    g.globalAlpha=0.42;
+    g.fillRect(0, OY+i*band, VW, band);
+  }
+  g.globalAlpha=1;
+
+  /* slopes: the ball is nudged towards the bright side */
+  for(k=0;k<h.slopes.length;k++){
+    var z=h.slopes[k];
+    var L=Math.sqrt(z.ax*z.ax+z.ay*z.ay);
+    var ux=z.ax/L, uy=z.ay/L;
+    var cxm=z.x+z.w/2, cym=z.y+z.h/2, sp=Math.max(z.w,z.h)/2;
+    var gr=g.createLinearGradient(tx(cxm-ux*sp), ty(cym-uy*sp), tx(cxm+ux*sp), ty(cym+uy*sp));
+    gr.addColorStop(0,C.slopeLo); gr.addColorStop(1,C.slopeHi);
+    g.fillStyle=gr;
+    g.fillRect(tx(z.x), ty(z.y), z.w*SC, z.h*SC);
+    /* chevrons pointing downhill, so which way it leans is never a guess */
+    var ang=Math.atan2(uy,ux);
+    var stepx=13, stepy=13, a2, b2;
+    for(a2=z.x+7;a2<z.x+z.w-4;a2+=stepx){
+      for(b2=z.y+7;b2<z.y+z.h-4;b2+=stepy){
+        g.save();
+        g.translate(tx(a2), ty(b2));
+        g.rotate(ang);
+        g.strokeStyle=C.chev; g.lineWidth=Math.max(1.4,SC*0.62);
+        g.lineCap="round";
+        var s2=SC*2.6;
+        g.beginPath();
+        g.moveTo(-s2,-s2); g.lineTo(s2,0); g.lineTo(-s2,s2);
+        g.stroke();
+        g.restore();
+      }
+    }
+  }
+
+  /* the tee mark */
+  g.fillStyle=C.tee;
+  g.beginPath(); g.arc(tx(h.tee.x), ty(h.tee.y), Math.max(4,SC*3.4), 0, 6.284); g.fill();
+  g.strokeStyle="rgba(255,255,255,.7)"; g.lineWidth=Math.max(1,SC*0.5);
+  g.beginPath(); g.arc(tx(h.tee.x), ty(h.tee.y), Math.max(4,SC*3.4), 0, 6.284); g.stroke();
+
+  /* the cup, sunk into the turf, with the flag beside it */
+  var cr=MG.CUP_R*SC;
+  g.fillStyle="rgba(0,60,38,.22)";
+  g.beginPath(); g.arc(tx(h.cup.x), ty(h.cup.y)+cr*0.16, cr*1.12, 0, 6.284); g.fill();
+  g.fillStyle=C.cupIn;
+  g.beginPath(); g.arc(tx(h.cup.x), ty(h.cup.y), cr, 0, 6.284); g.fill();
+  g.strokeStyle=C.cupRim; g.lineWidth=Math.max(2,cr*0.26);
+  g.beginPath(); g.arc(tx(h.cup.x), ty(h.cup.y), cr*0.90, 0, 6.284); g.stroke();
+  g.restore();
+
+  /* the flag stands proud of the green, so it is drawn after the clip is off */
+  var fx=tx(h.cup.x), fy=ty(h.cup.y);
+  var fh=Math.max(16,SC*13);
+  g.strokeStyle="rgba(0,60,38,.28)"; g.lineWidth=Math.max(2,SC*0.8);
+  g.beginPath(); g.moveTo(fx,fy); g.lineTo(fx+fh*0.42, fy+fh*0.10); g.stroke();
+  g.strokeStyle=C.pole; g.lineWidth=Math.max(1.6,SC*0.62);
+  g.beginPath(); g.moveTo(fx,fy); g.lineTo(fx, fy-fh); g.stroke();
+  g.fillStyle=C.flag;
+  g.beginPath();
+  g.moveTo(fx, fy-fh);
+  g.lineTo(fx+fh*0.62, fy-fh*0.80);
+  g.lineTo(fx, fy-fh*0.58);
+  g.closePath(); g.fill();
+
+  /* blocks */
+  for(k=0;k<h.blocks.length;k++){
+    var r=h.blocks[k];
+    var X=tx(r.x), Y=ty(r.y), Wd=r.w*SC, Ht=r.h*SC;
+    g.fillStyle="rgba(0,60,38,.26)";
+    g.fillRect(X, Y+Math.max(2,SC*0.9), Wd, Ht);
+    g.fillStyle=r.bouncy?C.springy:C.block;
+    g.fillRect(X,Y,Wd,Ht);
+    g.fillStyle=r.bouncy?C.springyHi:C.blockHi;
+    g.fillRect(X,Y,Wd,Math.max(2,Ht*0.30));
+    g.fillStyle=C.blockLo;
+    g.fillRect(X,Y+Ht-Math.max(2,Ht*0.20),Wd,Math.max(2,Ht*0.20));
+    if(r.bouncy){
+      /* a spring pattern, so a lively rail is never mistaken for a dead one */
+      g.strokeStyle="rgba(255,255,255,.85)"; g.lineWidth=Math.max(1.2,SC*0.5);
+      var st2=Math.max(6,SC*3.2), xx;
+      g.beginPath();
+      for(xx=X+st2*0.5; xx<X+Wd-st2*0.2; xx+=st2){
+        g.moveTo(xx, Y+Ht*0.30); g.lineTo(xx+st2*0.5, Y+Ht*0.72);
+      }
+      g.stroke();
+    }
+  }
+
+  /* bumpers */
+  for(k=0;k<h.bumpers.length;k++){
+    var c=h.bumpers[k], br=c.r*SC;
+    g.fillStyle="rgba(0,60,38,.26)";
+    g.beginPath(); g.arc(tx(c.x), ty(c.y)+Math.max(2,SC*0.9), br, 0, 6.284); g.fill();
+    g.fillStyle=C.bump;
+    g.beginPath(); g.arc(tx(c.x), ty(c.y), br, 0, 6.284); g.fill();
+    g.strokeStyle=C.bumpRing; g.lineWidth=Math.max(2,br*0.20);
+    g.beginPath(); g.arc(tx(c.x), ty(c.y), br*0.72, 0, 6.284); g.stroke();
+    g.fillStyle=C.bumpHi;
+    g.beginPath(); g.arc(tx(c.x)-br*0.26, ty(c.y)-br*0.30, br*0.24, 0, 6.284); g.fill();
+  }
+
+  /* the windmill hubs - the blades move, so they are drawn every frame */
+  for(k=0;k<h.spins.length;k++){
+    var sp2=h.spins[k];
+    g.strokeStyle="rgba(255,255,255,.30)"; g.lineWidth=Math.max(1,SC*0.5);
+    g.beginPath(); g.arc(tx(sp2.x), ty(sp2.y), (sp2.len+sp2.w/2)*SC, 0, 6.284); g.stroke();
+  }
+
+  /* a thin bright lip along the inside of the rail */
+  polyPath(g,h.poly);
+  g.strokeStyle=C.wallLip; g.lineWidth=Math.max(1.5,SC*0.7); g.stroke();
+}
+
+function drawBlades(){
+  var h=S.hole, k;
+  for(k=0;k<h.spins.length;k++){
+    var sp=h.spins[k];
+    var bl=MG.bladeAt(sp, S.clock);
+    var w=sp.w*SC;
+    ctx.save();
+    ctx.lineCap="round";
+    ctx.strokeStyle="rgba(0,60,38,.30)"; ctx.lineWidth=w+Math.max(2,SC*0.8);
+    ctx.beginPath();
+    ctx.moveTo(tx(bl.x0), ty(bl.y0)+Math.max(2,SC*0.9));
+    ctx.lineTo(tx(bl.x1), ty(bl.y1)+Math.max(2,SC*0.9));
+    ctx.stroke();
+    ctx.strokeStyle=C.mill; ctx.lineWidth=w;
+    ctx.beginPath();
+    ctx.moveTo(tx(bl.x0), ty(bl.y0)); ctx.lineTo(tx(bl.x1), ty(bl.y1));
+    ctx.stroke();
+    ctx.strokeStyle=C.millHi; ctx.lineWidth=Math.max(1.2,w*0.26);
+    ctx.beginPath();
+    ctx.moveTo(tx(bl.x0), ty(bl.y0)); ctx.lineTo(tx(bl.x1), ty(bl.y1));
+    ctx.stroke();
+    ctx.fillStyle=C.millHub;
+    ctx.beginPath(); ctx.arc(tx(sp.x), ty(sp.y), w*0.62, 0, 6.284); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.85)";
+    ctx.beginPath(); ctx.arc(tx(sp.x), ty(sp.y), w*0.22, 0, 6.284); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ---------------- the aim line and the power bar ----------------
+   The line is the game's own physics run forward on a copy of the ball, so
+   what you are shown is exactly what will happen.  How far ahead it goes is
+   the level's biggest kindness: two bounces on Gentle, one on Tricky, and on
+   Fiendish just a stub pointing the way. */
+function drawAim(){
+  if(!aiming||!S||!S.ball.rest||S.holeDone) return;
+  var guide=modeOf(mId).cfg.guide;
+  var b=S.ball;
+  var bxp=tx(b.x), byp=ty(b.y);
+  var pw=power();
+  ctx.save();
+  /* the pull, drawn behind the ball where the finger is */
+  ctx.strokeStyle="rgba(255,255,255,.55)";
+  ctx.lineWidth=Math.max(1.5,SC*0.6);
+  ctx.setLineDash([Math.max(3,SC*1.4), Math.max(3,SC*1.4)]);
+  ctx.beginPath();
+  ctx.moveTo(bxp, byp);
+  ctx.lineTo(bxp-Math.cos(aimA)*pullPx, byp-Math.sin(aimA)*pullPx);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if(pw>MG.MIN_POWER){
+    var pts;
+    if(guide>0){
+      pts=MG.predict(S, aimA, pw, guide);
+    }else{
+      var stub=Math.min(26, 10+pw*22);
+      pts=[[b.x,b.y],[b.x+Math.cos(aimA)*stub, b.y+Math.sin(aimA)*stub]];
+    }
+    var i;
+    ctx.lineCap="round";
+    ctx.strokeStyle=C.aim;
+    ctx.lineWidth=Math.max(2,SC*0.9);
+    ctx.setLineDash([Math.max(4,SC*2.0), Math.max(4,SC*2.0)]);
+    ctx.beginPath();
+    ctx.moveTo(tx(pts[0][0]), ty(pts[0][1]));
+    for(i=1;i<pts.length;i++) ctx.lineTo(tx(pts[i][0]), ty(pts[i][1]));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    /* a ring where the line ends, so the length means something */
+    var e=pts[pts.length-1];
+    ctx.strokeStyle=C.aim2; ctx.lineWidth=Math.max(1.5,SC*0.6);
+    ctx.beginPath(); ctx.arc(tx(e[0]), ty(e[1]), Math.max(3,SC*2.0), 0, 6.284); ctx.stroke();
+  }
+  /* the cancel ring: let go inside it and nothing happens */
+  if(pw<=MG.MIN_POWER){
+    ctx.strokeStyle="rgba(255,255,255,.9)";
+    ctx.lineWidth=Math.max(1.5,SC*0.7);
+    ctx.setLineDash([Math.max(3,SC*1.2), Math.max(3,SC*1.2)]);
+    ctx.beginPath(); ctx.arc(bxp, byp, Math.max(10,SC*5.2), 0, 6.284); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+
+function drawPowerBar(){
+  if(!aiming||!S) return;
+  var pw=power();
+  /* Pinned to the viewport, not to the hole.  The view now zooms to fit each
+     hole, so anything positioned in course units wanders about from hole to
+     hole and the first cut slid this bar and the score tag clean off the
+     side of the screen. */
+  var w=Math.min(VW-24, 340), x0=(VW-w)/2;
+  var y0=4, hgt=Math.min(14, Math.max(9,SC*3.0));
+  ctx.save();
+  ctx.fillStyle="rgba(8,64,42,.55)";
+  rrect(ctx,x0,y0,w,hgt,hgt/2); ctx.fill();
+  var g=ctx.createLinearGradient(x0,0,x0+w,0);
+  g.addColorStop(0,"#7ee0a8"); g.addColorStop(0.55,"#ffd166"); g.addColorStop(1,"#ff4f96");
+  ctx.save();
+  rrect(ctx,x0,y0,w,hgt,hgt/2); ctx.clip();
+  ctx.fillStyle=g; ctx.fillRect(x0,y0,w*Math.min(1,pw),hgt);
+  ctx.restore();
+  ctx.strokeStyle="rgba(255,255,255,.8)"; ctx.lineWidth=1.5;
+  rrect(ctx,x0,y0,w,hgt,hgt/2); ctx.stroke();
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font="900 "+Math.round(Math.max(8,hgt*0.72))+"px -apple-system,Helvetica,Arial";
+  ctx.fillStyle="rgba(255,255,255,.95)";
+  ctx.fillText(pw<=MG.MIN_POWER?"LET GO TO CANCEL":"POWER", VW/2, y0+hgt/2+0.5);
+  ctx.restore();
+}
+function rrect(g,x,y,w,h,r){
+  g.beginPath();
+  g.moveTo(x+r,y);
+  g.arcTo(x+w,y,x+w,y+h,r);
+  g.arcTo(x+w,y+h,x,y+h,r);
+  g.arcTo(x,y+h,x,y,r);
+  g.arcTo(x,y,x+w,y,r);
+  g.closePath();
+}
+
+function drawBanner(){
+  if(!banner) return;
+  var t=banner.t/banner.life;
+  ctx.save();
+  ctx.globalAlpha=Math.min(1, t*4);
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  var fs=Math.min(19, Math.max(11, SC*5.2));
+  ctx.font="900 "+Math.round(fs)+"px -apple-system,Helvetica,Arial";
+  var w=ctx.measureText(banner.a).width;
+  var fs2=Math.round(fs*0.62);
+  ctx.font="900 "+fs2+"px -apple-system,Helvetica,Arial";
+  var w2=banner.b?ctx.measureText(banner.b).width:0;
+  var bw=Math.max(w,w2)+fs*1.6, bh=fs*(banner.b?2.9:1.9);
+  /* Half way down.  The two things the player must be able to see are the
+     ball at the bottom and the cup at the top, and a banner at either end
+     covers one of them - the first cut sat on the flag on nearly every hole. */
+  var bxp=VW/2-bw/2, byp=VH*0.46-bh/2;
+  ctx.fillStyle=C.banner;
+  rrect(ctx,bxp,byp,bw,bh,bh*0.28); ctx.fill();
+  ctx.fillStyle=C.bannerTx;
+  ctx.font="900 "+Math.round(fs)+"px -apple-system,Helvetica,Arial";
+  ctx.fillText(banner.a, VW/2, byp+(banner.b?fs*1.02:bh/2));
+  if(banner.b){
+    ctx.font="900 "+fs2+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle="rgba(255,255,255,.82)";
+    ctx.fillText(banner.b, VW/2, byp+fs*2.0);
+  }
+  ctx.restore();
+}
+
+function drawScoreTag(){
+  if(!S) return;
+  var tp=MG.toPar(S);
+  var txt=(S.scores.length===0)?"E":(tp===0?"E":(tp>0?"+"+tp:String(tp)));
+  ctx.save();
+  ctx.textAlign="left"; ctx.textBaseline="middle";
+  var fs=Math.max(9, Math.min(13, SC*3.4));
+  ctx.font="900 "+Math.round(fs)+"px -apple-system,Helvetica,Arial";
+  var lab="ROUND "+txt;
+  var w=ctx.measureText(lab).width;
+  var x0=8, y0=VH-fs*1.05;
+  ctx.fillStyle="rgba(8,64,42,.60)";
+  rrect(ctx,x0-fs*0.5,y0-fs*0.86,w+fs,fs*1.72,fs*0.86); ctx.fill();
+  ctx.fillStyle="#fff";
+  ctx.fillText(lab, x0, y0+0.5);
+  ctx.restore();
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!S) return;
+  if(!SC){ layout(); if(!SC) return; }
+  if(!lastT) lastT=ts||0;
+  var dt=Math.min(50,(ts||0)-lastT)/1000; lastT=ts||0;
+  if(started && running && !frozen) advance(dt);
+  var i;
+  for(i=puffs.length-1;i>=0;i--){ puffs[i].t-=dt; if(puffs[i].t<=0) puffs.splice(i,1); }
+  /* A white ball this size on a green this big reads as a full stop unless it
+     leaves something behind it - the roll is the whole game, so it gets a
+     short fading tail. */
+  for(i=trail.length-1;i>=0;i--){ trail[i].t-=dt; if(trail[i].t<=0) trail.splice(i,1); }
+  if(banner){ banner.t-=dt; if(banner.t<=0) banner=null; }
+
+  var key=S.hi+"|"+mId+"|"+VW+"x"+VH+"|"+DPR;
+  if(key!==bgKey){ fitHole(); paintGreen(); bgKey=key; }
+  ctx.clearRect(0,0,VW,VH);
+  ctx.drawImage(bg, 0, 0, VW, VH);
+
+  drawBlades();
+
+  for(i=0;i<puffs.length;i++){
+    var p=puffs[i];
+    ctx.globalAlpha=Math.max(0,p.t/p.life)*0.8;
+    ctx.fillStyle=p.c;
+    ctx.beginPath();
+    ctx.arc(tx(p.x), ty(p.y), Math.max(2, SC*(1.5+3.5*(1-p.t/p.life))), 0, 6.284);
+    ctx.fill();
+    ctx.globalAlpha=1;
+  }
+
+  /* the ball */
+  var b=S.ball;
+  var br=MG.BALL_R*SC;
+  for(i=0;i<trail.length;i++){
+    var tr=trail[i], f2=tr.t/tr.life;
+    ctx.globalAlpha=f2*0.38;
+    ctx.fillStyle="#ffffff";
+    ctx.beginPath(); ctx.arc(tx(tr.x), ty(tr.y), br*(0.25+0.42*f2), 0, 6.284); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  if(!(S.holeDone&&S.sunk)){
+    ctx.fillStyle=C.ballSh;
+    ctx.beginPath(); ctx.arc(tx(b.x), ty(b.y)+br*0.42, br*1.02, 0, 6.284); ctx.fill();
+    ctx.fillStyle=C.ball;
+    ctx.beginPath(); ctx.arc(tx(b.x), ty(b.y), br, 0, 6.284); ctx.fill();
+    ctx.strokeStyle="rgba(0,70,45,.30)"; ctx.lineWidth=Math.max(1,br*0.16);
+    ctx.beginPath(); ctx.arc(tx(b.x), ty(b.y), br*0.94, 0, 6.284); ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,.95)";
+    ctx.beginPath(); ctx.arc(tx(b.x)-br*0.30, ty(b.y)-br*0.32, br*0.34, 0, 6.284); ctx.fill();
+  }
+
+  drawAim();
+  drawPowerBar();
+  drawScoreTag();
+  drawBanner();
+}
+
+/* ---------------- the one place the world moves ---------------- */
+function advance(dt){
+  if(S.done) return {};
+  var ev=MG.step(S, dt);
+  if(!S.ball.rest && !S.holeDone && trail.length<48)
+    trail.push({ x:S.ball.x, y:S.ball.y, t:0.34, life:0.34 });
+  if(ev.bump){ beep(720,.09,"triangle",.05); }
+  else if(ev.blade){ beep(300,.07,"square",.04); }
+  else if(ev.hit){ beep(220,.045,"sine",.035); }
+  if(ev.sunk) sinkIt();
+  else if(ev.capped) pickUp();
+  if(ev.rested) persist();
+  if(pend>0){
+    pend-=dt;
+    if(pend<=0){ pend=0; goOn(); }
+  }
+  paintHUD();
+  return ev;
+}
+
+function scoreWord(sc, par){
+  if(sc===1) return "HOLE IN ONE!";
+  var d=sc-par;
+  if(d<=-3) return "ALBATROSS";
+  if(d===-2) return "EAGLE";
+  if(d===-1) return "BIRDIE";
+  if(d===0) return "PAR";
+  if(d===1) return "BOGEY";
+  if(d===2) return "DOUBLE BOGEY";
+  return "+"+d;
+}
+function sinkIt(){
+  var sc=S.scores[S.hi], par=MG.parOf(S.hi), i;
+  for(i=0;i<14;i++)
+    puffs.push({ x:S.hole.cup.x+(Math.random()-0.5)*7, y:S.hole.cup.y+(Math.random()-0.5)*7,
+                 c:i%2?"#ffffff":"#ff8fc0", t:0.55, life:0.55 });
+  beep(660,.10,"triangle",.07);
+  setTimeout(function(){ beep(990,.14,"triangle",.07); },110);
+  banner={ a:sc===1?"HOLE IN ONE!":("IN "+sc),
+           b:sc===1?("hole "+(S.hi+1)+" in a single putt"):scoreWord(sc,par),
+           t:1.5, life:1.5 };
+  if(window.GGA){
+    GGA.haptic(sc<=par?"success":"light");
+    GGA.award("mg_first");
+    if(sc===1) GGA.award("mg_ace");
+    if(sc<par) GGA.award("mg_birdie");
+  }
+  if(sc<=par){ runStreak++; if(runStreak>=3 && window.GGA) GGA.award("mg_streak"); }
+  else runStreak=0;
+  pend=1.5;
+  save("cur",null);
+}
+function pickUp(){
+  var sc=S.scores[S.hi];
+  beep(240,.30,"sine",.06,120);
+  banner={ a:"PICKED UP", b:"scored at the cap, "+sc, t:1.6, life:1.6 };
+  if(window.GGA) GGA.haptic("warning");
+  runStreak=0;
+  pend=1.6;
+  save("cur",null);
+}
+function goOn(){
+  if(!S.holeDone) return;
+  var wasLast=(S.hi>=MG.holeCount()-1);
+  MG.nextHole(S);
+  aiming=false; trail=[];
+  if(wasLast||S.done){ finish(); return; }
+  banner=null;
+  showHoleBanner();
+  paintHUD();
+  persist();
+}
+function showHoleBanner(){
+  if(!S) return;
+  banner={ a:"HOLE "+(S.hi+1)+" - "+S.hole.name,
+           b:"par "+S.hole.par+"   -   pick up after "+S.hole.cap,
+           t:1.9, life:1.9 };
+}
+
+function finish(){
+  running=false;
+  save("cur",null);
+  var tp=MG.toPar(S);
+  if(best===null||tp<best){ best=tp; save("best",best); }
+  if(window.GGA){
+    GGA.award("mg_round");
+    if(tp<=0) GGA.award("mg_under");
+    if(tp<=0 && mId==="hard") GGA.award("mg_hard");
+    GGA.haptic(tp<=0?"success":"light");
+  }
+  beep(520,.14,"triangle",.07);
+  setTimeout(function(){ beep(780,.18,"triangle",.07); },150);
+  setTimeout(function(){ roundScreen(); }, 700);
+}
+
+function paintHUD(){
+  if(!S) return;
+  document.getElementById("vHole").textContent=(S.hi+1)+"/"+MG.holeCount();
+  document.getElementById("vPar").textContent=S.hole.par;
+  document.getElementById("vShots").textContent=S.strokes;
+  var c=document.getElementById("tCard");
+  if(started) c.classList.remove("off"); else c.classList.add("off");
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started||!S) return;
+  if(S.done||S.holeDone){ return; }
+  if(S.hi===0 && S.strokes===0){ save("cur",null); return; }
+  if(!S.ball.rest) return;                 /* only ever saved between shots */
+  save("cur",{ v:1, m:mId, hi:S.hi, st:S.strokes,
+               sc:S.scores.slice(0,S.hi),
+               bx:Math.round(S.ball.x*1000)/1000, by:Math.round(S.ball.y*1000)/1000 });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||c.v!==1) return false;
+  if(!modeOf(c.m)) return false;
+  var hi=c.hi|0;
+  if(hi<0||hi>=MG.holeCount()) return false;
+  if(!c.sc||c.sc.length!==hi) return false;
+  newGame(c.m, hi);
+  var i;
+  for(i=0;i<hi;i++){
+    var v=c.sc[i]|0;
+    if(!(v>=1&&v<=MG.capOf(i))) { newGame(c.m); return false; }
+    S.scores[i]=v;
+  }
+  S.strokes=Math.max(0, Math.min(S.hole.cap-1, c.st|0));
+  S.ball.x=c.bx; S.ball.y=c.by; S.ball.vx=0; S.ball.vy=0; S.ball.rest=true; S.ball.over=0;
+  if(MG.audit(S)){ newGame(c.m); return false; }
+  banner=null;
+  paintHUD();
+  return true;
+}
+
+/* ---------------- input ----------------
+   Touch anywhere and drag BACK from the ball: the ball goes the way you have
+   pulled from, and how far you pull is how hard you hit it.  Come back to
+   where you started and the shot is cancelled - nothing is committed until
+   your finger leaves the glass. */
+var aiming=false, aimA=0, pullPx=0, dragX=0, dragY=0;
+function power(){ return Math.min(1, pullPx/MAXPULL); }
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+function canAim(){
+  return started && S && !S.done && !S.holeDone && running && S.ball.rest &&
+         S.strokes<S.hole.cap && !pend;
+}
+function onDown(e){
+  if(!canAim()) return;
+  if(e.cancelable) e.preventDefault();
+  var q=pt(e), b=cv.getBoundingClientRect();
+  dragX=q.clientX-b.left; dragY=q.clientY-b.top;
+  aiming=true; pullPx=0; aimA=-Math.PI/2;
+}
+function onMove(e){
+  if(!aiming) return;
+  if(e.cancelable) e.preventDefault();
+  var q=pt(e), b=cv.getBoundingClientRect();
+  var dx=dragX-(q.clientX-b.left), dy=dragY-(q.clientY-b.top);
+  pullPx=Math.sqrt(dx*dx+dy*dy);
+  if(pullPx>2) aimA=Math.atan2(dy,dx);
+  if(pullPx>MAXPULL) pullPx=MAXPULL;
+}
+function onUp(e){
+  if(!aiming) return;
+  if(e&&e.cancelable) e.preventDefault();
+  var pw=power();
+  aiming=false;
+  if(!canAim()) return;
+  if(pw<=MG.MIN_POWER){ beep(180,.05,"sine",.03); return; }   /* cancelled */
+  if(MG.putt(S, aimA, pw)){
+    beep(150+pw*120,.07,"square",.05);
+    if(window.GGA) GGA.haptic("medium");
+    paintHUD();
+  }
+}
+function onCancel(){ aiming=false; }
+cv.addEventListener("touchstart", onDown, {passive:false});
+cv.addEventListener("touchmove", onMove, {passive:false});
+cv.addEventListener("touchend", onUp, {passive:false});
+cv.addEventListener("touchcancel", onCancel);
+cv.addEventListener("mousedown", onDown);
+window.addEventListener("mousemove", onMove);
+window.addEventListener("mouseup", onUp);
+cv.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+document.getElementById("tCard").onclick=function(){ if(started) cardScreen(true); };
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started){ titleScreen(); return; }
+  if(S.done){ newGame(mId); persist(); closeOvl(); started=true; return; }
+  running=false;
+  openOvl('<h2>START AGAIN?</h2><p>This round will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW ROUND</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){ newGame(mId); bumpPlayed(); persist(); closeOvl(); };
+  card.querySelector("#n").onclick=function(){ running=true; lastT=0; closeOvl(); };
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); running=false; aiming=false; }
+function closeOvl(){ ovl.classList.remove("on"); running=true; lastT=0; }
+
+function bumpPlayed(){
+  var p=load("played",0)+1; save("played",p);
+  if(window.GGA && p>=10) GGA.award("mg_10");
+}
+
+function titleScreen(){
+  running=false;
+  var cur=load("cur",null);
+  var h='<h2>MINI GOLF</h2><p>Eighteen holes. Drag back from the ball to aim, let go to putt.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  if(cur&&cur.v===1) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; HOLE '+((cur.hi|0)+1)+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  h+='<div class="tot"><div><div class="tk">PAR</div><div class="tv">'+MG.totalPar()+'</div></div>'+
+     '<div><div class="tk">BEST ROUND</div><div class="tv">'+bestTxt()+'</div></div></div>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newGame(el.getAttribute("data-m"));
+      bumpPlayed(); closeOvl(); layout(); persist();
+    };
+  });
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()){ newGame(load("mode","med")); bumpPlayed(); }
+    closeOvl(); layout(); persist();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function bestTxt(){
+  if(best===null) return "-";
+  return best===0?"E":(best>0?"+"+best:String(best));
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; <b>Drag back from the ball</b> the way a catapult works: the ball sets off in the direction you pulled from, and the further back you pull the harder it goes.<br><br>'+
+    '&#9642; The <b>power bar</b> along the top fills as you pull. Nothing is committed until you lift your finger - drag back to where you started and the shot is <b>cancelled</b>.<br><br>'+
+    '&#9642; The dotted <b>aim line</b> is the real thing: it is this hole played forward on a copy of the ball. Gentle shows you two bounces, Tricky one, and Fiendish only points the way.<br><br>'+
+    '&#9642; The ball must be rolling <b>slowly enough to drop</b>. Too fast and it rims the hole and runs on, which is what makes the second putt the hard one.<br><br>'+
+    '&#9642; <b>Pink rails</b> bounce hard and <b>springy rails</b> give nearly everything back. Round bumpers are the liveliest thing on the course.<br><br>'+
+    '&#9642; <b>Chevrons</b> mark a slope, and they point the way the green leans. Play across it and the ball will drift.<br><br>'+
+    '&#9642; Windmill blades sweep the fairway on the last three holes. A blade will knock the ball along as well as stop it - and the aim line does not know where a blade will be by the time the ball gets there, so that part is on you.<br><br>'+
+    '&#9642; Each hole has a <b>par</b> and a stroke cap six over it. Reach the cap and you are picked up and scored at it, so no hole can ever trap you.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+
+function cardTable(from,to){
+  var i, r1='<tr><th>HOLE</th>', r2='<tr><td class="hn">PAR</td>', r3='<tr><td class="hn">YOU</td>';
+  var ps=0, ss=0, any=false;
+  for(i=from;i<to;i++){
+    r1+='<th>'+(i+1)+'</th>';
+    r2+='<td class="pv">'+MG.parOf(i)+'</td>';
+    ps+=MG.parOf(i);
+    if(i<S.scores.length){
+      var sc=S.scores[i], d=sc-MG.parOf(i);
+      var cls=d<0?"under":(d>0?"over":"sv");
+      r3+='<td class="'+cls+'">'+sc+'</td>';
+      ss+=sc; any=true;
+    }else r3+='<td class="blank">&middot;</td>';
+  }
+  r1+='<th>'+(from?"IN":"OUT")+'</th>'; r2+='<td class="pv">'+ps+'</td>';
+  r3+='<td class="sv">'+(any?ss:"-")+'</td>';
+  return '<table class="card9">'+r1+'</tr>'+r2+'</tr>'+r3+'</tr></table>';
+}
+function totalsBlock(){
+  var t=MG.totalScore(S), tp=MG.toPar(S);
+  var s=S.scores.length===0?"-":String(t);
+  var p=S.scores.length===0?"-":(tp===0?"E":(tp>0?"+"+tp:String(tp)));
+  return '<div class="tot">'+
+    '<div><div class="tk">HOLES IN</div><div class="tv">'+S.scores.length+'/18</div></div>'+
+    '<div><div class="tk">STROKES</div><div class="tv">'+s+'</div></div>'+
+    '<div><div class="tk">TO PAR</div><div class="tv">'+p+'</div></div>'+
+    '</div>';
+}
+function cardScreen(fromGame){
+  openOvl('<h2>SCORECARD</h2><p>'+modeOf(mId).name+' &middot; par '+MG.totalPar()+' for the course</p>'+
+    cardTable(0,9)+cardTable(9,18)+totalsBlock()+
+    '<button class="btn btn-go" id="bBack2">BACK TO THE ROUND</button>');
+  card.querySelector("#bBack2").onclick=function(){
+    if(fromGame&&!S.done){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function roundScreen(){
+  var tp=MG.toPar(S), t=MG.totalScore(S);
+  var head=tp<0?"UNDER PAR!":(tp===0?"LEVEL PAR":"ROUND COMPLETE");
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+t+' strokes round eighteen holes on '+modeOf(mId).name.toLowerCase()+'.</p>'+
+    cardTable(0,9)+cardTable(9,18)+totalsBlock()+
+    '<div class="tot"><div><div class="tk">BEST ROUND</div><div class="tv">'+bestTxt()+'</div></div></div>'+
+    '<button class="btn btn-go" id="bAgain">PLAY AGAIN</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE LEVEL</button>');
+  card.querySelector("#bAgain").onclick=function(){
+    newGame(mId); bumpPlayed(); persist(); closeOvl(); layout(); started=true;
+  };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.done){ titleScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<p>'+modeOf(mId).name+' &middot; hole '+(S.hi+1)+', '+S.hole.name+'</p>'+
+    totalsBlock()+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bCard">SCORECARD</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE LEVEL</button>');
+  card.querySelector("#bGo").onclick=function(){ closeOvl(); };
+  card.querySelector("#bCard").onclick=function(){ cardScreen(true); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+best=load("best",null);
+newGame(load("mode","med"));
+started=false; running=false;
+banner=null;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden){ running=false; aiming=false; persist(); }
+});
+window.addEventListener("pagehide", persist);
+
+/* ---------------- the test hook ----------------
+   Stripped out of the shipping build by the assembler; nothing in the game
+   reads it, and `frozen` stays false without it. */
+function aimCup(){
+  return Math.atan2(S.hole.cup.y-S.ball.y, S.hole.cup.x-S.ball.x);
+}
+
+})();
+</script>
+</body>
+</html>

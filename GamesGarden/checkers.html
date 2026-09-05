@@ -2,166 +2,206 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Checkers</title>
 <style>
-/* ============================================================
-   BOARD COLOURS — EDIT THESE VALUES TO CHANGE THE LOOK
-   ------------------------------------------------------------
-   --light-square : colour of the light squares
-   --dark-square  : colour of the dark (playing) squares
-   --board-border : frame around the board
-   --sel-color    : highlight on the selected piece's square
-   --move-dot     : dots showing where you can move
-   --last-move    : tint on the from/to squares of the last move
-   --red-piece / --red-piece-edge   : Player 1's pieces (bottom)
-   --black-piece / --black-piece-edge : Player 2's pieces (top)
-   --king-mark    : colour of the crown on a king
-   ============================================================ */
-:root{
-  --light-square:#eed9b6;
-  --dark-square:#7b4a2d;
-  --board-border:#4b2c18;
-  --sel-color:rgba(255,225,80,.65);
-  --move-dot:rgba(30,120,30,.55);
-  --last-move:rgba(155,199,90,.45);
-  --red-piece:#c8372d;
-  --red-piece-edge:#7e1f18;
-  --black-piece:#2b2b2b;
-  --black-piece-edge:#000;
-  --king-mark:#ffd54a;
-  --bg:#2b2b33;
-  --panel:#3a3a44;
-  --accent:#e8a33d;
-  --text:#f0f0f0;
-}
-/* ================ end of colour section ================ */
+  /* ---- Checkers, re-skinned to the arcade house style, cherry / caramel ----
+     The engine underneath is the original, untouched: mandatory captures,
+     multi-jumps, kings, the 40-move draw, the same negamax, the same save key
+     and the same two badges.  Everything here is chrome.
 
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
-  display:flex;flex-direction:column;align-items:center;min-height:100%;
-  /* safe-area padding keeps content clear of the iPhone notch and home bar */
-  padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));
-  overflow-anchor:none}
-h1{font-size:1.6em;margin:8px 0;letter-spacing:2px}
-.screen{display:none;flex-direction:column;align-items:center;width:100%;max-width:560px}
-.screen.active{display:flex}
+     Board colours stay at the top of the file so they are easy to change. The
+     board is milk and caramel rather than the old cream and mud; the discs keep
+     their red-and-black identity, but each has a heavy dark rim and a lit top
+     edge, which is what actually separates a red disc from a warm square. */
+  :root{
+    --light-square:#fff4e2;
+    --dark-square:#dd9455;
+    --dark-square-d:#c67c3d;
+    --sel-color:rgba(255,209,102,.72);
+    --move-dot:rgba(120,52,26,.5);
+    --last-move:rgba(255,214,102,.45);
+    --red-piece:#ef5a44;
+    --red-piece-hi:#ff8c72;
+    --red-piece-edge:#a32718;
+    --black-piece:#4a4757;
+    --black-piece-hi:#7d7a8e;
+    --black-piece-edge:#221f2c;
+    --king-mark:#ffd54a;
+    --ink:#8a3418;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(115% 80% at 4% -8%, #ffd0c4 0%, transparent 55%),
+      radial-gradient(120% 80% at 98% 106%, #ffe6b8 0%, transparent 58%),
+      linear-gradient(162deg, #d8402f 0%, #f4795e 46%, #fff2e4 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--ink);
+    background:rgba(255,255,255,.95);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(110,35,18,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 0 #b32d1e,0 4px 12px rgba(95,28,15,.45)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;min-width:0;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4)}
+  .chip.me{background:rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.9;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}
+  .chip .v{font-size:clamp(12px,3.8vw,15px);font-weight:900;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}
 
-.card{background:var(--panel);border-radius:14px;padding:22px;width:100%;box-shadow:0 6px 18px rgba(0,0,0,.35)}
-.card h2{margin-bottom:14px;font-size:1.1em;color:var(--accent)}
-.modes{display:flex;gap:8px;margin-bottom:16px}
-.modes button{flex:1;padding:12px 4px;border:2px solid transparent;border-radius:10px;background:#4a4a56;
-  color:var(--text);font-size:.95em;cursor:pointer}
-.modes button.sel{border-color:var(--accent);background:#55505e}
-label{display:block;font-size:.85em;margin:10px 0 4px;opacity:.85}
-input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid #666;background:#2f2f38;
-  color:var(--text);font-size:1em}
-.bigbtn{width:100%;margin-top:18px;padding:14px;border:none;border-radius:10px;background:var(--accent);
-  color:#222;font-size:1.1em;font-weight:700;cursor:pointer}
-.bigbtn.secondary{background:#5a5a68;color:var(--text);margin-top:10px}
+  #stage{flex:1;position:relative;min-height:0;display:flex;flex-direction:column}
+  #play{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 
-.topbar{display:flex;align-items:center;justify-content:space-between;width:100%;margin:6px 0 10px;gap:8px}
-.turnbox{flex:1;min-width:0;background:var(--panel);border-radius:10px;padding:10px 14px;font-size:1em;min-height:44px;
-  display:flex;align-items:center;gap:8px}
-.turnbox .dot{width:16px;height:16px;border-radius:50%;border:2px solid #888;flex:none}
-.turnbox span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.menu{flex:none;white-space:nowrap}
-.menu button{padding:10px 12px;border:none;border-radius:10px;background:var(--panel);color:var(--text);
-  font-size:.85em;cursor:pointer;margin-left:4px}
-.menu button:active{background:#55505e}
+  /* ---------- board ---------- */
+  /* Square, sized to whichever of the wrapper's sides runs out first. CSS alone
+     will not do it - aspect-ratio with height:100% and max-width:100% clamps the
+     width and leaves the height, so you get a rectangle - so layoutBoard() sets
+     both sides to the smaller of the two. */
+  #boardwrap{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;width:100%}
+  #board{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
+    border:5px solid #fff;border-radius:14px;overflow:hidden;
+    box-shadow:0 8px 22px rgba(95,28,15,.4);user-select:none}
+  .sq{position:relative;cursor:pointer;overflow:hidden;min-width:0;min-height:0}
+  .sq.light{background:var(--light-square)}
+  .sq.dark{background:linear-gradient(160deg,var(--dark-square),var(--dark-square-d))}
+  .sq.last::after{content:'';position:absolute;inset:0;background:var(--last-move)}
+  .sq.sel::after{content:'';position:absolute;inset:0;background:var(--sel-color)}
+  /* Every legal landing square in checkers is a dark square, so the dot only
+     ever has to hold against caramel - a cream disc ringed in brown does that
+     far better than the tinted dot it had, which all but vanished. */
+  .sq .hint{position:absolute;inset:32%;border-radius:50%;background:#fff8eb;z-index:2;
+    box-shadow:0 0 0 3px var(--move-dot),0 2px 5px rgba(70,20,10,.4)}
+  .disc{position:absolute;inset:11%;border-radius:50%;z-index:1;pointer-events:none;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 6px rgba(70,20,10,.45),inset 0 -4px 0 rgba(0,0,0,.22),inset 0 3px 0 rgba(255,255,255,.28)}
+  .disc.w{background:radial-gradient(circle at 34% 28%,var(--red-piece-hi),var(--red-piece) 62%,var(--red-piece-edge));
+    border:3px solid var(--red-piece-edge)}
+  .disc.b{background:radial-gradient(circle at 34% 28%,var(--black-piece-hi),var(--black-piece) 62%,var(--black-piece-edge));
+    border:3px solid var(--black-piece-edge)}
+  /* the ring that says "this is a disc and not a blob", and reads at any size */
+  .disc::after{content:'';position:absolute;inset:22%;border-radius:50%;
+    border:2px solid rgba(255,255,255,.28)}
+  .disc .crown{font-size:var(--cr,20px);line-height:1;color:var(--king-mark);z-index:2;
+    text-shadow:0 1px 2px rgba(0,0,0,.75)}
 
-#board{display:grid;grid-template-columns:repeat(8,1fr);
-  width:min(92vw,520px);contain:layout;
-  border:6px solid var(--board-border);border-radius:6px;user-select:none}
-.sq{position:relative;aspect-ratio:1/1;cursor:pointer;overflow:hidden;min-width:0}
-.sq.light{background:var(--light-square)}
-.sq.dark{background:var(--dark-square)}
-.sq.last::after{content:'';position:absolute;inset:0;background:var(--last-move)}
-.sq.sel::after{content:'';position:absolute;inset:0;background:var(--sel-color)}
-.sq .hint{position:absolute;inset:34%;border-radius:50%;background:var(--move-dot);z-index:2}
-.disc{position:absolute;inset:12%;border-radius:50%;z-index:1;pointer-events:none;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 3px 5px rgba(0,0,0,.5),inset 0 -4px 0 rgba(0,0,0,.25),inset 0 3px 0 rgba(255,255,255,.2)}
-.disc.w{background:radial-gradient(circle at 35% 30%,var(--red-piece),var(--red-piece-edge));
-  border:2px solid var(--red-piece-edge)}
-.disc.b{background:radial-gradient(circle at 35% 30%,#4a4a4a,var(--black-piece));
-  border:2px solid var(--black-piece-edge)}
-.disc .crown{font-size:min(6vw,30px);color:var(--king-mark);text-shadow:0 1px 2px rgba(0,0,0,.7)}
+  .hint-line{font-size:11.5px;font-weight:800;min-height:15px;margin:8px 4px 2px;text-align:center;
+    color:#8a3418;flex:0 0 auto}
+  .hint-line b{color:#c9331c;letter-spacing:1px}
 
-.counts{width:min(92vw,520px);display:flex;justify-content:space-between;margin-top:6px;font-size:.9em;
-  height:20px;overflow:hidden;white-space:nowrap;opacity:.9}
+  /* ---------- tools ---------- */
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.96);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:var(--ink);
+    box-shadow:0 4px 0 rgba(130,45,25,.35),0 6px 14px rgba(95,28,15,.24)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(130,45,25,.35)}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:10}
-.overlay.show{display:flex}
-.overlay .box{background:var(--panel);border-radius:14px;padding:24px;text-align:center;max-width:320px;width:88%}
-.overlay .box h2{margin-bottom:10px;color:var(--accent)}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#222;
-  padding:10px 22px;border-radius:20px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20}
-#toast.show{opacity:1}
+  /* ---------- overlay cards ---------- */
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(150,50,30,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#fff2e4);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#b58771;box-shadow:0 20px 50px rgba(95,28,15,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#d8402f;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#b58771;margin:7px 0}
+  .card .big{font-size:34px;font-weight:900;color:#d8402f;margin:6px 0 2px}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between;
+    text-align:left;border:3px solid transparent}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz.sel{border-color:#ffd166;box-shadow:0 4px 0 rgba(0,0,0,.14),0 0 0 3px rgba(255,209,102,.35)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px}
+  .sz .tick{font-size:17px;opacity:0}
+  .sz.sel .tick{opacity:1}
+  .z-a{background:linear-gradient(180deg,#ff8a72,#d8402f)}
+  .z-b{background:linear-gradient(180deg,#ffd166,#e8a11c)}
+  .fields{margin-top:11px;text-align:left}
+  .fields label{display:block;font-size:10px;font-weight:900;letter-spacing:1px;color:#d3a993;
+    margin:8px 2px 3px}
+  .fields input{width:100%;padding:10px 12px;border-radius:13px;border:1.5px solid #f0d8c6;
+    background:#fff8f1;color:#8a3418;font-size:14.5px;font-weight:700;font-family:inherit}
+  .fields input:focus{outline:none;border-color:#f4795e}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ff8a72,#d8402f);color:#fff;
+    box-shadow:0 5px 0 #a3271a,0 8px 18px rgba(170,45,28,.34)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #a3271a}
+  .btn-alt{background:#fff0e4;color:var(--ink);border:1.5px solid #f5d9c6}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#b58771;margin:10px 2px}
+  .rules b{color:#d8402f}
+
+  /* ---------- toast ---------- */
+  .toast{position:absolute;top:10%;left:50%;transform:translateX(-50%) scale(.6);
+    background:linear-gradient(180deg,#ffd166,#e8a11c);color:#5a3a08;font-weight:900;font-size:15px;
+    letter-spacing:1px;padding:11px 20px;border-radius:15px;border:2px solid #fff;
+    box-shadow:0 10px 30px rgba(95,28,15,.5);opacity:0;pointer-events:none;z-index:45;
+    transition:all .35s cubic-bezier(.2,1.6,.4,1);text-align:center;max-width:90%}
+  .toast.show{opacity:1;transform:translateX(-50%) scale(1)}
+
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}
+    .btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+    .fields input{padding:8px 11px;font-size:13.5px}
+  }
 </style>
 </head>
 <body>
-
-<h1>⛀ CHECKERS</h1>
-
-<!-- ================= SETUP SCREEN ================= -->
-<div id="setup" class="screen active">
-  <div class="card">
-    <h2>New Game</h2>
-    <div class="modes">
-      <button id="m1p" class="sel" onclick="setMode('1p')">1 Player</button>
-      <button id="m2p" onclick="setMode('2p')">2 Player</button>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">CHECKERS</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip" id="chipW"><div class="k">RED</div><div class="v" id="vW">-</div></div>
+    <div class="chip"><div class="k">PIECES</div><div class="v" id="vCount">12 - 12</div></div>
+    <div class="chip" id="chipB"><div class="k">BLACK</div><div class="v" id="vB">-</div></div>
+  </div>
+  <div id="stage">
+    <div id="play">
+      <div id="boardwrap"><div id="board"></div></div>
+      <div class="hint-line" id="status"></div>
     </div>
-    <div id="nameFields">
-      <label id="lab1">Your name (Red)</label>
-      <input type="text" id="name1" placeholder="Player 1" maxlength="16">
-      <div id="p2wrap" style="display:none">
-        <label>Player 2 name (Black)</label>
-        <input type="text" id="name2" placeholder="Player 2" maxlength="16">
-      </div>
-    </div>
-    <button class="bigbtn" id="resumeBtn" style="display:none" onclick="resumeGame()">Continue Previous Game</button>
-    <button class="bigbtn" onclick="startGame()">Start Game</button>
-    <button class="bigbtn secondary" onclick="exitToMenu()">Exit to Main Menu</button>
+    <div class="ovl" id="ovl"><div class="card" id="ovlCard"></div></div>
+    <div class="toast" id="toast"></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+    <div class="tool" id="tSetup"><div class="ti">&#8646;</div><div class="tl">CHANGE MODE</div></div>
+    <div class="tool" id="tRules"><div class="ti">?</div><div class="tl">HOW TO PLAY</div></div>
   </div>
 </div>
-
-<!-- ================= GAME SCREEN ================= -->
-<div id="game" class="screen">
-  <div class="topbar">
-    <div class="turnbox"><div class="dot" id="turnDot"></div><span id="turnText"></span></div>
-    <div class="menu">
-      <button onclick="saveGame()">Save</button>
-      <button onclick="restartGame()">Restart</button>
-      <button onclick="exitToMenu()">Exit</button>
-    </div>
-  </div>
-  <div id="board"></div>
-  <div class="counts"><span id="cntW"></span><span id="cntB"></span></div>
-</div>
-
-<!-- game over -->
-<div class="overlay" id="overOv">
-  <div class="box">
-    <h2 id="overTitle"></h2>
-    <p id="overMsg" style="margin:8px 0 4px"></p>
-    <button class="bigbtn" onclick="restartGame()">Play Again</button>
-    <button class="bigbtn secondary" onclick="showSetup()">New Game Setup</button>
-    <button class="bigbtn secondary" onclick="exitToMenu()">Exit to Main Menu</button>
-  </div>
-</div>
-
-<div id="toast"></div>
 
 <script src="achievements.js"></script>
 <script>
 'use strict';
 /* =========================================================
-   CHECKERS (English draughts) — mandatory captures,
+   CHECKERS (English draughts) - mandatory captures,
    multi-jumps, kings, 40-move no-progress draw rule
    'w' = Red man (bottom), 'W' = Red king
    'b' = Black man (top),  'B' = Black king
+
+   Everything from here to the "UI" heading is the original game,
+   unchanged, including the save key.
    ========================================================= */
 const SAVE_KEY='jeevan-checkers-save';
 const COLOR_NAME={w:'Red',b:'Black'};
@@ -212,7 +252,7 @@ function pieceJumps(bd,r,c){
   }
   return out;
 }
-/* all legal moves for a colour — jumps are mandatory */
+/* all legal moves for a colour - jumps are mandatory */
 function allMoves(bd,col){
   const jumps=[],steps=[];
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
@@ -304,37 +344,109 @@ function aiPickMove(){
   return pool[Math.floor(Math.random()*pool.length)];
 }
 
-/* ---------- UI ---------- */
+/* =========================================================
+   UI - this part is the re-skin
+   ========================================================= */
 const $=id=>document.getElementById(id);
-function setMode(m){
-  S.mode=m;
-  ['m1p','m2p'].forEach(id=>$(id).classList.remove('sel'));
-  $({'1p':'m1p','2p':'m2p'}[m]).classList.add('sel');
-  $('p2wrap').style.display=m==='2p'?'block':'none';
-  $('lab1').textContent=m==='2p'?'Player 1 name (Red)':'Your name (Red)';
+const ovl=$('ovl'), ovlCard=$('ovlCard');
+function openOvl(html){ ovlCard.innerHTML=html; ovl.classList.add('on'); }
+function closeOvl(){ ovl.classList.remove('on'); }
+function ovlOpen(){ return ovl.classList.contains('on'); }
+
+function toast(msg){
+  const t=$('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>t.classList.remove('show'),1600);
 }
+
+/* ---------- saving ---------- */
+function autoSave(){
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify({mode:S.mode,names:S.names,game:S.game}));
+  }catch(e){}
+}
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function hasSave(){ try{ return !!localStorage.getItem(SAVE_KEY); }catch(e){ return false; } }
+
+/* ---------- screens ---------- */
+let setupMode='1p';
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function lastName(n){
+  /* remember what they typed last time rather than making them retype it */
+  try{ return localStorage.getItem('gg_checkers_name'+n)||''; }catch(e){ return ''; }
+}
+function rememberName(n,v){ try{ localStorage.setItem('gg_checkers_name'+n,v); }catch(e){} }
+
+function titleScreen(){
+  clearTimeout(aiTimer);
+  const saved=hasSave();
+  let h='<h2>CHECKERS</h2>'+
+    '<p>Captures are compulsory, jumps chain, and a man that reaches the far side is crowned.</p>'+
+    '<div class="sizes">'+
+      '<div class="sz z-a'+(setupMode==='1p'?' sel':'')+'" data-m="1p"><div>'+
+        '<div class="sn">1 Player</div><div class="stg">You are Red against the computer</div>'+
+      '</div><div class="tick">&#10003;</div></div>'+
+      '<div class="sz z-b'+(setupMode==='2p'?' sel':'')+'" data-m="2p"><div>'+
+        '<div class="sn">2 Players</div><div class="stg">Pass the phone</div>'+
+      '</div><div class="tick">&#10003;</div></div>'+
+    '</div>'+
+    '<div class="fields">'+
+      '<label id="lab1">'+(setupMode==='2p'?'PLAYER 1 (RED)':'YOUR NAME (RED)')+'</label>'+
+      '<input type="text" id="name1" maxlength="16" placeholder="Player 1" value="'+esc(lastName(1))+'">'+
+      '<div id="p2wrap" style="display:'+(setupMode==='2p'?'block':'none')+'">'+
+        '<label>PLAYER 2 (BLACK)</label>'+
+        '<input type="text" id="name2" maxlength="16" placeholder="Player 2" value="'+esc(lastName(2))+'">'+
+      '</div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bStart">START GAME</button>';
+  if(saved) h+='<button class="btn btn-alt" id="bResume">CARRY ON WITH THE SAVED GAME</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(ovlCard.querySelectorAll('.sz'), el=>{
+    el.onclick=()=>{ setupMode=el.getAttribute('data-m'); titleScreen(); };
+  });
+  $('bStart').onclick=startGame;
+  if(saved) $('bResume').onclick=resumeGame;
+  $('bRules').onclick=()=>rulesScreen(false);
+}
+
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; <b>Tap one of your discs</b> to pick it up. Every square it can move to gets a dot. Tap a dot to move, or tap the disc again to put it down.<br><br>'+
+    '&#9642; Men move one square diagonally forwards. You take by <b>jumping over</b> a disc into the empty square behind it.<br><br>'+
+    '&#9642; <b>Taking is compulsory.</b> If any of your discs can jump, those are the only moves you will be offered - the line under the board warns you when a capture is on.<br><br>'+
+    '&#9642; If the disc you just landed with <b>can jump again, it must</b>, and it stays picked up until the chain is finished.<br><br>'+
+    '&#9642; Reach the far row and your man is <b>crowned</b>. A king wears a gold crown and can move and jump <b>backwards as well as forwards</b>.<br><br>'+
+    '&#9642; You win by taking every enemy disc, or by leaving your opponent with <b>no legal move</b>. Forty moves with no capture and nobody crowned is a draw.<br><br>'+
+    '&#9642; The game <b>saves itself after every move</b>, so you can leave and pick it up later from the front page.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  $('bBack').onclick=()=>{ if(fromGame) closeOvl(); else titleScreen(); };
+}
+
+function pauseScreen(){
+  openOvl('<h2>PAUSED</h2>'+
+    '<p>Your game is saved after every move.</p>'+
+    '<button class="btn btn-go" id="bResume2">CARRY ON</button>'+
+    '<button class="btn btn-alt" id="bRestart">START THIS GAME AGAIN</button>'+
+    '<button class="btn btn-alt" id="bSetup2">CHANGE MODE</button>'+
+    '<a class="btn btn-alt" href="index.html" style="text-decoration:none">BACK TO THE ARCADE</a>');
+  $('bResume2').onclick=closeOvl;
+  $('bRestart').onclick=restartGame;
+  $('bSetup2').onclick=titleScreen;
+}
+
 function startGame(){
-  const n1=$('name1').value.trim(), n2=$('name2').value.trim();
-  if(S.mode==='2p')S.names={w:n1||'Player 1',b:n2||'Player 2'};
-  else S.names={w:n1||'Player',b:'Computer'};
+  const n1=($('name1')&&$('name1').value.trim())||'';
+  const n2=($('name2')&&$('name2').value.trim())||'';
+  rememberName(1,n1); rememberName(2,n2);
+  S.mode=setupMode;
+  if(S.mode==='2p') S.names={w:n1||'Player 1',b:n2||'Player 2'};
+  else S.names={w:n1||'You',b:'Computer'};
   S.game=newGame();
   autoSave();
   showGame();
-}
-function showSetup(){
-  clearTimeout(aiTimer);
-  $('overOv').classList.remove('show');
-  $('game').classList.remove('active');
-  $('setup').classList.add('active');
-  $('resumeBtn').style.display=localStorage.getItem(SAVE_KEY)?'block':'none';
-}
-function showGame(){
-  sel=null;hints=[];
-  $('overOv').classList.remove('show');
-  $('setup').classList.remove('active');
-  $('game').classList.add('active');
-  render();
-  maybeAI();
 }
 function restartGame(){
   clearTimeout(aiTimer);
@@ -342,32 +454,23 @@ function restartGame(){
   autoSave();
   showGame();
 }
-function exitToMenu(){window.location.href='index.html';}
-
-function saveGame(){
-  autoSave();
-  toast('Game saved');
-}
-function autoSave(){
-  try{
-    localStorage.setItem(SAVE_KEY,JSON.stringify({mode:S.mode,names:S.names,game:S.game}));
-  }catch(e){}
-}
-function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
 function resumeGame(){
   try{
     const d=JSON.parse(localStorage.getItem(SAVE_KEY));
-    if(!d||!d.game)return;
-    S.mode=d.mode;S.names=d.names;S.game=d.game;
+    if(!d||!d.game){ toast('No saved game'); return; }
+    S.mode=d.mode; S.names=d.names; S.game=d.game;
+    setupMode=d.mode;
     showGame();
-  }catch(e){toast('Could not load save');}
+  }catch(e){ toast('Could not load that save'); }
 }
-function toast(msg){
-  const t=$('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),1600);
+function showGame(){
+  sel=null; hints=[];
+  closeOvl();
+  render();
+  maybeAI();
 }
 
+/* ---------- play ---------- */
 function isAITurn(){
   if(!S.game||S.game.over)return false;
   return S.mode==='1p'&&S.game.turn==='b';
@@ -385,6 +488,7 @@ function makeRealMove(m){
   const mover=st.turn;
   const res=applyM(st.board,m);
   if(window.GGA && res.promoted && mover==='w') GGA.award('check_king');
+  if(window.GGA) GGA.haptic(m.jump?'medium':'light');
   st.lastMove=[m.from,m.to];
   st.half=(m.jump||res.promoted)?0:st.half+1;
   // continue multi-jump with the same piece?
@@ -413,7 +517,7 @@ function makeRealMove(m){
 
 function onSquare(r,c){
   const st=S.game;
-  if(!st||st.over||isAITurn())return;
+  if(!st||st.over||isAITurn()||ovlOpen())return;
   const hint=hints.find(m=>m.to[0]===r&&m.to[1]===c);
   if(hint){makeRealMove(hint);return;}
   if(st.chain)return; // mid multi-jump: must finish with that piece
@@ -427,13 +531,26 @@ function onSquare(r,c){
 
 function showGameOver(){
   const o=S.game.over;
-  $('overTitle').textContent=o.type==='draw'?'Draw':(COLOR_NAME[o.winner]+' wins!');
-  $('overMsg').textContent=o.type==='draw'
-    ?'No captures or promotions for 40 moves.'
-    :S.names[o.winner]+' has won the game!';
-  setTimeout(()=>$('overOv').classList.add('show'),600);
+  let title,big,msg;
+  if(o.type==='draw'){
+    title='A DRAW'; big='Drawn';
+    msg='Forty moves with no capture and nobody crowned.';
+  }else{
+    title=COLOR_NAME[o.winner].toUpperCase()+' WINS';
+    big=S.names[o.winner];
+    const lost=countPieces(S.game.board,other(o.winner));
+    msg=lost===0?'Every last disc taken.':'Nothing left to play.';
+  }
+  setTimeout(()=>{
+    openOvl('<h2>'+title+'</h2><div class="big">'+esc(big)+'</div><p>'+msg+'</p>'+
+      '<button class="btn btn-go" id="bAgain">PLAY AGAIN</button>'+
+      '<button class="btn btn-alt" id="bSetup3">CHANGE MODE</button>');
+    $('bAgain').onclick=restartGame;
+    $('bSetup3').onclick=titleScreen;
+  },600);
 }
 
+/* ---------- render ---------- */
 let sqEls=null;
 function buildBoard(){
   const el=$('board');
@@ -449,9 +566,24 @@ function buildBoard(){
     }
   }
 }
+/* Square board, sized to whichever of the wrapper's sides runs out first, and
+   the crown sized from the square rather than the viewport. */
+function layoutBoard(){
+  const wrap=$('boardwrap'), el=$('board');
+  const w=wrap.clientWidth, h=wrap.clientHeight;
+  if(w<40||h<40) return;
+  const s=Math.floor(Math.min(w,h));
+  el.style.width=s+'px';
+  el.style.height=s+'px';
+  el.style.setProperty('--cr', Math.round((s-10)/8*0.46)+'px');
+}
+window.addEventListener('resize',layoutBoard);
+
 function render(){
   if(!sqEls)buildBoard();
-  const st=S.game, bd=st.board;
+  const st=S.game;
+  if(!st) return;
+  const bd=st.board;
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
     const sq=sqEls[r][c];
     let cls='sq '+(((r+c)%2)?'dark':'light');
@@ -462,24 +594,41 @@ function render(){
     let html='';
     if(hints.some(m=>m.to[0]===r&&m.to[1]===c))html+='<div class="hint"></div>';
     const p=bd[r][c];
-    if(p)html+='<div class="disc '+colorOf(p)+'">'+(isKing(p)?'<span class="crown">♔</span>':'')+'</div>';
+    if(p)html+='<div class="disc '+colorOf(p)+'">'+(isKing(p)?'<span class="crown">\u2654</span>':'')+'</div>';
     if(sq.innerHTML!==html)sq.innerHTML=html;
   }
-  const name=S.names[st.turn];
-  let txt=st.over?'Game over':name+"'s turn ("+COLOR_NAME[st.turn]+')';
-  if(!st.over&&st.chain)txt+=' — jump again!';
-  else if(!st.over&&allMoves(bd,st.turn).some(m=>m.jump))txt+=' — capture available';
-  $('turnText').textContent=txt;
-  $('turnDot').style.background=st.turn==='w'
-    ?getComputedStyle(document.documentElement).getPropertyValue('--red-piece')
-    :getComputedStyle(document.documentElement).getPropertyValue('--black-piece');
-  $('cntW').textContent=S.names.w+': '+countPieces(bd,'w')+' pieces';
-  $('cntB').textContent=S.names.b+': '+countPieces(bd,'b')+' pieces';
+  layoutBoard();
+
+  const nw=countPieces(bd,'w'), nb=countPieces(bd,'b');
+  $('vW').textContent=S.names.w;
+  $('vB').textContent=S.names.b;
+  $('vCount').textContent=nw+' - '+nb;
+  $('chipW').className='chip'+(st.turn==='w'&&!st.over?' me':'');
+  $('chipB').className='chip'+(st.turn==='b'&&!st.over?' me':'');
+
+  const line=$('status');
+  if(st.over) line.textContent='Game over.';
+  else if(isAITurn()) line.textContent='The computer is thinking...';
+  else if(st.chain) line.innerHTML=S.names[st.turn]+' - <b>JUMP AGAIN</b>';
+  else if(allMoves(bd,st.turn).some(m=>m.jump))
+    line.innerHTML=S.names[st.turn]+' to play - <b>YOU MUST TAKE</b>';
+  else line.textContent=S.names[st.turn]+' to play';
 }
 
+/* ---------- wiring ---------- */
+$('bPause').addEventListener('click',()=>{
+  if(S.game && !S.game.over && !ovlOpen()) pauseScreen(); else titleScreen();
+});
+$('tNew').addEventListener('click',()=>{ if(S.game) restartGame(); else titleScreen(); });
+$('tSetup').addEventListener('click',titleScreen);
+$('tRules').addEventListener('click',()=>rulesScreen(!ovlOpen()));
+
 /* ---------- init ---------- */
-if(localStorage.getItem(SAVE_KEY))$('resumeBtn').style.display='block';
-setMode('1p');
+/* Nothing here writes to the save - doing so would eat the saved game before
+   CARRY ON could offer it. */
+S.game=newGame();
+render();
+titleScreen();
 </script>
 </body>
 </html>

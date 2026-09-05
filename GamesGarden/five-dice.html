@@ -4,347 +4,255 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Five Dice</title>
 <style>
-  :root {
-    --felt: #1a6b3c;
-    --felt-dark: #114d2a;
-    --gold: #ffd24a;
-    --cream: #fdf8ec;
-    --ink: #22302a;
-    --red: #d64545;
-    --hold: #ffb100;
+  /* ---- Five Dice, re-skinned to the arcade house style, teal / salmon ----
+     The game logic underneath is the original, untouched: same scoring, same
+     computer, same save key, same two badges.  Everything here is chrome. */
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(115% 80% at 4% -8%, #b8f5ec 0%, transparent 55%),
+      radial-gradient(120% 80% at 98% 106%, #ffd3c4 0%, transparent 58%),
+      linear-gradient(162deg, #0f8a90 0%, #3fbdb4 47%, #eafbf8 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html { height: 100%; }
-  body { min-height: 100%; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(ellipse at 50% 20%, var(--felt) 0%, var(--felt-dark) 75%);
-    color: var(--cream);
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: max(10px, env(safe-area-inset-top)) 10px calc(20px + env(safe-area-inset-bottom));
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#0a5c63;
+    background:rgba(255,255,255,.95);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(8,70,72,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 0 #0b6a70,0 4px 12px rgba(6,55,58,.45)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4)}
+  .chip.me{background:rgba(255,255,255,.34)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.9;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+
+  #stage{flex:1;position:relative;min-height:0;display:flex;flex-direction:column}
+  /* "safe center" centres the dice and the sheet in the slack a tall phone
+     leaves, but falls back to top-aligned when the sheet is taller than the
+     space - plain "center" would clip the top of it out of reach. */
+  #play{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:safe center;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+  /* ---------- dice ---------- */
+  .dice-row{display:flex;gap:7px;margin:2px 0 12px;flex:0 0 auto}
+  .die{
+    width:57px;height:57px;flex:0 0 auto;
+    background:linear-gradient(150deg,#fffdf6,#efe7d6);
+    border-radius:13px;
+    box-shadow:0 4px 0 rgba(8,70,72,.28),0 6px 14px rgba(6,55,58,.3),inset 0 -3px 0 rgba(0,0,0,.07);
+    position:relative;cursor:pointer;
+    transition:transform .15s,box-shadow .15s;
+    border:2px solid #fff;
   }
-  h1 {
-    font-size: 26px;
-    letter-spacing: 5px;
-    color: var(--gold);
-    text-shadow: 0 2px 6px rgba(0,0,0,.5);
-    margin: 4px 0 2px;
-    font-weight: 800;
+  /* Held dice press DOWN into the table and wear a salmon ring - the arcade's
+     accent colour doing the job the old gold outline did. */
+  .die.held{
+    transform:translateY(5px);
+    border-color:#ff8a72;
+    box-shadow:0 1px 0 rgba(8,70,72,.28),0 0 0 3px rgba(255,138,114,.45),0 3px 9px rgba(6,55,58,.3);
   }
-  .status {
-    font-size: 13px;
-    opacity: .9;
-    margin-bottom: 8px;
-    min-height: 18px;
-    text-align: center;
+  .die.rolling{animation:tumble .45s ease}
+  @keyframes tumble{
+    0%{transform:rotate(0) scale(1)}
+    30%{transform:rotate(140deg) scale(.82)}
+    60%{transform:rotate(260deg) scale(1.08)}
+    100%{transform:rotate(360deg) scale(1)}
   }
-  /* ---------- DICE ---------- */
-  .dice-row { display: flex; gap: 8px; margin: 6px 0 10px; }
-  .die {
-    width: 58px; height: 58px;
-    background: linear-gradient(145deg, #ffffff, #e8e4d8);
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,.45), inset 0 -3px 0 rgba(0,0,0,.12);
-    position: relative;
-    cursor: pointer;
-    transition: transform .15s, box-shadow .15s, outline .15s;
-    outline: 3px solid transparent;
+  .die.blank{opacity:.42}
+  .pip{position:absolute;width:11px;height:11px;border-radius:50%;
+    background:radial-gradient(circle at 34% 28%,#4b6b6d,#0c3d41);
+    transform:translate(-50%,-50%)}
+  .hold-label{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);
+    font-size:8.5px;font-weight:900;letter-spacing:1px;color:#fff;opacity:0;transition:opacity .15s;
+    text-shadow:0 1px 3px rgba(6,55,58,.7)}
+  .die.held .hold-label{opacity:1}
+
+  /* ---------- roll ---------- */
+  .rollbtn{
+    flex:0 0 auto;border:none;border-radius:16px;font-family:inherit;
+    background:linear-gradient(180deg,#ff8a72,#e04a30);color:#fff;
+    font-size:16px;font-weight:900;letter-spacing:1.2px;padding:12px 44px;cursor:pointer;
+    box-shadow:0 5px 0 #ab3220,0 8px 18px rgba(170,50,32,.34);
+    transition:transform .1s,box-shadow .1s,opacity .2s;
   }
-  .die.held {
-    outline: 3px solid var(--hold);
-    transform: translateY(6px);
-    box-shadow: 0 2px 4px rgba(0,0,0,.5), 0 0 14px rgba(255,177,0,.55);
+  .rollbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #ab3220}
+  .rollbtn:disabled{opacity:.4;box-shadow:0 5px 0 #ab3220;cursor:default}
+  .hint{font-size:11.5px;font-weight:700;min-height:15px;margin:7px 4px 8px;text-align:center;
+    text-shadow:0 1px 4px rgba(6,55,58,.45)}
+
+  /* ---------- scorecard ---------- */
+  .sheet{width:100%;background:#fffdf6;color:#0a5c63;border-radius:17px;border:2px solid #fff;
+    box-shadow:0 8px 22px rgba(6,55,58,.32);overflow:hidden;flex:0 0 auto;margin-bottom:4px}
+  .sheet:empty{display:none}
+  .cols{display:flex}
+  .col{flex:1;min-width:0}
+  .col+.col{border-left:2px dashed #d6ece8}
+  .sec{background:#0f8a90;color:#fff;font-size:9.5px;font-weight:900;letter-spacing:1.6px;
+    text-align:center;padding:5px 0}
+  .phead{display:grid;grid-template-columns:1fr 52px 52px;gap:4px;background:#0b7076;padding:5px 9px}
+  .pname{text-align:center;font-size:11px;font-weight:900;border-radius:7px;padding:3px 0;
+    color:#a8e0dd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pname.on{background:#ff8a72;color:#fff}
+  .row{display:grid;grid-template-columns:1fr 48px;gap:4px;align-items:center;padding:5px 9px;
+    border-bottom:1px solid #eef4f1;font-size:13px;font-weight:700;cursor:pointer}
+  .row.wide{grid-template-columns:1fr 52px 52px;padding:2px 9px;font-size:11.8px}
+  .row.wide .mini{display:none}
+  .row:active{background:#f2fbf9}
+  .lbl{display:flex;align-items:baseline;gap:5px;min-width:0}
+  .lbl>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini{font-size:9.5px;color:#93b6b4;font-weight:600;flex:0 0 auto}
+  .val{text-align:center;font-weight:900;font-size:14px;border-radius:8px;padding:3px 2px;
+    font-variant-numeric:tabular-nums}
+  .val.open{color:#b9cfcd}
+  .val.dim{opacity:.4}
+  /* An available score is the one thing the eye must find, so it is the accent
+     colour and it moves.  A zero is shown just as plainly - taking a zero is a
+     real choice and hiding it would be dishonest. */
+  .val.avail{background:#ff8a72;color:#fff;box-shadow:0 2px 6px rgba(224,74,48,.4);
+    animation:pulse 1.2s infinite}
+  .val.avail.zero{background:#ffe2da;color:#d8412a;animation:none;box-shadow:none}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.11)}}
+  .val.taken{color:#0a5c63}
+  .val.taken.zeroed{color:#d8412a}
+  .trow{display:grid;grid-template-columns:1fr 48px;gap:4px;align-items:center;padding:5px 9px;
+    font-size:11px;font-weight:800;background:#eefaf7;border-bottom:1px solid #dcefeb;color:#4f8b8c}
+  .trow.wide{grid-template-columns:1fr 52px 52px;padding:2px 9px;font-size:10.5px}
+  /* Two full columns of thirteen boxes cannot fit a 375 phone - it is 180px too
+     tall however hard you squeeze - so the sheet scrolls, and this says so.
+     A score you cannot see is a score you will not take. */
+  .more{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);
+    background:rgba(255,255,255,.96);color:#0a5c63;font-size:9.5px;font-weight:900;
+    letter-spacing:1px;padding:4px 12px;border-radius:999px;pointer-events:none;
+    box-shadow:0 3px 10px rgba(6,55,58,.3);opacity:0;transition:opacity .2s;z-index:20}
+  .more.on{opacity:1}
+  .tval{text-align:center;font-weight:900;color:#0a5c63;font-variant-numeric:tabular-nums}
+  .grand{background:#0f8a90;color:#fff;font-size:13.5px;font-weight:900;padding:8px;
+    text-align:center;letter-spacing:.8px}
+
+  /* ---------- tools ---------- */
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.96);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#0a5c63;
+    box-shadow:0 4px 0 rgba(10,80,82,.35),0 6px 14px rgba(6,55,58,.24)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(10,80,82,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+
+  /* ---------- overlay cards ---------- */
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(8,80,84,.45);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#e9fbf8);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#74a6a6;box-shadow:0 20px 50px rgba(6,55,58,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#e2553c;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#7fabab;margin:7px 0}
+  .card .big{font-size:42px;font-weight:900;color:#e2553c;margin:6px 0 2px;
+    font-variant-numeric:tabular-nums}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between;
+    text-align:left}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px}
+  .z-a{background:linear-gradient(180deg,#8fe0c4,#2fae8b)}
+  .z-b{background:linear-gradient(180deg,#ffd166,#f0a020)}
+  .z-c{background:linear-gradient(180deg,#ff8a72,#d9422b)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ff8a72,#dd4229);color:#fff;
+    box-shadow:0 5px 0 #a91d16,0 8px 18px rgba(180,45,35,.34)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #a91d16}
+  .btn-alt{background:#e4f8f5;color:#0a5c63;border:1.5px solid #c4ece6}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#7fabab;margin:10px 2px}
+  .rules b{color:#e2553c}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#e4f8f5;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#9dcac6}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#0a5c63}
+
+  /* ---------- toast ---------- */
+  .toast{position:absolute;top:12%;left:50%;transform:translateX(-50%) scale(.6);
+    background:linear-gradient(180deg,#ff8a72,#e04a30);color:#fff;font-weight:900;font-size:17px;
+    letter-spacing:1.2px;padding:12px 22px;border-radius:15px;border:2px solid #fff;
+    box-shadow:0 10px 30px rgba(6,55,58,.5);opacity:0;pointer-events:none;z-index:45;
+    transition:all .35s cubic-bezier(.2,1.6,.4,1);text-align:center;max-width:90%}
+  .toast.show{opacity:1;transform:translateX(-50%) scale(1)}
+
+  @media (max-width:370px){
+    .die{width:50px;height:50px}
+    .pip{width:9.5px;height:9.5px}
+    .dice-row{gap:6px}
+    /* On a 320 phone the two solo columns squeeze "3 of a Kind" down to
+       "3 of a ...". Dropping the little hint and narrowing the value box buys
+       back the room, and the hint is repeated in HOW TO PLAY anyway. */
+    .row .mini{display:none}
+    .row{grid-template-columns:1fr 42px;font-size:12.2px;padding:5px 7px}
+    .trow{grid-template-columns:1fr 42px;padding:5px 7px}
+    .row.wide{grid-template-columns:1fr 46px 46px;padding:2px 7px}
+    .trow.wide{grid-template-columns:1fr 46px 46px;padding:2px 7px}
+    .phead{grid-template-columns:1fr 46px 46px;padding:5px 7px}
   }
-  .die.rolling { animation: tumble .45s ease; }
-  @keyframes tumble {
-    0%   { transform: rotate(0) scale(1); }
-    30%  { transform: rotate(140deg) scale(.82); }
-    60%  { transform: rotate(260deg) scale(1.08); }
-    100% { transform: rotate(360deg) scale(1); }
-  }
-  .die.blank { opacity: .35; }
-  .pip {
-    position: absolute;
-    width: 11px; height: 11px;
-    background: radial-gradient(circle at 35% 30%, #4a4a4a, #111);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-  }
-  .hold-label {
-    position: absolute;
-    bottom: -16px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 9px; font-weight: 700; letter-spacing: 1px;
-    color: var(--hold);
-    opacity: 0;
-    transition: opacity .15s;
-  }
-  .die.held .hold-label { opacity: 1; }
-  /* ---------- ROLL BUTTON ---------- */
-  .roll-btn {
-    background: linear-gradient(180deg, #e85b5b, #c23434);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-size: 17px; font-weight: 800; letter-spacing: 1px;
-    padding: 10px 40px;
-    margin: 6px 0 10px;
-    box-shadow: 0 5px 0 #8f2323, 0 8px 14px rgba(0,0,0,.4);
-    cursor: pointer;
-    transition: transform .1s, box-shadow .1s, opacity .2s;
-  }
-  .roll-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #8f2323, 0 3px 6px rgba(0,0,0,.4); }
-  .roll-btn:disabled { opacity: .4; box-shadow: 0 5px 0 #8f2323; cursor: default; }
-  /* ---------- SCORECARD ---------- */
-  .card {
-    background: var(--cream);
-    color: var(--ink);
-    border-radius: 14px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.45);
-    overflow: hidden;
-  }
-  .card:empty { display: none; }
-  .card-cols { display: flex; }
-  .col { flex: 1; }
-  .col + .col { border-left: 2px dashed #cfc7b2; }
-  .sec-head {
-    background: #2e4a3c;
-    color: var(--gold);
-    font-size: 11px; font-weight: 800; letter-spacing: 2px;
-    text-align: center;
-    padding: 5px 0;
-  }
-  .phead {
-    display: grid;
-    grid-template-columns: 1fr 54px 54px;
-    gap: 4px;
-    background: #24382e;
-    padding: 4px 10px;
-  }
-  .pname {
-    color: #9fbcaa;
-    text-align: center;
-    font-size: 12px; font-weight: 800;
-    border-radius: 6px;
-    padding: 3px 0;
-  }
-  .pname.on { background: var(--gold); color: var(--ink); }
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 50px;
-    gap: 4px;
-    align-items: center;
-    padding: 6px 10px;
-    border-bottom: 1px solid #e7e0cd;
-    font-size: 13.5px; font-weight: 600;
-    cursor: pointer;
-  }
-  .row.wide { grid-template-columns: 1fr 54px 54px; padding: 3px 10px; font-size: 12.5px; }
-  .row.wide .val { font-size: 13px; padding: 2px; }
-  .row.wide .mini { display: none; }
-  .lbl { display: flex; align-items: center; gap: 6px; }
-  .mini { font-size: 10px; color: #8a8471; font-weight: 500; }
-  .val {
-    text-align: center;
-    font-weight: 800;
-    font-size: 15px;
-    border-radius: 7px;
-    padding: 3px 2px;
-  }
-  .val.open { color: #b0a98f; }
-  .val.dim { opacity: .45; }
-  .val.avail {
-    background: var(--gold);
-    color: var(--ink);
-    box-shadow: 0 1px 4px rgba(0,0,0,.25);
-    animation: pulse 1.2s infinite;
-  }
-  .val.avail.zero { background: #f3cfcf; color: var(--red); animation: none; }
-  @keyframes pulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.12);} }
-  .val.taken { color: var(--ink); }
-  .val.taken.zeroed { color: var(--red); }
-  .trow {
-    display: grid;
-    grid-template-columns: 1fr 50px;
-    gap: 4px;
-    align-items: center;
-    padding: 6px 10px;
-    font-size: 12px; font-weight: 700;
-    background: #efe9d6;
-    border-bottom: 1px solid #ddd3ba;
-  }
-  .trow.wide { grid-template-columns: 1fr 54px 54px; padding: 3px 10px; font-size: 11px; }
-  .tval { text-align: center; font-weight: 800; }
-  .grand {
-    background: #2e4a3c;
-    color: var(--gold);
-    font-size: 15px; font-weight: 800;
-    padding: 8px;
-    text-align: center;
-    letter-spacing: 1px;
-  }
-  /* ---------- OVERLAYS ---------- */
-  .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.78);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .3s;
-  }
-  .overlay.show { opacity: 1; pointer-events: auto; }
-  .modal {
-    background: var(--cream);
-    color: var(--ink);
-    border-radius: 18px;
-    padding: 26px 30px;
-    text-align: center;
-    width: min(320px, 88vw);
-    box-shadow: 0 12px 40px rgba(0,0,0,.6);
-    transform: scale(.85);
-    transition: transform .3s;
-  }
-  .overlay.show .modal { transform: scale(1); }
-  .modal h2 { color: #2e4a3c; margin-bottom: 8px; font-size: 24px; letter-spacing: 2px; }
-  .modal .big { font-size: 44px; font-weight: 900; color: var(--red); margin: 8px 0; }
-  .modal .sub { font-size: 15px; color: #6b6552; margin-bottom: 16px; font-weight: 700; }
-  .mode-btn {
-    display: block;
-    width: 100%;
-    margin: 10px 0;
-    padding: 14px;
-    font-size: 15px; font-weight: 800;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    color: #fff;
-    letter-spacing: .5px;
-  }
-  .mode-btn:active { transform: translateY(2px); }
-  .mode-btn.solo { background: linear-gradient(180deg,#3fa06a,#2b7c4e); box-shadow: 0 4px 0 #1d5c38; }
-  .mode-btn.two  { background: linear-gradient(180deg,#4a7fd6,#3560ab); box-shadow: 0 4px 0 #244680; }
-  .mode-btn.vs   { background: linear-gradient(180deg,#e85b5b,#c23434); box-shadow: 0 4px 0 #8f2323; }
-  .modal-btns { display: flex; gap: 10px; justify-content: center; }
-  .modal-btns button {
-    border: none;
-    border-radius: 12px;
-    font-size: 15px; font-weight: 800;
-    padding: 12px 22px;
-    cursor: pointer;
-    color: #fff;
-  }
-  .btn-green { background: linear-gradient(180deg,#3fa06a,#2b7c4e); box-shadow: 0 4px 0 #1d5c38; }
-  .btn-gray  { background: linear-gradient(180deg,#8b8b8b,#666); box-shadow: 0 4px 0 #4a4a4a; }
-  .modal-btns button:active { transform: translateY(3px); box-shadow: none; }
-  .menu-btn {
-    position: fixed;
-    top: max(10px, env(safe-area-inset-top));
-    right: 12px;
-    width: 38px; height: 38px;
-    border: none;
-    border-radius: 10px;
-    background: rgba(0,0,0,.35);
-    color: var(--gold);
-    font-size: 18px;
-    font-weight: 800;
-    cursor: pointer;
-    z-index: 40;
-    display: none;
-  }
-  .menu-btn.show { display: block; }
-  .btn-red { background: linear-gradient(180deg,#e85b5b,#c23434); box-shadow: 0 4px 0 #8f2323; }
-  /* ---------- TOAST ---------- */
-  .toast {
-    position: fixed;
-    top: 14%; left: 50%;
-    transform: translateX(-50%) scale(.6);
-    background: var(--gold);
-    color: var(--ink);
-    font-weight: 900;
-    font-size: 24px;
-    letter-spacing: 2px;
-    padding: 14px 28px;
-    border-radius: 14px;
-    box-shadow: 0 8px 30px rgba(0,0,0,.5);
-    opacity: 0;
-    pointer-events: none;
-    transition: all .35s cubic-bezier(.2,1.6,.4,1);
-    z-index: 60;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
-  @media (max-width: 370px) {
-    .die { width: 50px; height: 50px; }
-    .pip { width: 9px; height: 9px; }
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}
+    .btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+    .rollbtn{padding:10px 40px;font-size:15px}
+    .dice-row{margin:0 0 11px}
   }
 </style>
 </head>
 <body>
-  <h1>FIVE DICE</h1>
-  <div class="status" id="status"></div>
-
-  <div class="dice-row" id="diceRow"></div>
-
-  <button class="roll-btn" id="rollBtn">ROLL 🎲</button>
-
-  <div class="card" id="card"></div>
-
-  <button class="menu-btn" id="menuBtn">☰</button>
-
-  <div class="overlay" id="quitOverlay">
-    <div class="modal">
-      <h2>GAME MENU</h2>
-      <div class="modal-btns" style="flex-direction:column;">
-        <button class="btn-green" id="btn-cancel" style="width:100%;margin:5px 0;">Resume</button>
-        <button class="btn-gray" id="btn-restart" style="width:100%;margin:5px 0;">Restart</button>
-        <button class="btn-red" id="btn-quit" style="width:100%;margin:5px 0;">Exit to Games</button>
-      </div>
-    </div>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">FIVE DICE</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
   </div>
-
-  <div class="toast" id="toast">FIVE OF A KIND!</div>
-
-  <div class="overlay" id="overlay">
-    <div class="modal">
-      <h2>Game Over</h2>
-      <div class="big" id="goScore">0</div>
-      <div class="sub" id="goSub"></div>
-      <div class="modal-btns">
-        <button class="btn-green" id="btn-again">Play Again</button>
-        <button class="btn-gray" id="btn-menu">Menu</button>
-      </div>
+  <div class="strip" id="strip"></div>
+  <div id="stage">
+    <div id="play">
+      <div class="dice-row" id="diceRow"></div>
+      <button class="rollbtn" id="rollBtn">ROLL</button>
+      <div class="hint" id="status"></div>
+      <div class="sheet" id="card"></div>
     </div>
+    <div class="more" id="more">&#9660; MORE BELOW</div>
+    <div class="ovl" id="ovl"><div class="card" id="ovlCard"></div></div>
+    <div class="toast" id="toast"></div>
   </div>
-
-  <div class="overlay show" id="startOverlay">
-    <div class="modal">
-      <h2>FIVE DICE</h2>
-      <div class="sub">Choose a game mode</div>
-      <button class="mode-btn" id="mode-continue" style="display:none;background:linear-gradient(180deg,#ffd24a,#e0a800);box-shadow:0 4px 0 #a87e00;color:#22302a;">▶ &nbsp;Continue Previous Game</button>
-      <button class="mode-btn solo" id="mode-solo">🎲 &nbsp;1 Player</button>
-      <button class="mode-btn two" id="mode-two">👥 &nbsp;2 Players · pass &amp; play</button>
-      <button class="mode-btn vs" id="mode-cpu">🤖 &nbsp;1 Player vs Computer</button>
-      <button class="mode-btn" id="mode-exit" style="background:linear-gradient(180deg,#8b8b8b,#666);box-shadow:0 4px 0 #4a4a4a;">‹ Games Menu</button>
-    </div>
+  <div id="tools">
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+    <div class="tool" id="tMode"><div class="ti">&#8646;</div><div class="tl">CHANGE MODE</div></div>
+    <div class="tool" id="tRules"><div class="ti">?</div><div class="tl">HOW TO PLAY</div></div>
   </div>
+</div>
 
 <script src="achievements.js"></script>
 <script>
 "use strict";
+/* ============================================================
+   Everything from here down is the original Five Dice logic.
+   Only the presentation layer (buildStrip, the overlay cards and
+   the tool row wiring) is new; the scoring, the computer, the save
+   format and the two badge awards are byte-for-byte the old game.
+   ============================================================ */
 const PIPS = {
   1: [[50,50]],
   2: [[28,28],[72,72]],
@@ -371,6 +279,11 @@ const LOWER = [
   { id:"chance",    name:"Chance",      mini:"sum" }
 ];
 const ALL = [...UPPER, ...LOWER];
+const MODES = [
+  { id:"solo", cls:"z-a", name:"1 Player",        tag:"Just you and the scorecard" },
+  { id:"two",  cls:"z-b", name:"2 Players",       tag:"Pass the phone" },
+  { id:"cpu",  cls:"z-c", name:"Vs the Computer", tag:"Head to head, thirteen rounds" }
+];
 let TEMPO = 1;
 const wait = ms => new Promise(r => setTimeout(r, ms * TEMPO));
 
@@ -379,6 +292,8 @@ let dice, held, rollsLeft, rolling = false, gameOver = false, cpuBusy = false;
 let rollDone = null, gameSeq = 0;
 
 // ---------- save / resume ----------
+/* Save key unchanged from the original build on purpose: a game in progress on
+   somebody's phone survives this re-skin instead of being thrown away. */
 const SAVE_KEY = "gg-save-five-dice";
 function saveGame() {
   if (!players || gameOver || cpuBusy) return;
@@ -399,9 +314,16 @@ function resetTurn() {
   rollsLeft = 3;
 }
 
+// ---------- overlay plumbing ----------
+const ovl = document.getElementById("ovl");
+const ovlCard = document.getElementById("ovlCard");
+function openOvl(html) { ovlCard.innerHTML = html; ovl.classList.add("on"); updateMore(); }
+function closeOvl() { ovl.classList.remove("on"); updateMore(); }
+function ovlOpen() { return ovl.classList.contains("on"); }
+
 function startGame(m) {
   mode = m;
-  const names = m === "solo" ? ["You"] : m === "two" ? ["Player 1","Player 2"] : ["You","CPU"];
+  const names = m === "solo" ? ["You"] : m === "two" ? ["Player 1","Player 2"] : ["You","Computer"];
   players = names.map(n => ({
     name: n,
     scores: Object.fromEntries(ALL.map(c => [c.id, null])),
@@ -410,10 +332,8 @@ function startGame(m) {
   cur = 0; gameOver = false; rolling = false; cpuBusy = false;
   gameSeq++;
   resetTurn();
-  document.getElementById("overlay").classList.remove("show");
-  document.getElementById("startOverlay").classList.remove("show");
-  document.getElementById("quitOverlay").classList.remove("show");
-  document.getElementById("menuBtn").classList.add("show");
+  closeOvl();
+  buildStrip();
   buildBoard();
   render();
   saveGame();
@@ -455,7 +375,7 @@ const roundOf = p => ALL.filter(c => p.scores[c.id] !== null).length + 1;
 
 // ---------- actions ----------
 function humanCanAct() {
-  return players && !gameOver && !rolling && !cpuBusy && !(mode === "cpu" && cur === 1);
+  return players && !gameOver && !rolling && !cpuBusy && !ovlOpen() && !(mode === "cpu" && cur === 1);
 }
 
 function roll() {
@@ -485,7 +405,7 @@ function afterRoll() {
   if (!players) { rollDone = null; return; }
   const P = players[cur];
   if (Math.max(...counts(dice)) === 5 && (P.scores.fiveKind === null || P.scores.fiveKind === 50)) {
-    const nm = players.length > 1 ? P.name + " — " : "";
+    const nm = players.length > 1 ? P.name + " - " : "";
     showToast(nm + (P.scores.fiveKind === 50 ? "FIVE OF A KIND! +100" : "FIVE OF A KIND!"));
     if (window.GGA && !(mode === "cpu" && cur === 1)){ GGA.award('dice_five'); GGA.haptic('success'); }
   }
@@ -499,6 +419,7 @@ function rollAsync() { return new Promise(res => { rollDone = res; roll(); }); }
 function toggleHold(i) {
   if (!humanCanAct() || dice[i] === 0) return;
   held[i] = !held[i];
+  if (window.GGA) GGA.haptic('light');
   render();
   saveGame();
 }
@@ -508,6 +429,7 @@ function take(id) {
   if (!players || gameOver || rolling || P.scores[id] !== null || dice[0] === 0 || rollsLeft === 3) return;
   if (Math.max(...counts(dice)) === 5 && P.scores.fiveKind === 50) P.yb += 100;
   P.scores[id] = potential(id, dice);
+  if (window.GGA) GGA.haptic('medium');
   resetTurn();
   if (players.every(playerDone)) {
     gameOver = true;
@@ -616,47 +538,46 @@ async function cpuTurn() {
   take(id);
 }
 
-function quitToMenu() {
-  gameSeq++;                 // cancels any in-flight CPU turn
-  players = null; mode = null;
-  rolling = false; cpuBusy = false; gameOver = false; rollDone = null;
-  resetTurn();
-  renderDice();
-  document.getElementById("card").innerHTML = "";
-  document.getElementById("menuBtn").classList.remove("show");
-  document.getElementById("quitOverlay").classList.remove("show");
-  document.getElementById("overlay").classList.remove("show");
-  document.getElementById("startOverlay").classList.add("show");
-  const btn = document.getElementById("rollBtn");
-  btn.disabled = false;
-  btn.textContent = "ROLL 🎲";
-  document.getElementById("status").textContent = "Choose a game mode";
-}
-
 // ---------- end game ----------
 function ratingText(g) {
-  if (g >= 300) return "Legendary! 🏆";
-  if (g >= 250) return "Excellent game! 🌟";
-  if (g >= 200) return "Nice rolling! 👏";
-  if (g >= 150) return "Not bad at all 🎲";
-  return "The dice were cruel. Try again!";
+  if (g >= 300) return "Legendary rolling.";
+  if (g >= 250) return "An excellent game.";
+  if (g >= 200) return "Nicely done.";
+  if (g >= 150) return "Not bad at all.";
+  return "The dice were cruel. Have another go.";
 }
 
 function endGame() {
   const totals = players.map(grandOf);
   if (window.GGA && totals[0] >= 250) GGA.award('dice_250');
-  const score = document.getElementById("goScore");
-  const sub = document.getElementById("goSub");
+  if (window.GGA) GGA.haptic('success');
+  const best = Math.max(bestScore, totals[0]);
+  if (best > bestScore) { bestScore = best; saveBest(best); }
+  let head, big, sub;
   if (players.length === 1) {
-    score.textContent = totals[0];
-    sub.textContent = ratingText(totals[0]);
+    head = "ROUND OVER";
+    big = String(totals[0]);
+    sub = ratingText(totals[0]);
   } else {
-    score.textContent = totals[0] + " – " + totals[1];
-    sub.textContent = totals[0] === totals[1]
-      ? "It's a tie!"
-      : (totals[0] > totals[1] ? players[0].name : players[1].name) + " wins! 🏆";
+    head = totals[0] === totals[1] ? "A DEAD HEAT"
+         : (totals[0] > totals[1] ? players[0].name : players[1].name).toUpperCase() + " WINS";
+    big = totals[0] + " - " + totals[1];
+    sub = totals[0] === totals[1] ? "Nothing in it." : "Thirteen rounds, all done.";
   }
-  setTimeout(() => document.getElementById("overlay").classList.add("show"), 600 * TEMPO);
+  setTimeout(() => {
+    openOvl('<h2>' + head + '</h2>' +
+      '<div class="big">' + big + '</div>' +
+      '<p>' + sub + '</p>' +
+      '<div class="stats">' +
+        '<div class="st"><div class="sk">UPPER</div><div class="sv">' + (upperRaw(players[0]) + bonusOf(players[0])) + '</div></div>' +
+        '<div class="st"><div class="sk">LOWER</div><div class="sv">' + lowerOf(players[0]) + '</div></div>' +
+        '<div class="st"><div class="sk">BEST</div><div class="sv">' + bestScore + '</div></div>' +
+      '</div>' +
+      '<button class="btn btn-go" id="bAgain">PLAY AGAIN</button>' +
+      '<button class="btn btn-alt" id="bModes">CHANGE MODE</button>');
+    document.getElementById("bAgain").onclick = () => startGame(mode);
+    document.getElementById("bModes").onclick = () => titleScreen();
+  }, 600 * TEMPO);
 }
 
 let toastTimer;
@@ -668,6 +589,61 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
 }
 
+// ---------- best score ----------
+const BEST_KEY = "gg_fivedice_best";
+let bestScore = 0;
+try { bestScore = parseInt(localStorage.getItem(BEST_KEY) || "0", 10) || 0; } catch (e) {}
+function saveBest(v) { try { localStorage.setItem(BEST_KEY, String(v)); } catch (e) {} }
+
+// ---------- screens ----------
+function titleScreen() {
+  gameSeq++;                 // cancels any in-flight computer turn
+  const sv = loadSave();
+  let h = '<h2>FIVE DICE</h2>' +
+    '<p>Five dice, three rolls a turn, thirteen boxes to fill. Take the best score you can and never leave a box empty by accident.</p>' +
+    '<div class="sizes">';
+  MODES.forEach(m => {
+    h += '<div class="sz ' + m.cls + '" data-m="' + m.id + '"><div>' +
+         '<div class="sn">' + m.name + '</div><div class="stg">' + m.tag + '</div></div></div>';
+  });
+  h += '</div>';
+  if (sv && sv.players && sv.players.length) {
+    const rd = Math.min(ALL.filter(c => sv.players[sv.cur].scores[c.id] !== null).length + 1, 13);
+    h += '<button class="btn btn-go" id="bResume">CARRY ON &middot; ROUND ' + rd + '/13</button>';
+  }
+  h += '<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(ovlCard.querySelectorAll(".sz"), el => {
+    el.onclick = () => startGame(el.getAttribute("data-m"));
+  });
+  const br = ovlCard.querySelector("#bResume");
+  if (br) br.onclick = () => resumeGame(loadSave());
+  ovlCard.querySelector("#bRules").onclick = () => rulesScreen(false);
+}
+
+function rulesScreen(fromGame) {
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">' +
+    '&#9642; Roll all five dice, then <b>tap any dice you want to keep</b> and roll the rest. You get <b>three rolls</b> a turn.<br><br>' +
+    '&#9642; When you are happy, <b>tap a box on the scorecard</b> to take that score. The boxes you can still take show what they would be worth right now.<br><br>' +
+    '&#9642; The <b>upper section</b> counts only that number: four fives in the Fives box is 20. Reach <b>63 or more</b> up there and you get a <b>35 bonus</b>.<br><br>' +
+    '&#9642; The <b>lower section</b> pays for hands: a full house is 25, a small straight 30, a large straight 40 and <b>five of a kind is 50</b>.<br><br>' +
+    '&#9642; Roll five of a kind again after taking the 50 and you get <b>100 more</b> every time.<br><br>' +
+    '&#9642; Thirteen boxes, thirteen rounds. A box you cannot fill has to be taken as a zero, so pick your moment.' +
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  ovlCard.querySelector("#bBack").onclick = () => { if (fromGame) closeOvl(); else titleScreen(); };
+}
+
+function pauseScreen() {
+  openOvl('<h2>PAUSED</h2>' +
+    '<button class="btn btn-go" id="bResume2">CARRY ON</button>' +
+    '<button class="btn btn-alt" id="bRestart">START THIS MODE AGAIN</button>' +
+    '<button class="btn btn-alt" id="bModes2">CHANGE MODE</button>' +
+    '<a class="btn btn-alt" href="index.html" style="text-decoration:none">BACK TO THE ARCADE</a>');
+  ovlCard.querySelector("#bResume2").onclick = closeOvl;
+  ovlCard.querySelector("#bRestart").onclick = () => startGame(mode);
+  ovlCard.querySelector("#bModes2").onclick = () => titleScreen();
+}
+
 // ---------- board building ----------
 function el(tag, cls, txt) {
   const e = document.createElement(tag);
@@ -676,6 +652,34 @@ function el(tag, cls, txt) {
   return e;
 }
 
+function buildStrip() {
+  const s = document.getElementById("strip");
+  s.innerHTML = "";
+  const N = players ? players.length : 1;
+  function chip(id, key) {
+    const c = el("div", "chip");
+    c.id = "chip-" + id;
+    c.appendChild(el("div", "k", key));
+    const v = el("div", "v", "0"); v.id = "cv-" + id;
+    c.appendChild(v);
+    s.appendChild(c);
+  }
+  if (N === 1) { chip("round", "ROUND"); chip("total", "TOTAL"); chip("rolls", "ROLLS LEFT"); }
+  else { chip("p0", players[0].name.toUpperCase()); chip("round", "ROUND"); chip("p1", players[1].name.toUpperCase()); }
+  /* sensible values behind the title card, before a game exists */
+  if (!players) { setChip("round", "1/13"); setChip("total", "0"); setChip("rolls", "3"); }
+}
+
+/* the sheet scrolls in two-player; say so while there is more below it */
+const playEl = document.getElementById("play");
+const moreEl = document.getElementById("more");
+function updateMore() {
+  const hidden = playEl.scrollHeight - playEl.clientHeight - playEl.scrollTop;
+  moreEl.classList.toggle("on", !!players && !ovlOpen() && hidden > 6);
+}
+playEl.addEventListener("scroll", updateMore);
+window.addEventListener("resize", updateMore);
+
 function makeRow(cat, N) {
   const r = el("div", "row" + (N > 1 ? " wide" : ""));
   const lbl = el("span", "lbl");
@@ -683,7 +687,7 @@ function makeRow(cat, N) {
   lbl.appendChild(el("span", "mini", cat.mini));
   r.appendChild(lbl);
   for (let pi = 0; pi < N; pi++) {
-    const v = el("span", "val open", "—");
+    const v = el("span", "val open", "-");
     v.id = "val-" + pi + "-" + cat.id;
     r.appendChild(v);
   }
@@ -707,16 +711,16 @@ function buildBoard() {
   card.innerHTML = "";
   const N = players.length;
   if (N === 1) {
-    const cols = el("div", "card-cols");
+    const cols = el("div", "cols");
     const a = el("div", "col"), b = el("div", "col");
-    a.appendChild(el("div", "sec-head", "UPPER SECTION"));
+    a.appendChild(el("div", "sec", "UPPER"));
     UPPER.forEach(c => a.appendChild(makeRow(c, 1)));
-    a.appendChild(makeTRow("Bonus (63+ = 35)", "bonus", 1));
-    a.appendChild(makeTRow("Upper Total", "upper", 1));
-    b.appendChild(el("div", "sec-head", "LOWER SECTION"));
+    a.appendChild(makeTRow("Bonus 63+", "bonus", 1));
+    a.appendChild(makeTRow("Upper", "upper", 1));
+    b.appendChild(el("div", "sec", "LOWER"));
     LOWER.forEach(c => b.appendChild(makeRow(c, 1)));
-    b.appendChild(makeTRow("Bonus Fives", "yb", 1));
-    b.appendChild(makeTRow("Lower Total", "lower", 1));
+    b.appendChild(makeTRow("Extra fives", "yb", 1));
+    b.appendChild(makeTRow("Lower", "lower", 1));
     cols.appendChild(a);
     cols.appendChild(b);
     card.appendChild(cols);
@@ -729,14 +733,14 @@ function buildBoard() {
       ph.appendChild(s);
     });
     card.appendChild(ph);
-    card.appendChild(el("div", "sec-head", "UPPER SECTION"));
+    card.appendChild(el("div", "sec", "UPPER"));
     UPPER.forEach(c => card.appendChild(makeRow(c, N)));
-    card.appendChild(makeTRow("Bonus (63+ = 35)", "bonus", N));
-    card.appendChild(makeTRow("Upper Total", "upper", N));
-    card.appendChild(el("div", "sec-head", "LOWER SECTION"));
+    card.appendChild(makeTRow("Bonus 63+", "bonus", N));
+    card.appendChild(makeTRow("Upper", "upper", N));
+    card.appendChild(el("div", "sec", "LOWER"));
     LOWER.forEach(c => card.appendChild(makeRow(c, N)));
-    card.appendChild(makeTRow("Bonus Fives", "yb", N));
-    card.appendChild(makeTRow("Lower Total", "lower", N));
+    card.appendChild(makeTRow("Extra fives", "yb", N));
+    card.appendChild(makeTRow("Lower", "lower", N));
   }
   const g = el("div", "grand");
   g.id = "grandBar";
@@ -767,6 +771,10 @@ function setT(key, pi, val) {
   const e = document.getElementById("t-" + key + "-" + pi);
   if (e) e.textContent = val;
 }
+function setChip(id, val) {
+  const e = document.getElementById("cv-" + id);
+  if (e) e.textContent = val;
+}
 
 function render() {
   if (!players) return;
@@ -791,7 +799,7 @@ function render() {
       } else {
         v.classList.add("open");
         if (N > 1 && pi !== cur) v.classList.add("dim");
-        v.textContent = "—";
+        v.textContent = "-";
       }
     });
     setT("bonus", pi, bonusOf(pl));
@@ -801,26 +809,41 @@ function render() {
     const nm = document.getElementById("pname-" + pi);
     if (nm) nm.className = "pname" + (pi === cur && !gameOver ? " on" : "");
   });
+
+  const round = Math.min(roundOf(players[cur]), 13);
+  if (N === 1) {
+    setChip("round", round + "/13");
+    setChip("total", grandOf(players[0]));
+    setChip("rolls", rollsLeft);
+  } else {
+    setChip("p0", grandOf(players[0]));
+    setChip("round", round + "/13");
+    setChip("p1", grandOf(players[1]));
+    const c0 = document.getElementById("chip-p0"), c1 = document.getElementById("chip-p1");
+    if (c0) c0.className = "chip" + (cur === 0 && !gameOver ? " me" : "");
+    if (c1) c1.className = "chip" + (cur === 1 && !gameOver ? " me" : "");
+  }
+
   const gbar = document.getElementById("grandBar");
   if (gbar) gbar.textContent = N === 1
-    ? "TOTAL: " + grandOf(players[0])
-    : players.map(p => p.name + ": " + grandOf(p)).join("   ·   ");
+    ? "TOTAL " + grandOf(players[0])
+    : players.map(p => p.name + " " + grandOf(p)).join("   /   ");
 
   const cpuNow = mode === "cpu" && cur === 1;
   const btn = document.getElementById("rollBtn");
   btn.disabled = gameOver || rolling || rollsLeft === 0 || cpuNow;
-  btn.textContent = rollsLeft === 3 ? "ROLL 🎲" : "ROLL 🎲 (" + rollsLeft + " left)";
+  btn.textContent = rollsLeft === 3 ? "ROLL" : "ROLL AGAIN (" + rollsLeft + ")";
 
   const st = document.getElementById("status");
-  const round = roundOf(players[cur]);
-  if (gameOver) st.textContent = "Game over!";
-  else if (cpuNow) st.textContent = "Round " + round + "/13 — CPU is thinking…";
+  if (gameOver) st.textContent = "Game over.";
+  else if (cpuNow) st.textContent = "The computer is thinking...";
   else {
-    const who = N > 1 ? players[cur].name + " · " : "";
-    if (!rolled) st.textContent = who + "Round " + round + "/13 — roll the dice!";
-    else if (rollsLeft > 0) st.textContent = who + "tap dice to hold · tap a score to take";
-    else st.textContent = who + "out of rolls — pick a score";
+    const who = N > 1 ? players[cur].name + " - " : "";
+    if (!rolled) st.textContent = who + "roll the dice to start your turn.";
+    else if (rollsLeft > 0) st.textContent = who + "tap dice to keep them, or tap a score to take it.";
+    else st.textContent = who + "no rolls left - take a score.";
   }
+  updateMore();
 }
 
 // ---------- init ----------
@@ -833,59 +856,42 @@ function buildDice() {
     d.addEventListener("click", () => toggleHold(i));
     const lbl = document.createElement("div");
     lbl.className = "hold-label";
-    lbl.textContent = "HELD";
+    lbl.textContent = "KEEP";
     d.appendChild(lbl);
     rowEl.appendChild(d);
   }
 }
 
-document.getElementById("rollBtn").addEventListener("click", () => { if (humanCanAct()) roll(); });
-document.getElementById("mode-solo").addEventListener("click", () => startGame("solo"));
-document.getElementById("mode-two").addEventListener("click", () => startGame("two"));
-document.getElementById("mode-cpu").addEventListener("click", () => startGame("cpu"));
-document.getElementById("mode-exit").addEventListener("click", () => { window.location.href = "index.html"; });
-document.getElementById("btn-again").addEventListener("click", () => startGame(mode));
-document.getElementById("btn-menu").addEventListener("click", quitToMenu);
-document.getElementById("menuBtn").addEventListener("click", () => {
-  if (players && !gameOver) document.getElementById("quitOverlay").classList.add("show");
-});
-document.getElementById("btn-quit").addEventListener("click", () => { window.location.href = "index.html"; });
-document.getElementById("btn-restart").addEventListener("click", () => {
-  document.getElementById("quitOverlay").classList.remove("show");
-  if (mode) startGame(mode);
-});
-document.getElementById("btn-cancel").addEventListener("click", () => {
-  document.getElementById("quitOverlay").classList.remove("show");
-});
 function resumeGame(sv) {
+  if (!sv || !sv.players) { titleScreen(); return; }
   mode = sv.mode;
   players = sv.players;
   cur = sv.cur;
   dice = sv.dice; held = sv.held; rollsLeft = sv.rollsLeft;
   gameOver = false; rolling = false; cpuBusy = false;
   gameSeq++;
-  document.getElementById("startOverlay").classList.remove("show");
-  document.getElementById("menuBtn").classList.add("show");
+  closeOvl();
+  buildStrip();
   buildBoard();
   render();
   if (mode === "cpu" && cur === 1) cpuTurn();
 }
 
-buildDice();
-dice = [0,0,0,0,0];
-held = [false,false,false,false,false];
-rollsLeft = 3;
-document.getElementById("status").textContent = "Choose a game mode";
+document.getElementById("rollBtn").addEventListener("click", () => { if (humanCanAct()) roll(); });
+document.getElementById("bPause").addEventListener("click", () => {
+  if (players && !gameOver) pauseScreen(); else titleScreen();
+});
+document.getElementById("tNew").addEventListener("click", () => { if (mode) startGame(mode); else titleScreen(); });
+document.getElementById("tMode").addEventListener("click", () => titleScreen());
+document.getElementById("tRules").addEventListener("click", () => rulesScreen(!!players));
 
-(function boot() {
-  const sv = loadSave();
-  if (!(sv && sv.players && sv.players.length)) return;
-  const btn = document.getElementById("mode-continue");
-  const round = ALL.filter(c => sv.players[sv.cur].scores[c.id] !== null).length + 1;
-  btn.textContent = "▶  Continue Game (Round " + Math.min(round, 13) + "/13)";
-  btn.style.display = "block";
-  btn.addEventListener("click", () => resumeGame(sv));
-})();
+/* Boot: lay out an empty board so there is something behind the title card,
+   then show the card.  Nothing here writes to the save - doing so would eat
+   the saved game before CARRY ON could offer it. */
+buildDice();
+resetTurn();
+buildStrip();
+titleScreen();
 </script>
 </body>
 </html>

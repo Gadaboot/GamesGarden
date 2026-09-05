@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Shut the Box</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(115% 80% at 4% -8%, #bdf0ff 0%, transparent 55%),
+      radial-gradient(120% 80% at 98% 106%, #ffd7b4 0%, transparent 58%),
+      linear-gradient(162deg, #1a86c9 0%, #56b8ec 46%, #e9f7ff 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#0b5580;
+    background:rgba(255,255,255,.95);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(10,60,100,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 0 #12608f,0 4px 12px rgba(8,45,80,.45)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4)}
+  .chip.me{background:rgba(255,255,255,.3)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.9}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.96);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#0b5580;
+    box-shadow:0 4px 0 rgba(12,70,115,.35),0 6px 14px rgba(8,45,80,.24)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(12,70,115,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(10,70,115,.45);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#eef8ff);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#6f93ab;box-shadow:0 20px 50px rgba(8,45,80,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#e03b2c;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#7fa1b6;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-a{background:linear-gradient(180deg,#8fe0a8,#2fae6b)}
+  .z-b{background:linear-gradient(180deg,#ffd166,#f0a020)}
+  .z-c{background:linear-gradient(180deg,#ff8a72,#d92b22)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ff8a72,#dd2f22);color:#fff;
+    box-shadow:0 5px 0 #a91d16,0 8px 18px rgba(180,45,35,.34)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #a91d16}
+  .btn-alt{background:#e7f5ff;color:#0b5580;border:1.5px solid #c9e6f8}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#7fa1b6;margin:10px 2px}
+  .rules b{color:#e03b2c}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#e7f5ff;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#9dc4dc}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#0b5580}
+  table.rc{width:100%;margin:10px 0 2px;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  table.rc th{font-size:8.5px;letter-spacing:1.1px;color:#9dc4dc;font-weight:900;padding:2px 3px}
+  table.rc td{font-size:14px;font-weight:900;color:#0b5580;padding:4px 3px;
+    border-top:1.5px solid #e0f0fa}
+  table.rc td.you{color:#e03b2c}
+  table.rc tr.tot td{border-top:2px solid #c9e6f8;font-size:16px}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+    table.rc td{font-size:13px;padding:3px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">SHUT THE BOX</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip me"><div class="k">YOU</div><div class="v" id="vYou">0</div></div>
+    <div class="chip"><div class="k">ROUND</div><div class="v" id="vRound">1/3</div></div>
+    <div class="chip"><div class="k">COMPUTER</div><div class="v" id="vCpu">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tUndo"><div class="ti">&#8630;</div><div class="tl">TAKE BACK</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW MATCH</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Shut the Box - the rules and the opponent, with no drawing and no input in
+   them.  Every roll and every shut goes through this module, so the same code
+   that runs on screen can be run headless a few hundred thousand times.
+
+   The board is nine flaps numbered 1 to 9, all standing.  Roll two dice and
+   fold down any set of standing flaps that adds up to the total.  Once the
+   flaps still standing add up to six or less you may take one die instead of
+   two.  When a roll cannot be made your turn is over and your score is the sum
+   of what is left standing - LOW is good, and folding all nine down is
+   "shutting the box" for a score of nought.
+
+   The whole board fits in nine bits, so a position is a number 0..511 and the
+   entire game is small enough to solve exactly.  That matters: the difficulty
+   ladder is the opponent's play quality and nothing else, and the top of the
+   ladder is the provably best play rather than a guess at it. */
+function makeShutTheBox(){
+  "use strict";
+
+  var N=9;
+  var FULL=511;             /* every flap standing */
+  var EXTRA=5;              /* most sudden-death rounds before a dead heat */
+
+  /* ---------------- the position tables ----------------
+     SUMOF[m] is what the flaps in m add up to; BYSUM[s] lists every set of
+     flaps that adds up to s, for the sums two dice can reach. */
+  var SUMOF=new Int16Array(512);
+  var BYSUM=[];
+  (function(){
+    var m,i,s;
+    for(s=0;s<=12;s++) BYSUM.push([]);
+    for(m=0;m<512;m++){
+      s=0;
+      for(i=0;i<N;i++) if(m&(1<<i)) s+=i+1;
+      SUMOF[m]=s;
+      if(m!==0 && s<=12) BYSUM[s].push(m);
+    }
+  })();
+
+  /* the odds of each two-dice total */
+  var P2=new Float64Array(13);
+  (function(){ var a,b; for(a=1;a<=6;a++) for(b=1;b<=6;b++) P2[a+b]+=1/36; })();
+
+  function popcount(m){ var n=0; while(m){ m&=m-1; n++; } return n; }
+  function hiFlap(m){ var f=0,i; for(i=0;i<N;i++) if(m&(1<<i)) f=i+1; return f; }
+  function flapsOf(m){ var out=[],i; for(i=0;i<N;i++) if(m&(1<<i)) out.push(i+1); return out; }
+
+  /* every set of standing flaps that makes this total */
+  function combos(mask,t){
+    var out=[],i,l;
+    if(t<1||t>12) return out;
+    l=BYSUM[t];
+    for(i=0;i<l.length;i++) if((l[i]&mask)===l[i]) out.push(l[i]);
+    return out;
+  }
+  function canMake(mask,t){
+    var i,l;
+    if(t<1||t>12) return false;
+    l=BYSUM[t];
+    for(i=0;i<l.length;i++) if((l[i]&mask)===l[i]) return true;
+    return false;
+  }
+
+  /* Given what is already selected, which still-standing flaps could be part
+     of some set that finishes the total?  The screen dims the rest, so a
+     player can always see what is worth tapping - and when this comes back
+     empty with the total unmet, the selection is a dead end and the game says
+     so instead of leaving the player poking at flaps that will never work. */
+  function liveFlaps(open,target,sel){
+    var rem=target-SUMOF[sel];
+    if(rem<=0||rem>12) return 0;
+    var pool=open&~sel, l=BYSUM[rem], u=0, i;
+    for(i=0;i<l.length;i++) if((l[i]&pool)===l[i]) u|=l[i];
+    return u;
+  }
+
+  /* ---------------- the exact solution ----------------
+     E[m] is the score a perfect player expects to finish on from position m,
+     and USE1[m] says whether one die beats two from there.  Worked out bottom
+     up: every set you could fold away leaves a strictly smaller position, so
+     by the time a position is reached every position it can move to is known.
+     This is the Fiendish opponent, and it is the ceiling - there is no
+     stronger play to find. */
+  var E=new Float64Array(512);
+  var USE1=new Uint8Array(512);
+  (function(){
+    var mask,s,i,l,t,v,best,tot,e1,e2;
+    for(mask=0;mask<512;mask++){
+      if(mask===0){ E[0]=0; USE1[0]=0; continue; }
+      tot=SUMOF[mask];
+      e2=0;
+      for(s=2;s<=12;s++){
+        l=BYSUM[s]; best=-1;
+        for(i=0;i<l.length;i++){
+          t=l[i];
+          if((t&mask)!==t) continue;
+          v=E[mask^t];
+          if(best<0||v<best) best=v;
+        }
+        e2 += P2[s]*(best<0?tot:best);
+      }
+      E[mask]=e2; USE1[mask]=0;
+      if(tot<=6){
+        e1=0;
+        for(s=1;s<=6;s++){
+          l=BYSUM[s]; best=-1;
+          for(i=0;i<l.length;i++){
+            t=l[i];
+            if((t&mask)!==t) continue;
+            v=E[mask^t];
+            if(best<0||v<best) best=v;
+          }
+          e1 += (best<0?tot:best)/6;
+        }
+        if(e1<e2-1e-12){ E[mask]=e1; USE1[mask]=1; }
+      }
+    }
+  })();
+
+  /* ---------------- levels ----------------
+     The lever is how well the computer plays and nothing else - the dice are
+     the same fair dice at every level and nothing is ever re-rolled.
+
+     Every level runs the same solved play; `slip` is the chance it takes some
+     other legal set instead of the best one, and it is the only knob that
+     moves the numbers.  There is no depth to add - the whole game is already
+     solved - so error rate is all that is left, exactly as it was for Mancala
+     and Reversi.
+
+     Two things measured here are worth writing down, because both are the
+     opposite of what you would expect:
+
+     * "Fold the biggest flap you can" is NOT a weak opponent.  Measured over
+       40,000 rounds it averages 11.41 left standing against the perfect
+       11.04 - it is a near-optimal rule of thumb, so it cannot be the Gentle
+       setting.  Gentle therefore takes almost any legal set it fancies and
+       never remembers the single die is allowed.
+     * The skill ceiling of this game is tiny.  A player who folds the biggest
+       flap every single time still only loses 52/48 to perfect play over a
+       three-round match.  So the ladder is scaled against a plausible person,
+       not against a machine - see the long note at the top of sim_sb.js.
+
+     Measured over 3000 matches a level, against that stand-in:
+       Gentle 79.4%   Tricky 50.2%   Fiendish 31.2% wins to the player. */
+  var LEVELS=[
+    { id:"easy", name:"Gentle",   slip:0.96, oneDie:false, rounds:3 },
+    { id:"med",  name:"Tricky",   slip:0.25, oneDie:true,  rounds:3 },
+    { id:"hard", name:"Fiendish", slip:0.00, oneDie:true,  rounds:3 }
+  ];
+  function levelOf(x){
+    var i;
+    if(typeof x==="number") return LEVELS[Math.max(0,Math.min(2,x|0))];
+    for(i=0;i<LEVELS.length;i++) if(LEVELS[i].id===x) return LEVELS[i];
+    return LEVELS[0];
+  }
+  function levelIndex(x){
+    var i;
+    if(typeof x==="number") return Math.max(0,Math.min(2,x|0));
+    for(i=0;i<LEVELS.length;i++) if(LEVELS[i].id===x) return i;
+    return 0;
+  }
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+
+  /* ---------------- the match ----------------
+     phase: "roll" waiting for the dice, "pick" choosing flaps, "end" this
+     turn is finished, "done" the match is finished. */
+  function create(cfg){
+    cfg=cfg||{};
+    var li=levelIndex(cfg.level==null?0:cfg.level);
+    var st={
+      v:1,
+      level:li,
+      rounds: cfg.rounds||LEVELS[li].rounds,
+      who:0,                 /* 0 the player, 1 the computer */
+      scores:[[],[]],
+      open:FULL,
+      dice:[],
+      target:0,
+      sel:0,
+      hist:[],
+      phase:"roll",
+      stuck:false,
+      over:false,
+      winner:-1,
+      seed: cfg.seed||((Math.random()*1e9)|0)
+    };
+    st.rand=rng(st.seed);
+    return st;
+  }
+
+  function roundNo(st){ return st.scores[1].length; }
+  function totals(st){
+    var i,a=0,b=0;
+    for(i=0;i<st.scores[0].length;i++) a+=st.scores[0][i];
+    for(i=0;i<st.scores[1].length;i++) b+=st.scores[1][i];
+    return [a,b];
+  }
+  function mayRollOne(st){ return st.phase==="roll" && SUMOF[st.open]<=6; }
+
+  /* rolling.  applyRoll takes the dice as given so a test or the simulator can
+     hand it a known roll; roll() makes them up out of the state's own rng. */
+  function applyRoll(st,d){
+    if(st.phase!=="roll") return null;
+    var i,t=0;
+    for(i=0;i<d.length;i++) t+=d[i];
+    st.dice=d.slice();
+    st.target=t;
+    st.sel=0;
+    if(canMake(st.open,t)){ st.phase="pick"; st.stuck=false; }
+    else { st.phase="end"; st.stuck=true; }
+    return { dice:st.dice.slice(), target:t, stuck:st.stuck };
+  }
+  function roll(st,n){
+    if(st.phase!=="roll") return null;
+    n = (n===1 && SUMOF[st.open]<=6) ? 1 : 2;
+    var d=[],i;
+    for(i=0;i<n;i++) d.push(1+Math.floor(st.rand()*6)%6);
+    return applyRoll(st,d);
+  }
+
+  /* selecting flaps.  A flap that would take the selection past the total is
+     still allowed on - the readout turns red and says what the sum is, which
+     tells a player far more than a tap that does nothing. */
+  function toggle(st,f){
+    if(st.phase!=="pick") return { ok:false, why:"notpick" };
+    if(f<1||f>N) return { ok:false, why:"range" };
+    var b=1<<(f-1);
+    if(!(st.open&b)) return { ok:false, why:"shut" };
+    if(st.sel&b){ st.sel^=b; return { ok:true, on:false, flap:f }; }
+    st.sel|=b;
+    return { ok:true, on:true, flap:f };
+  }
+  function selSum(st){ return SUMOF[st.sel]; }
+  function legal(st){ return st.phase==="pick" && st.sel!==0 && SUMOF[st.sel]===st.target; }
+  /* the selection cannot be finished: it is short of the total and no set of
+     the flaps still standing will make up the difference */
+  function deadSel(st){
+    if(st.phase!=="pick"||st.sel===0) return false;
+    var d=st.target-SUMOF[st.sel];
+    if(d===0) return false;
+    if(d<0) return true;
+    return liveFlaps(st.open,st.target,st.sel)===0;
+  }
+
+  function commit(st){
+    if(!legal(st)) return null;
+    var shut=st.sel;
+    st.hist.push({ sel:shut, dice:st.dice.slice(), target:st.target });
+    st.open^=shut;
+    st.sel=0; st.dice=[]; st.target=0;
+    if(st.open===0){ st.phase="end"; st.stuck=false; }
+    else st.phase="roll";
+    return { shut:shut, flaps:flapsOf(shut), boxShut:st.open===0 };
+  }
+
+  /* Take back.  A pending selection goes first; after that it un-folds the
+     last set this turn and puts the dice back on the table.  It is deliberately
+     dead once the turn has ended: letting a stuck player take back would let
+     them roll again for a different number, which is a re-roll and not a take
+     back.  Everything it does un-do was decided with the dice already face up,
+     so nothing is learned by doing it. */
+  function undo(st){
+    if(st.phase==="pick" && st.sel!==0){ st.sel=0; return "selection"; }
+    if((st.phase==="pick"||st.phase==="roll") && st.hist.length){
+      var h=st.hist.pop();
+      st.open|=h.sel;
+      st.dice=h.dice.slice();
+      st.target=h.target;
+      st.sel=0;
+      st.phase="pick";
+      st.stuck=false;
+      return "move";
+    }
+    return null;
+  }
+  function canUndo(st){
+    if(st.phase==="pick" && st.sel!==0) return true;
+    return (st.phase==="pick"||st.phase==="roll") && st.hist.length>0;
+  }
+
+  function endTurn(st){
+    if(st.phase!=="end") return null;
+    var score=SUMOF[st.open];
+    var ev={ who:st.who, score:score, boxShut:st.open===0, flaps:flapsOf(st.open) };
+    st.scores[st.who].push(score);
+    if(st.who===0) st.who=1;
+    else st.who=0;
+    st.open=FULL; st.sel=0; st.dice=[]; st.target=0; st.hist=[]; st.stuck=false;
+    st.phase="roll";
+    settle(st);
+    ev.over=st.over;
+    return ev;
+  }
+  /* the match is decided only when both sides have played the same number of
+     rounds; level totals go to sudden death rather than a shrug */
+  function settle(st){
+    if(st.scores[0].length!==st.scores[1].length) return;
+    var n=st.scores[0].length;
+    if(n<st.rounds) return;
+    var t=totals(st);
+    if(t[0]!==t[1]){ st.over=true; st.winner=(t[0]<t[1])?0:1; st.phase="done"; return; }
+    if(n>=st.rounds+EXTRA){ st.over=true; st.winner=-1; st.phase="done"; }
+  }
+  function suddenDeath(st){
+    return st.scores[0].length>=st.rounds && st.scores[1].length>=st.rounds;
+  }
+
+  /* ---------------- the opponent ---------------- */
+  function greedyPick(list){
+    var best=list[0],i,a,b;
+    for(i=1;i<list.length;i++){
+      a=hiFlap(list[i]); b=hiFlap(best);
+      if(a>b || (a===b && popcount(list[i])<popcount(best))) best=list[i];
+    }
+    return best;
+  }
+  function aiDice(st,rand){
+    var L=LEVELS[st.level];
+    rand=rand||st.rand;
+    if(SUMOF[st.open]>6) return 2;
+    if(!L.oneDie) return 2;
+    var want=USE1[st.open]?1:2;
+    if(L.slip>0 && rand()<L.slip) want=(want===1)?2:1;
+    return want;
+  }
+  function aiShut(st,rand){
+    var L=LEVELS[st.level], list=combos(st.open,st.target), i, v, bm, bv;
+    rand=rand||st.rand;
+    if(!list.length) return 0;
+    if(L.slip>0 && list.length>1 && rand()<L.slip)
+      return list[Math.floor(rand()*list.length)%list.length];
+    bm=list[0]; bv=E[st.open^list[0]];
+    for(i=1;i<list.length;i++){ v=E[st.open^list[i]]; if(v<bv){ bv=v; bm=list[i]; } }
+    return bm;
+  }
+  /* one step of the computer's turn, so the screen can pace it and the
+     simulator can rattle through it */
+  function aiStep(st,rand){
+    if(st.who!==1||st.over) return null;
+    if(st.phase==="roll") return { kind:"roll", n:aiDice(st,rand) };
+    if(st.phase==="pick") return { kind:"shut", mask:aiShut(st,rand) };
+    if(st.phase==="end") return { kind:"end" };
+    return null;
+  }
+
+  /* ---------------- audit ----------------
+     Called after every single change of state in the simulator.  It knows
+     nothing about how the change was made, only what must be true afterwards. */
+  function audit(st){
+    var i,u,s;
+    if(!st||typeof st.open!=="number") return "there is no board";
+    if(st.open<0||st.open>FULL||(st.open|0)!==st.open) return "the flaps are not a valid position";
+    if(st.sel<0||st.sel>FULL) return "the selection is not a valid position";
+    if((st.sel&st.open)!==st.sel) return "a flap that is already down is selected";
+    if(st.who!==0&&st.who!==1) return "it is nobody's turn";
+    if(["roll","pick","end","done"].indexOf(st.phase)<0) return "an unknown phase "+st.phase;
+    if(st.level<0||st.level>2) return "an odd level";
+
+    /* the flaps down this turn plus the flaps still up must be all nine */
+    u=st.open;
+    for(i=0;i<st.hist.length;i++){
+      if(u&st.hist[i].sel) return "a flap was folded twice this turn";
+      u|=st.hist[i].sel;
+    }
+    if(u!==FULL) return "a flap has gone missing off the board";
+
+    if(st.dice.length>2) return "more than two dice";
+    for(i=0;i<st.dice.length;i++)
+      if(st.dice[i]<1||st.dice[i]>6||(st.dice[i]|0)!==st.dice[i]) return "a die reads "+st.dice[i];
+    s=0; for(i=0;i<st.dice.length;i++) s+=st.dice[i];
+    if(st.dice.length && s!==st.target) return "the total does not match the dice";
+    if(st.dice.length===1 && SUMOF[st.open]>6)
+      return "one die was taken with more than six standing";
+
+    if(st.phase==="roll"){
+      if(st.dice.length) return "dice are on the table with nothing to do";
+      if(st.sel) return "flaps are selected with no roll";
+      if(st.open===0) return "the box is shut but the turn goes on";
+    }
+    if(st.phase==="pick"){
+      if(!st.dice.length) return "picking with no dice";
+      if(!canMake(st.open,st.target)) return "picking a total that cannot be made";
+    }
+    if(st.phase==="end"){
+      if(st.open!==0 && !st.stuck) return "the turn ended with the box open and a roll to answer";
+      if(st.stuck && canMake(st.open,st.target)) return "called stuck when the roll can be made";
+      if(st.sel) return "the turn ended with flaps still selected";
+    }
+
+    if(st.scores[0].length<st.scores[1].length) return "the computer has played more rounds than the player";
+    if(st.scores[0].length-st.scores[1].length>1) return "the player has played two rounds ahead";
+    if(st.who===0 && st.scores[0].length!==st.scores[1].length) return "it is the player's turn out of order";
+    if(st.who===1 && st.scores[0].length!==st.scores[1].length+1) return "it is the computer's turn out of order";
+    for(i=0;i<st.scores[0].length;i++)
+      if(st.scores[0][i]<0||st.scores[0][i]>45) return "an impossible score "+st.scores[0][i];
+    for(i=0;i<st.scores[1].length;i++)
+      if(st.scores[1][i]<0||st.scores[1][i]>45) return "an impossible score "+st.scores[1][i];
+
+    var t=totals(st), n=st.scores[0].length;
+    if(st.over){
+      if(st.phase!=="done") return "the match is over but the phase is "+st.phase;
+      if(st.scores[0].length!==st.scores[1].length) return "the match ended mid-round";
+      if(n<st.rounds) return "the match ended short of its rounds";
+      if(st.winner===0 && t[0]>=t[1]) return "the player won without the lower total";
+      if(st.winner===1 && t[1]>=t[0]) return "the computer won without the lower total";
+      if(st.winner===-1 && t[0]!==t[1]) return "a dead heat with different totals";
+    }else{
+      if(st.phase==="done") return "the phase says done but the match is not over";
+      if(st.scores[0].length===st.scores[1].length && n>=st.rounds && t[0]!==t[1])
+        return "the match should have been settled";
+      if(n>st.rounds+EXTRA) return "sudden death has run on too long";
+    }
+    return null;
+  }
+
+  return {
+    N:N, FULL:FULL, EXTRA:EXTRA, LEVELS:LEVELS, SUMOF:SUMOF, BYSUM:BYSUM, P2:P2, E:E, USE1:USE1,
+    rng:rng, create:create, levelOf:levelOf, levelIndex:levelIndex,
+    combos:combos, canMake:canMake, liveFlaps:liveFlaps, flapsOf:flapsOf,
+    popcount:popcount, hiFlap:hiFlap,
+    roll:roll, applyRoll:applyRoll, toggle:toggle, selSum:selSum, legal:legal,
+    deadSel:deadSel, commit:commit, undo:undo, canUndo:canUndo, endTurn:endTurn,
+    mayRollOne:mayRollOne, roundNo:roundNo, totals:totals, suddenDeath:suddenDeath,
+    aiDice:aiDice, aiShut:aiShut, aiStep:aiStep, greedyPick:greedyPick,
+    audit:audit
+  };
+}
+</script>
+<script>
+(function(){
+"use strict";
+var SB=makeShutTheBox();
+var LS="gg_shutthebox_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"easy", name:"Gentle",   cls:"z-a", tag:"Shuts whatever it fancies &middot; best of three"},
+  {id:"med",  name:"Tricky",   cls:"z-b", tag:"Plays well, but not every time &middot; best of three"},
+  {id:"hard", name:"Fiendish", cls:"z-c", tag:"Perfect play, every single roll &middot; best of three"}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+
+/* ---------------- colours ---------------- */
+var TABLE="#63c6f5", TABLE_D="#2996d6", RIM="#ffffff", WELL="#2585bf", WELL_E="#1b6d9f";
+var FLAP="#ff7663", FLAP_D="#dd2a1f", FLAP_E="#a81a12";
+/* A flap that cannot be part of any set making this roll is drawn washed out
+   rather than faded: fading it towards the slot behind made a standing flap
+   look folded, which is the one thing the board must never get wrong. */
+var PALE="#ffc9bf", PALE_D="#eda093", PALE_E="#cf8175", PALE_T="rgba(255,255,255,.9)";
+var SHUT_F="#ffeccd", SHUT_E="#dcbb8c", SHUT_T="#a8763a";
+var SEL="#ffd166", OKR="#2fbf74";
+var INK="#0b5580", INK_L="#6ea9cf";
+var DIE="#ffffff", PIP="#dd2a1f";
+var PANEL="rgba(255,255,255,.93)";
+
+/* ---------------- state ---------------- */
+var mId, S, started=false, lastT=0;
+var anim={ dice:0, tumble:[1,1], folds:{}, lift:0 };
+var cpuT=0, note="";
+var played, won, streak, bestStreak, bestRound, boxes, levelsWon;
+/* Only the test hook sets this.  It stops the clock so a test can look at a
+   still frame instead of racing the animation.  Stripped out, it stays false. */
+var frozen=false;
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ----------------
+   Six bands down the canvas: who is playing, the scorecard, the box itself,
+   the dice, a line of plain English saying what is going on, and the action
+   buttons.  The buttons live on the canvas rather than in the tool row so the
+   thumb never has to leave the part of the screen it is looking at. */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0, VH=0;
+var G={ ready:false, sig:"", flaps:[], btns:[] };
+
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  geom(true);
+}
+window.addEventListener("resize", function(){ layout(); });
+
+function rr(x,y,w,h,rad){
+  if(rad>w/2) rad=w/2; if(rad>h/2) rad=h/2; if(rad<0) rad=0;
+  ctx.beginPath(); ctx.moveTo(x+rad,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad);
+  ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath();
+}
+function txt(s,x,y,size,col,align,w){
+  ctx.save();
+  ctx.textAlign=align||"center"; ctx.textBaseline="middle";
+  ctx.font=(w||900)+" "+Math.round(size)+"px -apple-system,Helvetica,Arial";
+  ctx.fillStyle=col; ctx.fillText(s,x,y);
+  ctx.restore();
+}
+function fits(s,size,w){
+  ctx.save();
+  ctx.font="900 "+Math.round(size)+"px -apple-system,Helvetica,Arial";
+  var m=ctx.measureText(s).width; ctx.restore();
+  return m<=w;
+}
+
+function geom(force){
+  if(!S||VW<40) return;
+  var sig=VW+"/"+VH+"/"+S.rounds;
+  if(!force && G.ready && G.sig===sig) return;
+  G.sig=sig;
+
+  var fg=Math.max(3, Math.round(VW*0.013));
+  var fw=Math.min(56, Math.floor((VW-14-fg*8)/9));
+  var bandTurn=Math.max(22, Math.min(32, Math.round(VH*0.062)));
+  var bandCard=Math.max(38, Math.min(56, Math.round(VH*0.105)));
+  var bandMsg=Math.max(26, Math.min(40, Math.round(VH*0.072)));
+  var bandAct=Math.max(44, Math.min(62, Math.round(VH*0.112)));
+
+  var free=VH-bandTurn-bandCard-bandMsg-bandAct-48;
+  var fh=Math.max(46, Math.min(Math.round(fw*3.5), Math.round(free*0.58)-26));
+  var ds=Math.max(34, Math.min(Math.round(VW*0.19), Math.round(free*0.40)-38));
+  var bandTray=fh+26;
+  var bandDice=ds+38;
+
+  var content=bandTurn+bandCard+bandTray+bandDice+bandMsg+bandAct;
+  var gap=Math.max(6, Math.min(34, Math.floor((VH-content)/6)));
+  var top=Math.max(0, Math.floor((VH-content-gap*5)/2));
+
+  var y=top;
+  G.turn={ y:y, h:bandTurn }; y+=bandTurn+gap;
+  G.card={ y:y, h:bandCard }; y+=bandCard+gap;
+  G.tray={ y:y, h:bandTray, fw:fw, fh:fh, fg:fg }; y+=bandTray+gap;
+  G.dice={ y:y, h:bandDice, s:ds }; y+=bandDice+gap;
+  G.msg ={ y:y, h:bandMsg }; y+=bandMsg+gap;
+  G.act ={ y:y, h:bandAct };
+
+  var roww=fw*9+fg*8;
+  var x0=Math.round((VW-roww)/2);
+  var fy=G.tray.y+13;
+  G.flaps=[];
+  for(var i=0;i<9;i++)
+    G.flaps.push({ n:i+1, x:x0+i*(fw+fg), y:fy, w:fw, h:fh });
+  G.trayBox={ x:x0-9, y:G.tray.y, w:roww+18, h:bandTray };
+  G.ready=true;
+  buttons();
+}
+
+/* the action buttons change with the phase, so they are rebuilt every frame */
+function buttons(){
+  var b=[], w, h=G.act.h, y=G.act.y, m=10;
+  if(!started||!S){ G.btns=[]; return; }
+  if(S.over||S.who===1){ G.btns=[]; return; }
+  if(S.phase==="roll"){
+    if(SB.mayRollOne(S)){
+      w=Math.floor((VW-14-m)/2);
+      b.push({ id:"roll1", x:7, y:y, w:w, h:h, label:"ROLL ONE", on:true, tone:"go" });
+      b.push({ id:"roll2", x:7+w+m, y:y, w:w, h:h, label:"ROLL TWO", on:true, tone:"go" });
+    }else{
+      b.push({ id:"roll2", x:7, y:y, w:VW-14, h:h, label:"ROLL THE DICE", on:true, tone:"go" });
+    }
+  }else if(S.phase==="pick"){
+    var ok=SB.legal(S);
+    var lab= ok ? ("SHUT "+SB.flapsOf(S.sel).join(" + "))
+                : ("MAKE "+S.target+(S.sel? "  ("+SB.selSum(S)+" so far)":""));
+    b.push({ id:"shut", x:7, y:y, w:VW-14, h:h, label:lab, on:ok, tone:ok?"ok":"off" });
+  }else if(S.phase==="end"){
+    b.push({ id:"end", x:7, y:y, w:VW-14, h:h,
+             label: S.open===0 ? "SHUT THE BOX!" : "END MY TURN", on:true, tone:"go" });
+  }
+  G.btns=b;
+}
+
+/* ---------------- drawing ---------------- */
+function pips(x,y,s,v){
+  var r=s*0.088, c=[x+s*0.28,x+s*0.5,x+s*0.72], d=[y+s*0.28,y+s*0.5,y+s*0.72];
+  var P={1:[[1,1]],2:[[0,0],[2,2]],3:[[0,0],[1,1],[2,2]],
+         4:[[0,0],[2,0],[0,2],[2,2]],5:[[0,0],[2,0],[1,1],[0,2],[2,2]],
+         6:[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]]};
+  var list=P[v]||P[1];
+  ctx.fillStyle=PIP;
+  for(var i=0;i<list.length;i++){
+    ctx.beginPath(); ctx.arc(c[list[i][0]], d[list[i][1]], r, 0, 6.284); ctx.fill();
+  }
+}
+function die(x,y,s,v,tilt){
+  ctx.save();
+  ctx.translate(x+s/2,y+s/2); ctx.rotate(tilt||0); ctx.translate(-s/2,-s/2);
+  ctx.fillStyle="rgba(8,45,80,.22)";
+  rr(2,4,s,s,s*0.20); ctx.fill();
+  ctx.fillStyle=DIE; rr(0,0,s,s,s*0.20); ctx.fill();
+  ctx.strokeStyle="rgba(8,45,80,.14)"; ctx.lineWidth=1.4; rr(0,0,s,s,s*0.20); ctx.stroke();
+  pips(0,0,s,v);
+  ctx.restore();
+}
+
+function drawFlap(f){
+  var live=(S.open>>(f.n-1))&1;
+  var picked=(S.sel>>(f.n-1))&1;
+  var fold=anim.folds[f.n]||0;                     /* 1 -> just folded, 0 -> settled */
+  var dim=false;
+  if(live && !picked && S.phase==="pick" && S.who===0){
+    var can=SB.liveFlaps(S.open,S.target,S.sel);
+    if(!(can>>(f.n-1)&1)) dim=true;
+  }
+  /* the slot behind the flap */
+  var wg=ctx.createLinearGradient(0,f.y,0,f.y+f.h);
+  wg.addColorStop(0,WELL_E); wg.addColorStop(1,WELL);
+  ctx.fillStyle=wg;
+  rr(f.x, f.y, f.w, f.h, f.w*0.20); ctx.fill();
+
+  if(live || fold>0){
+    var t=fold;                                     /* 1 = upright, 0 = down */
+    var hh=f.h*(live?1:(0.36+0.64*t));
+    var yy=f.y+(f.h-hh);
+    var lift=picked?Math.round(f.h*0.07):0;
+    ctx.fillStyle="rgba(8,45,80,.30)";
+    rr(f.x+1, yy-lift+4, f.w, hh, f.w*0.20); ctx.fill();
+    var g=ctx.createLinearGradient(0,yy-lift,0,yy-lift+hh);
+    g.addColorStop(0,dim?PALE:FLAP); g.addColorStop(1,dim?PALE_D:FLAP_D);
+    ctx.fillStyle=g;
+    rr(f.x, yy-lift, f.w, hh, f.w*0.20); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.28)";
+    rr(f.x+f.w*0.14, yy-lift+f.w*0.13, f.w*0.30, hh*0.30, f.w*0.12); ctx.fill();
+    ctx.strokeStyle=picked?(SB.legal(S)?OKR:SEL):(dim?PALE_E:FLAP_E);
+    ctx.lineWidth=picked?Math.max(3,f.w*0.10):1.6;
+    rr(f.x, yy-lift, f.w, hh, f.w*0.20); ctx.stroke();
+    txt(String(f.n), f.x+f.w/2, yy-lift+hh*0.52, Math.min(f.w*0.62,hh*0.5),
+        dim?PALE_T:"#fff");
+  }else{
+    /* folded down: a pale plate lying flat at the bottom of the slot, with a
+       hinge line where it has folded over */
+    var ph=Math.max(14, f.h*0.34), py=f.y+f.h-ph;
+    ctx.fillStyle="rgba(8,45,80,.28)";
+    rr(f.x+1, py-3, f.w-2, 7, 3); ctx.fill();
+    ctx.fillStyle=SHUT_F; rr(f.x, py, f.w, ph, f.w*0.18); ctx.fill();
+    ctx.strokeStyle=SHUT_E; ctx.lineWidth=1.4; rr(f.x, py, f.w, ph, f.w*0.18); ctx.stroke();
+    ctx.fillStyle=SHUT_E;
+    rr(f.x+f.w*0.12, py+ph*0.13, f.w*0.76, 2.2, 1); ctx.fill();
+    txt(String(f.n), f.x+f.w/2, py+ph*0.60, Math.min(f.w*0.50,ph*0.60), SHUT_T);
+  }
+}
+
+function drawTray(){
+  var b=G.trayBox;
+  ctx.fillStyle="rgba(8,45,80,.20)";
+  rr(b.x+2, b.y+5, b.w, b.h, 18); ctx.fill();
+  var g=ctx.createLinearGradient(0,b.y,0,b.y+b.h);
+  g.addColorStop(0,TABLE); g.addColorStop(1,TABLE_D);
+  ctx.fillStyle=g; rr(b.x, b.y, b.w, b.h, 18); ctx.fill();
+  ctx.strokeStyle=RIM; ctx.lineWidth=2.5; rr(b.x, b.y, b.w, b.h, 18); ctx.stroke();
+  for(var i=0;i<G.flaps.length;i++) drawFlap(G.flaps[i]);
+}
+
+function drawScorecard(){
+  var b=G.card, x=8, w=VW-16;
+  ctx.fillStyle=PANEL; rr(x, b.y, w, b.h, 13); ctx.fill();
+  var n=Math.max(S.rounds, S.scores[0].length + (S.over?0:1));
+  if(n>6) n=Math.max(6, S.scores[0].length);
+  var cw=(w-56)/n, lx=x+52;
+  txt("YOU", x+26, b.y+b.h*0.36, Math.min(9,b.h*0.24), "#e03b2c");
+  txt("CPU", x+26, b.y+b.h*0.74, Math.min(9,b.h*0.24), INK);
+  var i;
+  for(i=0;i<n;i++){
+    var cx=lx+cw*(i+0.5);
+    var mine=S.scores[0][i], theirs=S.scores[1][i];
+    var current=(i===S.scores[0].length && !S.over);
+    if(current){
+      ctx.fillStyle="rgba(255,209,102,.42)";
+      rr(lx+cw*i+1, b.y+3, cw-2, b.h-6, 8); ctx.fill();
+    }
+    txt(String(i+1), cx, b.y+b.h*0.14, Math.min(9.5,b.h*0.22), INK_L);
+    txt(mine==null?"-":String(mine), cx, b.y+b.h*0.44, Math.min(15,b.h*0.34),
+        mine==null?INK_L:"#e03b2c");
+    txt(theirs==null?"-":String(theirs), cx, b.y+b.h*0.79, Math.min(15,b.h*0.34),
+        theirs==null?INK_L:INK);
+  }
+}
+
+function statusText(){
+  if(!started||!S) return "";
+  if(anim.dice>0) return "Rolling...";
+  if(S.over){
+    var t=SB.totals(S);
+    if(S.winner===0) return "You win the match, "+t[0]+" to "+t[1]+".";
+    if(S.winner===1) return "The computer wins, "+t[1]+" to "+t[0]+".";
+    return "A dead heat at "+t[0]+".";
+  }
+  if(S.who===1) return note||"The computer is thinking.";
+  var left=SB.SUMOF[S.open];
+  if(S.phase==="roll"){
+    if(S.hist.length===0) return "Roll the dice to start your turn.";
+    if(SB.mayRollOne(S)) return "Only "+left+" left standing, so you may take one die.";
+    return "Roll again. You still have "+left+" standing.";
+  }
+  if(S.phase==="pick"){
+    var s=SB.selSum(S), t2=S.target;
+    if(s===0) return "Tap flaps that add up to "+t2+".";
+    if(s===t2) return SB.flapsOf(S.sel).join(" + ")+" = "+t2+". Shut them!";
+    if(s>t2) return "That is "+s+" and you need "+t2+". Tap one off again.";
+    if(SB.deadSel(S)) return "Nothing left makes the other "+(t2-s)+". Tap TAKE BACK.";
+    return "That is "+s+". You need "+(t2-s)+" more.";
+  }
+  if(S.phase==="end"){
+    if(S.open===0) return "SHUT THE BOX! That round scores nothing.";
+    return "Nothing standing makes "+S.target+". You are left with "+left+".";
+  }
+  return "";
+}
+
+function drawMsg(){
+  var s=statusText(), b=G.msg;
+  var size=Math.min(14, VW*0.038);
+  while(size>9 && !fits(s,size,VW-26)) size-=0.5;
+  ctx.fillStyle="rgba(255,255,255,.20)";
+  rr(8, b.y, VW-16, b.h, b.h/2); ctx.fill();
+  txt(s, VW/2, b.y+b.h/2, size, "#ffffff");
+}
+
+function drawButtons(){
+  var i,b;
+  if(!G.btns.length){
+    if(started&&S&&S.who===1&&!S.over){
+      ctx.fillStyle="rgba(255,255,255,.20)";
+      rr(7, G.act.y+G.act.h*0.2, VW-14, G.act.h*0.6, G.act.h*0.3); ctx.fill();
+      txt("COMPUTER PLAYING", VW/2, G.act.y+G.act.h*0.5, Math.min(13,VW*0.034),
+          "rgba(255,255,255,.9)");
+    }
+    return;
+  }
+  for(i=0;i<G.btns.length;i++){
+    b=G.btns[i];
+    var top,bot,edge,col;
+    if(b.tone==="ok"){ top="#6be0a5"; bot="#20a862"; edge="#177a47"; col="#fff"; }
+    else if(b.tone==="off"){ top="#e4f1fa"; bot="#c7deee"; edge="#a9c7dc"; col="#6b93ad"; }
+    else { top="#ff8a72"; bot="#dd2f22"; edge="#a91d16"; col="#fff"; }
+    ctx.fillStyle=edge; rr(b.x, b.y+4, b.w, b.h, 15); ctx.fill();
+    var g=ctx.createLinearGradient(0,b.y,0,b.y+b.h);
+    g.addColorStop(0,top); g.addColorStop(1,bot);
+    ctx.fillStyle=g; rr(b.x, b.y, b.w, b.h, 15); ctx.fill();
+    var size=Math.min(16, b.w*0.10);
+    while(size>9 && !fits(b.label,size,b.w-18)) size-=0.5;
+    txt(b.label, b.x+b.w/2, b.y+b.h/2, size, col);
+  }
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!S) return;
+  if(!G.ready||!VW){ layout(); if(!G.ready) return; }
+  geom();
+  var now=ts||0, dt=lastT?Math.min(120,now-lastT):0;
+  lastT=now;
+  if(!frozen){
+    if(anim.dice>0){
+      anim.dice-=dt;
+      anim.tumble=[1+Math.floor(Math.random()*6),1+Math.floor(Math.random()*6)];
+      if(anim.dice<=0){ anim.dice=0; afterRoll(); }
+    }
+    for(var k in anim.folds){
+      anim.folds[k]-=dt/260;
+      if(anim.folds[k]<=0) delete anim.folds[k];
+    }
+    cpuTick(dt);
+  }
+  buttons();
+
+  ctx.clearRect(0,0,VW,VH);
+
+  /* who is playing */
+  var who = S.over ? "MATCH OVER" : (S.who===0?"YOUR TURN":"COMPUTER'S TURN");
+  var extra = SB.suddenDeath(S)&&!S.over ? "SUDDEN DEATH" :
+              ("ROUND "+Math.min(S.scores[0].length+1,S.rounds+SB.EXTRA)+" OF "+S.rounds);
+  ctx.fillStyle= S.who===0&&!S.over ? "rgba(255,255,255,.32)" : "rgba(255,255,255,.18)";
+  rr(8, G.turn.y, VW-16, G.turn.h, G.turn.h/2); ctx.fill();
+  txt(who, VW*0.34, G.turn.y+G.turn.h/2, Math.min(13.5,VW*0.036), "#fff");
+  txt(extra, VW*0.75, G.turn.y+G.turn.h/2, Math.min(11,VW*0.029), "rgba(255,255,255,.85)");
+
+  drawScorecard();
+  drawTray();
+
+  /* the dice */
+  var d=G.dice, s=d.s;
+  var vals = anim.dice>0 ? anim.tumble : S.dice;
+  var one = vals.length===1;
+  var chipW=Math.max(52, s*0.95);
+  var totW=(one?s:s*2+10)+14+chipW;
+  var dx=Math.round((VW-totW)/2), dy=d.y+6;
+  if(vals.length){
+    die(dx, dy, s, vals[0], anim.dice>0?(Math.random()-0.5)*0.5:-0.06);
+    if(!one) die(dx+s+10, dy, s, vals[1], anim.dice>0?(Math.random()-0.5)*0.5:0.07);
+  }else{
+    ctx.strokeStyle="rgba(255,255,255,.5)"; ctx.lineWidth=2; ctx.setLineDash([6,6]);
+    rr(dx, dy, s, s, s*0.2); ctx.stroke();
+    rr(dx+s+10, dy, s, s, s*0.2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  var cx=dx+(one?s:s*2+10)+14;
+  ctx.fillStyle=PANEL; rr(cx, dy, chipW, s, 14); ctx.fill();
+  txt("NEED", cx+chipW/2, dy+s*0.26, Math.min(9.5,s*0.19), INK_L);
+  txt(vals.length?String(anim.dice>0?(anim.tumble[0]+(one?0:anim.tumble[1])):S.target):"-",
+      cx+chipW/2, dy+s*0.63, s*0.44, "#e03b2c");
+  if(S.phase==="pick"&&S.sel&&anim.dice<=0){
+    txt("picked "+SB.selSum(S), VW/2, dy+s+18, Math.min(12,VW*0.032),
+        SB.legal(S)?"#bcffdc":"rgba(255,255,255,.9)");
+  }
+
+  drawMsg();
+  drawButtons();
+}
+
+/* ---------------- play ---------------- */
+function doRoll(n){
+  if(S.phase!=="roll"||anim.dice>0) return;
+  SB.roll(S,n);
+  anim.dice=frozen?0:460;
+  anim.tumble=S.dice.slice();
+  beep(520,.06,"square",.04);
+  if(window.GGA) GGA.haptic("light");
+  if(frozen) afterRoll();
+  persist(); paintHUD();
+}
+function afterRoll(){
+  if(S.phase==="end"&&S.stuck){
+    beep(200,.28,"sawtooth",.06,120);
+    if(window.GGA) GGA.haptic("warning");
+    if(S.who===1) note="The computer is stuck on "+S.target+".";
+  }else if(S.who===1){
+    note="The computer rolls "+S.target+".";
+  }
+  paintHUD();
+}
+function doToggle(f){
+  if(S.who!==0||S.phase!=="pick"||anim.dice>0) return;
+  var r=SB.toggle(S,f);
+  if(!r.ok){ beep(190,.05,"sine",.03); return; }
+  beep(r.on?640:400,.05,"triangle",.04);
+  if(window.GGA) GGA.haptic("light");
+  paintHUD(); persist();
+}
+function doCommit(){
+  var mask=S.sel;
+  var r=SB.commit(S);
+  if(!r) return;
+  var i, fl=SB.flapsOf(mask);
+  if(!frozen) for(i=0;i<fl.length;i++) anim.folds[fl[i]]=1;
+  beep(760,.09,"triangle",.06);
+  if(window.GGA) GGA.haptic("medium");
+  if(S.who===1) note="The computer shuts "+fl.join(" and ")+".";
+  if(r.boxShut){
+    beep(660,.12,"triangle",.09);
+    setTimeout(function(){ beep(880,.12,"triangle",.09); },120);
+    setTimeout(function(){ beep(1240,.30,"triangle",.10); },250);
+  }
+  paintHUD(); persist();
+}
+function doUndo(){
+  if(!started||S.over||S.who!==0||anim.dice>0) return;
+  if(!SB.canUndo(S)) return;
+  SB.undo(S);
+  beep(340,.07,"sine",.04);
+  if(window.GGA) GGA.haptic("light");
+  paintHUD(); persist();
+}
+function doEndTurn(){
+  if(S.phase!=="end") return;
+  var mine=(S.who===0);
+  var ev=SB.endTurn(S);
+  if(mine){
+    if(ev.score===0){ boxes++; save("boxes",boxes); }
+    if(bestRound<0||ev.score<bestRound){ bestRound=ev.score; save("bestRound",bestRound); }
+    if(window.GGA){
+      if(ev.boxShut) GGA.award("sb_shut");
+      if(ev.score<=3) GGA.award("sb_low");
+    }
+    note="";
+  }
+  cpuT=620;
+  paintHUD(); persist();
+  if(S.over) finishMatch();
+}
+function cpuTick(dt){
+  if(!started||!S||S.over||S.who!==1) return;
+  if(ovl.classList.contains("on")) return;
+  if(anim.dice>0) return;
+  cpuT-=dt;
+  if(cpuT>0) return;
+  if(S.phase==="roll"){ note=""; doRoll(SB.aiDice(S)); cpuT=700; return; }
+  if(S.phase==="pick"){
+    if(S.sel===0){ S.sel=SB.aiShut(S); cpuT=560; paintHUD(); return; }
+    doCommit(); cpuT=520; return;
+  }
+  if(S.phase==="end"){
+    note = S.open===0 ? "The computer shuts the box." :
+           ("Nothing makes "+S.target+" - it is left with "+SB.SUMOF[S.open]+".");
+    doEndTurn(); cpuT=700; return;
+  }
+}
+
+function finishMatch(){
+  var t=SB.totals(S);
+  won = won|0;
+  if(S.winner===0){
+    won++; streak++;
+    if(streak>bestStreak) bestStreak=streak;
+    levelsWon[mId]=1;
+    save("won",won); save("streak",streak); save("bestStreak",bestStreak);
+    save("levelsWon",levelsWon);
+    beep(660,.12,"triangle",.08);
+    setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+    setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+    if(window.GGA){
+      GGA.award("sb_first");
+      if(mId==="hard") GGA.award("sb_hard");
+      if(streak>=3) GGA.award("sb_streak3");
+      var sweep=true, i;
+      for(i=0;i<S.scores[0].length;i++) if(!(S.scores[0][i]<S.scores[1][i])) sweep=false;
+      if(sweep) GGA.award("sb_sweep");
+      if(levelsWon.easy&&levelsWon.med&&levelsWon.hard) GGA.award("sb_alldiff");
+      GGA.haptic("success");
+    }
+  }else{
+    streak=0; save("streak",0);
+    beep(300,.30,"sine",.06,150);
+    if(window.GGA) GGA.haptic(S.winner===1?"error":"warning");
+  }
+  save("cur",null);
+  paintHUD();
+  if(frozen) return;
+  setTimeout(function(){ S.winner===0?winScreen():loseScreen(); }, 950);
+}
+
+/* ---------------- match ---------------- */
+function newMatch(id){
+  mId=id; save("mode",id);
+  S=SB.create({ level:id });
+  anim.folds={}; anim.dice=0; cpuT=0; note="";
+  layout(); paintHUD();
+  /* deliberately does NOT persist: boot calls this so there is something to
+     draw behind the title card, and persisting here would eat the saved match
+     before CARRY ON has a chance to offer it */
+}
+function startMatch(id){
+  started=true;
+  newMatch(id);
+  played++; save("played",played);
+  if(window.GGA && played>=10) GGA.award("sb_10");
+  closeOvl(); layout(); paintHUD(); persist();
+}
+
+function paintHUD(){
+  if(!S) return;
+  var t=SB.totals(S);
+  document.getElementById("vYou").textContent=t[0];
+  document.getElementById("vCpu").textContent=t[1];
+  var r=Math.min(S.scores[0].length+(S.over?0:1), S.rounds+SB.EXTRA);
+  document.getElementById("vRound").textContent=
+    SB.suddenDeath(S)&&!S.over ? "EXTRA" : (r+"/"+S.rounds);
+  var u=document.getElementById("tUndo");
+  if(started&&!S.over&&S.who===0&&SB.canUndo(S)) u.classList.remove("off");
+  else u.classList.add("off");
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* nothing is owned before the player has started: pagehide and
+     visibilitychange both fire while the title card is up */
+  if(!started||!S) return;
+  if(S.over){ save("cur",null); return; }
+  save("cur",{ v:1, m:mId, rounds:S.rounds, who:S.who,
+               sc:[S.scores[0].slice(),S.scores[1].slice()],
+               open:S.open, dice:S.dice.slice(), target:S.target, sel:S.sel,
+               phase:S.phase, stuck:S.stuck,
+               hist:S.hist.map(function(h){ return { sel:h.sel, dice:h.dice.slice(), target:h.target }; }) });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||c.v!==1) return false;
+  var m=modeOf(c.m);
+  var st=SB.create({ level:m.id, rounds:c.rounds|0||undefined });
+  st.who=c.who|0;
+  st.scores=[ (c.sc&&c.sc[0]||[]).slice(), (c.sc&&c.sc[1]||[]).slice() ];
+  st.open=c.open|0; st.dice=(c.dice||[]).slice(); st.target=c.target|0;
+  st.sel=c.sel|0; st.phase=String(c.phase||"roll"); st.stuck=!!c.stuck;
+  st.hist=(c.hist||[]).map(function(h){ return { sel:h.sel|0, dice:(h.dice||[]).slice(), target:h.target|0 }; });
+  if(SB.audit(st)||st.over) return false;
+  mId=m.id; save("mode",mId);
+  S=st;
+  anim.folds={}; anim.dice=0; cpuT=700; note="";
+  geom(true); paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function onTapAt(lx,ly){
+  if(!started||!S||S.over) return;
+  geom();
+  var i,b;
+  for(i=0;i<G.btns.length;i++){
+    b=G.btns[i];
+    if(lx>=b.x&&lx<=b.x+b.w&&ly>=b.y-4&&ly<=b.y+b.h+6){
+      if(!b.on){ beep(190,.06,"sine",.03); return; }
+      if(b.id==="roll1") doRoll(1);
+      else if(b.id==="roll2") doRoll(2);
+      else if(b.id==="shut") doCommit();
+      else if(b.id==="end") doEndTurn();
+      return;
+    }
+  }
+  if(S.who!==0||S.phase!=="pick") return;
+  var g=G.tray.fg/2+2;
+  for(i=0;i<G.flaps.length;i++){
+    var f=G.flaps[i];
+    if(lx>=f.x-g&&lx<=f.x+f.w+g&&ly>=f.y-10&&ly<=f.y+f.h+10){ doToggle(f.n); return; }
+  }
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+function onTap(e){
+  if(e.cancelable) e.preventDefault();
+  var q=pt(e), b=cv.getBoundingClientRect();
+  onTapAt(q.clientX-b.left, q.clientY-b.top);
+}
+cv.addEventListener("touchend", onTap, {passive:false});
+cv.addEventListener("touchstart", function(e){ if(e.cancelable) e.preventDefault(); }, {passive:false});
+cv.addEventListener("mouseup", onTap);
+cv.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+window.addEventListener("keydown", function(e){
+  if(!started||!S||S.over||S.who!==0) return;
+  var k=String(e.key||"");
+  if(k>="1"&&k<="9") doToggle(parseInt(k,10));
+  else if(k===" "||k==="Enter"){
+    if(S.phase==="roll") doRoll(2);
+    else if(S.phase==="pick"&&SB.legal(S)) doCommit();
+    else if(S.phase==="end") doEndTurn();
+  }else if(k==="Backspace") doUndo();
+});
+
+document.getElementById("tUndo").onclick=doUndo;
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ startMatch(mId); return; }
+  openOvl('<h2>START AGAIN?</h2><p>This match is thrown away and your run of wins resets.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW MATCH</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){
+    streak=0; save("streak",0);
+    startMatch(mId);
+  };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); lastT=0; }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>SHUT THE BOX</h2><p>Roll the dice, fold down flaps that add up to the total. Lowest score over three rounds wins.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  if(cur&&cur.v===1) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+
+    modeOf(cur.m).name+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){ startMatch(el.getAttribute("data-m")); };
+  });
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()){ newMatch(load("mode","easy")); played++; save("played",played); }
+    closeOvl(); layout(); paintHUD(); persist();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Nine flaps stand up in the box. <b>Roll two dice</b>, then tap flaps that add up to the total and press SHUT.<br><br>'+
+    '&#9642; Any set will do: a seven can be <b>7</b>, or <b>3 + 4</b>, or <b>1 + 2 + 4</b>. Which one you pick is the whole game.<br><br>'+
+    '&#9642; Tapped the wrong flap? Tap it again to lift it, or use <b>TAKE BACK</b> &mdash; it will undo a whole set you have already shut, as long as you have not rolled since.<br><br>'+
+    '&#9642; Once the standing flaps add up to <b>six or less</b> you may take a single die instead of two.<br><br>'+
+    '&#9642; When no set makes your roll, your turn ends and <b>you score whatever is still standing</b>. Low is good, and nought &mdash; every flap down &mdash; is <b>shutting the box</b>.<br><br>'+
+    '&#9642; You and the computer play <b>three rounds each</b>, and the lower total wins. Level totals go to sudden death.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function roundTable(){
+  var i,h='<table class="rc"><tr><th></th>';
+  for(i=0;i<S.scores[0].length;i++) h+='<th>R'+(i+1)+'</th>';
+  h+='<th>TOTAL</th></tr><tr><td class="you">YOU</td>';
+  var t=SB.totals(S);
+  for(i=0;i<S.scores[0].length;i++) h+='<td class="you">'+S.scores[0][i]+'</td>';
+  h+='<td class="you">'+t[0]+'</td></tr><tr class="tot"><td>CPU</td>';
+  for(i=0;i<S.scores[1].length;i++) h+='<td>'+S.scores[1][i]+'</td>';
+  h+='<td>'+t[1]+'</td></tr></table>';
+  return h;
+}
+function statsBlock(){
+  return '<div class="stats">'+
+    '<div class="st"><div class="sk">WON</div><div class="sv">'+won+'</div></div>'+
+    '<div class="st"><div class="sk">IN A ROW</div><div class="sv">'+streak+'</div></div>'+
+    '<div class="st"><div class="sk">BEST ROUND</div><div class="sv">'+(bestRound<0?"-":bestRound)+'</div></div>'+
+    '</div>';
+}
+function winScreen(){
+  var t=SB.totals(S);
+  openOvl('<h2>YOU WIN!</h2><p>'+t[0]+' against '+t[1]+' on '+modeOf(mId).name+'.</p>'+
+    roundTable()+statsBlock()+
+    '<button class="btn btn-go" id="bAgain">PLAY AGAIN</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE LEVEL</button>');
+  card.querySelector("#bAgain").onclick=function(){ startMatch(mId); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+function loseScreen(){
+  var t=SB.totals(S);
+  openOvl('<h2>'+(S.winner===1?"THE COMPUTER WINS":"A DEAD HEAT")+'</h2>'+
+    '<p>'+(S.winner===1?(t[1]+" against your "+t[0]+"."):("Level at "+t[0]+" apiece."))+'</p>'+
+    roundTable()+statsBlock()+
+    '<button class="btn btn-go" id="bAgain">TRY AGAIN</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE LEVEL</button>');
+  card.querySelector("#bAgain").onclick=function(){ startMatch(mId); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||!S||S.over){ titleScreen(); return; }
+  persist();
+  var t=SB.totals(S);
+  openOvl('<h2>PAUSED</h2>'+
+    '<p>'+modeOf(mId).name+' &middot; you '+t[0]+', computer '+t[1]+'</p>'+
+    statsBlock()+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE LEVEL</button>');
+  card.querySelector("#bGo").onclick=function(){ closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+played=load("played",0)|0;
+won=load("won",0)|0;
+streak=load("streak",0)|0;
+bestStreak=load("bestStreak",0)|0;
+bestRound=load("bestRound",-1);
+if(typeof bestRound!=="number") bestRound=-1;
+boxes=load("boxes",0)|0;
+levelsWon=load("levelsWon",{})||{};
+newMatch(load("mode","easy"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+/* ---------------- the test hook ----------------
+   Stripped out of the shipping build by the assembler; nothing in the game
+   reads it, and `frozen` stays false without it. */
+
+})();
+</script>
+</body>
+</html>
