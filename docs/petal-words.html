@@ -89,6 +89,7 @@
   .sz .sn{font-size:14.5px}
   .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
   .sz .sc{font-size:10px;font-weight:900;opacity:.95;text-align:right;white-space:nowrap}
+  .z-d{background:linear-gradient(180deg,#ffd76b,#ff8fc6)}
   .z-p{background:linear-gradient(180deg,#f2a3e6,#b13fc4)}
   .z-a{background:linear-gradient(180deg,#8fe3c4,#22a37c)}
   .z-b{background:linear-gradient(180deg,#8fc9ff,#2f75d6)}
@@ -101,6 +102,7 @@
   .btn-alt{background:#fdeefa;color:#9c2fae;border:1.5px solid #f6d9ef}
   .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#c99ad4;margin:10px 2px}
   .rules b{color:#b13fc4}
+  .card p.soon{font-size:12.5px;font-weight:800;color:#c99ad4;margin:10px 0 2px}
   .stats{display:flex;gap:8px;margin-top:11px}
   .st{flex:1;background:#fdeefa;border-radius:13px;padding:8px 4px}
   .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#e3b8de}
@@ -109,7 +111,10 @@
     column-count:3;column-gap:8px;font-size:11.5px;line-height:1.62;color:#a878b4}
   .wlist span{display:block;break-inside:avoid}
   .wlist .pg{color:#b13fc4;font-weight:900}
+  .wlist .hit{color:#a878b4;font-weight:700}
   .wlist .miss{color:#dcb8e2}
+  .card p.lets{font-size:17px;font-weight:800;letter-spacing:4px;color:#b13fc4;margin:6px 0 2px}
+  .card p.lets b{color:#e8892f}
   .ladder{text-align:left;font-size:11.6px;line-height:1.5;color:#c99ad4;margin:8px 2px 2px;
     column-count:2;column-gap:10px}
   .ladder span{display:block;break-inside:avoid}
@@ -198,9 +203,86 @@ function pwSolve(dict, letters, centre){
   }
   return out;
 }
+
+/* ---------------- daily mode ----------------
+   All pure, and all driven by plain data, so the whole scheme can be run
+   headlessly over hundreds of simulated days before anyone plays it. */
+
+function pwKeyOf(i){ return PW_PACK.slice(i*8, i*8+8); }
+function pwIndexOfKey(k){
+  for(var i=0;i+8<=PW_PACK.length;i+=8) if(PW_PACK.slice(i,i+8)===k) return i/8;
+  return -1;
+}
+/* Days since the epoch, with the day rolling over at 09:00 device time.
+   Read straight off the local wall clock: take today's local date, and if it
+   is not yet 9am count it as yesterday.  Doing this by subtracting nine hours
+   of absolute time instead looks equivalent but is not - on the two daylight
+   saving changeovers it slips, and the new puzzle turns up at 10am in spring
+   and 8am in autumn. */
+function pwDayIndex(ms){
+  var d=new Date(ms);
+  var day=Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())/86400000;
+  return d.getHours()<9 ? day-1 : day;
+}
+function pwWeekday(day){ return ((day+4)%7+7)%7; }   /* 0 = Sunday */
+/* Gentle at the top of the week, Tricky at the weekend. */
+function pwDailyBand(day){
+  var w=pwWeekday(day);
+  if(w===1||w===2) return 0;
+  if(w===0||w===6) return 2;
+  return 1;
+}
+function pwBandRange(b){
+  var from=0;
+  for(var i=0;i<PW_BANDS.length;i++){
+    if(i===b) return {from:from, to:from+PW_BANDS[i][1]};
+    from+=PW_BANDS[i][1];
+  }
+  return {from:0, to:PW_PACK.length/8};
+}
+function pwRnd(seed){
+  var x=(seed*2654435761)>>>0;
+  x^=x>>>15; x=(x*2246822519)>>>0; x^=x>>>13; x=(x*3266489917)>>>0; x^=x>>>16;
+  return x>>>0;
+}
+/* Never-played first; failing that, anything off cooldown. -1 if neither. */
+function pwPickIn(day, from, to, seen, cooldown){
+  var fresh=[], ok=[], i, last;
+  for(i=from;i<to;i++){
+    last=seen[pwKeyOf(i)];
+    if(last==null) fresh.push(i);
+    else if(day-last>=cooldown) ok.push(i);
+  }
+  var pool = fresh.length ? fresh : ok;
+  if(!pool.length) return -1;
+  return pool[pwRnd(day*131+from*7919) % pool.length];
+}
+function pwLeastRecent(seen){
+  var n=PW_PACK.length/8, best=-1, bestDay=Infinity, i, last;
+  for(i=0;i<n;i++){
+    last=seen[pwKeyOf(i)];
+    if(last==null) return i;
+    if(last<bestDay){ bestDay=last; best=i; }
+  }
+  return best<0?0:best;
+}
+/* Today's puzzle: the day's band first, then any band, then whatever was
+   played longest ago.  The last step means this can never fail to return
+   a puzzle, however much of the set the player has already been through. */
+function pwPickDaily(day, seen, cooldown){
+  var r=pwBandRange(pwDailyBand(day));
+  var p=pwPickIn(day, r.from, r.to, seen, cooldown);
+  if(p<0) p=pwPickIn(day, 0, PW_PACK.length/8, seen, cooldown);
+  if(p<0) p=pwLeastRecent(seen);
+  return p;
+}
+
 if(typeof module!=="undefined") module.exports={
   pwDict:pwDict, pwPuzzle:pwPuzzle, pwCount:pwCount, pwScore:pwScore,
-  pwIsPangram:pwIsPangram, pwSolve:pwSolve, PW_BANDS:PW_BANDS
+  pwIsPangram:pwIsPangram, pwSolve:pwSolve, PW_BANDS:PW_BANDS,
+  pwKeyOf:pwKeyOf, pwIndexOfKey:pwIndexOfKey, pwDayIndex:pwDayIndex,
+  pwWeekday:pwWeekday, pwDailyBand:pwDailyBand, pwBandRange:pwBandRange,
+  pwPickIn:pwPickIn, pwLeastRecent:pwLeastRecent, pwPickDaily:pwPickDaily
 };
 </script>
 <script>
@@ -273,25 +355,63 @@ function haptic(k){ if(window.GGA&&GGA.haptic) GGA.haptic(k); }
 
 /* ---------------- state ---------------- */
 var DICT=pwDict();
+var NPUZ=pwCount();
 var P=null;                 /* current puzzle */
 var typed="";
 var bandId=load("band","gentle");
+
+/* Play All walks each band in order, so prog[band].n - the number of puzzles
+   of that band the player has opened - is all it takes to know how far
+   through the whole set they are.  No separate list needed. */
 var prog=load("prog",null);
 if(!prog||typeof prog!=="object") prog={};
 for(var k=0;k<BANDS.length;k++){
   var b=BANDS[k].id;
-  if(!prog[b]||typeof prog[b]!=="object") prog[b]={i:0,f:[]};
+  if(!prog[b]||typeof prog[b]!=="object") prog[b]={i:0,n:0,f:[]};
   if(typeof prog[b].i!=="number"||prog[b].i<0||prog[b].i>=BANDS[k].count) prog[b].i=0;
   if(Object.prototype.toString.call(prog[b].f)!=="[object Array]") prog[b].f=[];
+  /* saves written before daily mode existed have no n */
+  if(typeof prog[b].n!=="number"||prog[b].n<0) prog[b].n=prog[b].i+1;
+  if(prog[b].n>BANDS[k].count) prog[b].n=BANDS[k].count;
 }
 var doneCount=load("done",0);
 if(typeof doneCount!=="number"||doneCount<0) doneCount=0;
+
+/* seen[key] = the day this puzzle was last opened, in either mode.  Keyed by
+   the puzzle's own seven letters plus its centre rather than by its position,
+   so the history still means something if the puzzle set is ever regrown. */
+var seen=load("seen",null);
+if(!seen||typeof seen!=="object") seen={};
+var dailyS=load("daily",null);      /* {day,key,f} - today's */
+var prevD=load("prevd",null);       /* {day,key,f} - the one before */
+var dstreak=load("dstreak",null);
+if(!dstreak||typeof dstreak!=="object"||typeof dstreak.n!=="number") dstreak={last:-9999,n:0};
+var mode=load("mode","all");
+if(mode!=="daily"&&mode!=="all") mode="all";
+
 var started=false, frozen=false;
 var awarded=false;          /* completion badges already given for this puzzle */
+var NOWOFF=0;               /* only ever moved by the test hook */
+function nowMs(){ return Date.now()+NOWOFF; }
+function today(){ return pwDayIndex(nowMs()); }
 
-function makePuzzle(band,i){
-  var b=bandOf(band);
-  var raw=pwPuzzle(b.from+i);
+/* every puzzle opened in Play All, across all three bands */
+function playAllSeen(){
+  var t=0;
+  for(var i=0;i<BANDS.length;i++) t+=prog[BANDS[i].id].n;
+  return t;
+}
+function cooldown(){ return playAllSeen()>=NPUZ ? 5 : 90; }
+
+function bandOfIndex(gi){
+  for(var i=0;i<BANDS.length;i++) if(gi<BANDS[i].from+BANDS[i].count) return BANDS[i];
+  return BANDS[BANDS.length-1];
+}
+function markSeen(gi){ seen[pwKeyOf(gi)]=today(); save("seen",seen); }
+
+function makePuzzle(gi){
+  var bd=bandOfIndex(gi);
+  var raw=pwPuzzle(gi);
   var all=pwSolve(DICT, raw.letters, raw.centre).sort();
   var max=0, pans=[];
   for(var j=0;j<all.length;j++){
@@ -301,15 +421,16 @@ function makePuzzle(band,i){
   /* the six outer letters, centre held separately */
   var outer=[];
   for(var c=0;c<raw.letters.length;c++) if(raw.letters.charAt(c)!==raw.centre) outer.push(raw.letters.charAt(c));
-  return {band:band, i:i, letters:raw.letters, centre:raw.centre,
+  return {gi:gi, band:bd.id, i:gi-bd.from, letters:raw.letters, centre:raw.centre,
           outer:outer, all:all, set:dictSet(all), max:max, pans:pans,
-          found:[], recent:[], score:0, rank:0};
+          found:[], recent:[], score:0, rank:0, daily:false, over:false};
 }
 function dictSet(a){ var s={}; for(var i=0;i<a.length;i++) s[a[i]]=1; return s; }
 
-function startPuzzle(band,i,found){
-  P=makePuzzle(band,i);
-  bandId=band;
+function loadPuzzle(gi,found,isDaily){
+  P=makePuzzle(gi);
+  P.daily=!!isDaily;
+  if(!isDaily) bandId=P.band;
   typed="";
   awarded=false;
   if(found&&found.length){
@@ -324,12 +445,53 @@ function startPuzzle(band,i,found){
   shufflePetals(true);
   paintHUD(); layout(); paint();
 }
+/* Play All: open a puzzle and record that its letters have been seen */
+function startPuzzle(band,i,found){
+  var bd=bandOf(band);
+  loadPuzzle(bd.from+i, found, false);
+  if(prog[band].n<i+1) prog[band].n=i+1;
+  markSeen(bd.from+i);
+}
 function hasFound(w){ for(var i=0;i<P.found.length;i++) if(P.found[i]===w) return true; return false; }
+
+/* ---------------- daily ---------------- */
+function keyIndex(k){
+  var gi=pwIndexOfKey(k);
+  return gi;
+}
+/* Roll the day over if needed and hand back today's entry. */
+function dailyEntry(){
+  var d=today();
+  if(dailyS&&typeof dailyS.day==="number"&&dailyS.day===d) return dailyS;
+  if(dailyS&&typeof dailyS.day==="number"&&dailyS.day>d) return dailyS;  /* clock went back */
+  if(dailyS&&typeof dailyS.day==="number") prevD={day:dailyS.day,key:dailyS.key,f:(dailyS.f||[]).slice()};
+  var gi=pwPickDaily(d, seen, cooldown());
+  dailyS={day:d, key:pwKeyOf(gi), f:[]};
+  dstreak.n = (dstreak.last===d-1) ? dstreak.n+1 : 1;
+  dstreak.last=d;
+  save("daily",dailyS); save("prevd",prevD); save("dstreak",dstreak);
+  return dailyS;
+}
+function startDaily(){
+  var e=dailyEntry();
+  var gi=keyIndex(e.key);
+  if(gi<0){                       /* the set was regrown under us */
+    gi=pwPickDaily(e.day, seen, cooldown());
+    e.key=pwKeyOf(gi); save("daily",e);
+  }
+  loadPuzzle(gi, e.f, true);
+  markSeen(gi);
+}
 
 function persist(){
   if(!P) return;
-  prog[P.band]={i:P.i, f:P.found.slice()};
-  save("prog",prog); save("band",bandId); save("done",doneCount);
+  if(P.daily){
+    if(dailyS){ dailyS.f=P.found.slice(); save("daily",dailyS); }
+  }else{
+    prog[P.band]={i:P.i, n:prog[P.band].n, f:P.found.slice()};
+    save("prog",prog); save("band",bandId);
+  }
+  save("done",doneCount); save("mode",mode);
 }
 
 /* ---------------- layout ---------------- */
@@ -537,7 +699,7 @@ function say(t,good){
 
 /* ---------------- input ---------------- */
 function tapLetter(ch){
-  if(!started||frozen) return;
+  if(!started||frozen||P.over) return;
   if(typed.length>=20) return;
   typed+=ch;
   paintCur();
@@ -545,7 +707,7 @@ function tapLetter(ch){
   haptic("light");
 }
 function del(){
-  if(!started||frozen) return;
+  if(!started||frozen||P.over) return;
   if(!typed.length) return;
   typed=typed.slice(0,-1);
   paintCur();
@@ -554,7 +716,7 @@ function del(){
 function clearWord(){ typed=""; paintCur(); }
 
 function submit(){
-  if(!started||frozen) return null;
+  if(!started||frozen||P.over) return null;
   var w=typed;
   if(!w.length) return null;
   if(w.length<4){ say("Too short - four letters or more"); bad(); return "short"; }
@@ -683,31 +845,119 @@ function closeOvl(){ ovl.classList.remove("on"); }
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+/* the home screen: pick a way to play */
 function titleScreen(){
   started=false;
+  var d=today();
+  var fresh=!dailyS || dailyS.day!==d;
+  var bandName=BMETA[BANDS[pwDailyBand(d)].id].name;
+  var dTag, dNote="";
+  if(fresh){
+    dTag="A new flower every day &middot; "+bandName;
+  }else{
+    var gi=keyIndex(dailyS.key);
+    var doneToday=false, nf=(dailyS.f||[]).length;
+    dTag= nf ? "Carry on &middot; "+nf+(nf===1?" word":" words")+" so far"
+             : "Today&#8217;s flower &middot; "+bandName;
+  }
+  if(dstreak.n>0 && (dstreak.last===d||dstreak.last===d-1))
+    dNote=dstreak.n===1 ? "Day 1" : dstreak.n+" days in a row";
+
   var h='<h2>PETAL WORDS</h2>'+
         '<p>Make words from the seven petals. Every word must use the middle letter.</p>'+
+        '<div class="sizes">'+
+          '<div class="sz z-d" id="mDaily">'+
+            '<div><div class="sn">Play Daily</div><div class="stg">'+dTag+'</div></div>'+
+            (dNote?'<div class="sc">'+dNote.replace(" in a row","<br>in a row")+'</div>':'')+
+          '</div>'+
+          '<div class="sz z-p" id="mAll">'+
+            '<div><div class="sn">Play All</div><div class="stg">Work through all '+NPUZ+' at your own pace</div></div>'+
+            '<div class="sc">'+playAllSeen()+'<br>OPENED</div>'+
+          '</div>'+
+        '</div>';
+  if(prevD && prevD.key) h+='<button class="btn btn-alt" id="bYest">YESTERDAY&#8217;S WORDS</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  card.querySelector("#mDaily").onclick=function(){
+    mode="daily"; startDaily();
+    started=true; closeOvl(); persist(); layout(); paint(); paintHUD();
+  };
+  card.querySelector("#mAll").onclick=bandScreen;
+  var by=card.querySelector("#bYest");
+  if(by) by.onclick=function(){ yesterdayScreen(true); };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+
+/* Play All: choose a band */
+function bandScreen(){
+  started=false;
+  var h='<h2>PLAY ALL</h2>'+
+        '<p>Pick a size. Each one runs straight through in order.</p>'+
         '<div class="sizes">';
   for(var i=0;i<BANDS.length;i++){
     var b=BANDS[i], m=BMETA[b.id];
-    var pr=prog[b.id];
     h+='<div class="sz '+m.cls+'" data-b="'+b.id+'">'+
          '<div><div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div>'+
-         '<div class="sc">PUZZLE<br>'+(pr.i+1)+' / '+b.count+'</div>'+
+         '<div class="sc">PUZZLE<br>'+(prog[b.id].i+1)+' / '+b.count+'</div>'+
        '</div>';
   }
   h+='</div>';
-  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  h+='<button class="btn btn-alt" id="bBackHome">BACK</button>';
   openOvl(h);
   var els=card.querySelectorAll(".sz");
   for(var j=0;j<els.length;j++){
     els[j].onclick=function(){
       var b=this.getAttribute("data-b");
+      mode="all";
       startPuzzle(b, prog[b].i, prog[b].f);
       started=true; closeOvl(); persist(); layout(); paint(); paintHUD();
     };
   }
-  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+  card.querySelector("#bBackHome").onclick=titleScreen;
+}
+
+/* the whole word list, ticking off what was found */
+function wordsHTML(all, letters, got){
+  var h='<div class="wlist">';
+  for(var i=0;i<all.length;i++){
+    var w=all[i], pan=pwIsPangram(w,letters);
+    h+= got[w] ? '<span class="'+(pan?"pg":"hit")+'">'+esc(w)+(pan?" &#10022;":"")+' &#10003;</span>'
+               : '<span class="miss">'+esc(w)+(pan?" &#10022;":"")+'</span>';
+  }
+  return h+'</div>';
+}
+
+/* every word from the previous daily, marking what was found */
+function yesterdayScreen(fromHome){
+  if(!prevD||!prevD.key){ titleScreen(); return; }
+  var gi=keyIndex(prevD.key);
+  if(gi<0){ titleScreen(); return; }
+  var q=pwPuzzle(gi);
+  var all=pwSolve(DICT,q.letters,q.centre).sort();
+  var got={}, i, sc=0, mx=0;
+  for(i=0;i<(prevD.f||[]).length;i++) got[prevD.f[i]]=1;
+  for(i=0;i<all.length;i++){
+    mx+=pwScore(all[i],q.letters);
+    if(got[all[i]]) sc+=pwScore(all[i],q.letters);
+  }
+  var nf=0;
+  for(i=0;i<all.length;i++) if(got[all[i]]) nf++;
+
+  var lets="";
+  for(i=0;i<q.letters.length;i++){
+    var ch=q.letters.charAt(i).toUpperCase();
+    lets+= q.letters.charAt(i)===q.centre ? '<b>'+ch+'</b>' : ch;
+    if(i<q.letters.length-1) lets+=" ";
+  }
+  var h='<h2>LAST TIME</h2>'+
+        '<p class="lets">'+lets+'</p>'+
+        '<p>'+nf+' of '+all.length+' &middot; '+sc+' of '+mx+' points</p>'+
+        wordsHTML(all, q.letters, got)+
+        '<button class="btn btn-go" id="bBackY">BACK</button>';
+  openOvl(h);
+  card.querySelector("#bBackY").onclick=function(){
+    if(fromHome) titleScreen(); else closeOvl();
+  };
 }
 
 function rulesScreen(fromGame){
@@ -721,6 +971,8 @@ function rulesScreen(fromGame){
     '&bull; A word using <b>all seven</b> petals is a <b>pangram</b> and scores <b>7 extra</b>.<br>'+
     '&bull; <b>SHUFFLE</b> moves the petals about. It never changes the puzzle.<br>'+
     '&bull; There is no letter S, so no plurals ending in S.<br>'+
+    '&bull; In <b>Play All</b>, <b>GIVE UP</b> in the pause menu shows every word and ends that puzzle.<br>'+
+    '&bull; In <b>Play Daily</b> there is one flower a day, and a new one at 9am.<br>'+
     '</div>'+
     '<button class="btn btn-go" id="bBack">'+(fromGame?"CARRY ON":"BACK")+'</button>';
   openOvl(h);
@@ -769,6 +1021,10 @@ function statsHTML(){
 /* `lead` is false when another button on the card is the obvious next step,
    so that two purple buttons never compete for the same tap. */
 function tailButtons(h,lead){
+  /* One round a day means there is no "next" in daily mode - the only way
+     on is the 9am rollover. */
+  if(P.daily) return h+'<button class="btn btn-alt" id="bMenu">BACK TO MENU</button>'+
+                       '<p class="soon">A new flower at 9am.</p>';
   var more=P.i<bandOf(P.band).count-1;
   var cls=lead===false ? "btn-alt" : "btn-go";
   h+= more ? '<button class="btn '+cls+'" id="bNext">NEXT PUZZLE</button>'
@@ -790,7 +1046,8 @@ function finish(){
   haptic("success");
 
   var h='<h2>'+(perfect?"PERFECT BLOOM":esc(RANKS[P.rank].n).toUpperCase())+'</h2>'+
-        '<p>Puzzle '+(P.i+1)+' &middot; '+esc(BMETA[P.band].name)+'</p>'+
+        '<p>'+(P.daily ? "Today&#8217;s flower &middot; "+esc(BMETA[P.band].name)
+                       : "Puzzle "+(P.i+1)+" &middot; "+esc(BMETA[P.band].name))+'</p>'+
         statsHTML();
   if(perfect){
     h+='<p>Every word on the flower. Nothing left to find.</p>';
@@ -798,12 +1055,15 @@ function finish(){
     openOvl(h); wireTail();
   }else{
     h+='<p>There are still '+(P.all.length-P.found.length)+' to find.</p>'+
-       '<button class="btn btn-go" id="bKeep">KEEP LOOKING</button>'+
-       '<button class="btn btn-alt" id="bShow">SHOW ME THE REST</button>';
+       '<button class="btn btn-go" id="bKeep">KEEP LOOKING</button>';
+    /* Today's answers stay hidden in daily mode - that is the whole point of
+       a daily.  Yesterday's are on the home screen instead. */
+    if(!P.daily) h+='<button class="btn btn-alt" id="bShow">SHOW ME THE REST</button>';
     h=tailButtons(h,false);
     openOvl(h);
     card.querySelector("#bKeep").onclick=closeOvl;
-    card.querySelector("#bShow").onclick=revealScreen;
+    var bs=card.querySelector("#bShow");
+    if(bs) bs.onclick=revealScreen;
     wireTail();
   }
 }
@@ -825,10 +1085,47 @@ function revealScreen(){
   openOvl(h); wireTail();
 }
 
+/* ---------------- giving up (Play All only) ---------------- */
+function giveUpConfirm(){
+  var h='<h2>GIVE UP?</h2>'+
+        '<p>You will see every word, and this puzzle is then over. You cannot come back and finish it.</p>'+
+        '<button class="btn btn-go" id="gYes">YES, SHOW ME</button>'+
+        '<button class="btn btn-alt" id="gNo">NO, CARRY ON</button>';
+  openOvl(h);
+  card.querySelector("#gYes").onclick=giveUp;
+  card.querySelector("#gNo").onclick=function(){ lastT=0; closeOvl(); };
+}
+function giveUp(){
+  if(!P||P.daily||P.over) return;
+  P.over=true;
+  var last=bandOf(P.band).count-1;
+  var ni=P.i<last ? P.i+1 : P.i;
+  /* Move the band on NOW, before anything is shown.  Giving up ends the round
+     whatever the player does next - closing the card, leaving the game, even
+     killing the app - so the advance cannot wait on a button being pressed.
+     n is left alone: they have not opened the next puzzle yet. */
+  prog[P.band]={i:ni, n:prog[P.band].n, f:[]};
+  save("prog",prog);
+  beep(300,.16,"sine",.04,200);
+  haptic("warning");
+  roundOverScreen();
+}
+function roundOverScreen(){
+  var got={}, i;
+  for(i=0;i<P.found.length;i++) got[P.found[i]]=1;
+  var h='<h2>ROUND OVER</h2>'+
+        '<p>Puzzle '+(P.i+1)+' &middot; '+esc(BMETA[P.band].name)+'</p>'+
+        '<p>'+P.found.length+' of '+P.all.length+' &middot; '+P.score+' of '+P.max+' points</p>'+
+        wordsHTML(P.all, P.letters, got);
+  h=tailButtons(h);
+  openOvl(h); wireTail();
+}
+
 function nextPuzzle(){
+  if(P.daily) return;              /* one round a day, no skipping ahead */
   var last=bandOf(P.band).count-1;
   var i=P.i<last ? P.i+1 : P.i;
-  prog[P.band]={i:i, f:[]};
+  prog[P.band]={i:i, n:prog[P.band].n, f:[]};
   save("prog",prog);
   startPuzzle(P.band, i, []);
   started=true; closeOvl(); persist();
@@ -837,7 +1134,8 @@ function nextPuzzle(){
 document.getElementById("bPause").onclick=function(){
   if(!started){ titleScreen(); return; }
   var h='<h2>PAUSED</h2>'+
-        '<p>Puzzle '+(P.i+1)+' &middot; '+esc(BMETA[P.band].name)+'</p>'+
+        '<p>'+(P.daily ? "Today&#8217;s flower &middot; "+esc(BMETA[P.band].name)
+                       : "Puzzle "+(P.i+1)+" &middot; "+esc(BMETA[P.band].name))+'</p>'+
         '<div class="stats">'+
           '<div class="st"><div class="sk">SCORE</div><div class="sv">'+P.score+'</div></div>'+
           '<div class="st"><div class="sk">RANK</div><div class="sv" style="font-size:12px">'+esc(RANKS[P.rank].n)+'</div></div>'+
@@ -845,20 +1143,27 @@ document.getElementById("bPause").onclick=function(){
         '</div>'+
         ladderHTML()+
         '<button class="btn btn-go" id="bGo">CARRY ON</button>'+
-        '<button class="btn btn-alt" id="bSkip">SKIP TO NEXT PUZZLE</button>'+
+        (P.daily||P.over ? '' : '<button class="btn btn-alt" id="bGive">GIVE UP</button>')+
+        (P.daily && prevD && prevD.key ? '<button class="btn btn-alt" id="bYest2">YESTERDAY&#8217;S WORDS</button>' : '')+
         '<button class="btn btn-alt" id="bRules2">HOW TO PLAY</button>'+
         '<button class="btn btn-alt" id="bMenu2">BACK TO MENU</button>';
   openOvl(h);
   card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
-  card.querySelector("#bSkip").onclick=function(){ nextPuzzle(); };
+  var bgv=card.querySelector("#bGive");
+  if(bgv) bgv.onclick=giveUpConfirm;
+  var by2=card.querySelector("#bYest2");
+  if(by2) by2.onclick=function(){ yesterdayScreen(false); };
   card.querySelector("#bRules2").onclick=function(){ rulesScreen(true); };
   card.querySelector("#bMenu2").onclick=titleScreen;
 };
 
 /* ---------------- boot ---------------- */
-/* NOTE: do not call persist() from here. Booting must leave the saved puzzle
-   untouched so the title screen can offer it back exactly as it was. */
-startPuzzle(bandId, prog[bandId].i, prog[bandId].f);
+/* NOTE: do not call persist() from here, and use loadPuzzle rather than
+   startPuzzle.  Booting must leave the saved puzzle untouched so the title
+   screen can offer it back exactly as it was, and it must NOT mark anything
+   as seen - the player has not opened it yet, and marking it would block it
+   from daily mode for ninety days. */
+loadPuzzle(bandOf(bandId).from+prog[bandId].i, prog[bandId].f, false);
 started=false;
 titleScreen();
 requestAnimationFrame(frame);

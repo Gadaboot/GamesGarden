@@ -246,7 +246,15 @@
     { id: 'pw_century',  game: 'Petal Words',   icon: '💯', name: 'Century',           desc: 'Score 100 in one puzzle' },
     { id: 'pw_five',     game: 'Petal Words',   icon: '💐', name: 'Bouquet',           desc: 'Finish five puzzles' },
     { id: 'pw_25',       game: 'Petal Words',   icon: '🌻', name: 'Garden',            desc: 'Finish twenty-five puzzles' },
-    { id: 'pw_tricky',   game: 'Petal Words',   icon: '🌹', name: 'Thorny',            desc: 'Finish a Tricky puzzle' }
+    { id: 'pw_tricky',   game: 'Petal Words',   icon: '🌹', name: 'Thorny',            desc: 'Finish a Tricky puzzle' },
+    { id: 'cs_first',    game: 'Circle Smash',  icon: '🎯', name: 'Middle Cleared',    desc: 'Clear your first board' },
+    { id: 'cs_b5',       game: 'Circle Smash',  icon: '🔄', name: 'Five Boards',       desc: 'Clear five boards in one game' },
+    { id: 'cs_b10',      game: 'Circle Smash',  icon: '🏆', name: 'Ten Boards',        desc: 'Clear ten boards in one game' },
+    { id: 'cs_score',    game: 'Circle Smash',  icon: '💯', name: 'Four Figures',      desc: 'Score 1,000 in one game' },
+    { id: 'cs_multi',    game: 'Circle Smash',  icon: '⚡', name: 'Three at Once',     desc: 'Have three balls going at once' },
+    { id: 'cs_clean',    game: 'Circle Smash',  icon: '🧤', name: 'Not a Ball Lost',   desc: 'Clear a board without losing a ball' },
+    { id: 'cs_hard',     game: 'Circle Smash',  icon: '🧠', name: 'Fiendish Cleared',  desc: 'Clear a board on Fiendish' },
+    { id: 'cs_10',       game: 'Circle Smash',  icon: '🔟', name: 'Ten Games',         desc: 'Play ten games of Circle Smash' }
   ];
 
   var GAME_PAGES = [
@@ -259,7 +267,7 @@
     'picture-logic', 'spider', 'freecell', 'mine-hunt', 'word-search',
     'loose-ends', 'snake', 'knock-through', 'air-hockey', 'carrom', 'finger-soccer',
     'dots-boxes', 'connect4', 'mancala', 'reversi', 'backgammon', 'dominoes',
-    'last-letters', 'petal-words'
+    'last-letters', 'petal-words', 'circle-smash'
   ];
 
   var A_KEY = 'gg_ach', S_KEY = 'gg_streak', P_KEY = 'gg_played';

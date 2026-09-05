@@ -45,6 +45,8 @@
 		6739260F304C362200DD4D36 /* icon_last-letters.png in Resources */ = {isa = PBXBuildFile; fileRef = 6739260E304C362200DD4D36 /* icon_last-letters.png */; };
 		67392611304C366A00DD4D36 /* icon_petal-words.png in Resources */ = {isa = PBXBuildFile; fileRef = 67392610304C366A00DD4D36 /* icon_petal-words.png */; };
 		67392613304C367900DD4D36 /* petal-words.html in Resources */ = {isa = PBXBuildFile; fileRef = 67392612304C367900DD4D36 /* petal-words.html */; };
+		67392615304C65E200DD4D36 /* icon_circle-smash 2.png in Resources */ = {isa = PBXBuildFile; fileRef = 67392614304C65E200DD4D36 /* icon_circle-smash 2.png */; };
+		67392617304C65F200DD4D36 /* circle-smash 2.html in Resources */ = {isa = PBXBuildFile; fileRef = 67392616304C65F200DD4D36 /* circle-smash 2.html */; };
 		6761C90E30495EB70050EC58 /* nullpoints.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90D30495EB70050EC58 /* nullpoints.html */; };
 		6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90F30495EC50050EC58 /* icon_nullpoints.png */; };
 		6761C912304969D20050EC58 /* icon_wordguess.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C911304969D20050EC58 /* icon_wordguess.png */; };
@@ -154,6 +156,8 @@
 		6739260E304C362200DD4D36 /* icon_last-letters.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_last-letters.png"; sourceTree = "<group>"; };
 		67392610304C366A00DD4D36 /* icon_petal-words.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_petal-words.png"; sourceTree = "<group>"; };
 		67392612304C367900DD4D36 /* petal-words.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "petal-words.html"; sourceTree = "<group>"; };
+		67392614304C65E200DD4D36 /* icon_circle-smash 2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_circle-smash 2.png"; sourceTree = "<group>"; };
+		67392616304C65F200DD4D36 /* circle-smash 2.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "circle-smash 2.html"; sourceTree = "<group>"; };
 		6761C90D30495EB70050EC58 /* nullpoints.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = nullpoints.html; sourceTree = "<group>"; };
 		6761C90F30495EC50050EC58 /* icon_nullpoints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_nullpoints.png; sourceTree = "<group>"; };
 		6761C911304969D20050EC58 /* icon_wordguess.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wordguess.png; sourceTree = "<group>"; };
@@ -272,6 +276,7 @@
 				6761C92730498D320050EC58 /* cat-poopers.html */,
 				67D8238C2FFFA18C00892511 /* checkers.html */,
 				67D8238D2FFFA18C00892511 /* chess.html */,
+				67392616304C65F200DD4D36 /* circle-smash 2.html */,
 				673925F8304B35B300DD4D36 /* connect4.html */,
 				6739260A304C230C00DD4D36 /* dominoes.html */,
 				673925F6304B2DDF00DD4D36 /* dots-boxes.html */,
@@ -324,6 +329,7 @@
 				6761C92530498D240050EC58 /* icon_cat-poopers.png */,
 				67D823902FFFA1EB00892511 /* icon_checkers.png */,
 				67D823912FFFA1EB00892511 /* icon_chess.png */,
+				67392614304C65E200DD4D36 /* icon_circle-smash 2.png */,
 				673925FA304B35C000DD4D36 /* icon_connect4.png */,
 				6761C9353049962A0050EC58 /* icon_cup-run.png */,
 				67392608304C22FF00DD4D36 /* icon_dominoes.png */,
@@ -489,6 +495,7 @@
 				6761C95E304A069B0050EC58 /* icon_picture-logic.png in Resources */,
 				6761C940304999900050EC58 /* sea-battle.html in Resources */,
 				6761C941304999900050EC58 /* five-dice.html in Resources */,
+				67392617304C65F200DD4D36 /* circle-smash 2.html in Resources */,
 				6761C942304999900050EC58 /* icon_five-dice.png in Resources */,
 				67392601304C0F9D00DD4D36 /* reversi.html in Resources */,
 				673925ED304B200800DD4D36 /* icon_carrom.png in Resources */,
@@ -502,6 +509,7 @@
 				6761C95A304A03A10050EC58 /* icon_mahjong.png in Resources */,
 				6739260B304C230C00DD4D36 /* dominoes.html in Resources */,
 				6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */,
+				67392615304C65E200DD4D36 /* icon_circle-smash 2.png in Resources */,
 				67392609304C22FF00DD4D36 /* icon_dominoes.png in Resources */,
 				673925FB304B35C000DD4D36 /* icon_connect4.png in Resources */,
 				67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */,
