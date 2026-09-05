@@ -238,7 +238,15 @@
     { id: 'll_streak5',  game: 'Last Letters',  icon: '🔥', name: 'Five in a Row',     desc: 'Solve five words one after another' },
     { id: 'll_25',       game: 'Last Letters',  icon: '📚', name: 'Twenty-Five Words', desc: 'Solve twenty-five words in total' },
     { id: 'll_themes',   game: 'Last Letters',  icon: '🗺️', name: 'Well Read',        desc: 'Solve a word from every category' },
-    { id: 'll_alldiff',  game: 'Last Letters',  icon: '🎵', name: 'Every Size',        desc: 'Solve on Gentle, Tricky and Fiendish' }
+    { id: 'll_alldiff',  game: 'Last Letters',  icon: '🎵', name: 'Every Size',        desc: 'Solve on Gentle, Tricky and Fiendish' },
+    { id: 'pw_first',    game: 'Petal Words',   icon: '🌸', name: 'First Flower',      desc: 'Finish a puzzle' },
+    { id: 'pw_pangram',  game: 'Petal Words',   icon: '✨', name: 'All Seven',         desc: 'Find a word using every petal' },
+    { id: 'pw_perfect',  game: 'Petal Words',   icon: '🌷', name: 'Perfect Bloom',     desc: 'Find every word in a puzzle' },
+    { id: 'pw_long',     game: 'Petal Words',   icon: '📏', name: 'Long Stem',         desc: 'Find a word of nine letters or more' },
+    { id: 'pw_century',  game: 'Petal Words',   icon: '💯', name: 'Century',           desc: 'Score 100 in one puzzle' },
+    { id: 'pw_five',     game: 'Petal Words',   icon: '💐', name: 'Bouquet',           desc: 'Finish five puzzles' },
+    { id: 'pw_25',       game: 'Petal Words',   icon: '🌻', name: 'Garden',            desc: 'Finish twenty-five puzzles' },
+    { id: 'pw_tricky',   game: 'Petal Words',   icon: '🌹', name: 'Thorny',            desc: 'Finish a Tricky puzzle' }
   ];
 
   var GAME_PAGES = [
@@ -251,7 +259,7 @@
     'picture-logic', 'spider', 'freecell', 'mine-hunt', 'word-search',
     'loose-ends', 'snake', 'knock-through', 'air-hockey', 'carrom', 'finger-soccer',
     'dots-boxes', 'connect4', 'mancala', 'reversi', 'backgammon', 'dominoes',
-    'last-letters'
+    'last-letters', 'petal-words'
   ];
 
   var A_KEY = 'gg_ach', S_KEY = 'gg_streak', P_KEY = 'gg_played';
