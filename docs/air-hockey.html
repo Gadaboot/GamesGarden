@@ -315,10 +315,23 @@ function makeHockey(){
   }
 
   /* The computer mallet plays like a person: hold a line in front of your own
-     goal and read where the puck is going, then step out and strike when the
-     puck is yours and not a threat.  An earlier version simply chased the puck
-     and sat on it, which made it literally unbeatable - 500 seconds of rally
-     without a single goal. */
+     goal and read where the puck is going, then line up behind it and hit
+     THROUGH it when it is yours.
+
+     The follow-through is the whole thing.  An earlier version aimed at a point
+     1.02 times the contact distance behind the puck - a spot that is by
+     definition just barely not touching it.  The mallet drove there, arrived,
+     and stopped, and a mallet resting against a puck imparts nothing at all.
+     Measured: on Gentle the puck never left the computer's half in 99 tries out
+     of 200, and when it did it crawled off at speed 3.3 out of a cap of 34.
+     What the player saw was a mallet buzzing next to the puck and never
+     shooting.  A strike now aims PAST the puck, and once begun it is seen
+     through rather than re-decided every frame. */
+  var RUNUP=1.95;        /* how far behind the puck to line up, in contact radii */
+  var FOLLOW=1.70;       /* how far past it to drive */
+  var SWING=0.42;        /* seconds a strike is committed for */
+  var SETUP_MAX=0.55;    /* give up lining up after this and just hit it */
+
   /* what the computer can see: the puck as it was one reaction ago */
   function seen(st, react){
     var h=st.hist;
@@ -326,6 +339,13 @@ function makeHockey(){
     var want=st.clock-react;
     for(var i=0;i<h.length;i++) if(h[i].t>=want) return h[i];
     return h[h.length-1];
+  }
+
+  function holdLine(st, m, p, c, line, toward){
+    m.phase="hold"; m.aim=null; m.swing=0; m.setup=0;
+    if(toward && !st.waiting)
+      return { x:predictX(p, line)+(st.rand()-0.5)*c.wobble, y:line, sp:c.speed };
+    return { x:W/2+(p.x-W/2)*0.3, y:line, sp:c.speed };
   }
 
   function think(st, side, dt){
@@ -336,42 +356,68 @@ function makeHockey(){
        people too */
     var p=seen(st, c.react||0);
     var line = side===0 ? H-1.5 : 1.5;
+    var goalY = side===0 ? 0 : H;             /* the goal it is attacking */
     var toward = side===0 ? (p.vy>0.5) : (p.vy<-0.5);
-    var mine = side===0 ? (p.y>MID) : (p.y<MID);
-    var tx, ty;
-    if(toward && !st.waiting){
-      m.aim=null;
-      tx=predictX(p, line)+(st.rand()-0.5)*c.wobble;
-      ty=line;
-    }else if(mine && !st.waiting){
-      /* pick a spot in the far goal and stick to it for the whole strike -
-         re-rolling it every frame just averages back to the middle, which is
-         the easiest shot in the game to save */
+    var mine   = side===0 ? (p.y>MID) : (p.y<MID);
+    /* already struck it - do not go chasing after your own shot */
+    var away   = side===0 ? (p.vy<-2) : (p.vy>2);
+    if(m.phase==null){ m.phase="hold"; m.aim=null; m.swing=0; m.setup=0; m.jitter=0; }
+
+    if(m.swing>0){
+      m.swing-=dt;
+      if(!mine||st.waiting) m.swing=0;
+    }
+
+    var t;
+    if(m.swing<=0 && (st.waiting || !mine || toward || away)){
+      t=holdLine(st, m, p, c, line, toward);
+    }else{
       if(m.aim==null){
+        /* pick a spot in the far goal and stick to it for the whole strike -
+           re-rolling it every frame just averages back to the middle, which is
+           the easiest shot in the game to save */
         var spot=W/2+(st.rand()-0.5)*2*GOAL_HALF*(c.aimSpread||0);
         /* Sometimes go off the cushion. Since neither side reads a bank shot in
            advance, this is the one way to beat a defender who is otherwise
            always in the right place - it is how people score, too. */
         if(st.rand()<(c.bankShot||0)) spot = (st.rand()<0.5) ? -spot : 2*W-spot;
-        m.aim=spot;
+        /* Shakiness belongs in the AIM, not in where the mallet stands.  Put it
+           in the standing position and a wobbly level does not shoot crookedly,
+           it whiffs - it lines up on the wrong side of the puck and misses it
+           altogether.  Rolled once per strike, because re-rolling every frame
+           is what makes a mallet shiver on the spot. */
+        m.aim=spot+(st.rand()-0.5)*c.wobble*1.6;
+        m.jitter=0;
+        m.setup=0;
+        m.phase="line";
       }
-      var gy = side===0 ? 0 : H;
-      var ax=st.puck.x-m.aim, ay=st.puck.y-gy;
-      var al=len(ax,ay)||1;
-      var stand=(PUCK_R+m.r)*1.02;
-      tx=p.x+ax/al*stand+(st.rand()-0.5)*c.wobble;
-      ty=p.y+ay/al*stand;
-    }else{
-      m.aim=null;
-      tx=W/2+(p.x-W/2)*0.3;
-      ty=line;
+      var q=st.puck;
+      var dx=m.aim-q.x, dy=goalY-q.y;
+      var d=len(dx,dy)||1;
+      dx/=d; dy/=d;
+      var back=PUCK_R+m.r;
+      if(m.phase!=="strike"){
+        m.setup+=dt;
+        var lx=q.x-dx*back*RUNUP+m.jitter, ly=q.y-dy*back*RUNUP;
+        /* the run-up spot can sit off the table or inside its own goal mouth,
+           in which case it is never reached - so give up waiting and swing */
+        if(len(m.x-lx, m.y-ly) < back*0.6 || m.setup>SETUP_MAX){
+          m.phase="strike"; m.swing=SWING;
+        }else{
+          t={ x:lx, y:ly, sp:c.speed };
+        }
+      }
+      if(m.phase==="strike"){
+        t={ x:q.x+dx*back*FOLLOW+m.jitter, y:q.y+dy*back*FOLLOW,
+            sp:c.speed*(c.strike||1.7) };
+      }
     }
-    m.tx=tx; m.ty=ty;
-    var dx=tx-m.x, dy=ty-m.y;
-    var d=len(dx,dy);
-    if(d>1e-6){
-      var step=Math.min(d, c.speed*dt);
-      m.x+=dx/d*step; m.y+=dy/d*step;
+    m.tx=t.x; m.ty=t.y;
+    var mx=t.x-m.x, my=t.y-m.y;
+    var dd=len(mx,my);
+    if(dd>1e-6){
+      var step=Math.min(dd, t.sp*dt);
+      m.x+=mx/dd*step; m.y+=my/dd*step;
     }
     clampMallet(m, side);
   }
@@ -505,7 +551,6 @@ function makeHockey(){
            setTarget:setTarget, audit:audit, homeOf:homeOf, len:len, predictX:predictX,
            POSTS:POSTS, POST_R:POST_R };
 }
-if(typeof module!=='undefined') module.exports = makeHockey;
 </script>
 <script>
 (function(){
@@ -517,12 +562,12 @@ function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e
 
 var MODES=[
   {id:"two",  name:"Two Players", cls:"z-p", tag:"Share the phone &middot; one at each end", ai:null},
-  {id:"easy", name:"Gentle",      cls:"z-a", tag:"Against the computer &middot; takes its time",
-   ai:{speed:5.5, wobble:2.4, react:0.44, aimSpread:0.15, bankShot:0.04}},
+  {id:"easy", name:"Gentle",      cls:"z-a", tag:"Against the computer &middot; slow to spot a chance",
+   ai:{speed:5.5, wobble:3.4, react:0.75, aimSpread:0.15, bankShot:0.04, strike:1.25}},
   {id:"med",  name:"Tricky",      cls:"z-b", tag:"Against the computer &middot; a proper contest",
-   ai:{speed:10, wobble:1.1, react:0.26, aimSpread:0.55, bankShot:0.28}},
-  {id:"hard", name:"Fiendish",    cls:"z-c", tag:"Against the computer &middot; reads you quickly",
-   ai:{speed:15, wobble:0.5, react:0.12, aimSpread:0.95, bankShot:0.60}}
+   ai:{speed:9, wobble:1.9, react:0.34, aimSpread:0.55, bankShot:0.28, strike:1.4}},
+  {id:"hard", name:"Fiendish",    cls:"z-c", tag:"Against the computer &middot; reads you and strikes hard",
+   ai:{speed:14, wobble:1.1, react:0.26, aimSpread:0.95, bankShot:0.6, strike:1.7}}
 ];
 function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
 
@@ -883,7 +928,7 @@ function rulesScreen(fromGame){
     '&#9642; In <b>Two Players</b> both of you hold the phone between you and play at the same time &mdash; a finger each, one at each end.<br><br>'+
     '&#9642; You cannot reach past the halfway line, and neither can they.<br><br>'+
     '&#9642; Tap anywhere to serve. Whoever let the last one in serves the next.<br><br>'+
-    '&#9642; The <b>cushions are live</b>: the computer reads a straight shot but gets wrong-footed off the side wall, so bank it in.<br><br>'+
+    '&#9642; The <b>cushions are live</b>: the computer reads a straight shot but gets wrong-footed off the side wall, so bank it in &mdash; and it will do the same to you.<br><br>'+
     '&#9642; A puck left crawling for three seconds is put back on the spot.'+
     '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
   card.querySelector("#bBack").onclick=function(){
@@ -920,6 +965,10 @@ document.getElementById("bPause").onclick=function(){
   card.querySelector("#bGo").onclick=function(){ running=true; lastT=0; closeOvl(); };
   card.querySelector("#bMenu2").onclick=titleScreen;
 };
+
+/* ---------------- the test hook ----------------
+   Stripped out of the shipping build by the assembler; nothing in the game
+   reads it, and `frozen` stays false without it. */
 
 /* ---------------- boot ---------------- */
 newMatch(load("mode","two"));
