@@ -87,7 +87,11 @@
   /* Pieces are sized from the square they sit in, set in JS after layout -
      a viewport-based size is wrong the moment the board is height-limited
      rather than width-limited. */
-  .piece{font-size:var(--pc,34px);line-height:1;z-index:1;position:relative;pointer-events:none}
+  .piece{font-size:var(--pc,34px);line-height:1;z-index:1;position:relative;pointer-events:none;
+    /* keep the pieces on a TEXT font - see the note on GLYPH in the script. An
+       emoji font paints its own colours and a white pawn comes out black. */
+    font-family:"Apple Symbols","Segoe UI Symbol","DejaVu Sans",serif;
+    font-variant-emoji:text}
   .piece.w{color:var(--white-piece);text-shadow:0 0 2px #123,0 2px 3px rgba(0,0,0,.55)}
   .piece.b{color:var(--black-piece);text-shadow:0 0 2px #fff,0 2px 3px rgba(0,0,0,.3)}
   .coord{position:absolute;font-size:9px;font-weight:800;opacity:.55;pointer-events:none}
@@ -212,7 +216,17 @@
    same characters the old build drew.
    ========================================================= */
 const SAVE_KEY='jeevan-chess-save';
-const GLYPH={k:'\u265A',q:'\u265B',r:'\u265C',b:'\u265D',n:'\u265E',p:'\u265F'};
+/* Each glyph carries U+FE0E, the text variation selector.
+   U+265F (the pawn) is ALSO an emoji - the "chess pawn" emoji - and iOS will
+   happily render it from Apple Color Emoji, which paints its own black colour
+   and ignores `color` completely.  That is why the white pawns came out black
+   on the phone while every other white piece was fine, and it was true of the
+   original build too.  FE0E asks for the text glyph instead; the CSS below
+   backs it up with font-variant-emoji and a font stack with no emoji font in
+   it.  Do not strip the \uFE0E when editing this line. */
+const VS='\uFE0E';
+const GLYPH={k:'\u265A'+VS,q:'\u265B'+VS,r:'\u265C'+VS,
+             b:'\u265D'+VS,n:'\u265E'+VS,p:'\u265F'+VS};
 const VAL={p:100,n:320,b:330,r:500,q:900,k:0};
 const AI_DELAY=450;
 
