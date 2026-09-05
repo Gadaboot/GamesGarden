@@ -41,6 +41,10 @@
 		67392607304C1B7D00DD4D36 /* backgammon.html in Resources */ = {isa = PBXBuildFile; fileRef = 67392606304C1B7D00DD4D36 /* backgammon.html */; };
 		67392609304C22FF00DD4D36 /* icon_dominoes.png in Resources */ = {isa = PBXBuildFile; fileRef = 67392608304C22FF00DD4D36 /* icon_dominoes.png */; };
 		6739260B304C230C00DD4D36 /* dominoes.html in Resources */ = {isa = PBXBuildFile; fileRef = 6739260A304C230C00DD4D36 /* dominoes.html */; };
+		6739260D304C360E00DD4D36 /* last-letters.html in Resources */ = {isa = PBXBuildFile; fileRef = 6739260C304C360E00DD4D36 /* last-letters.html */; };
+		6739260F304C362200DD4D36 /* icon_last-letters.png in Resources */ = {isa = PBXBuildFile; fileRef = 6739260E304C362200DD4D36 /* icon_last-letters.png */; };
+		67392611304C366A00DD4D36 /* icon_petal-words.png in Resources */ = {isa = PBXBuildFile; fileRef = 67392610304C366A00DD4D36 /* icon_petal-words.png */; };
+		67392613304C367900DD4D36 /* petal-words.html in Resources */ = {isa = PBXBuildFile; fileRef = 67392612304C367900DD4D36 /* petal-words.html */; };
 		6761C90E30495EB70050EC58 /* nullpoints.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90D30495EB70050EC58 /* nullpoints.html */; };
 		6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90F30495EC50050EC58 /* icon_nullpoints.png */; };
 		6761C912304969D20050EC58 /* icon_wordguess.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C911304969D20050EC58 /* icon_wordguess.png */; };
@@ -146,6 +150,10 @@
 		67392606304C1B7D00DD4D36 /* backgammon.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = backgammon.html; sourceTree = "<group>"; };
 		67392608304C22FF00DD4D36 /* icon_dominoes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_dominoes.png; sourceTree = "<group>"; };
 		6739260A304C230C00DD4D36 /* dominoes.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = dominoes.html; sourceTree = "<group>"; };
+		6739260C304C360E00DD4D36 /* last-letters.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "last-letters.html"; sourceTree = "<group>"; };
+		6739260E304C362200DD4D36 /* icon_last-letters.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_last-letters.png"; sourceTree = "<group>"; };
+		67392610304C366A00DD4D36 /* icon_petal-words.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_petal-words.png"; sourceTree = "<group>"; };
+		67392612304C367900DD4D36 /* petal-words.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "petal-words.html"; sourceTree = "<group>"; };
 		6761C90D30495EB70050EC58 /* nullpoints.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = nullpoints.html; sourceTree = "<group>"; };
 		6761C90F30495EC50050EC58 /* icon_nullpoints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_nullpoints.png; sourceTree = "<group>"; };
 		6761C911304969D20050EC58 /* icon_wordguess.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wordguess.png; sourceTree = "<group>"; };
@@ -274,6 +282,7 @@
 				6761C967304A0D8A0050EC58 /* freecell.html */,
 				6761C938304999900050EC58 /* frog-jump.html */,
 				673925E6304B0C4300DD4D36 /* knock-through.html */,
+				6739260C304C360E00DD4D36 /* last-letters.html */,
 				67C106FA304AB3E400B0B866 /* loose-ends.html */,
 				67C56407300CD0BA00D2D146 /* ludo.html */,
 				6761C95B304A03BB0050EC58 /* mahjong.html */,
@@ -283,6 +292,7 @@
 				6761C90D30495EB70050EC58 /* nullpoints.html */,
 				67D8238A2FFF955C00892511 /* octo.html */,
 				6761C92930498E2A0050EC58 /* one-false-step.html */,
+				67392612304C367900DD4D36 /* petal-words.html */,
 				6761C95F304A06B30050EC58 /* picture-logic.html */,
 				6731DF27300FD9510070AC8B /* privacy.html */,
 				67392600304C0F9D00DD4D36 /* reversi.html */,
@@ -324,6 +334,7 @@
 				6761C939304999900050EC58 /* icon_five-dice.png */,
 				6761C93A304999900050EC58 /* icon_frog-jump.png */,
 				673925E4304B0C3600DD4D36 /* icon_knock-through.png */,
+				6739260E304C362200DD4D36 /* icon_last-letters.png */,
 				67C106F8304AB3D800B0B866 /* icon_loose-ends.png */,
 				67C56403300CD0A600D2D146 /* icon_Ludo.png */,
 				6761C959304A03A10050EC58 /* icon_mahjong.png */,
@@ -333,6 +344,7 @@
 				6761C90F30495EC50050EC58 /* icon_nullpoints.png */,
 				67D823862FFEDC9900892511 /* icon_octo.png */,
 				6761C92B30498E3F0050EC58 /* icon_one-false-step.png */,
+				67392610304C366A00DD4D36 /* icon_petal-words.png */,
 				6761C95D304A069B0050EC58 /* icon_picture-logic.png */,
 				67392602304C0FA800DD4D36 /* icon_reversi.png */,
 				67C56405300CD0AF00D2D146 /* icon_scopa.png */,
@@ -412,9 +424,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				67C56406300CD0AF00D2D146 /* icon_scopa.png in Resources */,
+				67392613304C367900DD4D36 /* petal-words.html in Resources */,
 				67050094303DDD240096E2BC /* icon_billiards.png in Resources */,
 				6761C958304A00100050EC58 /* water-sort.html in Resources */,
 				6761C914304969DD0050EC58 /* word-guess.html in Resources */,
+				6739260D304C360E00DD4D36 /* last-letters.html in Resources */,
 				6731DF30300FDF040070AC8B /* achievements.js in Resources */,
 				6761C95C304A03BB0050EC58 /* mahjong.html in Resources */,
 				6761C9183049700B0050EC58 /* spinny-letters.html in Resources */,
@@ -431,6 +445,7 @@
 				6761C9563049FFFE0050EC58 /* icon_water-sort.png in Resources */,
 				6761C9363049962A0050EC58 /* icon_cup-run.png in Resources */,
 				67D823A12FFFAD1C00892511 /* icon_bubbleshooter.png in Resources */,
+				67392611304C366A00DD4D36 /* icon_petal-words.png in Resources */,
 				6705008C303DDA090096E2BC /* arrow-exit.html in Resources */,
 				67C5640C300CD3C900D2D146 /* index.html in Resources */,
 				673925FF304B6EB800DD4D36 /* mancala.html in Resources */,
@@ -442,6 +457,7 @@
 				6761C96E304A14E10050EC58 /* icon_word-search.png in Resources */,
 				67050096303DDFB80096E2BC /* icon_arrowshapes.png in Resources */,
 				67392605304C1B7400DD4D36 /* icon_backgammon.png in Resources */,
+				6739260F304C362200DD4D36 /* icon_last-letters.png in Resources */,
 				6761C92A30498E2A0050EC58 /* one-false-step.html in Resources */,
 				67C56408300CD0BA00D2D146 /* ludo.html in Resources */,
 				673925F1304B254F00DD4D36 /* finger-soccer.html in Resources */,

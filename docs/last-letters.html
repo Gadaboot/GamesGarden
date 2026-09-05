@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Last Letters</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 6% -8%, #f7a8cc 0%, transparent 55%),
+      radial-gradient(120% 80% at 96% 104%, #ffd2bb 0%, transparent 55%),
+      linear-gradient(160deg, #6b2d55 0%, #ad4d82 46%, #ffdcea 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#8a2f5e;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(90,20,60,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 0 #7d3560,0 4px 12px rgba(70,15,50,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#8a2f5e;
+    box-shadow:0 4px 0 rgba(140,40,90,.35),0 6px 14px rgba(90,20,60,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(140,40,90,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(85,25,60,.44);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#fff4f9);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#9c7386;box-shadow:0 20px 50px rgba(70,15,50,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#c04a80;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#bb93a6;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-a{background:linear-gradient(180deg,#8fe0a8,#2fae6b)}
+  .z-b{background:linear-gradient(180deg,#ffd166,#f0a020)}
+  .z-c{background:linear-gradient(180deg,#ff8fa8,#d9345f)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ff9dbd,#d94a80);color:#fff;
+    box-shadow:0 5px 0 #a82f5e,0 8px 18px rgba(190,60,120,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #a82f5e}
+  .btn-alt{background:#ffeef5;color:#a83a68;border:1.5px solid #f6d2e0}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#bb93a6;margin:10px 2px}
+  .rules b{color:#c04a80}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#ffeef5;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#e2aec6}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#c04a80}
+  .word{font-size:19px;font-weight:900;letter-spacing:3px;color:#c04a80;margin:6px 0 2px}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+    .word{font-size:16px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">LAST LETTERS</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">SOLVED</div><div class="v" id="vSolved">0</div></div>
+    <div class="chip"><div class="k">PANELS LEFT</div><div class="v" id="vLeft">6</div></div>
+    <div class="chip"><div class="k">IN A ROW</div><div class="v" id="vStreak">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tHint"><div class="ti">&#9788;</div><div class="tl">HINT</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW WORD</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Last Letters - the words and the rules, with no drawing and no input in them.
+   Every guess goes through guess(), so the same code that runs on screen can be
+   run headless over every word in the list.
+
+   The mechanic is the old one: a hidden word, guess a letter at a time, six
+   wrong letters and you are out.  What sinks is a hot-air balloon losing its
+   panels, which is a countdown a child can read at a glance and does not put a
+   gallows on the menu of a bright arcade.
+
+   Words are stored uppercase A-Z with single spaces.  A space is shown as a gap
+   and is never guessed - it is revealed from the start, the way it is on a
+   television word board. */
+function makeLastLetters(){
+  "use strict";
+
+  /* How many panels the balloon carries is the real difficulty knob, and it has
+     to be, because word length is not one.  Measured: against a player who
+     reads the board, LONGER words are easier - every correct letter reveals
+     more of the word and collapses what it could still be, while a four-letter
+     word gives almost nothing back.  So the bands still run short to long,
+     because that is what a player can see and choose between, but what actually
+     makes Fiendish hard is that it gives you five chances instead of eight. */
+  var MAX_LIVES=9;
+  var ALPHA="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  /* Difficulty is length: short common words to start, long ones and two-word
+     phrases at the top.  The buckets are worked out from the list rather than
+     written down twice, so a word can never end up in the wrong one. */
+  var CATS=["ANIMALS","FOOD AND DRINK","PLACES","SPORT",
+            "AROUND THE HOUSE","NATURE","MUSIC","JOBS"];
+
+  var RAW={
+    "ANIMALS":[
+      "BEAR","WOLF","LION","GOAT","HORSE","SHEEP","MOUSE","TIGER","ZEBRA","OTTER",
+      "EAGLE","ROBIN","SNAKE","WHALE","CAMEL","MOOSE","SHARK","FERRET","RABBIT",
+      "MONKEY","DONKEY","BADGER","TURTLE","PARROT","WEASEL","BEAVER","WALRUS",
+      "DOLPHIN","LEOPARD","GIRAFFE","PENGUIN","HAMSTER","BUFFALO","GORILLA",
+      "PANTHER","RACCOON","MEERKAT","OSTRICH","PELICAN","SQUIRREL","HEDGEHOG",
+      "KANGAROO","ELEPHANT","FLAMINGO","TORTOISE","ANTEATER","REINDEER",
+      "CROCODILE","BUTTERFLY","PORCUPINE","ARMADILLO","ORANGUTAN","RHINOCEROS",
+      "CHIMPANZEE","SALAMANDER","GRASSHOPPER","WOODPECKER","CHINCHILLA",
+      "POLAR BEAR","GUINEA PIG","KILLER WHALE","PRAYING MANTIS"
+    ],
+    "FOOD AND DRINK":[
+      "BREAD","APPLE","LEMON","MANGO","ONION","OLIVE","HONEY","CREAM","TOAST",
+      "BEANS","JUICE","SUGAR","PASTA","PIZZA","SALAD","CHEESE","BUTTER","BANANA",
+      "CARROT","POTATO","TOMATO","GARLIC","MUFFIN","WALNUT","YOGURT","TURNIP",
+      "CABBAGE","PUDDING","CUSTARD","PANCAKE","POPCORN","BISCUIT","CRUMPET",
+      "OATCAKE","AVOCADO","PARSNIP","LETTUCE","SPINACH","CHERRIES","COURGETTE",
+      "CHOCOLATE","RASPBERRY","BLUEBERRY","PINEAPPLE","MARMALADE","STRAWBERRY",
+      "WATERMELON","CAULIFLOWER","SHEPHERDS PIE","FISH AND CHIPS","APPLE CRUMBLE",
+      "ROAST DINNER","LEMON MERINGUE"
+    ],
+    "PLACES":[
+      "SPAIN","INDIA","EGYPT","CHINA","JAPAN","KENYA","WALES","PARIS","ROME",
+      "CAIRO","TOKYO","BERLIN","LONDON","MADRID","LISBON","ATHENS","DUBLIN",
+      "MOSCOW","OSLO","BRAZIL","CANADA","MEXICO","POLAND","NORWAY","TURKEY",
+      "ICELAND","IRELAND","BELGIUM","AUSTRIA","MOROCCO","JAMAICA","ROMANIA",
+      "SCOTLAND","PORTUGAL","THAILAND","MALAYSIA","EDINBURGH","BARCELONA",
+      "AMSTERDAM","SINGAPORE","ARGENTINA","AUSTRALIA","MELBOURNE","SWITZERLAND",
+      "NETHERLANDS","NEW ZEALAND","SOUTH AFRICA","COSTA RICA","HONG KONG",
+      "BUENOS AIRES","SAN FRANCISCO"
+    ],
+    "SPORT":[
+      "GOLF","JUDO","POLO","RUGBY","TENNIS","BOXING","HOCKEY","SQUASH","SOCCER",
+      "DISCUS","JAVELIN","NETBALL","CRICKET","BOWLING","FENCING","SAILING",
+      "SKATING","CURLING","ARCHERY","ROWING","DIVING","CYCLING","SURFING",
+      "CLIMBING","SWIMMING","ATHLETICS","BADMINTON","BASKETBALL","VOLLEYBALL",
+      "GYMNASTICS","SNOOKER","TRIATHLON","WEIGHTLIFTING","TABLE TENNIS",
+      "HIGH JUMP","LONG JUMP","MARATHON","PENALTY SHOOTOUT","ICE HOCKEY",
+      "HORSE RACING","MOTOR RACING"
+    ],
+    "AROUND THE HOUSE":[
+      "DOOR","LAMP","SOFA","OVEN","CHAIR","TABLE","CLOCK","MIRROR","KETTLE",
+      "CARPET","PILLOW","WINDOW","GARAGE","LADDER","BUCKET","TEAPOT","SAUCER",
+      "DUSTER","FREEZER","CUPBOARD","BLANKET","CUSHION","WARDROBE","BOOKCASE",
+      "DOORBELL","FIREPLACE","RADIATOR","BATHROOM","STAIRCASE","TELEVISION",
+      "DISHWASHER","REFRIGERATOR","CHEST OF DRAWERS","WASHING MACHINE",
+      "COFFEE TABLE","FRONT DOOR","GARDEN SHED","LIVING ROOM","KITCHEN SINK"
+    ],
+    "NATURE":[
+      "TREE","LEAF","RAIN","SNOW","CLOUD","RIVER","OCEAN","STORM","BEACH",
+      "GRASS","STONE","FROST","MEADOW","FOREST","DESERT","VALLEY","ISLAND",
+      "SUNSET","THUNDER","RAINBOW","GLACIER","VOLCANO","MOUNTAIN","WATERFALL",
+      "ICEBERG","BLOSSOM","HORIZON","PRAIRIE","SEASHELL","DAFFODIL","SUNSHINE",
+      "LIGHTNING","AVALANCHE","WILDFLOWER","EARTHQUAKE","CATERPILLAR",
+      "RAINFOREST","THUNDERSTORM","NORTHERN LIGHTS","SHOOTING STAR",
+      "MORNING DEW","OAK TREE","SANDY BEACH","CORAL REEF"
+    ],
+    "MUSIC":[
+      "DRUM","HARP","BAND","SONG","PIANO","FLUTE","CHOIR","ORGAN","VIOLIN",
+      "GUITAR","BANJO","CELLO","TEMPO","CHORUS","RECORD","TRUMPET","CLARINET",
+      "TROMBONE","KEYBOARD","CONCERT","HARMONY","BAGPIPE","RECITAL","MAESTRO",
+      "TRIANGLE","ORCHESTRA","SAXOPHONE","ACCORDION","HARMONICA",
+      "TAMBOURINE","CONDUCTOR","XYLOPHONE","DOUBLE BASS","BRASS BAND",
+      "SHEET MUSIC","ELECTRIC GUITAR","GRAND PIANO","FRENCH HORN"
+    ],
+    "JOBS":[
+      "CHEF","NURSE","BAKER","PILOT","JUDGE","ACTOR","FARMER","DOCTOR",
+      "WAITER","ARTIST","DENTIST","BUILDER","TEACHER","PLUMBER","LAWYER",
+      "CLEANER","SOLDIER","PAINTER","LIBRARIAN","MECHANIC","ELECTRICIAN",
+      "ENGINEER","JOURNALIST","ARCHITECT","PHOTOGRAPHER","VETERINARY NURSE",
+      "FIREFIGHTER","SHOPKEEPER","HAIRDRESSER","POSTMAN","BUS DRIVER",
+      "POLICE OFFICER","FLIGHT ATTENDANT"
+    ]
+  };
+
+  /* Gentle is 4 to 6 letters, Tricky 7 to 8, Fiendish 9 and up - counting
+     letters only, so a two-word phrase is judged on its letters, not its gap. */
+  function letterCount(w){
+    var n=0, i;
+    for(i=0;i<w.length;i++) if(w.charAt(i)!==" ") n++;
+    return n;
+  }
+  function bandOf(w){
+    var n=letterCount(w);
+    if(n<=6) return 0;
+    if(n<=8) return 1;
+    return 2;
+  }
+
+  /* WORDS[band][cat] = list */
+  var WORDS=[{},{},{}], ALL=[];
+  (function(){
+    var c, i, b;
+    for(c=0;c<CATS.length;c++){
+      for(b=0;b<3;b++) WORDS[b][CATS[c]]=[];
+      var list=RAW[CATS[c]];
+      for(i=0;i<list.length;i++){
+        var w=list[i];
+        WORDS[bandOf(w)][CATS[c]].push(w);
+        ALL.push({ w:w, cat:CATS[c], band:bandOf(w) });
+      }
+    }
+  })();
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+
+  var BANDS=[
+    { id:"easy", name:"Gentle",   hints:3, lives:9 },
+    { id:"med",  name:"Tricky",   hints:2, lives:6 },
+    { id:"hard", name:"Fiendish", hints:1, lives:4 }
+  ];
+
+  /* pick a word of this band that is not in `used`; once the band is exhausted
+     the list starts again rather than leaving the player with nothing */
+  function pick(band, used, rand){
+    var pool=[], c, i;
+    for(c=0;c<CATS.length;c++){
+      var list=WORDS[band][CATS[c]];
+      for(i=0;i<list.length;i++)
+        if(!used || used.indexOf(list[i])<0) pool.push({ w:list[i], cat:CATS[c] });
+    }
+    if(!pool.length){
+      for(c=0;c<CATS.length;c++){
+        var l2=WORDS[band][CATS[c]];
+        for(i=0;i<l2.length;i++) pool.push({ w:l2[i], cat:CATS[c] });
+      }
+      if(used) used.length=0;
+    }
+    return pool[Math.floor(rand()*pool.length)%pool.length];
+  }
+
+  function create(cfg){
+    cfg=cfg||{};
+    var band=Math.max(0, Math.min(2, cfg.band|0));
+    var rand=rng(cfg.seed||((Math.random()*1e9)|0));
+    var got = cfg.word ? { w:cfg.word, cat:cfg.cat||CATS[0] } : pick(band, cfg.used||null, rand);
+    var st={
+      word:got.w, cat:got.cat, band:band,
+      guessed:"", wrong:0,
+      lives: cfg.lives==null ? BANDS[band].lives : cfg.lives,
+      hintsLeft: cfg.hints==null ? BANDS[band].hints : cfg.hints,
+      hintsUsed:0, moves:0,
+      over:false, won:false,
+      rand:rand
+    };
+    return st;
+  }
+
+  function isLetter(ch){ return ALPHA.indexOf(ch)>=0; }
+  function has(st, ch){ return st.guessed.indexOf(ch)>=0; }
+
+  /* the word as it should be shown: letters, gaps, and blanks for the rest */
+  function shown(st){
+    var out=[], i, ch;
+    for(i=0;i<st.word.length;i++){
+      ch=st.word.charAt(i);
+      if(ch===" ") out.push(" ");
+      else out.push(has(st,ch) ? ch : "");
+    }
+    return out;
+  }
+  function solved(st){
+    var i, ch;
+    for(i=0;i<st.word.length;i++){
+      ch=st.word.charAt(i);
+      if(ch!==" " && !has(st,ch)) return false;
+    }
+    return true;
+  }
+  /* letters still worth guessing */
+  function remaining(st){
+    var seen={}, out=[], i, ch;
+    for(i=0;i<st.word.length;i++){
+      ch=st.word.charAt(i);
+      if(ch!==" " && !has(st,ch) && !seen[ch]){ seen[ch]=1; out.push(ch); }
+    }
+    return out;
+  }
+
+  function finish(st){
+    if(solved(st)){ st.over=true; st.won=true; return true; }
+    if(st.wrong>=st.lives){ st.over=true; st.won=false; return true; }
+    return false;
+  }
+
+  function guess(st, ch){
+    if(st.over) return { ok:false };
+    ch=String(ch||"").toUpperCase();
+    if(!isLetter(ch)) return { ok:false };
+    if(has(st,ch)) return { ok:false, already:true };
+    st.guessed+=ch;
+    st.moves++;
+    var hit = st.word.indexOf(ch)>=0;
+    if(!hit) st.wrong++;
+    var ev={ ok:true, letter:ch, hit:hit, wrong:st.wrong,
+             left:st.lives-st.wrong, over:false, won:false };
+    if(finish(st)){ ev.over=true; ev.won=st.won; }
+    return ev;
+  }
+
+  /* a hint gives away one letter that is actually in the word - never a letter
+     already guessed, and never the last one, so a hint can never win the game
+     for you */
+  function hint(st){
+    if(st.over || st.hintsLeft<=0) return { ok:false };
+    var left=remaining(st);
+    if(left.length<=1) return { ok:false, last:true };
+    var ch=left[Math.floor(st.rand()*left.length)%left.length];
+    st.guessed+=ch;
+    st.hintsLeft--;
+    st.hintsUsed++;
+    var ev={ ok:true, letter:ch, over:false, won:false };
+    if(finish(st)){ ev.over=true; ev.won=st.won; }
+    return ev;
+  }
+
+  function audit(st){
+    var i, ch, seen={};
+    if(typeof st.word!=="string"||!st.word.length) return "there is no word";
+    for(i=0;i<st.word.length;i++){
+      ch=st.word.charAt(i);
+      if(ch!==" " && !isLetter(ch)) return "the word holds something that is not a letter";
+    }
+    if(st.word.charAt(0)===" "||st.word.charAt(st.word.length-1)===" ")
+      return "the word starts or ends with a gap";
+    if(st.word.indexOf("  ")>=0) return "the word has a double gap";
+    for(i=0;i<st.guessed.length;i++){
+      ch=st.guessed.charAt(i);
+      if(!isLetter(ch)) return "something that is not a letter was guessed";
+      if(seen[ch]) return "the letter "+ch+" was guessed twice";
+      seen[ch]=1;
+    }
+    var w=0;
+    for(i=0;i<st.guessed.length;i++)
+      if(st.word.indexOf(st.guessed.charAt(i))<0) w++;
+    if(w!==st.wrong) return "the wrong count says "+st.wrong+" but "+w+" letters missed";
+    if(st.wrong>st.lives) return "more wrong letters than panels";
+    if(st.lives<1||st.lives>MAX_LIVES) return "an odd number of panels ("+st.lives+")";
+    if(st.hintsLeft<0) return "a negative number of hints";
+    if(st.band<0||st.band>2) return "an odd difficulty band";
+    if(st.over){
+      if(st.won && !solved(st)) return "won without the word being complete";
+      if(!st.won && st.wrong<st.lives) return "lost with panels still on the balloon";
+    }else{
+      if(solved(st)) return "the word is complete but the game goes on";
+      if(st.wrong>=st.lives) return "no panels left but the game goes on";
+    }
+    return null;
+  }
+
+  return { MAX_LIVES:MAX_LIVES, ALPHA:ALPHA, CATS:CATS, BANDS:BANDS, WORDS:WORDS, ALL:ALL,
+           rng:rng, create:create, pick:pick, guess:guess, hint:hint,
+           shown:shown, solved:solved, remaining:remaining, has:has,
+           letterCount:letterCount, bandOf:bandOf, audit:audit };
+}
+</script>
+<script>
+(function(){
+"use strict";
+var LL=makeLastLetters();
+var LS="gg_lastletters_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"easy", band:0, name:"Gentle",   cls:"z-a", tag:"Short everyday words &middot; nine panels, three hints"},
+  {id:"med",  band:1, name:"Tricky",   cls:"z-b", tag:"Longer words &middot; six panels, two hints"},
+  {id:"hard", band:2, name:"Fiendish", cls:"z-c", tag:"Long words and sayings &middot; four panels, one hint"}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+
+/* ---------------- colours ---------------- */
+var SKY="#fff4fa", SKY_D="#ffe4f0", HILL="#f6c9dd", HILL_D="#eeb0cd";
+var PANEL=["#ff6f91","#ff9a5f","#ffc857","#ffe066","#a8e06a","#7ed6a5",
+           "#67c3ee","#8ea6ee","#b57ce0"];
+var GONE="rgba(150,95,130,.17)", GONE_L="rgba(140,80,115,.62)";
+var BASKET="#b4763f", BASKET_D="#8d5a2c", ROPE="rgba(120,70,95,.55)";
+var INK="#8a2f5e", INK_L="#c58aa8";
+var KEY="#ffffff", KEY_E="#f0cfdf", KEY_HIT="#7ed6a5", KEY_MISS="#e7d3dd";
+
+/* ---------------- state ---------------- */
+var mId, S, started, lastT=0, bob=0, shake=0, puff=[];
+var solvedTotal, streak, best, used, catsDone, diffsDone;
+/* Only the test hook ever sets this.  It stops the clock, so a test can look at
+   a still frame instead of racing the animation.  Stripped out, it stays false. */
+var frozen=false;
+
+function newWord(id){
+  mId=id; save("mode",id);
+  var m=modeOf(id);
+  S=LL.create({ band:m.band, used:used.slice() });
+  shake=0; puff=[];
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ----------------
+   Three bands down the canvas: the balloon in its sky, the word underneath it,
+   and the keyboard along the bottom where a thumb can reach it. */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0, VH=0;
+var ROWS=["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
+var G={ ready:false, sig:"", sky:{}, word:{}, keys:[], kb:0 };
+
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  geom(true);
+}
+window.addEventListener("resize", function(){ layout(); });
+
+function rr(x,y,w,h,rad){
+  if(rad>w/2) rad=w/2; if(rad>h/2) rad=h/2; if(rad<0) rad=0;
+  ctx.beginPath(); ctx.moveTo(x+rad,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad);
+  ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath();
+}
+
+/* how the word is broken into rows of blanks */
+function wordRows(){
+  var parts=S.word.split(" "), rows=[[]], i, w;
+  var maxPer = VW<400 ? 11 : 13;
+  for(i=0;i<parts.length;i++){
+    w=parts[i];
+    var cur=rows[rows.length-1];
+    var used2=0, k;
+    for(k=0;k<cur.length;k++) used2+=cur[k].length+1;
+    if(cur.length && used2+w.length>maxPer) rows.push([w]);
+    else cur.push(w);
+  }
+  return rows;
+}
+
+function geom(force){
+  if(!S||VW<40) return;
+  var sig=VW+"/"+VH+"/"+S.word.length+"/"+mId;
+  if(!force && G.ready && G.sig===sig) return;
+  G.sig=sig;
+
+  /* the keyboard is sized first: it must always be reachable and never crushed */
+  var gap=Math.max(3, Math.round(VW*0.011));
+  var kw=Math.min(44, Math.floor((VW-2-gap*9)/10));
+  var kh=Math.min(Math.round(kw*1.24), Math.round(VH*0.115));
+  var kbH=kh*3+gap*2+4;
+  G.kb=kbH;
+
+  var rows=wordRows();
+  var wordH=Math.round(Math.min(VH*0.10*rows.length+10, VH*0.24));
+  var skyH=Math.max(60, VH-kbH-wordH-8);
+  G.sky={ x:2, y:0, w:VW-4, h:skyH };
+  G.word={ x:0, y:skyH+4, w:VW, h:wordH, rows:rows };
+
+  /* the keys */
+  var keys=[], r, i2;
+  var top=VH-kbH+2;
+  for(r=0;r<ROWS.length;r++){
+    var line=ROWS[r], n=line.length;
+    var rowW=n*kw+(n-1)*gap;
+    var x0=(VW-rowW)/2;
+    for(i2=0;i2<n;i2++)
+      keys.push({ ch:line.charAt(i2), x:x0+i2*(kw+gap), y:top+r*(kh+gap), w:kw, h:kh });
+  }
+  G.keys=keys;
+  G.ready=true;
+}
+
+/* Every blank on screen, with the index into the word it stands for.  Rows are
+   laid out by wordRows(); the running index steps over the gap between two
+   words on the same row AND over the gap a row break lands on. */
+function wordCells(){
+  var rows=G.word.rows, i, k, wI;
+  var maxLen=0;
+  for(i=0;i<rows.length;i++){
+    var n=0;
+    for(k=0;k<rows[i].length;k++) n+=rows[i][k].length;
+    n+=rows[i].length-1;
+    if(n>maxLen) maxLen=n;
+  }
+  var slot=Math.min(30, Math.floor((VW-14)/Math.max(1,maxLen)));
+  var rowH=Math.min(slot*1.5, G.word.h/rows.length);
+  var out=[], idx=0;
+  for(i=0;i<rows.length;i++){
+    var cellsIn=0;
+    for(k=0;k<rows[i].length;k++) cellsIn+=rows[i][k].length;
+    cellsIn+=rows[i].length-1;
+    var x=VW/2-(cellsIn*slot)/2, y=G.word.y+rowH*(i+0.72), col=0;
+    for(wI=0;wI<rows[i].length;wI++){
+      var word=rows[i][wI];
+      for(k=0;k<word.length;k++){
+        out.push({ idx:idx, x:x+(col+0.5)*slot, y:y, row:i });
+        idx++; col++;
+      }
+      if(wI<rows[i].length-1){ idx++; col++; }   /* the gap inside this row */
+    }
+    if(i<rows.length-1) idx++;                   /* the gap the row break fell on */
+  }
+  return { list:out, slot:slot, fs:Math.round(slot*0.86), rows:rows.length };
+}
+
+/* ---------------- drawing ---------------- */
+/* the balloon silhouette: a round top drawn down to a narrow neck */
+function balloonPath(cx, cy, R){
+  ctx.beginPath();
+  ctx.moveTo(cx, cy-R);
+  ctx.bezierCurveTo(cx+R*1.16, cy-R*0.86, cx+R*1.04, cy+R*0.36, cx+R*0.24, cy+R*1.04);
+  ctx.lineTo(cx-R*0.24, cy+R*1.04);
+  ctx.bezierCurveTo(cx-R*1.04, cy+R*0.36, cx-R*1.16, cy-R*0.86, cx, cy-R);
+  ctx.closePath();
+}
+function drawBalloon(cx, cy, R, lost, total){
+  var i;
+  /* shadow on the ground below */
+  ctx.save();
+  ctx.fillStyle="rgba(120,50,90,.10)";
+  ctx.beginPath();
+  ctx.ellipse(cx, G.sky.y+G.sky.h-R*0.22, R*0.86, R*0.16, 0, 0, 6.284);
+  ctx.fill();
+  ctx.restore();
+
+  /* the gores, cut out of the one silhouette by clipping vertical strips - as
+     many of them as this level gives the player panels */
+  var step=(R*2.32)/total, left=cx-R*1.16;
+  for(i=0;i<total;i++){
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(left+i*step, cy-R*1.15, step+0.6, R*2.4);
+    ctx.clip();
+    balloonPath(cx, cy, R);
+    ctx.fillStyle = i<total-lost ? PANEL[i%PANEL.length] : GONE;
+    ctx.fill();
+    if(i>=total-lost){
+      ctx.strokeStyle=GONE_L; ctx.lineWidth=1.4;
+      ctx.setLineDash([4,4]);
+      balloonPath(cx, cy, R);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+  }
+  /* a soft sheen and the outline */
+  ctx.save();
+  balloonPath(cx, cy, R); ctx.clip();
+  ctx.fillStyle="rgba(255,255,255,.22)";
+  ctx.beginPath(); ctx.ellipse(cx-R*0.34, cy-R*0.40, R*0.30, R*0.44, -0.35, 0, 6.284); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle="rgba(120,50,90,.35)"; ctx.lineWidth=Math.max(1.4,R*0.035);
+  balloonPath(cx, cy, R); ctx.stroke();
+
+  /* neck, ropes and basket */
+  var neck=cy+R*1.04, bw=R*0.52, bh=R*0.40, by=neck+R*0.34;
+  ctx.strokeStyle=ROPE; ctx.lineWidth=Math.max(1,R*0.028);
+  ctx.beginPath();
+  ctx.moveTo(cx-R*0.22, neck); ctx.lineTo(cx-bw/2, by);
+  ctx.moveTo(cx+R*0.22, neck); ctx.lineTo(cx+bw/2, by);
+  ctx.stroke();
+  ctx.fillStyle=BASKET;
+  rr(cx-bw/2, by, bw, bh, bh*0.22); ctx.fill();
+  ctx.strokeStyle=BASKET_D; ctx.lineWidth=Math.max(1,R*0.03);
+  rr(cx-bw/2, by, bw, bh, bh*0.22); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx-bw/2, by+bh*0.42); ctx.lineTo(cx+bw/2, by+bh*0.42);
+  ctx.stroke();
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!S) return;
+  if(!G.ready||!VW){ layout(); if(!G.ready) return; }
+  geom();
+  var now=ts||0;
+  var dt=lastT?Math.min(120,now-lastT):0;
+  lastT=now;
+  if(!frozen){
+    bob=(bob+dt/1600)%1;
+    if(shake>0) shake-=dt;
+    for(var q=puff.length-1;q>=0;q--){
+      var pf=puff[q];
+      pf.t+=dt; pf.x+=pf.vx*dt/16; pf.y+=pf.vy*dt/16; pf.vy+=0.02;
+      if(pf.t>pf.life) puff.splice(q,1);
+    }
+  }
+  var i, k;
+
+  ctx.clearRect(0,0,VW,VH);
+
+  /* the sky */
+  var g=ctx.createLinearGradient(0,G.sky.y,0,G.sky.y+G.sky.h);
+  g.addColorStop(0,SKY); g.addColorStop(1,SKY_D);
+  ctx.fillStyle=g;
+  rr(G.sky.x, G.sky.y, G.sky.w, G.sky.h, 16); ctx.fill();
+  ctx.save();
+  rr(G.sky.x, G.sky.y, G.sky.w, G.sky.h, 16); ctx.clip();
+  /* hills along the bottom */
+  ctx.fillStyle=HILL_D;
+  ctx.beginPath();
+  ctx.moveTo(G.sky.x, G.sky.y+G.sky.h);
+  ctx.quadraticCurveTo(G.sky.x+G.sky.w*0.28, G.sky.y+G.sky.h-G.sky.h*0.13,
+                       G.sky.x+G.sky.w*0.58, G.sky.y+G.sky.h-G.sky.h*0.03);
+  ctx.lineTo(G.sky.x+G.sky.w, G.sky.y+G.sky.h);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle=HILL;
+  ctx.beginPath();
+  ctx.moveTo(G.sky.x, G.sky.y+G.sky.h);
+  ctx.quadraticCurveTo(G.sky.x+G.sky.w*0.62, G.sky.y+G.sky.h-G.sky.h*0.10,
+                       G.sky.x+G.sky.w, G.sky.y+G.sky.h-G.sky.h*0.02);
+  ctx.lineTo(G.sky.x+G.sky.w, G.sky.y+G.sky.h);
+  ctx.closePath(); ctx.fill();
+
+  /* the balloon, sinking one step for every panel it has lost */
+  var R=Math.min(G.sky.w*0.20, G.sky.h*0.24);
+  var hiY=G.sky.y+R*1.20, loY=G.sky.y+G.sky.h-R*1.62;
+  var t=S.wrong/S.lives;
+  var cy=hiY+(loY-hiY)*t+(S.over&&!S.won?0:Math.sin(bob*6.283)*R*0.05);
+  var cx=G.sky.x+G.sky.w/2+(shake>0?Math.sin(shake/22)*4:0);
+  drawBalloon(cx, cy, R, S.wrong, S.lives);
+
+  /* the puff of a panel coming loose */
+  for(i=0;i<puff.length;i++){
+    var p2=puff[i];
+    ctx.globalAlpha=Math.max(0,1-p2.t/p2.life);
+    ctx.fillStyle=p2.c;
+    ctx.beginPath(); ctx.arc(p2.x, p2.y, p2.r, 0, 6.284); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+
+  /* the category, as the clue */
+  ctx.save();
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  var cf=Math.max(9, Math.min(13, VW*0.032));
+  ctx.font="900 "+Math.round(cf)+"px -apple-system,Helvetica,Arial";
+  var cw=ctx.measureText(S.cat).width;
+  ctx.fillStyle="rgba(255,255,255,.85)";
+  rr(VW/2-cw/2-10, G.sky.y+7, cw+20, cf*1.9, cf); ctx.fill();
+  ctx.fillStyle=INK;
+  ctx.fillText(S.cat, VW/2, G.sky.y+7+cf*0.95);
+  ctx.restore();
+
+  /* the word.  The cells are worked out first and drawn second, so the same
+     mapping the test hook checks is the one that reaches the screen.  This is
+     where a two-word answer used to go wrong: when a row break fell on the gap
+     between two words, nothing consumed that gap, and every letter on the
+     second row was drawn one place along from where it belonged. */
+  var cells=wordCells();
+  var show=LL.shown(S);
+  ctx.save();
+  ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+  ctx.font="900 "+cells.fs+"px -apple-system,Helvetica,Arial";
+  for(i=0;i<cells.list.length;i++){
+    var ce=cells.list[i];
+    ctx.strokeStyle="rgba(255,255,255,.85)";
+    ctx.lineWidth=Math.max(2, cells.slot*0.09);
+    ctx.beginPath();
+    ctx.moveTo(ce.x-cells.slot*0.36, ce.y+3); ctx.lineTo(ce.x+cells.slot*0.36, ce.y+3);
+    ctx.stroke();
+    var ch=show[ce.idx];
+    if(ch && ch!==" "){
+      ctx.fillStyle="#ffffff";
+      ctx.fillText(ch, ce.x, ce.y-cells.slot*0.10);
+    }
+  }
+  ctx.restore();
+
+  /* the keyboard */
+  for(i=0;i<G.keys.length;i++){
+    var kk=G.keys[i];
+    var got=LL.has(S,kk.ch);
+    var hit=got && S.word.indexOf(kk.ch)>=0;
+    ctx.fillStyle="rgba(90,20,60,.18)";
+    rr(kk.x, kk.y+2, kk.w, kk.h, kk.w*0.24); ctx.fill();
+    ctx.fillStyle = !got ? KEY : (hit ? KEY_HIT : KEY_MISS);
+    rr(kk.x, kk.y, kk.w, kk.h, kk.w*0.24); ctx.fill();
+    ctx.strokeStyle=KEY_E; ctx.lineWidth=1;
+    rr(kk.x, kk.y, kk.w, kk.h, kk.w*0.24); ctx.stroke();
+    ctx.save();
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.round(kk.h*0.46)+"px -apple-system,Helvetica,Arial";
+    ctx.fillStyle = !got ? INK : (hit ? "#17663f" : INK_L);
+    ctx.globalAlpha = got && !hit ? 0.55 : 1;
+    ctx.fillText(kk.ch, kk.x+kk.w/2, kk.y+kk.h/2+1);
+    ctx.restore();
+  }
+}
+
+/* ---------------- play ---------------- */
+/* the panel that just came loose, blowing away from the side it was on -
+   scattering the puff across the whole envelope looked like the balloon had
+   caught the measles */
+function panelPuff(){
+  var R=Math.min(G.sky.w*0.20, G.sky.h*0.24);
+  var t=S.wrong/S.lives;
+  var cy=G.sky.y+R*1.20+(G.sky.y+G.sky.h-R*1.62-(G.sky.y+R*1.20))*t;
+  var cx=G.sky.x+G.sky.w/2;
+  var gone=S.lives-S.wrong;                       /* the gore just lost */
+  var step=(R*2.32)/S.lives;
+  var gx=cx-R*1.16+(gone+0.5)*step;
+  var c=PANEL[gone%PANEL.length] || PANEL[0];
+  for(var i=0;i<6;i++)
+    puff.push({ x:gx+(Math.random()-0.5)*step*0.7, y:cy+(Math.random()-0.5)*R*0.9,
+                vx:0.5+Math.random()*1.1, vy:-0.25-Math.random()*0.5,
+                r:R*(0.045+Math.random()*0.06), c:c, t:0, life:560 });
+}
+
+function play(ch){
+  if(!started||!S||S.over) return;
+  var ev=LL.guess(S, ch);
+  if(!ev.ok){
+    if(ev.already) beep(200,.05,"sine",.03);
+    return;
+  }
+  if(ev.hit){
+    beep(660,.07,"triangle",.05);
+    if(window.GGA) GGA.haptic("light");
+  }else{
+    beep(240,.12,"sawtooth",.05);
+    shake=260;
+    panelPuff();
+    if(window.GGA) GGA.haptic("warning");
+  }
+  paintHUD(); persist();
+  if(ev.over) finish();
+}
+function useHint(){
+  if(!started||!S||S.over||S.hintsLeft<=0) return;
+  var ev=LL.hint(S);
+  if(!ev.ok) return;
+  beep(880,.10,"sine",.05);
+  if(window.GGA) GGA.haptic("light");
+  paintHUD(); persist();
+  if(ev.over) finish();
+}
+
+function finish(){
+  var m=modeOf(mId);
+  used.push(S.word);
+  while(used.length>80) used.shift();
+  save("used", used);
+  if(S.won){
+    solvedTotal++; streak++;
+    if(streak>best) best=streak;
+    catsDone[S.cat]=1; diffsDone[mId]=1;
+    save("solved",solvedTotal); save("streak",streak); save("best",best);
+    save("cats",catsDone); save("diffs",diffsDone);
+    beep(660,.12,"triangle",.08);
+    setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+    setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+    if(window.GGA){
+      GGA.award("ll_first");
+      if(S.wrong===0) GGA.award("ll_clean");
+      if(S.wrong===S.lives-1) GGA.award("ll_close");
+      if(mId==="hard") GGA.award("ll_hard");
+      if(streak>=5) GGA.award("ll_streak5");
+      if(solvedTotal>=25) GGA.award("ll_25");
+      var allCats=true, c2;
+      for(c2=0;c2<LL.CATS.length;c2++) if(!catsDone[LL.CATS[c2]]) allCats=false;
+      if(allCats) GGA.award("ll_themes");
+      if(diffsDone.easy&&diffsDone.med&&diffsDone.hard) GGA.award("ll_alldiff");
+      GGA.haptic("success");
+    }
+  }else{
+    streak=0; save("streak",0);
+    beep(300,.30,"sine",.06,150);
+    if(window.GGA) GGA.haptic("error");
+  }
+  save("cur",null);
+  paintHUD();
+  if(frozen) return;
+  setTimeout(function(){ S.won ? winScreen() : loseScreen(); }, S.won?900:1100);
+}
+
+function nextWord(){
+  newWord(mId);
+  started=true;
+  closeOvl(); layout(); paintHUD(); persist();
+}
+
+function paintHUD(){
+  document.getElementById("vSolved").textContent=solvedTotal;
+  document.getElementById("vLeft").textContent=Math.max(0, S.lives-S.wrong);
+  document.getElementById("vStreak").textContent=streak;
+  var h=document.getElementById("tHint");
+  if(started && !S.over && S.hintsLeft>0 && LL.remaining(S).length>1) h.classList.remove("off");
+  else h.classList.add("off");
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started||!S) return;
+  if(S.over){ save("cur",null); return; }
+  save("cur",{ v:1, m:mId, w:S.word, c:S.cat, g:S.guessed, h:S.hintsLeft,
+               hu:S.hintsUsed, lv:S.lives });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||c.v!==1||!c.w) return false;
+  if(!modeOf(c.m)) return false;
+  mId=c.m; save("mode",mId);
+  S=LL.create({ band:modeOf(c.m).band, word:c.w, cat:c.c, hints:c.h|0,
+                lives:c.lv|0 || null });
+  S.guessed="";
+  var i, g=String(c.g||"");
+  for(i=0;i<g.length;i++) LL.guess(S, g.charAt(i));
+  S.hintsLeft=c.h|0; S.hintsUsed=c.hu|0;
+  if(LL.audit(S)||S.over){ newWord(c.m); return false; }
+  geom(true); paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function onTapAt(lx, ly){
+  if(!started||!S||S.over) return;
+  geom();
+  for(var i=0;i<G.keys.length;i++){
+    var k=G.keys[i];
+    if(lx>=k.x-2 && lx<=k.x+k.w+2 && ly>=k.y-2 && ly<=k.y+k.h+2){ play(k.ch); return; }
+  }
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+function onTap(e){
+  if(e.cancelable) e.preventDefault();
+  var q=pt(e), b=cv.getBoundingClientRect();
+  onTapAt(q.clientX-b.left, q.clientY-b.top);
+}
+cv.addEventListener("touchend", onTap, {passive:false});
+cv.addEventListener("touchstart", function(e){ if(e.cancelable) e.preventDefault(); }, {passive:false});
+cv.addEventListener("mouseup", onTap);
+cv.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+/* a real keyboard, for anyone playing on a Mac */
+window.addEventListener("keydown", function(e){
+  if(!started||!S||S.over) return;
+  var ch=String(e.key||"").toUpperCase();
+  if(ch.length===1 && LL.ALPHA.indexOf(ch)>=0) play(ch);
+});
+
+document.getElementById("tHint").onclick=useHint;
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ nextWord(); return; }
+  openOvl('<h2>ANOTHER WORD?</h2><p>This one counts as a miss and your run resets.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW WORD</button>'+
+    '<button class="btn btn-alt" id="n">KEEP GOING</button>');
+  card.querySelector("#y").onclick=function(){
+    streak=0; save("streak",0);
+    nextWord();
+  };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>LAST LETTERS</h2><p>Guess the word a letter at a time. Run out of panels and the balloon is down.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  if(cur&&cur.w) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+
+    modeOf(cur.m).name+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newWord(el.getAttribute("data-m"));
+      closeOvl(); layout(); persist();
+    };
+  });
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newWord(load("mode","easy"));
+    closeOvl(); layout(); persist();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; There is a hidden word. The chip above it tells you <b>what sort of thing</b> it is.<br><br>'+
+    '&#9642; <b>Tap a letter.</b> If it is in the word every copy of it appears. If it is not, the balloon loses a panel.<br><br>'+
+    '&#9642; <b>Run the panels out and the balloon is on the ground</b> &mdash; that word is lost. Gentle gives you nine, Tricky six, Fiendish four.<br><br>'+
+    '&#9642; Green keys are in the word, faded keys are not. A gap in the row means the answer is <b>two words</b>.<br><br>'+
+    '&#9642; Stuck? <b>HINT</b> gives you a letter. You get three on Gentle, two on Tricky and one on Fiendish, and it will never hand you the last letter.<br><br>'+
+    '&#9642; Solve them one after another to build a run.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function statsBlock(){
+  return '<div class="stats">'+
+    '<div class="st"><div class="sk">SOLVED</div><div class="sv">'+solvedTotal+'</div></div>'+
+    '<div class="st"><div class="sk">IN A ROW</div><div class="sv">'+streak+'</div></div>'+
+    '<div class="st"><div class="sk">BEST RUN</div><div class="sv">'+best+'</div></div>'+
+    '</div>';
+}
+function winScreen(){
+  var how = S.wrong===0 ? "Not a single panel lost."
+          : (S.wrong===1 ? "One panel down." : S.wrong+" panels down.");
+  openOvl('<h2>SOLVED!</h2>'+
+    '<div class="word">'+S.word+'</div>'+
+    '<p>'+how+(S.hintsUsed?" One hint used.":"")+'</p>'+
+    statsBlock()+
+    '<button class="btn btn-go" id="bAgain">NEXT WORD</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE LEVEL</button>');
+  card.querySelector("#bAgain").onclick=nextWord;
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+function loseScreen(){
+  openOvl('<h2>DOWN IT GOES</h2>'+
+    '<p>The word was</p><div class="word">'+S.word+'</div>'+
+    statsBlock()+
+    '<button class="btn btn-go" id="bAgain">TRY ANOTHER</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE LEVEL</button>');
+  card.querySelector("#bAgain").onclick=nextWord;
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.over){ titleScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<p>'+modeOf(mId).name+' &middot; '+S.cat.toLowerCase()+'</p>'+
+    statsBlock()+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE LEVEL</button>');
+  card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+solvedTotal=load("solved",0)|0;
+streak=load("streak",0)|0;
+best=load("best",0)|0;
+used=load("used",[]);
+if(!used||!used.length) used=[];
+catsDone=load("cats",{})||{};
+diffsDone=load("diffs",{})||{};
+newWord(load("mode","easy"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+/* ---------------- the test hook ----------------
+   Stripped out of the shipping build by the assembler; nothing in the game
+   reads it, and `frozen` stays false without it. */
+
+})();
+</script>
+</body>
+</html>

@@ -230,7 +230,15 @@
     { id: 'dm_big',      game: 'Dominoes',      icon: '💰', name: 'Big Round',         desc: 'Score 40 or more in one round' },
     { id: 'dm_hard',     game: 'Dominoes',      icon: '🧠', name: 'Beat Fiendish',     desc: 'Beat the computer on Fiendish' },
     { id: 'dm_2p',       game: 'Dominoes',      icon: '👥', name: 'Pass the Phone',    desc: 'Play a two-player game' },
-    { id: 'dm_10',       game: 'Dominoes',      icon: '🔟', name: 'Ten Rounds',        desc: 'Play ten rounds of Dominoes' }
+    { id: 'dm_10',       game: 'Dominoes',      icon: '🔟', name: 'Ten Rounds',        desc: 'Play ten rounds of Dominoes' },
+    { id: 'll_first',    game: 'Last Letters',  icon: '🎈', name: 'Safe Landing',      desc: 'Solve your first word' },
+    { id: 'll_clean',    game: 'Last Letters',  icon: '✨',      name: 'Not a Panel',       desc: 'Solve a word without a single wrong letter' },
+    { id: 'll_close',    game: 'Last Letters',  icon: '😅', name: 'By a Thread',       desc: 'Solve a word with one panel left' },
+    { id: 'll_hard',     game: 'Last Letters',  icon: '🧠', name: 'Fiendish Solved',   desc: 'Solve a word on Fiendish' },
+    { id: 'll_streak5',  game: 'Last Letters',  icon: '🔥', name: 'Five in a Row',     desc: 'Solve five words one after another' },
+    { id: 'll_25',       game: 'Last Letters',  icon: '📚', name: 'Twenty-Five Words', desc: 'Solve twenty-five words in total' },
+    { id: 'll_themes',   game: 'Last Letters',  icon: '🗺️', name: 'Well Read',        desc: 'Solve a word from every category' },
+    { id: 'll_alldiff',  game: 'Last Letters',  icon: '🎵', name: 'Every Size',        desc: 'Solve on Gentle, Tricky and Fiendish' }
   ];
 
   var GAME_PAGES = [
@@ -242,7 +250,8 @@
     'nullpoints', 'snug-fit', 'maze-escape', 'sudoku', 'water-sort', 'mahjong',
     'picture-logic', 'spider', 'freecell', 'mine-hunt', 'word-search',
     'loose-ends', 'snake', 'knock-through', 'air-hockey', 'carrom', 'finger-soccer',
-    'dots-boxes', 'connect4', 'mancala', 'reversi', 'backgammon', 'dominoes'
+    'dots-boxes', 'connect4', 'mancala', 'reversi', 'backgammon', 'dominoes',
+    'last-letters'
   ];
 
   var A_KEY = 'gg_ach', S_KEY = 'gg_streak', P_KEY = 'gg_played';

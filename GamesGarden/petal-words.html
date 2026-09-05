@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Petal Words</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 6% -8%, #f7b6ef 0%, transparent 55%),
+      radial-gradient(120% 80% at 96% 105%, #ffdcf2 0%, transparent 55%),
+      linear-gradient(160deg, #b558d8 0%, #e585d2 48%, #fff0fa 100%);
+    background-color:#e585d2;
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#9c2fae;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(120,20,110,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.6px;line-height:1;
+    font-size:clamp(15px,4.8vw,21px);text-shadow:0 2px 0 #b13fc4,0 4px 12px rgba(110,15,100,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:5px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  .prog{height:6px;border-radius:99px;background:rgba(255,255,255,.26);
+    border:1px solid rgba(255,255,255,.34);overflow:hidden;margin-bottom:7px}
+  .pf{height:100%;width:0%;border-radius:99px;
+    background:linear-gradient(90deg,#fff2fb,#ffd9f2 55%,#fff);transition:width .28s ease}
+  #stage{flex:1;position:relative;min-height:0;display:flex;flex-direction:column}
+  #wordbar{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.94);
+    border:1.5px solid #fff;border-radius:14px;padding:6px 10px;cursor:pointer;
+    box-shadow:0 3px 9px rgba(120,20,110,.2);flex:0 0 auto}
+  #wordbar:active{transform:scale(.99)}
+  #wbn{font-size:10.5px;font-weight:900;letter-spacing:.6px;color:#9c2fae;white-space:nowrap}
+  #wblist{flex:1;overflow:hidden;white-space:nowrap;font-size:11.5px;font-weight:700;
+    color:#c98fd6;text-overflow:ellipsis}
+  #wbg{font-size:11px;font-weight:900;color:#c98fd6}
+  #cur{position:absolute;left:0;right:0;text-align:center;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;letter-spacing:2.5px;white-space:nowrap;overflow:hidden;
+    text-shadow:0 2px 5px rgba(110,15,100,.32);line-height:1}
+  #cur .mid{color:#ffe27a}
+  #cur .caret{display:inline-block;width:2px;height:.86em;vertical-align:-.08em;
+    background:#fff;margin-left:1px;animation:bl 1s steps(1,end) infinite}
+  @keyframes bl{0%,50%{opacity:1}51%,100%{opacity:0}}
+  #flower{position:absolute;left:0;right:0;bottom:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #msg{position:absolute;left:50%;top:6px;transform:translateX(-50%);pointer-events:none;
+    background:rgba(255,255,255,.96);color:#9c2fae;font-size:13px;font-weight:900;
+    padding:7px 15px;border-radius:999px;box-shadow:0 5px 16px rgba(110,15,100,.3);
+    opacity:0;white-space:nowrap;max-width:96%;overflow:hidden;text-overflow:ellipsis}
+  #msg.show{animation:pop 1.25s ease forwards}
+  #msg.good{background:#fff3fb}
+  @keyframes pop{0%{opacity:0;transform:translate(-50%,7px) scale(.9)}
+    14%{opacity:1;transform:translate(-50%,0) scale(1)}
+    72%{opacity:1;transform:translate(-50%,0) scale(1)}
+    100%{opacity:0;transform:translate(-50%,-9px) scale(.98)}}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#9c2fae;
+    box-shadow:0 4px 0 rgba(150,35,140,.35),0 6px 14px rgba(120,20,110,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(150,35,140,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(140,30,130,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#fff4fc);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#a878b4;box-shadow:0 20px 50px rgba(110,15,100,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#b13fc4;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#c99ad4;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .sz .sc{font-size:10px;font-weight:900;opacity:.95;text-align:right;white-space:nowrap}
+  .z-p{background:linear-gradient(180deg,#f2a3e6,#b13fc4)}
+  .z-a{background:linear-gradient(180deg,#8fe3c4,#22a37c)}
+  .z-b{background:linear-gradient(180deg,#8fc9ff,#2f75d6)}
+  .z-c{background:linear-gradient(180deg,#ffb27a,#e8702f)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#f2a3e6,#b13fc4);color:#fff;
+    box-shadow:0 5px 0 #8a2b9c,0 8px 18px rgba(180,60,190,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #8a2b9c}
+  .btn-alt{background:#fdeefa;color:#9c2fae;border:1.5px solid #f6d9ef}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#c99ad4;margin:10px 2px}
+  .rules b{color:#b13fc4}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#fdeefa;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#e3b8de}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#b13fc4}
+  .wlist{text-align:left;margin:10px 0 2px;max-height:44vh;overflow:auto;
+    column-count:3;column-gap:8px;font-size:11.5px;line-height:1.62;color:#a878b4}
+  .wlist span{display:block;break-inside:avoid}
+  .wlist .pg{color:#b13fc4;font-weight:900}
+  .wlist .miss{color:#dcb8e2}
+  .ladder{text-align:left;font-size:11.6px;line-height:1.5;color:#c99ad4;margin:8px 2px 2px;
+    column-count:2;column-gap:10px}
+  .ladder span{display:block;break-inside:avoid}
+  .ladder b{color:#b13fc4}
+  .ladder .now{color:#b13fc4;font-weight:900}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+    .wlist{max-height:38vh}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">PETAL WORDS</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">SCORE</div><div class="v" id="vScore">0</div></div>
+    <div class="chip"><div class="k">RANK</div><div class="v" id="vRank">Seed</div></div>
+    <div class="chip"><div class="k">WORDS</div><div class="v" id="vWords">0/0</div></div>
+  </div>
+  <div class="prog"><div class="pf" id="pf"></div></div>
+  <div id="stage">
+    <div id="wordbar">
+      <span id="wbn">0 words</span><span id="wblist"></span><span id="wbg">&#9662;</span>
+    </div>
+    <div id="cur"></div>
+    <div id="flower"><canvas id="cv"></canvas><div id="msg"></div></div>
+    <!-- #cur and #flower are placed by layout() so the word and the flower
+         read as one centred group instead of drifting apart on a tall phone -->
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tDel"><div class="ti">&#9003;</div><div class="tl">DELETE</div></div>
+    <div class="tool" id="tShuf"><div class="ti">&#8635;</div><div class="tl">SHUFFLE</div></div>
+    <div class="tool" id="tEnter"><div class="ti">&#10003;</div><div class="tl">ENTER</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Petal Words data - generated by build_pw.py, do not hand-edit. */
+var PW_DICT_ENC="0able1cacia3demia7c2celerate4nt6ed4pt3ident3laim7ed3ompany4unt7ant3rue2etate2he3ieve7d4ng2id4ic2ne2re4age2ted3ing4on4vate7ion5e3or1dage3mant2ded3ict6ed4ng4tion8al2here6d2min4t2oration4e5d4n2vantage3ent3ice1erial1far2fair3iliation2loat2ter5noon1gain3r2ed3ing3nda4t2gregate2ile3ng3tation2rarian3ee5ing5ment1head3m1ide4d3ing2ling2med3ing2ring3men3tight5me3y1kin1larm2cohol7ic2ert2gae2ien3ght4n5ing3ve2kali2lege5iance6ng4le4rgy4y3iance4ed3ocate8d7ion4tted4w5ing4y3ure3y2manac2oe3ft3ha3ng3of2pha3ine2right2tar3er5nate3hough3o1mateur3ze4ing2en2id3no2mo4nia6um3unition2ount4r2ulet1naconda3log2cient2droid2emia3w2gel5ic7a4r3le4ing3ry2imal5te6ion4e2nex3ounce8d4y3ual2on3ther2tarctic3e4nna7e3i4gen2vil2ymore3one3thing3way4here1orta1part5ment3thy2erture3x2iece2palling4rent3eal5r4tite3le4y5ing3reciate4ove7d2tly1rable2cane3h4aic4ed5r3tic2ea3na2gue3yle2ia3d2mament3chair3ing3or5y4ur3y2oma2range7ment6ing4y3ive3oyo2terial5y3icle4llery3y1thlete2om3p2rial2tach6ed6ing4in6ed6ing6ment3empt4nd6ance8t6ed5tive3ic4re3ract7ive4ition2ypical1uction2dience2nt2ra3ora2to4mation3umn1vail3tar2enge6d3rage4t2ian4tion3d1ward5ing4e3y2ry1xial2le0baby2ht2le3l4et2rrel3ter2th4room3ter4le1each3t4er2came2ech3r3t4le2lieve6ing3l4e4y3t2ret3ry3yl2ta3ter1idding2le3l4ing4y2nd4ing2te3ter6ly1lind5ing4g2ob3om3t2ue3r1obby2de3y2lt2mb4er2oed3m4er3t4h2rder6ed3e4d3ough2th3tle2ught3t1race5let3t3y2each3d3ech4d5er2ibe5ry3e3ll3ttle2ood4m3th3ught2ute1ubble5ing2dding2gging2ild5ing2lb3ging3l4et2rr2tler3t4e5r1yte0cabal4ret3le2che2dence4t2fe2ge4d2lf3l4ed5r4ing3m4ed2me4l4ra3p4aign8ing4ing2nal4ry3cel6ing6ling5r3did6ate3e3ine3ned4ing4on5t3oe4n5ical4py3t4een4on3yon2pacity3e3ital5ol3ping2rat3e4er4free5ul3go3ing3nal3p4et3rier4ot4ying3t4el5r3ve5r2talytic4ract3ch5er5ing5y3er3heter4olic3tle2ution2ve4at4d3iar1eded2iling2leb5rate4ry3l4ar4o4ular2ment2nt4er4ral5e4ury2real4bral4mony3tain1had3in4r5man3llenge3mber3nce4ge6d5ing4nel4t5ing3otic3p4ter3r4acter5de4ge6d6r4ity4m4red4t5er3t4ted6r5ing5y2eap5er4t5ed6r3ck5ing3ddar3ek4r5ed4tah3w4ed2ic4k5en3me3n4a3t1ider2nder3ema6tic2rca4le4uit2tation3e4d3ing3y2vic4l1lad3im5ed3m3n3p3y2ean5er5ing4r5ance5er3ric6al2ient6ele3ff3mate6ic3ng5ing4ic6al6ian3p2one3t3ve2ue3ng1oach3l4ition3t4ed4ing2ca3o4a4nut4on2de4d3ified2ed3fficient3rced5ion6ve2ffee4in2gnac4ition2il3n4cide8d8nce4ed2la3d3lect7ed7ion4ie3on5el5ial3t2ma3e4t3ic3ma4ence8d8ment6d7ed6t5rce4odore5n3p4any4el5te7nce8t4lete6x4onent2ncede7d5ive8d5pt5rn7ed7ing6t7o4ierge4ord4rete4ur6rent3demn7ed4ition9ed4o5ne5r4uct7ed3e3fetti4ide7d7nce5ne7d5rm4lict4orm3ical3nect7ed7ion8ve7or4otation3tact7ing5gion5in7ing4empt5nd7ed6t7ed7ion7ment4inent6uation7e7ing4our3vection5ne7d6ience9t6t7ion4ict7ion5nce8d2ol4ant4ed3p4er6ate2pe3ped5r3y2rd4on3e3n4er6ed4y3oner3porate3rect7ed4idor4upt2te3ton2unt5ed6r5ing5ry5y3p4e3rt3ture2ve4n4r5age5ed1rab3m3ne4ial3te5r3ve2eam4te5ive5or3d4ence4it6ed6or3ed4p5er3me3pt2ied3minal3nge3teria4ic6al2op4ped2ude3el2ying1uddle5ing2ff2ll2nning2rd3e4d3l3rency6t4y3t2te4r3ie3off4ut3ter4ing1ycle4ic6al0daily2le2me3n4ation2nce5d3g4ling2ring3n3t2ta3e4d3ing2wn1eacon3d4line3l4t3n3rth3th2cade6nt4l3eit5ve7d4nt3ide6d4mal3line7d3ode4r3ree6d2dicate8d3uce6d2ed3m4ed3p4er3r2fence5d6ed7r4r5ence5red3ied4ne6d5ite7ion3ormed3y2ity2lete6d3i4ght7ed4ver7ed7y3l3ta3uded3ve2mented3o4n4ted2nial4ed4m3ote6d4unce8d3t3y2pendent3ot3rive7d2rby3ive6d2tach6ed4in6ed3ect6ed6ion6or4ntion4r5mine9d5red7nt3riment2uce2vice4l3oid4lved1ial4ed4ing3mond2ce4d3tate7d2ed3t4er2ff4er6ed7nce8t2gging3it2lemma3l2me2ne4d4r3g3ing3ner2ode2pped2re4ct6ed6or3t2tto2va3e4d4r3ide6d6nd4ne3orce7d1octor2dging2ing2le3l4y2main3e3inant6tion5ion5o2nation3e3or2odle3m4ed3r2pe4d2rm3y2tted2ve2wn4ing1rag4ging3in5ing3w4ing4n2ew2ied4r3ft5ed3ll5ed3p3ve5r2oid3ne3ol3p4out4ped3ve3wn5ing2uid2yer1ual2ct2de2el2ff2ll2ne3g2ped1well1yed3r0each2ger5ly3le2rl4ier4y3n4er4ing3ring3th5y2ten4r3ing1ccentric2lectic2onomy1ddy2ema2ge4d3ing2ict3fice3t4ed4ion4or1erie1ffect3icient3ort1ight5een8th5h2ther1ject1lated2der5ly2ect5ed5ing6on5ric8al3gance3phant3vate4en2icit3te2uded1mail5ed2ber3lem3race2erge6nce8y7t5ing4y2inence6t3r3t4ted6r2otion2peror3ire3ty2ulate1nact5ed5ment2code6d4re4unter2ded3ing3point3ure6d2emy3rgy2gage6d6ment5ing3ine6er8ing2hance7d2igma2joy5ing2large2roll6ing2ter5ed5ing5tain9er3ice5ing4re6ly6ty4ty3rance6t4y1pic1rect5ed2go2ode5d2rant4tic3or2upt1tched2ernal5ity2her3ic3nic3yl1uro1vade5d2en4ing4t3r4green4y5body2ict5ion3dence8d3l2olve6d1xact5ly2cel3ite5ing2ec3rt2ile3t4ing2pel4rience3ire3lain3o2tent4rnal3inct3ra4eme7ly1yed3ing3liner0face3ial4lity3t2il4ure3nt3r4er2ll4acy2nfare2rce3e3m2tal5ity5ly3e3ter4y1ear4ful3t2cal2ed4er3l3t2line3l4a2nce5d3d4er3nel2ral3n3ret4y2ud1iat2ction2end3rce2fe3teen4h4y2ght5er2le3ing3l4er4ing4y2nal3d4er3e4d4r3ger3ite2re4d4fighter3ing3m3th2tted5r1lair3re3t4ly2ea3e4ce2ier3ng4t3p2oat3or3p3ra5l3tation3ur3w4ing4n2uff2yer1oam2dder2il2lio3low6ing4y2nd3t2od4ie3l4ing3t4ed5r4note2rd3e4front4going4ign7er4runner3ge4ing4o3m4al4ed5r6ly4ing4ula3t4e4une3um2ul3nd5ed6r3r4teen2wl2yer1rail3t2ee4d5om4ing4ly4r3ight7er3t2iar3ed4nd3ght3nge2og3m3nt2yer1uel2lfil6l3l4er2nction3d4ed3nel2ture0gadget2ga3ged4ing2in4ed4ing3t2la3e3l4ant4ery5y4on2me4r3ing3ma2ng2ping2rage3ment3ner3ret3ter2te4d3her2uge2ve2ze3ing1ear4ing2ne4ra6l7ly5ic4tic3ie3re3t4ile4le3uine2rm2tting1iant2ft2gantic3gle5ing2lded3l3t2nger2rl3o3th2ve4n4r3ing1lacial3d3nce5ing4d3re4ing2ee3n2ide4ing2ow4ing2ue1oal3t2ing2ld3f4ing2ne3g2od3f3n2re3ge3illa3y2ut2wn1race3d4ing3il4n3m4mar3n4d4ge4ny4ola3pe3te3ve3y2eat5er3en5er4t5ing3w3y2id3ef4ve5ing3ffin3ll5e5ing3m4e3n4d5ing4ning3t2oan5ing3cer3om5ing4ve3tto3ve3w4ing4n2ub3nge4t1uiding3ld2ll4y2nner4ing2rney3u2tter0haggard2il4ed4ing3r4y2lal3e3l4way3o3t2mmer2nd4ed4held4ing4le6d5ing3g4ar4ed5r4ing2ppen6ing4y2rbor3d4en6ed5r3e4m3m3p3ry3t2tch5ed6t5ing3e4d4r3h3ing3red2ul4ing2ve1ead4ache4ed5r4ing4line8d3l4ed4th6y3p3r4d4ing4t5ache5h5y3t4ed5r4h5en6r4ing3ve4ily4y2ck3tare4ic2dge4ing2ed3l2ight3r2ld3l4o3p4ing4line2nce4hman2rb3d3e4in3itage3nia3o4n3ring1idden3e3ing2gh4er4land5ight9ed2ke3ing2ll4y3t2nd3ge5d3t4ing2ppie2re3ing2tch3ter4ing2ve1obo2ld4ing3e3iday3ly3y2me4r4work2ne3or2od3p3t2pe2rn4et3ror2tel3ter2ur1ugging2la3l2ng2rt1ype4r0iced2ing2on4ic1dea4l3ntified9r7y6ty2iom4t5ic2le3y2ol1gnite5ion3ore5ing1llegal5itimate3icit4terate1mage4ine6g6ing3m2itate6ion2minent2port3rint4oper5ve1naction3nimate2carnate3entive3h3idence7t4te5ing3lination6e7d4ude7d6ing3ognito4ntinence5venience;t2decent4ed4finite4pendent3icate8d5ted4e4fference:t4go4vidual3oor3uce6d5ing4lging2efficient3pt3rt5ia3xperience2fant3ect6ion4r5ence5ior5no5red3inite7y3lation4uence3o4rm6ing3ringe7ing2hale6d5ing2itial6te8d7ing8on8ve2jure6d2kling2land3et3ine2mate2nate3er3ing3ocence7t4vation2tact3eger4llect6igence:t4nd6ed5t6ion6ly4r5act5fere9d5im6or5mittent5n6et6ment5pret9er5vene8tion6iew9er3imate5idation3o3ricate5gue7ing4o5vert3uition2valid3ent6ing7on7ve6or3itation5e5ing3ocation4ice4lve7d2ward1odine2nic2ta1ron4ic5ng4y2radiation3itate7ion1tch4ing4y2em0jenny1ogging2in4ing0keen2to1ick4ing2dding4o2ll4ing3n2mono2nd3etic3g4dom3k2tchen3e3ten2wi1nee3w2it4ting2ot3w4ing4n0label3or2ce4d3tic3y2den3y2ger3ging3oon2id3r2ma3e2nce5t3d4ed4ing4line3e3tern2ptop2rge5ly5r4o3va5e5l2tch3e4ly4nt4r5al7ly4x3he3te5r4ice2ugh5ing3rel2va2wn2yer3ing1each3d3f3gue3n4ed4ing3p3rn5er5t3ve4ing2ech2gal5ly3ion4t5imate2nd3ient3t2thal3ter4ing2vel5ed5ing5led6ing4r3ied3y1iar2bel4rty2ce4nce2ed3ge3n3u2fe4line3t2ght5ed6r2king2lac3y2me3it3p2nden3e4age4d4n4r3g4er6ie7ng4o3ing3k4ing3t2on2ra2te4r5al7ly6ry6te3re3ter4le2ve4d4ly4r5y3id4ng1lama1oad4ed3f3n2bby3e2cal5e4te6d5ion3o2dging2ft2gging3in3o2llipop2ne4r3g4er4ing2om3n3p4hole3t4ed2rd3e3ry2tion3to2ve4d2wer5ed2yal1ube2cid2ggage2ll3u2nar3g2re1ying0macabre3e3h4ine2dam5e3e3man2gazine3e4nta3i4c5ian3ma3nate4et2hatma2id3l4ed5r3n4tain5enance3ze2laria3e3ice3l4et3t2ma3ma5l6ian4oth2nage6ment6r5ing3e3ga4er3ia5c4c4la3ner4ing3or3tra3y2pping2rathon3ch3e3gin3ina5e6r4tal5ime3lin3oon3riage4y3t4ial4yr2te4r5ial3h3t4e5r3ure2yo4r2ze1ead3ger3l3n4ing4t5ime3t4y2cca3hanic2dal3ia5l4c5al2ek3t4up2ga2lee3t2mber3e4nto3o4ir4rial5y2nace3d3tion7ed2ow2rcer4y3e4ly3ge5r4ing3it3ry2ta4l5lic3er3re1ica3e3ro2ddle3i3night3term2ght3raine2ld3e3ieu4tarily7y5ia3l4er5t4imeter2me3ic2nce3d4ed4ing3e4d4r3i4mal5ize7ing5um4ng4on3k3or5ity3t4ed2rage3ror6ing2te3igate3t1oan3t2de4m4rn2lar3e2ment3my2ney3itor3k3o3th2od3n3r3t2ral5e4y3e4over3n4ing3on3row2tel3h3ion3or3to2unt5ain3rn2ve4r3ie2wer1ule3let3ti5ple2ral3mur2tant4tion3e3t4on1yrtle0nagging2il4ed4ing3ve2me3ing2nny2pping2rration6or2tal3ion6al4ve2val3e4l3igate7ing1ear4er4ing4ly3t2ck3tar2ed4ed4ing4le4y2gate5ive3lect7ing4igence8t2on2rd3ve2ther3ted4ing3work2ural4on3tron2ver2wer3t4on2xt1ice4r3he3k3otine2ece2fty2gh4t2ne4teen8th5y3th2trate4ic4o1odded4ing3e2el2mad3ination5ee2ne3fiction3violent2odle3k3n2pe2rm3th5ern2tation3e4d3ice6d5ing4fied4ng4on2un2va3el3ice1uance6d2clear5i6c2de2gget2ll2rture6ing2trient3ty0oath1bey4ed1ccur5red7nce2ean2tagon1ddly2or3ur1ffence5d6ed7r4r5ed5ing3ice2ten1gre1iled3y2ntment1lder2ive1mega3n2it4ted1nce2going2ion2line2to1pal2en4ed5r3ra2inion3oid2ponent2ted3ic5al4on1ral4ly3tor2der5ed3ination2gan2ient3gin6al2nate1ther2ter3oman1ught2nce2tcry3door3er3fit3going3ing3let3put3run1vation2en3r4drive4ride4t1wed2ing2ner3ing0pace3ing3t2gan3e4ant3ing2in3r2lace3e3l2ne4l3g3ic3t2pa4cy4l3er2ra4meter3ent3lor3ry3t4icipate4ner4y2tch3ent3h3io3tern4y2ve2yer3ing3ment3roll1eace5ful4h3r3t2ed3ing3l4ing3p4ing3r2llet2nal3ce3etrate3ny3t2ople2pper6oni3tide2rch3form7ed8r3il4od3m4anent3petuate3tinent3vert2ter3ite5ion8ed3ty1hone3to5n1iccolo3nic3ture2ece3d3r4ce2ggy2le3ing3l3ot2ne4apple3g3ned4ing3point3t4o2oneer2pe4d4line4r3ing2rate2ta3ted3y2xel3ie1lace3in5ly3n4e4ning3t3y4boy4ing2ea2ot3y2ume1oem3t2int5ed6r2lar3e3io4tical7o3l4en3o3y2mp2nd3y2oh3l3p3r4er4ly2pe3lar3ped5r4y2re3t4er4ion2tato3ent3ion3ted5r2ur4ed1ractice3irie3y4er2each6er3ceded3fer6red3game4nant3heat3mature4ier7e3p4are4ped3ttier5y3y2ice3de3me5r3nce4t5er3or3vate2obably4e4lem3cedure5ed7ed4tor4ure7d3d4uce7d7r6t3f4ile3gram7me9r3ject7or3m4o5tion4pt3ne3of3p4el6ler5r4onent5rtion4ped4rietor3tect7or9ate5in4on3ud3ve5d4ide7d7r1ulpit2ma2pil3pet2re2tt4er0rabble2ce4r3ial4ng2dar3iant5ting7on6or4o2ffle3t2ge3ing2id4ing3l4ing3n4ing4y2lly2mp4age5nt2nch3d3g4e5r4ing3t2pper3ture2re4ly4r3ity2tchet3e3her3io5n3tle2ve4n2yon1each5ed4t5ive5or3l4ity4ly4m4ty3p4er4pear3r4ing4range2bate3el3oot2call4p3eipt5ve7d7r6ing4nt6ly4ptor3harge3ipe4tal5e6d3ommend9ed4n5nect4rd6ed7r4unt5p4ver7ed3reate4uit7er3tor3urrence8t3ycle2deem6ed7r4fine8d3head3irect8ed3o3uce6d3wood2ef3l4ing3ve2fer5ee6nce9d5ral6ed6ing3ill4ne6d5ing3orm6ed7r3und6ed4te2gain6ing4l3ency5t3gae3ime6n4on3ret6ting3ular7ly2hab2ign5ing3n4deer4vent3terate2ject2latable5e4x4y3evant3ic4ed5f5ve7d7r4gion4ve3y2main6ing3ember3ind6ed7r4t3nant3ove6r2nal4me5ing3der6ed3ew5ing3ounce4wn3t4al4ed4ing2open2pair4y3eat4l4nt4rtoire4tition8ve3ort6er3rint4oduce9d2run2tail6er5n6er4liate3ention3ina4re6d6ment5ing3ract7able4eat4ieve8r4o3urn6ing2unite6ing2veal4l4nge4rb5e6d6nce5t3iew6er4ve6d5ing2write6ten1hea1ice3h2dden4le6d3e4r3ing2fe3f3le3t2gging3ht3id3or2ng4er4ing3k2ot2pe3ped5r4le2te2ver1oad3m3r4ed4ing2bbed5r6y3e3ot2de4o2ger3ue2le3l4ed5r4ing2man3eo2ndo2of4ing3k3m3t4ed2pe4r2tate5ion3e3or3ten2uge4h3lette3nd5ed6r3t4e5r2ver2wer3ing2yal1ubber4le2dder3e2ff2in4ed4ing2le4r2mor4ur3p2ne3g3ner4ing4y3off2pee3ture2ral0table5t2cit3o3t4ic6al5le2gged4ing2il4gate3nt5ed2king2le4nt3k4ing3l4er4y3on2me2ng4ent4o3k3ned5r4ing3tamount2pe4r2rget3o4t3p3t4an2ttoo6ed2ught3nt3t2vern2xa1each5er3l3m4mate3r2ch3tonic2ddy2en4age4y3th2lemetry4phone3l4er4ing4tale4y2mp4er6ament7te8ure4le4o4t2nant3d4ed5r6ed4on3et3or3t4ative4h3ure2rm4ed3race5in4ible7y5er5fied4or4y3tiary2ther6ed2xt4ing1han3t4cher3w2eater5re3e3ft3ir3n4ce3rapy4e5to3ta3y2ick3ef3gh3n4e4g4k4ning3rty2orn4ough3u4gh6t2read6ed5t6en8ed4e4w3ift4ll6er3oat4ne4ugh7out3u2ug2wart1iara2ck4et2dal3e3y2ed3r4ed2ff2ger3ht5en7ing6r2le4d3l4er3t4ed4ing2me4d4r3id4ng2nder3gling3t4ed3y2pped2re4d3ing2tan5ic6um3le5d1oad2fu2il4et2ken2ld3l2mato3e2nal3e4d4r3g3ic3ne3y2ol3t4h2pic5al3ped5r4le2re3n4ado3rent3t4ure2tal5ed5led3e4m2ugh3r3t2wer3n1race5r4t5or3d4ing5tion3il5er4n5ee6r4t5or3m4p3nce3p4per3uma3vel6er6ler3y2eat5ment5y3ble3e3k3nd3y2iad4l3be3dent3ed3gger7ing3m4med3nity3o3p3via2oll3op5er3pe3t4ter3uble4gh4t3ve3y2uce3e4r3mp5et3th1ube2ition2lip2na3e4d4r3ic4ng2rbo3f3n4er4ing4out3ret3tle2tor3u1weed4t5ed2in4e3tter1ycoon2ing2pe3ical7ly2re0ugly1lcer2timate7um1nannounced2cle5an6r3ut2decided4r4tected3o4ne3ue2fit3ounded2iform3on3t4e4ing2real2to3rue1pped4r1rge4nt3ing2ine1terine2ter0vacant4te5ion3cination2in2le4t3id3ley3ve2ne3illa3tage2pe3or2riety3y1eal2er2gan3etative3gie2il4ed3n2lvet2ndetta3eer3t4ed4ing4ral2rb3ge3y2teran3o3ted4ing1ial2be2car3e2deo2ew4er2gil2le3la5ge5in2ne3tage2olence6t5t4in2per2rgin2ta2va3id1ocation2ice5d3d2lt2odoo2te4r0wade3ing2ge4r3ing3on2il4ing2king2lk4ing3l4et2nd3ing2rd3e3n4ing3ren4ing3y2tch5ed3er3t2ve1ealth6y3r4er4ing4y3ther3ve5r2dded2ed3k2ir4d5er5o2ld4ed5r3l2nt2re2tter1hale3t4ever2eat3el3n3re5ver3ther3w3y1ide4r3ow5ed6r2eld5ed2ki2ld3l4ed4ing4ow2nd4ing4ow3e3g4er3k3ner4ing3ter2re4d3ing1oke4n2lf2nt2od4ed3l2rd4ed4ing3e3k4er4ing3ld5wide3m3n3ried1rath2eath3n2it4e5r4ten2ong5doing3te0yacht2ng2rn2wn1eah3r4ly4n2ll2ti1oung5er3r";
+var PW_PACK="cdoprtuuabcehmrhachimnraahmnorthaehilvyecelmoptldeghilthcemnoptcceginrvvacfiltyfadilnotaacegorvvehlnopthcdgilnugcelnrtytacdehivabdgilnulabhmorthacilptytaghilrthacgimnpmcefilnufdghilnoleghilnpeacdeinuigiknorwwaehprtyycefilnueaehilvyaacilmnrnagiklnttegnoruyocfinotuiceinprxeachirtyhaeilnpxnagilnowoaghlotutimnortynehlnoptleinrtvwweflmorymachimnrcagiklnwlabloprylaeilnpxaaeghinpaaeglnryyaeirtvyvaghlotuaachimnribdeorvyoadginrwwagilnpylcelnrtyeeghilrthdeijnrunfimnoruocegintxecegmnryeefnortufcelmopxeadilnuvleflmoryoacmnopyaegnoruyeehkmorweeflmoryfbegilnvvbelmoprmceghiknidgikmnoiadghilndaceghlncaceflrucceiprtuiaehnrwywailmrtyiacilptypaceltxyabdgilnunaflmorufeknortwwcfimnormaemnptymeghilnplacilptylfgilnowidghimntgaghintytcelmoptpagilnowwdghilnogfimnoruraeghinrhcehikntkceinprxpcdoprturcdgilnuiceilnovvbdgilnuicemnorymaegimnzecehiknthelmrtxyecdgilnunceghiknncnortuyrbghortuhdghilnooaeghinpicfinotunaeglruyyaemnoryyegijnoynaceltxylaehilvyvfgimnormehkmorwradehilnhailmrtymaghintyaaghlotuheilnotvvadilnuviaeilnpxiaghilnuaaghilnunablopryycenrtuynaehnrwyeaehrtvwwdginorwwelmrtxyraeilmtuieilnrtylacdeghnhcemnoryeabloprypeilmptuiacmnopyocefilnuicnortuyuaceflpuecefinotfadilnotnaceltxyeefghirtggiknorwoacdeghnnceiprtuccfimnoroagilnpypaceghlnnacdenouaaeginrwwceinprxiceiprtupailmrtyladhiloyleimoprvmdgikmnoddgikmnonbghortuuadilnuvaaehlnpthacdehivdaimnotuiaehnrwyraemnorymacdenounafilnotacdoprtuoaehprtyhcdeilnunefiloprfacgimnpnacehimnnaeghinpnimnoprtncdefinofcginotuocdeilnuideghiltiacginrynbghortuodefinotfdeilorwwacghintgdeijnrueaimnotuoagiklntaadginrtdaeghinthimnoprtrcemnoptncginotuibelmoprrdeilrvyracghinthbelortulaeirtvyeeinortvifgilnowlacdehtwhacdehtwtaegintvvceinotueeknortwnaeilrtyyaefnortfacginotgacehimnedefnoruoceginrvncnortuyoaceghlnacdeinovvagilnpyaaefnortnaemnprtmaemnprtndeilnovveilnotvoacegilncagiklnwicdemnormacehimnaeilnrtyneghilnpicdeopruufgilnownaghilnugaehltwyheilnrtyraegimnzncenrtuytacilmnrlaegimnzgaemnoryeegilnoroacinotvtadeoprvoaemnptyedeilorwlaehltwytacdehiveachilotadefnorufacdeinudaegilnvvcejoprtpadeghinaadinortdagiklnwnaelnrtxladginrwdaciloptoaeghirtgacelnruceinortvveimoprvoceginorecfilnotoaeilmtueacinotuigiknorwnadegntvdafilnotnagilnorocelmopteehlnopteadimnotndefmoprmbeilrtyldeilnovnabcehmrcadilnotlacinotvoefghirtheilmptutcehikntnceginorideioprvveilmptueaeilmoreadegntvnagilnorlaehrtvwhdeilnovoacdeghrhacdeghneaemnptyacginotunacgimnpaaflmorurbeilrtyicdeiorvodeijnrudafilnotiadinortnefginoroaegmoproeinrtvwncdeiorvcacegorvadeilorwoadehilnncenrtuyebeilrtytefiloproaegnprtpaciloptaefiloprlacilmnricdeiorvvimnoprtiaghintynaegilmttaceflruadefintyidefmoprfceilnovlacginotcaeiprtvpcemnoryoaeghirthceinotuoagilnowlbdeorvyraflmoruoadimnottcfinotuodeghilttdeimnottaceilmteagiklntncefinoteacinotuoaceirtvaaeghinraaeglnryradginrwnceilnotnaehrtvweceilnotoaeiprtvaadehnrthacdeintccdeopruoaegmnrtmaeglruyrcegilntedefmoprodeimnrtmcenortuccdeiorttaegmopraacdelotdacdeilmaacelnrtnacdeilmeeilnotveadeghinebelortuecdefinrfaceiprtteginrtuicemnopteaeghinrecdeiortcacelnrtcaegintvgaceimntmcejoprteaehprtytaemprtuacdeoprupcdefinonceinotunaceiprtpdeinoptiaegimnrmaeirtvyrceinotvoaceilmtmaceilmtlacelnrtlefghirteaeilmrtmadehilndcegilnttefginoreaefilrufaceiprtcaimnotundeimnotdcdefinribelmoproacegilnndeimnotiaceirtvcaeglruyeaeglnryleknortweegilnorecefinotoaceirtveaefilrueaceflrueacelnrueabcelrtlacginotoeinoprtiacdeilmdefginornaelnrtvrcdefinoecenortunacegorveaceoprtccdefinrnaegintvedefinrtfceinotvtacdenouecdeinotcaemnprtpdeinoptodeimnrtnaeilrtyicegilntldefintynagilnornacdelotadeinopttdeioprvrdeioprvoeginrtugaemprturdefinotiacegilneacinotunaelnrtvtcejoprtracdeintacenortuuacdelotlaemprtutadinortidefinrttabcelrtcceilnoteeinoprtpdefintydaceilrtcaegmopreadegntveceilnovecdeinotiadeghindacilnotaeinortvnaehnortaaegilnvnaegilnveacdeintiaciloptlaceinrtceinrtvwecdemnorraefilrulcdeilnueacdeinueeginrtutcdenotunacilnotnacelnruaeimoprvrceginrveacilnotocdeiortiaeginrwaaeiprtveaehnorthcdemnornacdehtwaaelnrtvlaceinrtiabcelrttdefinotnegilnornceinotveaeginrweaehnortnacinotvnaelnrtxrbdeorvyebelorturacehprth";
+var PW_BANDS=[["gentle", 166], ["standard", 168], ["tricky", 166]];
+
+function pwDict(){
+  var out=[], prev="", s=PW_DICT_ENC, i=0, n=s.length;
+  while(i<n){
+    var k=s.charCodeAt(i)-48; i++;
+    var j=i; while(j<n && s.charCodeAt(j)>=97) j++;
+    var w=prev.slice(0,k)+s.slice(i,j);
+    out.push(w); prev=w; i=j;
+  }
+  return out;
+}
+function pwPuzzle(idx){
+  var o=idx*8;
+  return { letters: PW_PACK.slice(o,o+7), centre: PW_PACK.charAt(o+7) };
+}
+function pwCount(){ return PW_PACK.length/8; }
+function pwScore(w, letters){
+  var base = w.length===4 ? 1 : w.length;
+  if(pwIsPangram(w, letters)) base += 7;
+  return base;
+}
+function pwIsPangram(w, letters){
+  for(var i=0;i<letters.length;i++) if(w.indexOf(letters.charAt(i))<0) return false;
+  return true;
+}
+function pwSolve(dict, letters, centre){
+  var ok={}, i;
+  for(i=0;i<letters.length;i++) ok[letters.charAt(i)]=1;
+  var out=[];
+  for(i=0;i<dict.length;i++){
+    var w=dict[i];
+    if(w.indexOf(centre)<0) continue;
+    var good=true;
+    for(var j=0;j<w.length;j++) if(!ok[w.charAt(j)]){ good=false; break; }
+    if(good) out.push(w);
+  }
+  return out;
+}
+if(typeof module!=="undefined") module.exports={
+  pwDict:pwDict, pwPuzzle:pwPuzzle, pwCount:pwCount, pwScore:pwScore,
+  pwIsPangram:pwIsPangram, pwSolve:pwSolve, PW_BANDS:PW_BANDS
+};
+</script>
+<script>
+(function(){
+"use strict";
+
+var LS="gg_petal-words_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+/* ---------------- bands ---------------- */
+var BANDS=[], off=0;
+for(var bi=0;bi<PW_BANDS.length;bi++){
+  BANDS.push({id:PW_BANDS[bi][0], from:off, count:PW_BANDS[bi][1]});
+  off+=PW_BANDS[bi][1];
+}
+var BMETA={
+  gentle:  {name:"Gentle",   cls:"z-a", tag:"Shorter lists &middot; kinder words"},
+  standard:{name:"Standard", cls:"z-b", tag:"A proper puzzle &middot; the usual size"},
+  tricky:  {name:"Tricky",   cls:"z-c", tag:"Long lists &middot; plenty to hunt for"}
+};
+function bandOf(id){ for(var i=0;i<BANDS.length;i++) if(BANDS[i].id===id) return BANDS[i]; return BANDS[0]; }
+
+/* ---------------- ranks ---------------- */
+var RANKS=[
+  {n:"Seed",         f:0},
+  {n:"Sprout",       f:0.02},
+  {n:"Shoot",        f:0.05},
+  {n:"Leaf",         f:0.08},
+  {n:"Bud",          f:0.15},
+  {n:"Petal",        f:0.25},
+  {n:"Blossom",      f:0.40},
+  {n:"Bloom",        f:0.50},
+  {n:"Full Bloom",   f:0.70},
+  {n:"Perfect Bloom",f:1.00}
+];
+var DONE_RANK=8;                       /* Full Bloom is "completed" */
+function rankIdx(score,max){
+  if(max<=0) return 0;
+  var r=0;
+  for(var i=0;i<RANKS.length;i++){
+    /* Perfect Bloom is every word, not a rounded fraction */
+    var need = i===RANKS.length-1 ? max : Math.floor(RANKS[i].f*max);
+    if(score>=need) r=i;
+  }
+  return r;
+}
+function rankNeed(i,max){
+  if(i>=RANKS.length) return max;
+  return i===RANKS.length-1 ? max : Math.floor(RANKS[i].f*max);
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+function haptic(k){ if(window.GGA&&GGA.haptic) GGA.haptic(k); }
+
+/* ---------------- state ---------------- */
+var DICT=pwDict();
+var P=null;                 /* current puzzle */
+var typed="";
+var bandId=load("band","gentle");
+var prog=load("prog",null);
+if(!prog||typeof prog!=="object") prog={};
+for(var k=0;k<BANDS.length;k++){
+  var b=BANDS[k].id;
+  if(!prog[b]||typeof prog[b]!=="object") prog[b]={i:0,f:[]};
+  if(typeof prog[b].i!=="number"||prog[b].i<0||prog[b].i>=BANDS[k].count) prog[b].i=0;
+  if(Object.prototype.toString.call(prog[b].f)!=="[object Array]") prog[b].f=[];
+}
+var doneCount=load("done",0);
+if(typeof doneCount!=="number"||doneCount<0) doneCount=0;
+var started=false, frozen=false;
+var awarded=false;          /* completion badges already given for this puzzle */
+
+function makePuzzle(band,i){
+  var b=bandOf(band);
+  var raw=pwPuzzle(b.from+i);
+  var all=pwSolve(DICT, raw.letters, raw.centre).sort();
+  var max=0, pans=[];
+  for(var j=0;j<all.length;j++){
+    max+=pwScore(all[j],raw.letters);
+    if(pwIsPangram(all[j],raw.letters)) pans.push(all[j]);
+  }
+  /* the six outer letters, centre held separately */
+  var outer=[];
+  for(var c=0;c<raw.letters.length;c++) if(raw.letters.charAt(c)!==raw.centre) outer.push(raw.letters.charAt(c));
+  return {band:band, i:i, letters:raw.letters, centre:raw.centre,
+          outer:outer, all:all, set:dictSet(all), max:max, pans:pans,
+          found:[], recent:[], score:0, rank:0};
+}
+function dictSet(a){ var s={}; for(var i=0;i<a.length;i++) s[a[i]]=1; return s; }
+
+function startPuzzle(band,i,found){
+  P=makePuzzle(band,i);
+  bandId=band;
+  typed="";
+  awarded=false;
+  if(found&&found.length){
+    for(var j=0;j<found.length;j++){
+      var w=found[j];
+      if(P.set[w]===1 && !hasFound(w)){ P.found.push(w); P.score+=pwScore(w,P.letters); }
+    }
+    P.found.sort();
+    P.recent=P.found.slice().reverse();
+  }
+  P.rank=rankIdx(P.score,P.max);
+  shufflePetals(true);
+  paintHUD(); layout(); paint();
+}
+function hasFound(w){ for(var i=0;i<P.found.length;i++) if(P.found[i]===w) return true; return false; }
+
+function persist(){
+  if(!P) return;
+  prog[P.band]={i:P.i, f:P.found.slice()};
+  save("prog",prog); save("band",bandId); save("done",doneCount);
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,CX=0,CY=0,RAD=0,PR=0;
+/* The whole vertical budget below the word bar is divided here in one pass:
+   a fixed slot for the typed word, then the flower, then the leftover air is
+   split evenly above and below the pair.  Reserving the word's slot up front
+   is what stops it being squeezed off the top of a short screen. */
+var CURH=0;
+function layout(){
+  var stg=document.getElementById("stage");
+  var fl=document.getElementById("flower");
+  var wb=document.getElementById("wordbar");
+  var sw=stg.clientWidth, sh=stg.clientHeight;
+  if(sw<40||sh<40) return;
+  var wbH=wb.offsetHeight;
+  var box=sh-wbH;                      /* everything under the word bar */
+  CURH=Math.max(28, Math.min(46, Math.round(sh*0.062)));
+  var GAP=Math.round(CURH*0.22);
+
+  /* A petal is 1.10 x 0.90 of PR and sits RAD from the middle, so the flower
+     spans 5.40 PR across and 5.90 PR down. */
+  PR=Math.min(sw/5.7, (box-CURH-GAP)/6.1);
+  if(PR<8) PR=8;
+  RAD=PR*1.85;
+  var flowerH=5.9*PR;
+  var slack=Math.max(0, box-CURH-GAP-flowerH);
+  var top=Math.round(slack/2);
+
+  elCur.style.top=(wbH+top)+"px";
+  elCur.style.height=CURH+"px";
+  fl.style.top=(wbH+top+CURH+GAP)+"px";
+
+  var aw=fl.clientWidth, ah=fl.clientHeight;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  CX=Math.round(aw/2);
+  CY=Math.round(RAD+1.10*PR);
+
+  /* the toast sits under the flower, never over the petals */
+  var my=CY+RAD+1.10*PR+6;
+  if(my>ah-34) my=ah-34;
+  if(my<0) my=0;
+  elMsg.style.top=Math.round(my)+"px";
+  fitCur();
+}
+/* keep the typed word on one line whatever its length */
+function fitCur(){
+  if(!CURH) return;
+  var n=Math.max(4, typed.length);
+  var size=Math.min(CURH*0.70, VW/(n*0.78));
+  if(size<11) size=11;
+  elCur.style.fontSize=Math.round(size)+"px";
+}
+window.addEventListener("resize", function(){ layout(); paint(); });
+
+/* ---------------- petal geometry ---------------- */
+/* slot 0..5 run clockwise from the top; order[] says which letter sits where */
+var order=[0,1,2,3,4,5], anim=null;
+function slotAngle(s){ return -Math.PI/2 + s*Math.PI/3; }
+function petalPos(s){
+  var a=slotAngle(s);
+  return {x:CX+Math.cos(a)*RAD, y:CY+Math.sin(a)*RAD, a:a};
+}
+function shufflePetals(instant){
+  var n=order.slice();
+  /* Fisher-Yates, and never leave it exactly as it was */
+  for(var i=n.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=n[i]; n[i]=n[j]; n[j]=t; }
+  var same=true;
+  for(var k=0;k<6;k++) if(n[k]!==order[k]) same=false;
+  if(same){ var t2=n[0]; n[0]=n[3]; n[3]=t2; }
+  if(instant){ order=n; anim=null; return; }
+  anim={from:order.slice(), to:n, t:0, dur:300};
+  order=n;
+}
+/* where a letter is drawn right now, allowing for the shuffle tween */
+function letterSlot(li){
+  var to=order.indexOf(li);
+  if(!anim) return to;
+  var from=anim.from.indexOf(li);
+  return {from:from, to:to, k:anim.t/anim.dur};
+}
+function drawPos(li){
+  var s=letterSlot(li);
+  if(typeof s==="number") return petalPos(s);
+  var a0=slotAngle(s.from), a1=slotAngle(s.to);
+  var d=a1-a0;
+  while(d>Math.PI) d-=Math.PI*2;
+  while(d<-Math.PI) d+=Math.PI*2;
+  var e=s.k<0?0:(s.k>1?1:s.k);
+  e=e<.5 ? 2*e*e : 1-Math.pow(-2*e+2,2)/2;
+  var a=a0+d*e;
+  var r=RAD*(1-0.13*Math.sin(Math.PI*e));
+  return {x:CX+Math.cos(a)*r, y:CY+Math.sin(a)*r, a:a};
+}
+
+/* ---------------- painting ---------------- */
+var press={i:-1, t:0};      /* i: 0..5 outer index, or 6 for the centre */
+function rr(x,y,w,h,rad){
+  if(rad>w/2) rad=w/2; if(rad>h/2) rad=h/2;
+  ctx.beginPath(); ctx.moveTo(x+rad,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad);
+  ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath();
+}
+function petalPath(x,y,ang,r,sq){
+  ctx.save(); ctx.translate(x,y); ctx.rotate(ang);
+  ctx.beginPath(); ctx.ellipse(0,0,r*1.10*sq,r*0.90*sq,0,0,Math.PI*2); ctx.restore();
+}
+function paint(){
+  if(!ctx||!P||VW<40) return;
+  ctx.clearRect(0,0,VW,VH);
+
+  /* a soft halo behind the flower */
+  var g=ctx.createRadialGradient(CX,CY,PR*0.4,CX,CY,RAD+PR*1.25);
+  g.addColorStop(0,"rgba(255,255,255,.30)");
+  g.addColorStop(1,"rgba(255,255,255,0)");
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(CX,CY,RAD+PR*1.25,0,Math.PI*2); ctx.fill();
+
+  var i;
+  for(i=0;i<6;i++) drawPetal(i);
+  drawCentre();
+}
+function petalScale(idx){
+  if(press.i!==idx) return 1;
+  var k=press.t/140; if(k>1) k=1;
+  return 1-0.10*Math.sin(Math.PI*k);
+}
+function drawPetal(li){
+  var p=drawPos(li), sq=petalScale(li);
+  ctx.save();
+  ctx.shadowColor="rgba(120,20,110,.30)"; ctx.shadowBlur=PR*0.34; ctx.shadowOffsetY=PR*0.11;
+  petalPath(p.x,p.y,p.a,PR,sq);
+  ctx.fillStyle="#ffffff";
+  ctx.fill();
+  ctx.restore();
+  /* a blush towards the outer tip */
+  ctx.save();
+  petalPath(p.x,p.y,p.a,PR,sq); ctx.clip();
+  var lg=ctx.createLinearGradient(p.x-Math.cos(p.a)*PR,p.y-Math.sin(p.a)*PR,
+                                  p.x+Math.cos(p.a)*PR*1.2,p.y+Math.sin(p.a)*PR*1.2);
+  lg.addColorStop(0,"rgba(255,255,255,0)");
+  lg.addColorStop(1,"rgba(255,190,232,.85)");
+  ctx.fillStyle=lg; ctx.fillRect(p.x-PR*2,p.y-PR*2,PR*4,PR*4);
+  ctx.restore();
+
+  ctx.fillStyle="#9c2fae";
+  ctx.font="900 "+Math.round(PR*0.86)+"px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(P.outer[li].toUpperCase(), p.x, p.y+PR*0.03);
+}
+function drawCentre(){
+  var sq=petalScale(6);
+  ctx.save();
+  ctx.shadowColor="rgba(120,20,110,.36)"; ctx.shadowBlur=PR*0.4; ctx.shadowOffsetY=PR*0.12;
+  ctx.beginPath(); ctx.arc(CX,CY,PR*sq,0,Math.PI*2);
+  var g=ctx.createLinearGradient(CX,CY-PR,CX,CY+PR);
+  g.addColorStop(0,"#ffd76b"); g.addColorStop(1,"#ff9ad0");
+  ctx.fillStyle=g; ctx.fill();
+  ctx.restore();
+  ctx.fillStyle="#fff";
+  ctx.font="900 "+Math.round(PR*0.86)+"px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(P.centre.toUpperCase(), CX, CY+PR*0.03);
+}
+
+/* ---------------- HUD ---------------- */
+var elScore=document.getElementById("vScore"), elRank=document.getElementById("vRank"),
+    elWords=document.getElementById("vWords"), elPf=document.getElementById("pf"),
+    elCur=document.getElementById("cur"), elWbn=document.getElementById("wbn"),
+    elWbl=document.getElementById("wblist"), elMsg=document.getElementById("msg");
+function paintHUD(){
+  if(!P) return;
+  elScore.textContent=String(P.score);
+  elRank.textContent=RANKS[P.rank].n;
+  elWords.textContent=P.found.length+"/"+P.all.length;
+  var frac=P.max>0 ? P.score/P.max : 0;
+  elPf.style.width=Math.round(Math.min(1,frac)*100)+"%";
+  elWbn.textContent=P.found.length===1 ? "1 word" : P.found.length+" words";
+  /* newest first - an alphabetical strip always shows the same few words */
+  elWbl.textContent=P.recent.join("   ");
+  paintCur();
+}
+function paintCur(){
+  var h="", i;
+  for(i=0;i<typed.length;i++){
+    var ch=typed.charAt(i);
+    h+= ch===P.centre ? '<span class="mid">'+ch.toUpperCase()+'</span>' : ch.toUpperCase();
+  }
+  h+='<span class="caret"></span>';
+  elCur.innerHTML=h;
+  fitCur();
+}
+var msgT=null;
+function say(t,good){
+  elMsg.textContent=t;
+  elMsg.className="";
+  void elMsg.offsetWidth;
+  elMsg.className="show"+(good?" good":"");
+}
+
+/* ---------------- input ---------------- */
+function tapLetter(ch){
+  if(!started||frozen) return;
+  if(typed.length>=20) return;
+  typed+=ch;
+  paintCur();
+  beep(430+typed.length*18,.05,"sine",.035);
+  haptic("light");
+}
+function del(){
+  if(!started||frozen) return;
+  if(!typed.length) return;
+  typed=typed.slice(0,-1);
+  paintCur();
+  beep(300,.05,"sine",.03);
+}
+function clearWord(){ typed=""; paintCur(); }
+
+function submit(){
+  if(!started||frozen) return null;
+  var w=typed;
+  if(!w.length) return null;
+  if(w.length<4){ say("Too short - four letters or more"); bad(); return "short"; }
+  if(w.indexOf(P.centre)<0){ say("Needs the middle letter"); bad(); return "centre"; }
+  if(hasFound(w)){ say("Already found"); bad(); return "dup"; }
+  if(P.set[w]!==1){ say("Not in the word list"); bad(); return "unknown"; }
+
+  var pts=pwScore(w,P.letters), pan=pwIsPangram(w,P.letters);
+  P.found.push(w); P.found.sort(); P.recent.unshift(w);
+  P.score+=pts;
+  var before=P.rank;
+  P.rank=rankIdx(P.score,P.max);
+  typed="";
+  paintHUD();
+
+  if(pan){
+    say("Pangram!  +"+pts, true);
+    beep(520,.10,"triangle",.06,780); setTimeout(function(){ beep(780,.16,"triangle",.05,1170); },95);
+    haptic("success");
+    if(window.GGA) GGA.award("pw_pangram");
+  }else{
+    say("+"+pts, true);
+    beep(600,.07,"triangle",.05,860);
+    haptic("light");
+  }
+  if(w.length>=9 && window.GGA) GGA.award("pw_long");
+  if(P.score>=100 && window.GGA) GGA.award("pw_century");
+  if(P.rank>before && P.rank>=4){
+    setTimeout(function(){ say(RANKS[P.rank].n+"!", true); },900);
+    beep(660,.12,"sine",.045,990);
+  }
+  persist();
+  if(P.found.length===P.all.length){
+    setTimeout(function(){ finish(); },700);
+  }else if(P.rank>=DONE_RANK && !awarded){
+    markDone();
+    setTimeout(function(){ finish(); },1000);
+  }
+  return "ok";
+}
+function bad(){ beep(210,.13,"sawtooth",.035,150); haptic("error"); }
+
+function markDone(){
+  if(awarded) return;
+  awarded=true;
+  doneCount++;
+  save("done",doneCount);
+  if(window.GGA){
+    GGA.award("pw_first");
+    if(P.band==="tricky") GGA.award("pw_tricky");
+    if(doneCount>=5) GGA.award("pw_five");
+    if(doneCount>=25) GGA.award("pw_25");
+  }
+}
+
+/* ---------------- taps on the flower ---------------- */
+function hit(x,y){
+  var dx=x-CX, dy=y-CY;
+  if(dx*dx+dy*dy<=PR*PR) return 6;
+  for(var li=0;li<6;li++){
+    var p=drawPos(li);
+    var ox=x-p.x, oy=y-p.y;
+    var c=Math.cos(-p.a), s=Math.sin(-p.a);
+    var lx=ox*c-oy*s, ly=ox*s+oy*c;
+    var a=PR*1.10, b=PR*0.90;
+    if((lx*lx)/(a*a)+(ly*ly)/(b*b)<=1) return li;
+  }
+  return -1;
+}
+function pointerAt(e){
+  var r=cv.getBoundingClientRect();
+  var t=e.touches&&e.touches.length ? e.touches[0] : e;
+  return {x:t.clientX-r.left, y:t.clientY-r.top};
+}
+function onDown(e){
+  if(!started||frozen||!P) return;
+  var q=pointerAt(e), i=hit(q.x,q.y);
+  if(i<0) return;
+  e.preventDefault();
+  press.i=i; press.t=0;
+  tapLetter(i===6 ? P.centre : P.outer[i]);
+  paint();
+}
+cv.addEventListener("touchstart", onDown, {passive:false});
+cv.addEventListener("mousedown", onDown);
+
+document.addEventListener("keydown", function(e){
+  if(!started||frozen||!P) return;
+  if(ovl.classList.contains("on")) return;
+  var k=e.key;
+  if(k==="Enter"){ submit(); e.preventDefault(); return; }
+  if(k==="Backspace"){ del(); e.preventDefault(); return; }
+  if(k&&k.length===1){
+    var c=k.toLowerCase();
+    if(P.letters.indexOf(c)>=0){ tapLetter(c); e.preventDefault(); }
+  }
+});
+
+document.getElementById("tDel").onclick=function(){ del(); };
+document.getElementById("tEnter").onclick=function(){ submit(); };
+document.getElementById("tShuf").onclick=function(){
+  if(!started||frozen) return;
+  shufflePetals(false); beep(400,.07,"sine",.03,300); haptic("light");
+};
+document.getElementById("wordbar").onclick=function(){ if(started) foundScreen(); };
+
+/* ---------------- animation ---------------- */
+var lastT=0;
+function step(dt){
+  if(anim){ anim.t+=dt; if(anim.t>=anim.dur) anim=null; }
+  if(press.i>=0){ press.t+=dt; if(press.t>=140){ press.i=-1; press.t=0; } }
+}
+function frame(t){
+  requestAnimationFrame(frame);
+  if(frozen){ lastT=t; return; }
+  if(!lastT) lastT=t;
+  var dt=t-lastT; if(dt>100) dt=100;
+  lastT=t;
+  if(anim||press.i>=0){ step(dt); paint(); }
+}
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function titleScreen(){
+  started=false;
+  var h='<h2>PETAL WORDS</h2>'+
+        '<p>Make words from the seven petals. Every word must use the middle letter.</p>'+
+        '<div class="sizes">';
+  for(var i=0;i<BANDS.length;i++){
+    var b=BANDS[i], m=BMETA[b.id];
+    var pr=prog[b.id];
+    h+='<div class="sz '+m.cls+'" data-b="'+b.id+'">'+
+         '<div><div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div>'+
+         '<div class="sc">PUZZLE<br>'+(pr.i+1)+' / '+b.count+'</div>'+
+       '</div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  var els=card.querySelectorAll(".sz");
+  for(var j=0;j<els.length;j++){
+    els[j].onclick=function(){
+      var b=this.getAttribute("data-b");
+      startPuzzle(b, prog[b].i, prog[b].f);
+      started=true; closeOvl(); persist(); layout(); paint(); paintHUD();
+    };
+  }
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+
+function rulesScreen(fromGame){
+  var h='<h2>HOW TO PLAY</h2>'+
+    '<div class="rules">'+
+    '&bull; Tap the petals to build a word, then press <b>ENTER</b>.<br>'+
+    '&bull; Words must be <b>four letters or longer</b>.<br>'+
+    '&bull; Every word must use the <b>middle letter</b>.<br>'+
+    '&bull; Letters may be used <b>as often as you like</b>.<br>'+
+    '&bull; Four letters scores <b>1</b>. Longer words score <b>one point per letter</b>.<br>'+
+    '&bull; A word using <b>all seven</b> petals is a <b>pangram</b> and scores <b>7 extra</b>.<br>'+
+    '&bull; <b>SHUFFLE</b> moves the petals about. It never changes the puzzle.<br>'+
+    '&bull; There is no letter S, so no plurals ending in S.<br>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bBack">'+(fromGame?"CARRY ON":"BACK")+'</button>';
+  openOvl(h);
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame) closeOvl(); else titleScreen();
+  };
+}
+
+function ladderHTML(){
+  var h='<div class="ladder">';
+  for(var i=0;i<RANKS.length;i++){
+    var need=rankNeed(i,P.max);
+    h+='<span class="'+(i===P.rank?"now":"")+'">'+
+        (i===P.rank?"<b>":"")+esc(RANKS[i].n)+(i===P.rank?"</b>":"")+
+        " &middot; "+need+'</span>';
+  }
+  return h+'</div>';
+}
+
+function foundScreen(){
+  var h='<h2>'+P.found.length+' OF '+P.all.length+'</h2>'+
+        '<p>'+P.score+' points &middot; '+esc(RANKS[P.rank].n)+'</p>';
+  if(P.found.length){
+    h+='<div class="wlist">';
+    for(var i=0;i<P.found.length;i++){
+      var w=P.found[i], pan=pwIsPangram(w,P.letters);
+      h+='<span class="'+(pan?"pg":"")+'">'+esc(w)+(pan?" &#10022;":"")+'</span>';
+    }
+    h+='</div>';
+  }else{
+    h+='<p>Nothing found yet.</p>';
+  }
+  h+=ladderHTML();
+  h+='<button class="btn btn-go" id="bBack">CARRY ON</button>';
+  openOvl(h);
+  card.querySelector("#bBack").onclick=closeOvl;
+}
+
+function statsHTML(){
+  return '<div class="stats">'+
+    '<div class="st"><div class="sk">SCORE</div><div class="sv">'+P.score+'</div></div>'+
+    '<div class="st"><div class="sk">WORDS</div><div class="sv">'+P.found.length+'/'+P.all.length+'</div></div>'+
+    '<div class="st"><div class="sk">DONE</div><div class="sv">'+doneCount+'</div></div>'+
+    '</div>';
+}
+/* `lead` is false when another button on the card is the obvious next step,
+   so that two purple buttons never compete for the same tap. */
+function tailButtons(h,lead){
+  var more=P.i<bandOf(P.band).count-1;
+  var cls=lead===false ? "btn-alt" : "btn-go";
+  h+= more ? '<button class="btn '+cls+'" id="bNext">NEXT PUZZLE</button>'
+           : '<p>That is the last '+esc(BMETA[P.band].name)+' puzzle. Well played.</p>';
+  return h+'<button class="btn btn-alt" id="bMenu">BACK TO MENU</button>';
+}
+function wireTail(){
+  var bn=card.querySelector("#bNext");
+  if(bn) bn.onclick=function(){ nextPuzzle(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+
+function finish(){
+  markDone();
+  var perfect=P.found.length===P.all.length;
+  if(perfect && window.GGA) GGA.award("pw_perfect");
+  beep(520,.12,"triangle",.055,780);
+  setTimeout(function(){ beep(780,.2,"triangle",.05,1170); },110);
+  haptic("success");
+
+  var h='<h2>'+(perfect?"PERFECT BLOOM":esc(RANKS[P.rank].n).toUpperCase())+'</h2>'+
+        '<p>Puzzle '+(P.i+1)+' &middot; '+esc(BMETA[P.band].name)+'</p>'+
+        statsHTML();
+  if(perfect){
+    h+='<p>Every word on the flower. Nothing left to find.</p>';
+    h=tailButtons(h);
+    openOvl(h); wireTail();
+  }else{
+    h+='<p>There are still '+(P.all.length-P.found.length)+' to find.</p>'+
+       '<button class="btn btn-go" id="bKeep">KEEP LOOKING</button>'+
+       '<button class="btn btn-alt" id="bShow">SHOW ME THE REST</button>';
+    h=tailButtons(h,false);
+    openOvl(h);
+    card.querySelector("#bKeep").onclick=closeOvl;
+    card.querySelector("#bShow").onclick=revealScreen;
+    wireTail();
+  }
+}
+
+/* Only ever reached by asking for it - finding Full Bloom must not spoil the
+   words the player has not got yet. */
+function revealScreen(){
+  var h='<h2>THE REST</h2>'+
+        '<p>'+(P.all.length-P.found.length)+' you did not get</p>'+
+        '<div class="wlist">';
+  for(var i=0;i<P.all.length;i++){
+    var w=P.all[i];
+    if(hasFound(w)) continue;
+    var pan=pwIsPangram(w,P.letters);
+    h+='<span class="miss'+(pan?" pg":"")+'">'+esc(w)+(pan?" &#10022;":"")+'</span>';
+  }
+  h+='</div>';
+  h=tailButtons(h);
+  openOvl(h); wireTail();
+}
+
+function nextPuzzle(){
+  var last=bandOf(P.band).count-1;
+  var i=P.i<last ? P.i+1 : P.i;
+  prog[P.band]={i:i, f:[]};
+  save("prog",prog);
+  startPuzzle(P.band, i, []);
+  started=true; closeOvl(); persist();
+}
+
+document.getElementById("bPause").onclick=function(){
+  if(!started){ titleScreen(); return; }
+  var h='<h2>PAUSED</h2>'+
+        '<p>Puzzle '+(P.i+1)+' &middot; '+esc(BMETA[P.band].name)+'</p>'+
+        '<div class="stats">'+
+          '<div class="st"><div class="sk">SCORE</div><div class="sv">'+P.score+'</div></div>'+
+          '<div class="st"><div class="sk">RANK</div><div class="sv" style="font-size:12px">'+esc(RANKS[P.rank].n)+'</div></div>'+
+          '<div class="st"><div class="sk">WORDS</div><div class="sv">'+P.found.length+'/'+P.all.length+'</div></div>'+
+        '</div>'+
+        ladderHTML()+
+        '<button class="btn btn-go" id="bGo">CARRY ON</button>'+
+        '<button class="btn btn-alt" id="bSkip">SKIP TO NEXT PUZZLE</button>'+
+        '<button class="btn btn-alt" id="bRules2">HOW TO PLAY</button>'+
+        '<button class="btn btn-alt" id="bMenu2">BACK TO MENU</button>';
+  openOvl(h);
+  card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
+  card.querySelector("#bSkip").onclick=function(){ nextPuzzle(); };
+  card.querySelector("#bRules2").onclick=function(){ rulesScreen(true); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+/* NOTE: do not call persist() from here. Booting must leave the saved puzzle
+   untouched so the title screen can offer it back exactly as it was. */
+startPuzzle(bandId, prog[bandId].i, prog[bandId].f);
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); paint(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(function(){ layout(); paint(); },220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+})();
+</script>
+</body>
+</html>
