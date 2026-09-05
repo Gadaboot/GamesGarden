@@ -6,147 +6,191 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Anagram Crosswords</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { height:100%; }
-  body {
-    background:linear-gradient(160deg,#0d1b3e 0%,#1a2c5e 60%,#23407c 100%);
-    font-family:-apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-    color:#fff; overflow:hidden;
-    user-select:none; -webkit-user-select:none; touch-action:manipulation;
-    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+  /* ---- Anagram Crosswords, re-skinned to the house style, mango / berry ----
+     The game underneath is the original, untouched: both modes, the same twelve
+     wheel levels, the same six themed puzzles, the same crossword layout engine,
+     the same save keys and the same two badges.
+
+     Every class name and every id from the original build is kept, because the
+     game builds the grids, the wheel, the keyboard and the puzzle list in
+     JavaScript and names them.  The only colour the script sets for itself is
+     the line drawn between wheel letters, which the assembler patches. */
+  :root{
+    --ink:#8a3a12;
+    --berry:#e0357a;
+    --berry-d:#b01f5c;
+    --cream:#fffdf7;
+    --solved:#2fae6b;
+    --solved-d:#1d7a48;
   }
-  .screen { display:none; height:100%; flex-direction:column; align-items:center; }
-  .screen.active { display:flex; }
-  .topbar {
-    width:100%; max-width:560px; display:flex; justify-content:space-between;
-    align-items:center; padding:10px 12px; flex:0 0 auto;
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(115% 80% at 4% -8%, #ffd0b0 0%, transparent 55%),
+      radial-gradient(120% 80% at 98% 106%, #ffc8de 0%, transparent 58%),
+      linear-gradient(162deg, #e8622a 0%, #f79b62 46%, #fff2e8 100%);
+    color:#fff;
+    touch-action:manipulation;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
   }
-  .tbtn {
-    background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.35);
-    font-size:14px; font-weight:600; padding:8px 14px; border-radius:20px; cursor:pointer;
-    font-family:inherit;
+  .screen{display:none;height:100%;flex-direction:column;align-items:center;
+    width:100%;max-width:520px;margin:0 auto}
+  .screen.active{display:flex}
+
+  /* ---------- the house bar, wearing the old .topbar name ---------- */
+  .topbar{width:100%;display:flex;align-items:center;gap:8px;margin-bottom:6px;flex:0 0 auto}
+  .tbtn{display:inline-flex;align-items:center;justify-content:center;gap:4px;
+    background:rgba(255,255,255,.95);color:var(--ink);border:1.5px solid #fff;
+    font-size:12.5px;font-weight:800;padding:6px 12px;border-radius:999px;cursor:pointer;
+    font-family:inherit;box-shadow:0 3px 9px rgba(120,45,15,.26);white-space:nowrap}
+  .tbtn:active{transform:scale(.94)}
+  .barTitle{flex:1;text-align:center;font-weight:900;letter-spacing:1.2px;line-height:1;
+    font-size:clamp(13px,4.2vw,19px);text-shadow:0 2px 0 #c34d1e,0 4px 12px rgba(110,40,15,.45);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- the strip, wearing the old .hud name ---------- */
+  .hud{width:100%;display:flex;gap:6px;margin-bottom:6px;flex:0 0 auto}
+  .hud span{flex:1;min-width:0;text-align:center;padding:5px 2px;border-radius:13px;
+    background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.5);
+    font-size:clamp(11px,3.5vw,15px);font-weight:900;color:#7a3210;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hud .lvl{color:#a8265f;background:rgba(255,255,255,.42)}
+
+  /* ---------- menu + puzzle pick, as house cards ---------- */
+  .title-big{font-size:26px;font-weight:900;letter-spacing:1.5px;margin:18px 0 4px;
+    text-align:center;text-shadow:0 2px 0 #c34d1e,0 4px 14px rgba(110,40,15,.4)}
+  .subtitle{font-size:13px;opacity:.95;margin-bottom:16px;text-align:center;padding:0 20px;
+    text-shadow:0 1px 6px rgba(110,40,15,.4)}
+  .modecard{
+    width:100%;max-width:400px;background:linear-gradient(180deg,#fff,#fff4ec);
+    border:2px solid #fff;border-radius:20px;
+    padding:15px 16px;margin:7px 0;cursor:pointer;text-align:left;color:#b58a72;
+    box-shadow:0 8px 22px rgba(120,45,15,.28);transition:transform .1s;
   }
-  .tbtn:active { background:rgba(255,255,255,0.3); }
-  .title-big { font-size:34px; font-weight:800; letter-spacing:1px; margin:24px 0 6px;
-    text-shadow:0 2px 8px rgba(0,0,0,0.4); text-align:center; }
-  .subtitle { opacity:0.75; margin-bottom:30px; text-align:center; padding:0 20px; }
-  .modecard {
-    width:86%; max-width:400px; background:rgba(255,255,255,0.09);
-    border:1px solid rgba(255,255,255,0.25); border-radius:18px;
-    padding:20px 22px; margin:10px 0; cursor:pointer; text-align:left;
-    transition:transform .1s;
+  .modecard:active{transform:scale(.97)}
+  .modecard h2{font-size:18px;font-weight:900;margin-bottom:4px;color:#d8481f}
+  .modecard p{font-size:12.5px;line-height:1.4;color:#b58a72}
+  .modecard .emoji{font-size:26px;float:right;margin-left:10px}
+
+  #puzzlePick{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;
+    max-width:400px;padding:0 4px}
+  .pzbtn{
+    width:114px;padding:13px 4px;border-radius:16px;border:2px solid #fff;
+    background:linear-gradient(180deg,#fff,#fff4ec);color:#a3491f;font-family:inherit;
+    font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 5px 0 rgba(160,70,30,.3)}
+  .pzbtn .done{color:var(--solved)}
+  .pzbtn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(160,70,30,.3)}
+
+  /* ---------- grids ---------- */
+  #gridArea,#agGridArea{flex:1 1 auto;width:100%;display:flex;align-items:center;
+    justify-content:center;min-height:0;padding:4px}
+  .grid{position:relative}
+  .cell{
+    position:absolute;background:rgba(255,255,255,.6);
+    border:2px solid #f3cfb2;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;color:var(--ink);
   }
-  .modecard:active { transform:scale(0.97); background:rgba(255,255,255,0.18); }
-  .modecard h2 { font-size:21px; margin-bottom:6px; }
-  .modecard p { font-size:14px; opacity:0.75; line-height:1.35; }
-  .modecard .emoji { font-size:30px; float:right; margin-left:10px; }
-  .hud { width:100%; max-width:560px; display:flex; justify-content:space-between;
-    padding:2px 16px 6px; font-size:15px; font-weight:700; flex:0 0 auto; }
-  .hud .lvl { color:#ffd76a; }
-  #gridArea, #agGridArea {
-    flex:1 1 auto; width:100%; display:flex; align-items:center; justify-content:center;
-    min-height:0; padding:4px;
+  .cell.revealed{background:var(--cream);color:var(--ink);border-color:#e8b58c}
+  .cell.locked{background:var(--solved);color:#fff;border-color:var(--solved-d)}
+  .cell.sel{outline:3px solid var(--berry);outline-offset:-1px;z-index:2}
+  .cell.wrong{background:#e8482f !important;color:#fff !important;border-color:#b4351f !important}
+  .cell .num{position:absolute;top:0;left:3px;font-size:9px;font-weight:800;opacity:.6}
+
+  /* ---------- wheel mode ---------- */
+  #wordPreview{min-height:38px;margin:2px 0 6px;display:flex;gap:5px;justify-content:center;
+    align-items:center;flex:0 0 auto}
+  #wordPreview .pl{
+    background:var(--berry);color:#fff;font-weight:900;font-size:19px;
+    border-radius:8px;padding:5px 9px;min-width:30px;text-align:center;
+    box-shadow:0 3px 0 var(--berry-d)}
+  #wheelZone{flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    padding-bottom:4px;gap:12px}
+  #wheel{position:relative;border-radius:50%;
+    background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.75);
+    box-shadow:0 6px 18px rgba(120,45,15,.25);touch-action:none}
+  #wheelLines{position:absolute;inset:0;pointer-events:none}
+  .wletter{
+    position:absolute;width:50px;height:50px;border-radius:50%;
+    background:var(--cream);color:var(--ink);font-size:24px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    box-shadow:0 4px 0 #e0b48f,0 6px 12px rgba(120,45,15,.3)}
+  .wletter.selL{background:var(--berry);color:#fff;transform:scale(1.1);
+    box-shadow:0 4px 0 var(--berry-d)}
+  .sidebtns{display:flex;flex-direction:column;gap:9px}
+  .roundbtn{
+    width:50px;height:50px;border-radius:50%;border:1.5px solid #fff;
+    background:rgba(255,255,255,.96);color:var(--ink);font-size:19px;cursor:pointer;
+    font-family:inherit;box-shadow:0 4px 0 rgba(160,70,30,.32)}
+  .roundbtn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(160,70,30,.32)}
+
+  /* ---------- anagram mode ---------- */
+  #clueBar{flex:0 0 auto;width:100%;text-align:center;padding:2px 4px 4px;min-height:52px}
+  .clueTop{display:flex;align-items:center;gap:8px;padding:0 2px}
+  #clueLabel{flex:1;font-size:11.5px;font-weight:800;color:#7a3210;text-align:center}
+  .tbtn.tiny{padding:5px 10px;font-size:10.5px;flex:0 0 auto}
+  #clueScramble{display:flex;gap:5px;justify-content:center;margin-top:4px;flex-wrap:wrap}
+  #clueScramble .ct{
+    background:var(--berry);color:#fff;font-weight:900;font-size:17px;
+    border-radius:8px;padding:4px 8px;min-width:27px;box-shadow:0 3px 0 var(--berry-d)}
+  #kbd{flex:0 0 auto;width:100%;padding:2px 2px 0}
+  .krow{display:flex;justify-content:center;gap:4px;margin-bottom:5px}
+  .key{
+    flex:1;max-width:42px;background:rgba(255,255,255,.96);color:var(--ink);
+    border:none;border-radius:11px;font-size:15px;font-weight:900;
+    padding:10px 0;cursor:pointer;font-family:inherit;text-align:center;
+    box-shadow:0 3px 0 rgba(160,70,30,.3)}
+  .key:active{transform:translateY(3px);box-shadow:none;background:var(--berry);color:#fff}
+  .key.wide{max-width:62px;font-size:14px}
+
+  /* ---------- toast + overlay ---------- */
+  #toast{
+    position:fixed;top:16%;left:50%;transform:translateX(-50%);
+    background:linear-gradient(180deg,#fff,#fff4ec);color:var(--berry);border:2px solid #fff;
+    font-weight:900;padding:11px 20px;border-radius:16px;font-size:15px;
+    opacity:0;pointer-events:none;transition:opacity .25s;z-index:50;
+    box-shadow:0 10px 30px rgba(120,45,15,.4);white-space:nowrap}
+  #toast.show{opacity:1}
+  .shake{animation:shake .4s}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)}
   }
-  .grid { position:relative; }
-  .cell {
-    position:absolute; background:rgba(255,255,255,0.14);
-    border:1px solid rgba(255,255,255,0.30); border-radius:4px;
-    display:flex; align-items:center; justify-content:center;
-    font-weight:800; color:#fff;
+  .overlay{position:fixed;inset:0;background:rgba(150,60,25,.45);backdrop-filter:blur(6px);
+    z-index:100;display:none;align-items:center;justify-content:center;padding:12px}
+  .overlay.show{display:flex}
+  .overlay .box{
+    width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#fff4ec);
+    border:2px solid #fff;border-radius:22px;padding:20px 16px 14px;text-align:center;
+    color:#b58a72;box-shadow:0 20px 50px rgba(120,45,15,.45);max-height:100%;overflow:auto}
+  .overlay h2{font-size:21px;font-weight:900;margin-bottom:6px;color:#d8481f}
+  .overlay p{margin-bottom:14px;font-size:13px;line-height:1.5;color:#b58a72}
+  .rules{text-align:left;font-size:12.4px;line-height:1.6;color:#b58a72;margin:10px 2px}
+  .rules b{color:#d8481f}
+  .bigbtn{
+    display:block;width:100%;margin:8px 0 0;padding:12px;border:none;border-radius:15px;
+    font:900 14.5px -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.4px;
+    background:linear-gradient(180deg,#ff9d5e,#e0561f);color:#fff;cursor:pointer;
+    font-family:inherit;box-shadow:0 5px 0 #a83c12,0 8px 18px rgba(170,60,20,.3)}
+  .bigbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #a83c12}
+  .bigbtn.ghost{background:#fff2e8;color:var(--ink);border:1.5px solid #f5d6c0;
+    box-shadow:none}
+  .bigbtn.ghost:active{transform:translateY(2px)}
+
+  @media (max-height:700px){
+    .overlay .box{padding:14px 13px 10px}.overlay h2{font-size:18px}
+    .rules{font-size:11.4px;line-height:1.45}
+    .bigbtn{padding:10px;font-size:13.5px}
+    .title-big{font-size:22px;margin:12px 0 4px}
+    .subtitle{margin-bottom:10px}
+    .modecard{padding:12px 14px;margin:5px 0}
+    .modecard h2{font-size:16px}
+    .wletter{width:44px;height:44px;font-size:21px}
+    .roundbtn{width:44px;height:44px;font-size:17px}
   }
-  .cell.revealed { background:#f7f2e7; color:#1a2c5e; }
-  .cell.locked { background:#69c77c; color:#08301a; border-color:#4ea85f; }
-  .cell.sel { outline:3px solid #ffd76a; outline-offset:-2px; z-index:2; }
-  .cell.wrong { background:#d95757 !important; color:#fff !important; }
-  .cell .num {
-    position:absolute; top:1px; left:3px; font-size:9px; font-weight:600; opacity:0.75;
-  }
-  /* ---- wheel mode ---- */
-  #wordPreview {
-    min-height:40px; margin:2px 0 6px; display:flex; gap:5px; justify-content:center;
-    align-items:center; flex:0 0 auto;
-  }
-  #wordPreview .pl {
-    background:#ffd76a; color:#1a2c5e; font-weight:800; font-size:20px;
-    border-radius:6px; padding:6px 9px; min-width:32px; text-align:center;
-  }
-  #wheelZone { flex:0 0 auto; display:flex; align-items:center; justify-content:center;
-    padding-bottom:8px; gap:14px; }
-  #wheel {
-    position:relative; border-radius:50%;
-    background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.25);
-    touch-action:none;
-  }
-  #wheelLines { position:absolute; inset:0; pointer-events:none; }
-  .wletter {
-    position:absolute; width:52px; height:52px; border-radius:50%;
-    background:#f7f2e7; color:#1a2c5e; font-size:26px; font-weight:800;
-    display:flex; align-items:center; justify-content:center; cursor:pointer;
-    box-shadow:0 3px 6px rgba(0,0,0,0.35);
-  }
-  .wletter.selL { background:#ffd76a; transform:scale(1.12); }
-  .sidebtns { display:flex; flex-direction:column; gap:10px; }
-  .roundbtn {
-    width:54px; height:54px; border-radius:50%; border:1px solid rgba(255,255,255,0.4);
-    background:rgba(255,255,255,0.12); color:#fff; font-size:22px; cursor:pointer;
-  }
-  .roundbtn:active { background:rgba(255,255,255,0.3); }
-  #toast {
-    position:fixed; top:18%; left:50%; transform:translateX(-50%);
-    background:#ffd76a; color:#1a2c5e; font-weight:800; padding:10px 22px;
-    border-radius:24px; font-size:18px; opacity:0; pointer-events:none;
-    transition:opacity .25s; z-index:50; box-shadow:0 4px 14px rgba(0,0,0,0.4);
-  }
-  #toast.show { opacity:1; }
-  .shake { animation:shake .4s; }
-  @keyframes shake {
-    0%,100% { transform:translateX(0); } 20% { transform:translateX(-8px); }
-    40% { transform:translateX(8px); } 60% { transform:translateX(-6px); } 80% { transform:translateX(6px); }
-  }
-  .overlay {
-    position:fixed; inset:0; background:rgba(6,12,32,0.85); z-index:100;
-    display:none; align-items:center; justify-content:center; flex-direction:column;
-  }
-  .overlay.show { display:flex; }
-  .overlay .box {
-    background:#1a2c5e; border:1px solid rgba(255,255,255,0.3); border-radius:20px;
-    padding:30px 36px; text-align:center; max-width:85%;
-  }
-  .overlay h2 { font-size:28px; margin-bottom:10px; color:#ffd76a; }
-  .overlay p { margin-bottom:20px; opacity:0.85; }
-  .bigbtn {
-    background:#ffd76a; color:#1a2c5e; border:none; font-size:18px; font-weight:800;
-    padding:12px 30px; border-radius:26px; cursor:pointer; font-family:inherit; margin:4px;
-  }
-  .bigbtn.ghost { background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.5); }
-  /* ---- anagram crossword mode ---- */
-  #clueBar {
-    flex:0 0 auto; width:100%; max-width:560px; text-align:center; padding:4px 10px 6px;
-    min-height:56px;
-  }
-  #clueScramble { display:flex; gap:5px; justify-content:center; margin-top:2px; flex-wrap:wrap; }
-  #clueScramble .ct {
-    background:#ffd76a; color:#1a2c5e; font-weight:800; font-size:18px;
-    border-radius:6px; padding:5px 8px; min-width:28px;
-  }
-  #clueLabel { font-size:13px; opacity:0.75; }
-  #kbd { flex:0 0 auto; width:100%; max-width:560px; padding:4px 4px 10px; }
-  .krow { display:flex; justify-content:center; gap:4px; margin-bottom:5px; }
-  .key {
-    flex:1; max-width:44px; background:rgba(255,255,255,0.16); color:#fff;
-    border:1px solid rgba(255,255,255,0.28); border-radius:6px; font-size:17px;
-    font-weight:700; padding:11px 0; cursor:pointer; font-family:inherit; text-align:center;
-  }
-  .key:active { background:#ffd76a; color:#1a2c5e; }
-  .key.wide { max-width:66px; font-size:13px; }
-  #puzzlePick { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:400px; }
-  .pzbtn {
-    width:110px; padding:14px 4px; border-radius:14px; border:1px solid rgba(255,255,255,0.35);
-    background:rgba(255,255,255,0.1); color:#fff; font-family:inherit; font-size:14px;
-    font-weight:700; cursor:pointer;
-  }
-  .pzbtn .done { color:#69c77c; }
-  .pzbtn:active { background:rgba(255,255,255,0.25); }
 </style>
 </head>
 <body>
@@ -154,40 +198,44 @@
 <!-- ============ MENU ============ -->
 <div class="screen active" id="scrMenu">
   <div class="topbar">
-    <button class="tbtn" onclick="goHome()">🏠 Home</button>
-    <button class="tbtn" id="menuMute" onclick="toggleMute()">🔊</button>
+    <a class="tbtn" href="index.html">&#9776; Menu</a>
+    <div class="barTitle">ANAGRAM CROSSWORDS</div>
+    <button class="tbtn" id="menuMute" onclick="toggleMute()">&#128266;</button>
   </div>
-  <div class="title-big">ANAGRAM<br>CROSSWORDS</div>
-  <div class="subtitle">Two ways to play — pick your style</div>
+  <div class="title-big">TWO WAYS TO PLAY</div>
+  <div class="subtitle">Pick your style</div>
   <div class="modecard" onclick="startWheel()">
-    <span class="emoji">🎡</span>
+    <span class="emoji">&#127905;</span>
     <h2>Word Wheel</h2>
-    <p>Swipe or tap letters on the wheel to build words and fill the crossword. 12 levels, with bonus words to discover.</p>
+    <p>Swipe or tap letters on the wheel to build words and fill the crossword. Twelve levels, with bonus words to discover.</p>
   </div>
   <div class="modecard" onclick="showPuzzlePick()">
-    <span class="emoji">🔀</span>
+    <span class="emoji">&#128256;</span>
     <h2>Anagram Crossword</h2>
-    <p>A crossword where every clue is a scrambled word. Unscramble and type your answers. 6 themed puzzles.</p>
+    <p>A crossword where every clue is a scrambled word. Unscramble it and type your answer. Six themed puzzles.</p>
+  </div>
+  <div class="modecard" id="menuRules" style="text-align:center">
+    <h2 style="margin:0">How to play</h2>
   </div>
 </div>
 
 <!-- ============ PUZZLE PICK (mode B) ============ -->
 <div class="screen" id="scrPick">
   <div class="topbar">
-    <button class="tbtn" onclick="showMenu()">← Menu</button>
-    <button class="tbtn" onclick="goHome()">🏠 Home</button>
+    <button class="tbtn" onclick="showMenu()">&#8592; Back</button>
+    <div class="barTitle">CHOOSE A PUZZLE</div>
+    <a class="tbtn" href="index.html">&#9776;</a>
   </div>
-  <div class="title-big" style="font-size:26px;">Choose a Puzzle</div>
-  <div class="subtitle">Every clue is an anagram — unscramble it!</div>
+  <div class="subtitle" style="margin:14px 0 16px">Every clue is an anagram - unscramble it</div>
   <div id="puzzlePick"></div>
 </div>
 
 <!-- ============ WORD WHEEL ============ -->
 <div class="screen" id="scrWheel">
   <div class="topbar">
-    <button class="tbtn" onclick="showMenu()">← Menu</button>
-    <button class="tbtn" onclick="goHome()">🏠 Home</button>
-    <button class="tbtn" id="wheelMute" onclick="toggleMute()">🔊</button>
+    <button class="tbtn" onclick="showMenu()">&#8592; Back</button>
+    <div class="barTitle">WORD WHEEL</div>
+    <button class="tbtn" id="wheelMute" onclick="toggleMute()">&#128266;</button>
   </div>
   <div class="hud">
     <span class="lvl" id="whLevel">Level 1</span>
@@ -198,13 +246,13 @@
   <div id="wordPreview"></div>
   <div id="wheelZone">
     <div class="sidebtns">
-      <button class="roundbtn" onclick="shuffleWheel()" title="Shuffle">🔀</button>
-      <button class="roundbtn" onclick="useHint()" title="Hint (-15)">💡</button>
+      <button class="roundbtn" onclick="shuffleWheel()" title="Shuffle">&#128256;</button>
+      <button class="roundbtn" onclick="useHint()" title="Hint">&#128161;</button>
     </div>
     <div id="wheel"><svg id="wheelLines"></svg></div>
     <div class="sidebtns">
-      <button class="roundbtn" onclick="clearSelection()" title="Clear">✕</button>
-      <button class="roundbtn" onclick="submitWord()" title="Submit">✓</button>
+      <button class="roundbtn" onclick="clearSelection()" title="Clear">&#10005;</button>
+      <button class="roundbtn" onclick="submitWord()" title="Submit">&#10003;</button>
     </div>
   </div>
 </div>
@@ -212,33 +260,40 @@
 <!-- ============ ANAGRAM CROSSWORD ============ -->
 <div class="screen" id="scrAnag">
   <div class="topbar">
-    <button class="tbtn" onclick="showPuzzlePick()">← Puzzles</button>
-    <button class="tbtn" onclick="goHome()">🏠 Home</button>
-    <button class="tbtn" onclick="agReveal()">💡 Reveal</button>
+    <button class="tbtn" onclick="showPuzzlePick()">&#8592; Puzzles</button>
+    <div class="barTitle" id="agTheme">Puzzle</div>
+    <a class="tbtn" href="index.html">&#9776;</a>
   </div>
   <div class="hud">
-    <span class="lvl" id="agTheme">Puzzle</span>
     <span id="agProgress">0/8 solved</span>
   </div>
   <div id="agGridArea"><div class="grid" id="agGrid"></div></div>
   <div id="clueBar">
-    <div id="clueLabel">Tap a word in the grid to start</div>
+    <div class="clueTop">
+      <span style="width:66px"></span>
+      <div id="clueLabel">Tap a word in the grid to start</div>
+      <button class="tbtn tiny" onclick="agReveal()">&#128161; REVEAL</button>
+    </div>
     <div id="clueScramble"></div>
   </div>
   <div id="kbd"></div>
 </div>
 
 <div id="toast"></div>
+
 <div class="overlay" id="winOverlay">
   <div class="box">
-    <h2 id="winTitle">Level Complete!</h2>
+    <h2 id="winTitle">Level Complete</h2>
     <p id="winText"></p>
     <button class="bigbtn" id="winNext">Next</button>
     <button class="bigbtn ghost" onclick="hideOverlay(); showMenu()">Menu</button>
   </div>
 </div>
 
+<div class="overlay" id="ovl"><div class="box" id="ovlCard"></div></div>
+
 <script src="achievements.js"></script>
+
 <script>
 (function(){
 "use strict";
@@ -272,7 +327,7 @@ function toggleMute(){
   syncMuteIcons();
 }
 function syncMuteIcons(){
-  var t = muted ? '🔇' : '🔊';
+  var t = muted ? '\ud83d\udd07' : '\ud83d\udd0a';
   document.getElementById('menuMute').textContent = t;
   document.getElementById('wheelMute').textContent = t;
 }
@@ -614,7 +669,7 @@ function renderPreview(){
     var pl = document.createElementNS('http://www.w3.org/2000/svg','polyline');
     pl.setAttribute('points', pts.join(' '));
     pl.setAttribute('fill','none');
-    pl.setAttribute('stroke','#ffd76a');
+    pl.setAttribute('stroke','#e0357a');
     pl.setAttribute('stroke-width','5');
     pl.setAttribute('stroke-linecap','round');
     pl.setAttribute('stroke-linejoin','round');
@@ -740,9 +795,9 @@ function wheelLevelComplete(){
   store('anag_wheel_level', String(whLevelIdx));
   setTimeout(function(){
     showOverlay(
-      isLast ? '🏆 All Levels Complete!' : '⭐ Level ' + (wh.idx+1) + ' Complete!',
+      isLast ? 'ALL LEVELS COMPLETE' : 'LEVEL ' + (wh.idx+1) + ' COMPLETE',
       'Level score: ' + wh.levelScore + (bonusN ? ' (' + bonusN + ' bonus words)' : '') +
-      '  •  Total: ' + whScoreTotal,
+      '  \u2022  Total: ' + whScoreTotal,
       isLast ? 'Play Again' : 'Next Level',
       function(){ loadWheelLevel(whLevelIdx); renderWheelAll(); }
     );
@@ -752,7 +807,7 @@ function wheelLevelComplete(){
 // wheel pointer interaction (drag across letters or tap)
 (function(){
   var wheel = document.getElementById('wheel');
-  var dragging = false;
+  var dragging = false, swiped = false;
   function letterAt(x, y){
     var el = document.elementFromPoint(x, y);
     while (el && el !== document.body){
@@ -774,14 +829,22 @@ function wheelLevelComplete(){
     if (!dragging) return;
     e.preventDefault();
     var el = letterAt(e.clientX, e.clientY);
-    if (el) addSel(parseInt(el.dataset.li,10));
+    if (el){
+      var li = parseInt(el.dataset.li,10);
+      if (wh && wh.sel.indexOf(li) === -1) swiped = true;
+      addSel(li);
+    }
   });
   wheel.addEventListener('pointerup', function(e){
     if (!dragging) return;
     dragging = false;
-    // if moved through 2+ letters, treat as swipe → auto submit
-    if (wh && wh.sel.length >= 2) submitWord();
-    // single tap keeps letter selected for tap-mode building
+    /* Only a real SWIPE auto-submits.  The original submitted whenever two
+       letters were selected at pointerup, which meant tapping a second letter
+       fired the word off as a two-letter guess - so tap-to-build, which the
+       menu card advertises and the tick button exists for, could never work.
+       swiped is set only when a pointermove adds a letter. */
+    if (swiped && wh && wh.sel.length >= 2) submitWord();
+    swiped = false;
   });
   wheel.addEventListener('pointercancel', function(){ dragging = false; });
 })();
@@ -824,7 +887,7 @@ function showPuzzlePick(){
       var b = document.createElement('button');
       b.className = 'pzbtn';
       b.innerHTML = (i+1) + '. ' + AG_PUZZLES[i].theme +
-        (done.indexOf(String(i)) !== -1 ? ' <span class="done">✓</span>' : '');
+        (done.indexOf(String(i)) !== -1 ? ' <span class="done">\u2713</span>' : '');
       b.onclick = function(){ startAnagPuzzle(i); };
       box.appendChild(b);
     })(i);
@@ -926,7 +989,7 @@ function agUpdateClue(){
   if (ag.sel === null){ lbl.textContent = 'Tap a word in the grid to start'; return; }
   var en = ag.lay.entries[ag.sel];
   lbl.textContent = en.num + ' ' + (en.dir==='H' ? 'Across' : 'Down') +
-    ' — unscramble (' + en.word.length + ' letters)' + (ag.solved[en.word] ? '  ✓ SOLVED' : '');
+    ' - ' + en.word.length + ' letters' + (ag.solved[en.word] ? ' - SOLVED' : '');
   var s = scramble(en.word, ag.idx*37 + en.num*7 + (en.dir==='H'?1:2));
   for (var i=0;i<s.length;i++){
     var t = document.createElement('span');
@@ -1052,7 +1115,7 @@ function agCheckWin(){
   sndBig();
   var isLast = ag.idx >= AG_PUZZLES.length - 1;
   setTimeout(function(){
-    showOverlay('🎉 Puzzle Solved!',
+    showOverlay('PUZZLE SOLVED',
       'You unscrambled every word in "' + ag.def.theme + '"!',
       isLast ? 'Choose Puzzle' : 'Next Puzzle',
       function(){
@@ -1071,7 +1134,7 @@ function agCheckWin(){
     div.className = 'krow';
     if (r === 2){
       var del = document.createElement('button');
-      del.className = 'key wide'; del.textContent = '⌫';
+      del.className = 'key wide'; del.textContent = '\u232b';
       del.addEventListener('pointerdown', function(e){ e.preventDefault(); agBackspace(); });
       div.appendChild(del);
     }
@@ -1106,6 +1169,41 @@ document.addEventListener('keydown', function(e){
     else if (e.key === 'Escape'){ clearSelection(); }
   }
 });
+})();
+</script>
+
+<script>
+/* =========================================================
+   Added by the re-skin: the how-to-play card.  The game above
+   is one IIFE that exports what the markup calls, so this is a
+   separate block that only adds.
+   ========================================================= */
+(function(){
+"use strict";
+function $id(id){ return document.getElementById(id); }
+function openOvl(html){ $id("ovlCard").innerHTML=html; $id("ovl").classList.add("show"); }
+function closeOvl(){ $id("ovl").classList.remove("show"); }
+
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2>'+
+    '<div class="rules">'+
+    '<b>Word Wheel</b><br>'+
+    '&#9642; Drag across the letters on the wheel to spell a word, or tap them one at a time and press the tick.<br>'+
+    '&#9642; The <b>six words in the crossword</b> are the ones you are after - the counter at the top says how many are left.<br>'+
+    '&#9642; Other real words made from the same letters are <b>bonus words</b>: they are worth five points each and do not go in the grid.<br>'+
+    '&#9642; The bulb reveals one letter for fifteen points. The shuffle just moves the letters about.<br><br>'+
+    '<b>Anagram Crossword</b><br>'+
+    '&#9642; Every clue is a <b>scrambled word</b>. Tap a word in the grid and its jumbled letters appear underneath.<br>'+
+    '&#9642; Type your answer on the keyboard. Get it right and the word <b>locks in green</b>; get it wrong and it clears so you can try again.<br>'+
+    '&#9642; Tapping a square where two words cross <b>switches between them</b>.<br>'+
+    '&#9642; REVEAL gives you one letter of the word you are on.<br><br>'+
+    '&#9642; Both modes <b>save as you go</b>, so you can leave part way through and pick up where you were.'+
+    '</div>'+
+    '<button class="bigbtn" id="bBack">GOT IT</button>');
+  $id("bBack").onclick=closeOvl;
+}
+var mr=$id("menuRules");
+if(mr) mr.addEventListener("click", rulesScreen);
 })();
 </script>
 </body>
