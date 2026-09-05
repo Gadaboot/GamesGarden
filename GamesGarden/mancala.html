@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mancala</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 8% -8%, #7fd6ff 0%, transparent 55%),
+      radial-gradient(120% 80% at 94% 105%, #b9c9ff 0%, transparent 55%),
+      linear-gradient(160deg, #35b6f5 0%, #6f9df0 48%, #cfe0ff 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#1d63a8;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(20,70,130,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.6px;line-height:1;
+    font-size:clamp(15px,4.8vw,21px);text-shadow:0 2px 0 #2f86d0,0 4px 12px rgba(15,60,120,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#1d63a8;
+    box-shadow:0 4px 0 rgba(30,100,180,.35),0 6px 14px rgba(20,70,130,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(30,100,180,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(20,80,150,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#eff7ff);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#5b7d99;box-shadow:0 20px 50px rgba(15,60,120,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#2f86d0;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#8fb0c8;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-p{background:linear-gradient(180deg,#7fd0ff,#2f86d0)}
+  .z-a{background:linear-gradient(180deg,#8fe0a8,#2fae6b)}
+  .z-b{background:linear-gradient(180deg,#ffd166,#f0a020)}
+  .z-c{background:linear-gradient(180deg,#f59a8a,#d0442f)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#7fd0ff,#2f86d0);color:#fff;
+    box-shadow:0 5px 0 #1d63a8,0 8px 18px rgba(30,120,200,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #1d63a8}
+  .btn-alt{background:#eaf5ff;color:#1d63a8;border:1.5px solid #cfe4f7}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#8fb0c8;margin:10px 2px}
+  .rules b{color:#2f86d0}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#eaf5ff;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#aecde6}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#2f86d0}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">MANCALA</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">RED</div><div class="v" id="vRed">0</div></div>
+    <div class="chip"><div class="k">TO PLAY</div><div class="v" id="vTurn">RED</div></div>
+    <div class="chip"><div class="k">TEAL</div><div class="v" id="vTeal">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tHint"><div class="ti">&#9758;</div><div class="tl">HINT</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Mancala (Kalah, six pits a side, four seeds each) - the rules and the
+   computer opponent, with no drawing and no input in them.  Every move goes
+   through sow(), so the same code that runs on screen can be run headless for
+   thousands of games in Node - and the computer searches ahead through this
+   very same code.
+
+   The fourteen places, in the order the seeds travel:
+     0..5   player 0's pits
+     6      player 0's store
+     7..12  player 1's pits
+     13     player 1's store
+   Sowing always goes 0,1,2,...,13,0,... skipping the OTHER player's store. */
+function makeMancala(){
+  "use strict";
+
+  var PITS=6, SEEDS=4;
+  var STORE=[6,13];
+  var TOTAL=PITS*2*SEEDS;              /* forty-eight seeds, for ever */
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+  function ownerOf(i){ return i<=6 ? 0 : 1; }
+  function firstPit(p){ return p===0 ? 0 : 7; }
+  function lastPit(p){ return p===0 ? 5 : 12; }
+  function isPitOf(i,p){ return i>=firstPit(p) && i<=lastPit(p); }
+  /* the pit facing this one across the board */
+  function opposite(i){ return 12-i; }
+
+  function create(cfg){
+    cfg=cfg||{};
+    var st={
+      PITS:PITS,
+      pit:new Array(14),
+      turn:cfg.first===1?1:0,
+      first:cfg.first===1?1:0,
+      moves:0, over:false, winner:-1,
+      lastMove:-1,
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    for(var i=0;i<14;i++) st.pit[i]=0;
+    for(i=0;i<PITS;i++){ st.pit[i]=SEEDS; st.pit[7+i]=SEEDS; }
+    return st;
+  }
+
+  function legal(st,i){
+    return !st.over && isPitOf(i, st.turn) && st.pit[i]>0;
+  }
+  function legalMoves(st){
+    var out=[], lo=firstPit(st.turn), hi=lastPit(st.turn);
+    for(var i=lo;i<=hi;i++) if(st.pit[i]>0) out.push(i);
+    return out;
+  }
+  function sideCount(st,p){
+    var n=0, lo=firstPit(p), hi=lastPit(p);
+    for(var i=lo;i<=hi;i++) n+=st.pit[i];
+    return n;
+  }
+
+  /* the next place a seed may go, skipping the other player's store */
+  function nextPos(i, me){
+    var j=(i+1)%14;
+    if(j===STORE[1-me]) j=(j+1)%14;
+    return j;
+  }
+
+  /* Play the seeds out of pit `i`.  The path is returned seed by seed so the
+     screen can drop them one at a time - the rules and the animation must never
+     be allowed to disagree about where a seed went. */
+  function sow(st, i){
+    if(!legal(st,i)) return { ok:false };
+    var me=st.turn;
+    var n=st.pit[i];
+    st.pit[i]=0;
+    var path=[], pos=i, k;
+    for(k=0;k<n;k++){
+      pos=nextPos(pos, me);
+      st.pit[pos]++;
+      path.push(pos);
+    }
+    var ev={ ok:true, by:me, from:i, seeds:n, path:path,
+             capture:null, free:false, over:false, swept:null, turnPassed:false };
+
+    /* last seed in your own store: go again */
+    if(pos===STORE[me]){
+      ev.free=true;
+    }else if(isPitOf(pos, me) && st.pit[pos]===1 && st.pit[opposite(pos)]>0){
+      /* last seed into an empty pit of your own, facing seeds: take the lot */
+      var opp=opposite(pos), got=st.pit[opp]+1;
+      st.pit[opp]=0; st.pit[pos]=0;
+      st.pit[STORE[me]]+=got;
+      ev.capture={ landed:pos, opposite:opp, count:got };
+    }
+
+    st.moves++;
+    st.lastMove=i;
+
+    /* the game ends the moment either side runs out; the other side sweeps up */
+    var e0=sideCount(st,0)===0, e1=sideCount(st,1)===0;
+    if(e0||e1){
+      var other = e0 ? 1 : 0;
+      var swept=sideCount(st,other);
+      var lo=firstPit(other), hi=lastPit(other);
+      for(k=lo;k<=hi;k++) st.pit[k]=0;
+      st.pit[STORE[other]]+=swept;
+      ev.swept={ side:other, count:swept };
+      st.over=true;
+      st.winner = st.pit[6]===st.pit[13] ? -1 : (st.pit[6]>st.pit[13] ? 0 : 1);
+      ev.over=true;
+      return ev;
+    }
+
+    if(!ev.free){ st.turn = me===0 ? 1 : 0; ev.turnPassed=true; }
+    return ev;
+  }
+
+  /* where the last seed of a handful would land, without moving anything */
+  function landingOf(st,i){
+    if(!isPitOf(i,st.turn)||st.pit[i]<=0) return -1;
+    var me=st.turn, pos=i;
+    for(var k=0;k<st.pit[i];k++) pos=nextPos(pos, me);
+    return pos;
+  }
+  /* Every place a seed would fall into, with how many each would get, plus
+     whether this handful earns another turn or takes a capture.  A capture is
+     the hardest thing on the board to spot by eye, so the preview works it out
+     the same way sow() does - including the case where a big handful wraps all
+     the way round and drops a SECOND seed in the landing pit, which is then no
+     capture at all. */
+  function previewOf(st,i){
+    if(!isPitOf(i,st.turn)||st.pit[i]<=0) return null;
+    var me=st.turn, pos=i, n=st.pit[i], hits={}, path=[];
+    for(var k=0;k<n;k++){
+      pos=nextPos(pos, me);
+      hits[pos]=(hits[pos]||0)+1;
+      path.push(pos);
+    }
+    var free=(pos===STORE[me]);
+    /* The pit being played is emptied BEFORE any seed is dropped, so for a
+       handful big enough to come all the way round to its own pit, its count
+       starts from nothing - not from the pile that was just lifted out of it. */
+    function baseAt(k){ return k===i ? 0 : st.pit[k]; }
+    function endAt(k){ return baseAt(k)+(hits[k]||0); }
+    var capture=null;
+    if(!free && isPitOf(pos, me) && endAt(pos)===1 && endAt(opposite(pos))>0){
+      capture={ landed:pos, opposite:opposite(pos),
+                count:endAt(opposite(pos))+1 };
+    }
+    return { hits:hits, path:path, landing:pos, free:free, capture:capture };
+  }
+
+  /* ---- the computer ---- */
+  function clone(st){
+    return { PITS:PITS, pit:st.pit.slice(), turn:st.turn, first:st.first,
+             moves:st.moves, over:st.over, winner:st.winner, lastMove:st.lastMove,
+             rand:rng(1) };
+  }
+  function evaluate(st, me){
+    var them=1-me;
+    var s=(st.pit[STORE[me]]-st.pit[STORE[them]])*10;
+    /* seeds still on your own side are worth something - they are yours to
+       play with, and the sweep at the end hands them to you */
+    s+=(sideCount(st,me)-sideCount(st,them))*1;
+    return s;
+  }
+  function search(st, depth, alpha, beta, me){
+    if(st.over||depth<=0) return evaluate(st, me);
+    var moves=legalMoves(st);
+    if(!moves.length) return evaluate(st, me);
+    var mover=st.turn, i;
+    var best = mover===me ? -1e9 : 1e9;
+    for(i=0;i<moves.length;i++){
+      var c=clone(st);
+      sow(c, moves[i]);
+      /* a free turn does NOT hand over, so the same side keeps maximising */
+      var v=search(c, depth-1, alpha, beta, me);
+      if(mover===me){
+        if(v>best) best=v;
+        if(best>alpha) alpha=best;
+      }else{
+        if(v<best) best=v;
+        if(best<beta) beta=best;
+      }
+      if(beta<=alpha) break;
+    }
+    return best;
+  }
+
+  /* Depth alone is a hopeless difficulty knob here.  Kalah on six pits is a
+     first-player win, and a search only five deep already converts it every
+     single time - so "Tricky" and "Fiendish" built on depth alone both beat a
+     thinking player 20-0 and only "Gentle" is a game at all.  What separates
+     the levels is therefore how often the computer plays its best move at all:
+     `slip` is the chance it settles for something else instead.  The numbers
+     below were measured against a stand-in player, not guessed. */
+  var LEVELS=[{depth:1, slip:0.50},{depth:3, slip:0.22},{depth:6, slip:0.10}];
+
+  /* score every opening move, best first */
+  function rankMoves(st, depth){
+    var moves=legalMoves(st), me=st.turn, out=[], i;
+    for(i=0;i<moves.length;i++){
+      var c=clone(st);
+      sow(c, moves[i]);
+      out.push({ move:moves[i], score:search(c, depth-1, -1e9, 1e9, me) });
+    }
+    /* On a tie, prefer the pit nearest your own store - the highest-numbered
+       one for either player.  Shallow searches tie constantly here, so this
+       tie-break decides a great many moves, and leaving it to whatever order
+       the sort happens to produce plays noticeably worse. */
+    out.sort(function(a,b){ return (b.score-a.score) || (b.move-a.move); });
+    return out;
+  }
+
+  function think(st, level, opts){
+    if(st.over) return -1;
+    var moves=legalMoves(st);
+    if(!moves.length) return -1;
+    var cfg = opts || LEVELS[Math.min(LEVELS.length-1, Math.max(0, level|0))];
+    var ranked=rankMoves(st, cfg.depth);
+    if(!ranked.length) return -1;
+    if(ranked.length>1 && st.rand()<cfg.slip){
+      /* anything but the best - this is what makes a level beatable */
+      var k=1+Math.floor(st.rand()*(ranked.length-1));
+      if(k>=ranked.length) k=ranked.length-1;
+      return ranked[k].move;
+    }
+    return ranked[0].move;
+  }
+  /* a suggestion for the player: always the best the middling search can find */
+  function hint(st){ return think(st, 1, {depth:LEVELS[1].depth, slip:0}); }
+
+  /* every promise the game makes, checked from the outside */
+  function audit(st){
+    var i, total=0;
+    for(i=0;i<14;i++){
+      var v=st.pit[i];
+      if(typeof v!=="number"||!isFinite(v)||v<0||v!==Math.floor(v))
+        return "pit "+i+" holds something that is not a whole number of seeds ("+v+")";
+      total+=v;
+    }
+    if(total!==TOTAL) return "there are "+total+" seeds on the board, not "+TOTAL;
+    if(st.turn!==0&&st.turn!==1) return "nobody's turn";
+    if(st.moves<0) return "a negative move count";
+    var e0=sideCount(st,0)===0, e1=sideCount(st,1)===0;
+    if(!st.over){
+      if(e0||e1) return "a side is empty but the game is not over";
+      if(legalMoves(st).length===0) return "the side to play has no move but the game is not over";
+    }else{
+      if(!(e0&&e1)) return "the game is over but seeds are still sitting in pits";
+      var w = st.pit[6]===st.pit[13] ? -1 : (st.pit[6]>st.pit[13] ? 0 : 1);
+      if(st.winner!==w) return "the wrong winner ("+st.winner+" should be "+w+")";
+      if(st.pit[6]+st.pit[13]!==TOTAL) return "the stores do not hold every seed at the end";
+    }
+    return null;
+  }
+
+  return { PITS:PITS, SEEDS:SEEDS, STORE:STORE, TOTAL:TOTAL, LEVELS:LEVELS,
+           rng:rng, create:create, legal:legal, legalMoves:legalMoves,
+           sow:sow, landingOf:landingOf, previewOf:previewOf, opposite:opposite,
+           ownerOf:ownerOf, firstPit:firstPit, lastPit:lastPit, isPitOf:isPitOf,
+           sideCount:sideCount, nextPos:nextPos, evaluate:evaluate,
+           think:think, hint:hint, audit:audit };
+}
+if(typeof module!=='undefined') module.exports = makeMancala;
+</script>
+<script>
+(function(){
+"use strict";
+var MK=makeMancala();
+var LS="gg_mancala_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"two",  name:"Two Players", cls:"z-p", tag:"Share the phone &middot; take turns", ai:null},
+  {id:"easy", name:"Gentle",      cls:"z-a", tag:"Against the computer &middot; often takes the easy pit", ai:0},
+  {id:"med",  name:"Tricky",      cls:"z-b", tag:"Against the computer &middot; an even contest", ai:1},
+  {id:"hard", name:"Fiendish",    cls:"z-c", tag:"Against the computer &middot; counts the seeds", ai:2}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+var STARTS=[{id:"red",lab:"RED"},{id:"teal",lab:"TEAL"},{id:"swap",lab:"SWAP"}];
+function startsOf(id){ for(var i=0;i<STARTS.length;i++) if(STARTS[i].id===id) return STARTS[i]; return STARTS[0]; }
+
+var WOOD="#c8894a", WOOD_D="#a0682f", HOLLOW="#7d4f22", HOLLOW_E="#6a4118";
+var RED="#e0533f", RED_D="#a5301f", TEAL="#12776e", TEAL_D="#0a4f49";
+var SEED="#fff3d8", SEED_E="#d8b877";
+function colOf(p){ return p===0?RED:TEAL; }
+function darkOf(p){ return p===0?RED_D:TEAL_D; }
+
+/* ---------------- state ---------------- */
+var mId, S, started, startId, lastStarter, thinking, aiTimer=null;
+var view=null, anim=null, pending=null, hold=-1, hintPit=-1, hintAt=0;
+var flash=[], msg="", msgUntil=0, lastT=0, freeRun=0;
+var wins=[0,0];
+/* Only the test hook ever sets this. It stops the clock and the computer's
+   timer, so a test can step the game itself instead of racing an animation.
+   With the hook stripped out it stays false for good. */
+var frozen=false;
+
+function firstFor(){
+  if(startId==="red") return 0;
+  if(startId==="teal") return 1;
+  return lastStarter===0 ? 1 : 0;
+}
+function newGame(id){
+  mId=id; save("mode",id);
+  var f=firstFor();
+  lastStarter=f; save("lastStarter",f);
+  S=MK.create({first:f});
+  view=S.pit.slice();
+  started=started||false;
+  thinking=false; anim=null; pending=null; hold=-1; hintPit=-1;
+  flash=[]; msg=""; msgUntil=0; freeRun=0;
+  if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ----------------
+   The board is the classic one turned on its side so it fits a phone held
+   upright.  Your six pits are the RIGHT column and you sow DOWNWARDS into your
+   own store at the bottom; your opponent's are the left column, sown upwards
+   into theirs at the top.  Seeds therefore travel clockwise round the board. */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,SC=0,OX=0,OY=0;
+var BW=5.4, BH=9.3;                 /* the board, in units */
+var PITW=2.15, PITH=0.98, ROW0=1.72, ROWD=1.15;
+var COLX=[1.35, 4.05];              /* left column (theirs), right column (yours) */
+var STOREW=4.5, STOREH=1.05;
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40||!S) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  SC=Math.min((aw-6)/BW, (ah-6)/BH);
+  OX=Math.round((aw-SC*BW)/2);
+  OY=Math.round((ah-SC*BH)/2);
+}
+window.addEventListener("resize", function(){ layout(); });
+function px(x){ return OX+x*SC; }
+function py(y){ return OY+y*SC; }
+function rr(x,y,w,h,rad){
+  if(rad>w/2) rad=w/2; if(rad>h/2) rad=h/2;
+  ctx.beginPath(); ctx.moveTo(x+rad,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad);
+  ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath();
+}
+
+/* where each of the fourteen places sits, in units */
+function placeOf(i){
+  if(i===6)  return { x:BW/2, y:BH-0.72, w:STOREW, h:STOREH, store:true, who:0 };
+  if(i===13) return { x:BW/2, y:0.72,    w:STOREW, h:STOREH, store:true, who:1 };
+  var row, x;
+  if(i<=5){ row=i; x=COLX[1]; }        /* yours: pit 0 at the top, 5 at the bottom */
+  else { row=12-i; x=COLX[0]; }        /* theirs: pit 7 at the bottom, 12 at the top */
+  return { x:x, y:ROW0+row*ROWD, w:PITW, h:PITH, store:false, who:(i<=5?0:1) };
+}
+function pitAtUnits(ux, uy){
+  for(var i=0;i<14;i++){
+    if(i===6||i===13) continue;
+    var p=placeOf(i);
+    if(Math.abs(ux-p.x)<=p.w/2+0.14 && Math.abs(uy-p.y)<=p.h/2+0.16) return i;
+  }
+  return -1;
+}
+
+/* seeds drawn as a neat little cluster, so a glance is enough */
+function drawSeeds(cxp, cyp, n, wpx, hpx){
+  if(n<=0) return;
+  var show=Math.min(n,12);
+  var cols=Math.min(4, Math.max(2, Math.ceil(Math.sqrt(show*1.6))));
+  var rows=Math.ceil(show/cols);
+  var r=Math.min(wpx/(cols*2.9), hpx/(rows*2.9));
+  r=Math.max(1.5, Math.min(r, SC*0.13));
+  var gx=r*2.5, gy=r*2.5;
+  var x0=cxp-(cols-1)*gx/2, y0=cyp-(rows-1)*gy/2;
+  for(var k=0;k<show;k++){
+    var cc=k%cols, rrw=Math.floor(k/cols);
+    var sx=x0+cc*gx, sy=y0+rrw*gy;
+    if(rrw===rows-1){
+      var inLast=show-(rows-1)*cols;
+      sx=cxp-(inLast-1)*gx/2+cc*gx;
+    }
+    ctx.fillStyle=SEED;
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, 6.284); ctx.fill();
+    ctx.strokeStyle=SEED_E; ctx.lineWidth=Math.max(0.6,r*0.25);
+    ctx.beginPath(); ctx.arc(sx, sy, r*0.78, 0, 6.284); ctx.stroke();
+  }
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!SC){ layout(); if(!SC) return; }
+  if(!S||!view) return;
+  var now=ts||0;
+  var dt=lastT?Math.min(120,now-lastT):0;
+  lastT=now;
+  if(!frozen) step(dt);
+
+  ctx.clearRect(0,0,VW,VH);
+
+  /* the board */
+  ctx.fillStyle="rgba(15,60,120,.28)";
+  rr(px(0.06), py(0.06)+5, SC*(BW-0.12), SC*(BH-0.12), Math.max(10,SC*0.5)); ctx.fill();
+  ctx.fillStyle=WOOD_D;
+  rr(px(0.06), py(0.06), SC*(BW-0.12), SC*(BH-0.12), Math.max(10,SC*0.5)); ctx.fill();
+  ctx.fillStyle=WOOD;
+  rr(px(0.16), py(0.16), SC*(BW-0.32), SC*(BH-0.32), Math.max(8,SC*0.42)); ctx.fill();
+
+  /* which side is on */
+  var band=placeOf(S.turn===0?0:12);
+  ctx.fillStyle = S.turn===0 ? "rgba(224,83,63,.15)" : "rgba(18,119,110,.16)";
+  var bx=S.turn===0 ? px(COLX[1]-PITW/2-0.16) : px(COLX[0]-PITW/2-0.16);
+  rr(bx, py(ROW0-PITH/2-0.16), SC*(PITW+0.32), SC*(ROWD*5+PITH+0.32), Math.max(6,SC*0.3));
+  ctx.fill();
+  void band;
+
+  var pv = (hold>=0 && !anim && !S.over && myTurn()) ? MK.previewOf(S, hold) : null;
+  var i;
+
+  for(i=0;i<14;i++){
+    var p=placeOf(i);
+    var x=px(p.x-p.w/2), y=py(p.y-p.h/2), w=SC*p.w, h=SC*p.h;
+    var rad=p.store ? Math.max(6,SC*0.3) : h/2;
+
+    /* the hollow */
+    ctx.fillStyle=HOLLOW;
+    rr(x, y, w, h, rad); ctx.fill();
+    ctx.strokeStyle=HOLLOW_E; ctx.lineWidth=Math.max(1,SC*0.045);
+    rr(x, y, w, h, rad); ctx.stroke();
+
+    /* a store is tinted with its owner's colour so nobody has to remember */
+    if(p.store){
+      ctx.fillStyle = p.who===0 ? "rgba(224,83,63,.30)" : "rgba(18,119,110,.34)";
+      rr(x, y, w, h, rad); ctx.fill();
+    }
+
+    /* a flash for a pit that just gave up its seeds */
+    for(var f=0;f<flash.length;f++) if(flash[f].i===i && now<flash[f].until){
+      ctx.fillStyle="rgba(255,225,140,.55)";
+      rr(x, y, w, h, rad); ctx.fill();
+    }
+
+    /* the preview: a ring on everything this handful would reach */
+    if(pv){
+      var cap=pv.capture;
+      if(pv.hits[i]){
+        /* a wash as well as a ring - a thin outline alone is far too easy to
+           miss against the wood */
+        ctx.fillStyle="rgba(255,244,205,.16)";
+        rr(x, y, w, h, rad); ctx.fill();
+        ctx.strokeStyle="rgba(255,240,190,.85)";
+        ctx.lineWidth=Math.max(2, SC*0.075);
+        rr(x, y, w, h, rad); ctx.stroke();
+      }
+      /* the capture, if there is one, in gold on both pits it would empty */
+      if(cap && (i===cap.landed || i===cap.opposite)){
+        ctx.fillStyle="rgba(255,196,60,.28)";
+        rr(x, y, w, h, rad); ctx.fill();
+        ctx.strokeStyle="rgba(255,196,60,.98)"; ctx.lineWidth=Math.max(3,SC*0.12);
+        rr(x, y, w, h, rad); ctx.stroke();
+      }else if(i===pv.landing){
+        ctx.strokeStyle="rgba(255,255,255,.98)"; ctx.lineWidth=Math.max(3,SC*0.12);
+        rr(x, y, w, h, rad); ctx.stroke();
+      }
+      if(i===hold){
+        ctx.strokeStyle=colOf(S.turn); ctx.lineWidth=Math.max(2,SC*0.11);
+        rr(x, y, w, h, rad); ctx.stroke();
+      }
+    }
+
+    var n=view[i];
+    if(p.store){
+      /* the store shows its number large - it is the score, after all */
+      ctx.save();
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.font="900 "+Math.round(SC*0.62)+"px -apple-system,Helvetica,Arial";
+      ctx.fillStyle=p.who===0?"#ffd8ce":"#c9efe9";
+      ctx.fillText(String(n), x+w*0.16, y+h/2+1);
+      ctx.restore();
+      drawSeeds(x+w*0.60, y+h/2, n, w*0.66, h*0.82);
+    }else{
+      drawSeeds(x+w*0.58, y+h/2, n, w*0.72, h*0.86);
+      if(n>0){
+        ctx.save();
+        ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.font="900 "+Math.round(SC*0.40)+"px -apple-system,Helvetica,Arial";
+        ctx.fillStyle=p.who===0?"rgba(255,214,204,.95)":"rgba(190,235,229,.95)";
+        ctx.fillText(String(n), x+w*0.15, y+h/2+1);
+        ctx.restore();
+      }
+    }
+  }
+
+  /* the hint, while it lasts */
+  if(hintPit>=0 && now-hintAt<2600 && !anim){
+    var hp=placeOf(hintPit);
+    var pulse=0.5+0.4*Math.sin(now/150);
+    ctx.strokeStyle="rgba(60,220,140,"+pulse.toFixed(3)+")";
+    ctx.lineWidth=Math.max(3,SC*0.12);
+    rr(px(hp.x-hp.w/2), py(hp.y-hp.h/2), SC*hp.w, SC*hp.h, SC*hp.h/2); ctx.stroke();
+  }
+
+  /* a word about what just happened */
+  var say=null;
+  if(thinking) say="THINKING";
+  else if(now<msgUntil) say=msg;
+  else if(pv && pv.capture) say="TAKES "+pv.capture.count;
+  else if(pv && pv.free) say="GOES AGAIN";
+  if(started && say){
+    ctx.save();
+    ctx.translate(px(BW/2), py(BH/2));
+    if(S.turn===1 && modeOf(mId).ai===null) ctx.rotate(Math.PI);
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.round(Math.min(24,SC*0.52))+"px -apple-system,Helvetica,Arial";
+    var tw=ctx.measureText(say).width, ph=Math.min(36,SC*0.8);
+    ctx.fillStyle="rgba(60,36,12,.9)";
+    rr(-tw/2-SC*0.3, -ph/2, tw+SC*0.6, ph, ph/2); ctx.fill();
+    ctx.fillStyle="#ffffff";
+    ctx.fillText(say, 0, 1);
+    ctx.restore();
+  }
+
+  if(flash.length && now>flash[0].until+40) flash=[];
+}
+
+/* ---------------- the one place seeds move ---------------- */
+function step(dt){
+  if(!anim) return;
+  anim.t+=dt;
+  while(anim && anim.t>=anim.gap){
+    anim.t-=anim.gap;
+    if(anim.k<anim.path.length){
+      view[anim.path[anim.k]]++;
+      beep(420+anim.k*18,.045,"sine",.035);
+      anim.k++;
+    }else if(!anim.settled){
+      anim.settled=true;
+      anim.t=-anim.gap*3;                /* a beat before the capture is taken */
+    }else{
+      anim=null;
+      landed();
+      return;
+    }
+  }
+}
+function landed(){
+  var ev=pending; pending=null;
+  view=S.pit.slice();
+  if(!ev) return;
+  if(ev.capture){
+    flash=[{i:ev.capture.landed, until:lastT+520},{i:ev.capture.opposite, until:lastT+520}];
+    msg="TAKE "+ev.capture.count; msgUntil=lastT+1100;
+    beep(880,.16,"triangle",.07,1320);
+    if(window.GGA){
+      GGA.haptic("medium");
+      if(ev.by===0){
+        GGA.award("mn_capture");
+        if(ev.capture.count>=8) GGA.award("mn_big");
+      }
+    }
+  }else if(ev.free && !ev.over){
+    freeRun = ev.by===0 ? freeRun+1 : 0;
+    msg="GO AGAIN"; msgUntil=lastT+900;
+    beep(760,.1,"triangle",.06);
+    if(window.GGA && ev.by===0 && freeRun>=3) GGA.award("mn_chain");
+  }
+  if(ev.turnPassed) freeRun=0;
+  paintHUD();
+  persist();
+  if(ev.over) finish(ev);
+  else scheduleAI();
+}
+
+function myTurn(){
+  var m=modeOf(mId);
+  return m.ai===null || S.turn===0;
+}
+function busy(){ return !!anim || thinking; }
+
+function doSow(i){
+  if(!MK.legal(S,i) || busy()) return false;
+  var ev=MK.sow(S,i);
+  if(!ev.ok) return false;
+  /* the picture starts from before the handful was lifted, then the seeds are
+     dropped one at a time along the very path the rules just walked */
+  view[i]=0;
+  var n=ev.path.length;
+  anim={ path:ev.path, k:0, t:0, settled:false, gap:Math.max(46, Math.min(150, 620/Math.max(1,n))) };
+  pending=ev;
+  hold=-1; hintPit=-1;
+  beep(300,.05,"square",.045);
+  paintHUD();
+  return true;
+}
+function scheduleAI(){
+  var m=modeOf(mId);
+  if(m.ai===null || S.turn!==1 || S.over || frozen) return;
+  if(aiTimer) clearTimeout(aiTimer);
+  thinking=true;
+  paintHUD();
+  aiTimer=setTimeout(function(){
+    aiTimer=null;
+    if(!S || S.over || S.turn!==1){ thinking=false; paintHUD(); return; }
+    var i=MK.think(S, m.ai);
+    thinking=false;
+    if(i<0){ paintHUD(); return; }
+    doSow(i);
+  }, 460);
+}
+
+function finish(ev){
+  save("cur",null);
+  var m=modeOf(mId);
+  var played=load("played",0)+1; save("played",played);
+  if(S.winner>=0){ wins[S.winner]++; save("wins",wins); }
+  msg = S.winner<0 ? "DEAD HEAT" : (S.winner===0 ? "RED WINS" : "TEAL WINS");
+  msgUntil=lastT+2000;
+  if(window.GGA){
+    if(m.ai===null) GGA.award("mn_2p");
+    if(played>=10) GGA.award("mn_10");
+    if(S.winner===0){
+      GGA.award("mn_first");
+      if(mId==="hard") GGA.award("mn_hard");
+    }
+    GGA.haptic(S.winner===0?"success":(S.winner<0?"light":"error"));
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  setTimeout(function(){ winScreen(); },1150);
+  void ev;
+}
+
+function paintHUD(){
+  document.getElementById("vRed").textContent=view?view[6]:0;
+  document.getElementById("vTeal").textContent=view?view[13]:0;
+  var t=document.getElementById("vTurn");
+  if(S.over) t.textContent = S.winner<0 ? "LEVEL" : (S.winner===0?"RED":"TEAL");
+  else if(thinking) t.textContent="...";
+  else t.textContent = S.turn===0 ? "RED" : "TEAL";
+  var h=document.getElementById("tHint");
+  if(started && !S.over && !busy() && myTurn()) h.classList.remove("off");
+  else h.classList.add("off");
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started) return;
+  if(S.over || S.moves===0){ save("cur",null); return; }
+  save("cur",{ m:mId, f:S.first, t:S.turn, mv:S.moves, p:S.pit.slice() });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||!c.p||c.p.length!==14) return false;
+  newGame(c.m);
+  S=MK.create({first:c.f===1?1:0});
+  S.pit=c.p.map(function(v){ return v|0; });
+  S.turn=(c.t===1)?1:0;
+  S.moves=c.mv|0;
+  if(MK.audit(S)){ newGame(c.m); return false; }
+  view=S.pit.slice();
+  anim=null; pending=null; hold=-1;
+  paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function unitsOf(clientX, clientY){
+  var b=cv.getBoundingClientRect();
+  return { x:(clientX-b.left-OX)/SC, y:(clientY-b.top-OY)/SC };
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+var down=false;
+function grab(e){
+  var u=unitsOf(pt(e).clientX, pt(e).clientY);
+  var i=pitAtUnits(u.x, u.y);
+  hold = (i>=0 && MK.legal(S,i)) ? i : -1;
+}
+function onDown(e){
+  if(!started||S.over||busy()||!myTurn()) return;
+  e.preventDefault();
+  down=true; grab(e);
+}
+function onMove(e){
+  if(!down) return;
+  if(e.cancelable) e.preventDefault();
+  grab(e);
+}
+function onUp(e){
+  if(!down) return;
+  down=false;
+  if(e) grab(e);
+  var i=hold;
+  hold=-1;
+  if(i>=0 && myTurn() && !busy()) doSow(i);
+}
+cv.addEventListener("touchstart",onDown,{passive:false});
+cv.addEventListener("touchmove",onMove,{passive:false});
+cv.addEventListener("touchend",onUp);
+cv.addEventListener("touchcancel",function(){ down=false; hold=-1; });
+cv.addEventListener("mousedown",onDown);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",function(e){ onUp(e); });
+cv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+document.getElementById("tHint").onclick=function(){
+  if(!started||S.over||busy()||!myTurn()) return;
+  hintPit=MK.hint(S); hintAt=lastT;
+  beep(880,.07,"sine",.04);
+};
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ newGame(mId); persist(); closeOvl(); scheduleAI(); return; }
+  openOvl('<h2>START AGAIN?</h2><p>This game will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW GAME</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){ newGame(mId); persist(); closeOvl(); scheduleAI(); };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>MANCALA</h2><p>Scoop up a pit and drop the seeds one by one. Most seeds in your store wins.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bStart">FIRST GO &middot; '+startsOf(startId).lab+'</button>';
+  if(cur&&cur.p) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+
+    (cur.p[6]|0)+' &ndash; '+(cur.p[13]|0)+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newGame(el.getAttribute("data-m"));
+      persist(); closeOvl(); layout(); scheduleAI();
+    };
+  });
+  card.querySelector("#bStart").onclick=function(){
+    var k=0;
+    for(var j=0;j<STARTS.length;j++) if(STARTS[j].id===startId) k=j;
+    startId=STARTS[(k+1)%STARTS.length].id;
+    save("starts",startId);
+    /* textContent, not innerHTML, so the entity would show up literally - and
+       the source stays ASCII, which is the rule for every file here */
+    this.textContent="FIRST GO \u00B7 "+startsOf(startId).lab;
+  };
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newGame(load("mode","two"));
+    persist(); closeOvl(); layout(); scheduleAI();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; The board is the usual one <b>turned on its side</b> to fit the phone. Your six pits are the <b>right-hand column</b> and your store is the wide one at the <b>bottom</b>.<br><br>'+
+    '&#9642; <b>Touch one of your pits</b> to pick up every seed in it. The rings show exactly where they will land &ndash; slide your finger to compare pits, then let go to sow.<br><br>'+
+    '&#9642; Seeds go one per pit, working <b>down your side, through your store and up theirs</b>. Their store is always skipped.<br><br>'+
+    '&#9642; Last seed in <b>your own store</b>? Take another turn.<br><br>'+
+    '&#9642; Last seed in an <b>empty pit on your own side</b>? You take it and everything in the pit facing it.<br><br>'+
+    '&#9642; When either side is empty the other player sweeps up what is left, and whoever holds the most seeds wins.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function winScreen(){
+  var m=modeOf(mId);
+  var head;
+  if(S.winner<0) head="DEAD HEAT";
+  else if(m.ai===null) head = S.winner===0 ? "RED WINS!" : "TEAL WINS!";
+  else head = S.winner===0 ? "YOU WIN!" : "COMPUTER WINS";
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+(m.ai===null?"Two players":m.name)+' &middot; '+S.moves+' turns.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">RED</div><div class="sv">'+S.pit[6]+'</div></div>'+
+      '<div class="st"><div class="sk">TEAL</div><div class="sv">'+S.pit[13]+'</div></div>'+
+      '<div class="st"><div class="sk">PLAYED</div><div class="sv">'+load("played",0)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER GAME</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE OPPONENT</button>');
+  card.querySelector("#bAgain").onclick=function(){ newGame(mId); persist(); closeOvl(); layout(); scheduleAI(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.over){ titleScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">RED</div><div class="sv">'+S.pit[6]+'</div></div>'+
+      '<div class="st"><div class="sk">TEAL</div><div class="sv">'+S.pit[13]+'</div></div>'+
+      '<div class="st"><div class="sk">TURNS</div><div class="sv">'+S.moves+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE OPPONENT</button>');
+  card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+startId=load("starts","red");
+if(startsOf(startId).id!==startId) startId="red";
+lastStarter=load("lastStarter",1);
+wins=load("wins",[0,0]);
+if(!wins||wins.length!==2) wins=[0,0];
+newGame(load("mode","two"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+
+})();
+</script>
+</body>
+</html>

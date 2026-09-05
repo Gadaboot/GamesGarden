@@ -31,6 +31,14 @@
 		673925F3304B255B00DD4D36 /* icon_finger-soccer.png in Resources */ = {isa = PBXBuildFile; fileRef = 673925F2304B255B00DD4D36 /* icon_finger-soccer.png */; };
 		673925F5304B2DCF00DD4D36 /* icon_dots-boxes.png in Resources */ = {isa = PBXBuildFile; fileRef = 673925F4304B2DCF00DD4D36 /* icon_dots-boxes.png */; };
 		673925F7304B2DDF00DD4D36 /* dots-boxes.html in Resources */ = {isa = PBXBuildFile; fileRef = 673925F6304B2DDF00DD4D36 /* dots-boxes.html */; };
+		673925F9304B35B300DD4D36 /* connect4.html in Resources */ = {isa = PBXBuildFile; fileRef = 673925F8304B35B300DD4D36 /* connect4.html */; };
+		673925FB304B35C000DD4D36 /* icon_connect4.png in Resources */ = {isa = PBXBuildFile; fileRef = 673925FA304B35C000DD4D36 /* icon_connect4.png */; };
+		673925FD304B6EAD00DD4D36 /* icon_mancala.png in Resources */ = {isa = PBXBuildFile; fileRef = 673925FC304B6EAD00DD4D36 /* icon_mancala.png */; };
+		673925FF304B6EB800DD4D36 /* mancala.html in Resources */ = {isa = PBXBuildFile; fileRef = 673925FE304B6EB800DD4D36 /* mancala.html */; };
+		67392601304C0F9D00DD4D36 /* reversi.html in Resources */ = {isa = PBXBuildFile; fileRef = 67392600304C0F9D00DD4D36 /* reversi.html */; };
+		67392603304C0FA800DD4D36 /* icon_reversi.png in Resources */ = {isa = PBXBuildFile; fileRef = 67392602304C0FA800DD4D36 /* icon_reversi.png */; };
+		67392605304C1B7400DD4D36 /* icon_backgammon.png in Resources */ = {isa = PBXBuildFile; fileRef = 67392604304C1B7400DD4D36 /* icon_backgammon.png */; };
+		67392607304C1B7D00DD4D36 /* backgammon.html in Resources */ = {isa = PBXBuildFile; fileRef = 67392606304C1B7D00DD4D36 /* backgammon.html */; };
 		6761C90E30495EB70050EC58 /* nullpoints.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90D30495EB70050EC58 /* nullpoints.html */; };
 		6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90F30495EC50050EC58 /* icon_nullpoints.png */; };
 		6761C912304969D20050EC58 /* icon_wordguess.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C911304969D20050EC58 /* icon_wordguess.png */; };
@@ -126,6 +134,14 @@
 		673925F2304B255B00DD4D36 /* icon_finger-soccer.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_finger-soccer.png"; sourceTree = "<group>"; };
 		673925F4304B2DCF00DD4D36 /* icon_dots-boxes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_dots-boxes.png"; sourceTree = "<group>"; };
 		673925F6304B2DDF00DD4D36 /* dots-boxes.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "dots-boxes.html"; sourceTree = "<group>"; };
+		673925F8304B35B300DD4D36 /* connect4.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = connect4.html; sourceTree = "<group>"; };
+		673925FA304B35C000DD4D36 /* icon_connect4.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_connect4.png; sourceTree = "<group>"; };
+		673925FC304B6EAD00DD4D36 /* icon_mancala.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_mancala.png; sourceTree = "<group>"; };
+		673925FE304B6EB800DD4D36 /* mancala.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = mancala.html; sourceTree = "<group>"; };
+		67392600304C0F9D00DD4D36 /* reversi.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = reversi.html; sourceTree = "<group>"; };
+		67392602304C0FA800DD4D36 /* icon_reversi.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_reversi.png; sourceTree = "<group>"; };
+		67392604304C1B7400DD4D36 /* icon_backgammon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_backgammon.png; sourceTree = "<group>"; };
+		67392606304C1B7D00DD4D36 /* backgammon.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = backgammon.html; sourceTree = "<group>"; };
 		6761C90D30495EB70050EC58 /* nullpoints.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = nullpoints.html; sourceTree = "<group>"; };
 		6761C90F30495EC50050EC58 /* icon_nullpoints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_nullpoints.png; sourceTree = "<group>"; };
 		6761C911304969D20050EC58 /* icon_wordguess.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wordguess.png; sourceTree = "<group>"; };
@@ -237,12 +253,14 @@
 				67D823AC2FFFBBCD00892511 /* anagram-crosswords.html */,
 				6705008B303DDA090096E2BC /* arrow-exit.html */,
 				67050097303DDFC80096E2BC /* arrow-exit-shapes.html */,
+				67392606304C1B7D00DD4D36 /* backgammon.html */,
 				67050091303DDCB10096E2BC /* billiards.html */,
 				67D823A22FFFAD7700892511 /* bubbleshooter.html */,
 				673925EE304B201200DD4D36 /* carrom.html */,
 				6761C92730498D320050EC58 /* cat-poopers.html */,
 				67D8238C2FFFA18C00892511 /* checkers.html */,
 				67D8238D2FFFA18C00892511 /* chess.html */,
+				673925F8304B35B300DD4D36 /* connect4.html */,
 				673925F6304B2DDF00DD4D36 /* dots-boxes.html */,
 				67E1D1F630261BB3002AEE31 /* england-football-coach.html */,
 				6761C92130497A3B0050EC58 /* empty-hand.html */,
@@ -254,6 +272,7 @@
 				67C106FA304AB3E400B0B866 /* loose-ends.html */,
 				67C56407300CD0BA00D2D146 /* ludo.html */,
 				6761C95B304A03BB0050EC58 /* mahjong.html */,
+				673925FE304B6EB800DD4D36 /* mancala.html */,
 				6761C9433049D1FD0050EC58 /* maze-escape.html */,
 				6761C969304A10BD0050EC58 /* mine-hunt.html */,
 				6761C90D30495EB70050EC58 /* nullpoints.html */,
@@ -261,6 +280,7 @@
 				6761C92930498E2A0050EC58 /* one-false-step.html */,
 				6761C95F304A06B30050EC58 /* picture-logic.html */,
 				6731DF27300FD9510070AC8B /* privacy.html */,
+				67392600304C0F9D00DD4D36 /* reversi.html */,
 				67C56409300CD0C200D2D146 /* scopa.html */,
 				6761C93C304999900050EC58 /* sea-battle.html */,
 				673925E0304AF79800DD4D36 /* snake.html */,
@@ -282,12 +302,14 @@
 				67D823B22FFFBBEC00892511 /* icon_anagram-crosswords.png */,
 				67050085303DD9D30096E2BC /* icon_arrowexit.png */,
 				67050095303DDFB80096E2BC /* icon_arrowshapes.png */,
+				67392604304C1B7400DD4D36 /* icon_backgammon.png */,
 				67050093303DDD240096E2BC /* icon_billiards.png */,
 				67D823A02FFFAD1C00892511 /* icon_bubbleshooter.png */,
 				673925EC304B200800DD4D36 /* icon_carrom.png */,
 				6761C92530498D240050EC58 /* icon_cat-poopers.png */,
 				67D823902FFFA1EB00892511 /* icon_checkers.png */,
 				67D823912FFFA1EB00892511 /* icon_chess.png */,
+				673925FA304B35C000DD4D36 /* icon_connect4.png */,
 				6761C9353049962A0050EC58 /* icon_cup-run.png */,
 				673925F4304B2DCF00DD4D36 /* icon_dots-boxes.png */,
 				6761C91D30497A1A0050EC58 /* icon_empty-hand.png */,
@@ -299,12 +321,14 @@
 				67C106F8304AB3D800B0B866 /* icon_loose-ends.png */,
 				67C56403300CD0A600D2D146 /* icon_Ludo.png */,
 				6761C959304A03A10050EC58 /* icon_mahjong.png */,
+				673925FC304B6EAD00DD4D36 /* icon_mancala.png */,
 				6761C9453049D2090050EC58 /* icon_maze-escape.png */,
 				6761C96B304A10D00050EC58 /* icon_mine-hunt.png */,
 				6761C90F30495EC50050EC58 /* icon_nullpoints.png */,
 				67D823862FFEDC9900892511 /* icon_octo.png */,
 				6761C92B30498E3F0050EC58 /* icon_one-false-step.png */,
 				6761C95D304A069B0050EC58 /* icon_picture-logic.png */,
+				67392602304C0FA800DD4D36 /* icon_reversi.png */,
 				67C56405300CD0AF00D2D146 /* icon_scopa.png */,
 				6761C93B304999900050EC58 /* icon_sea-battle.png */,
 				673925E2304AF7B600DD4D36 /* icon_snake.png */,
@@ -397,11 +421,13 @@
 				673925F3304B255B00DD4D36 /* icon_finger-soccer.png in Resources */,
 				673925F7304B2DDF00DD4D36 /* dots-boxes.html in Resources */,
 				67D8239F2FFFA7F800892511 /* icon_solitaire.png in Resources */,
+				673925FD304B6EAD00DD4D36 /* icon_mancala.png in Resources */,
 				6761C9563049FFFE0050EC58 /* icon_water-sort.png in Resources */,
 				6761C9363049962A0050EC58 /* icon_cup-run.png in Resources */,
 				67D823A12FFFAD1C00892511 /* icon_bubbleshooter.png in Resources */,
 				6705008C303DDA090096E2BC /* arrow-exit.html in Resources */,
 				67C5640C300CD3C900D2D146 /* index.html in Resources */,
+				673925FF304B6EB800DD4D36 /* mancala.html in Resources */,
 				6761C92E30498EF10050EC58 /* solitaire-tower.html in Resources */,
 				6761C9443049D1FD0050EC58 /* maze-escape.html in Resources */,
 				6761C912304969D20050EC58 /* icon_wordguess.png in Resources */,
@@ -409,16 +435,19 @@
 				6761C92630498D240050EC58 /* icon_cat-poopers.png in Resources */,
 				6761C96E304A14E10050EC58 /* icon_word-search.png in Resources */,
 				67050096303DDFB80096E2BC /* icon_arrowshapes.png in Resources */,
+				67392605304C1B7400DD4D36 /* icon_backgammon.png in Resources */,
 				6761C92A30498E2A0050EC58 /* one-false-step.html in Resources */,
 				67C56408300CD0BA00D2D146 /* ludo.html in Resources */,
 				673925F1304B254F00DD4D36 /* finger-soccer.html in Resources */,
 				6761C94A3049D2F40050EC58 /* snug-fit.html in Resources */,
 				67D823872FFEDC9900892511 /* icon_octo.png in Resources */,
 				67D823922FFFA1EB00892511 /* icon_checkers.png in Resources */,
+				673925F9304B35B300DD4D36 /* connect4.html in Resources */,
 				6761C964304A09B40050EC58 /* icon_spider.png in Resources */,
 				67050092303DDCB10096E2BC /* billiards.html in Resources */,
 				6761C96A304A10BD0050EC58 /* mine-hunt.html in Resources */,
 				6761C970304A14F10050EC58 /* word-search.html in Resources */,
+				67392603304C0FA800DD4D36 /* icon_reversi.png in Resources */,
 				6761C90E30495EB70050EC58 /* nullpoints.html in Resources */,
 				6761C960304A06B30050EC58 /* picture-logic.html in Resources */,
 				67D823932FFFA1EB00892511 /* icon_chess.png in Resources */,
@@ -439,6 +468,7 @@
 				6761C940304999900050EC58 /* sea-battle.html in Resources */,
 				6761C941304999900050EC58 /* five-dice.html in Resources */,
 				6761C942304999900050EC58 /* icon_five-dice.png in Resources */,
+				67392601304C0F9D00DD4D36 /* reversi.html in Resources */,
 				673925ED304B200800DD4D36 /* icon_carrom.png in Resources */,
 				67D823A32FFFAD7700892511 /* bubbleshooter.html in Resources */,
 				673925E1304AF79800DD4D36 /* snake.html in Resources */,
@@ -449,6 +479,7 @@
 				67D8238F2FFFA18C00892511 /* checkers.html in Resources */,
 				6761C95A304A03A10050EC58 /* icon_mahjong.png in Resources */,
 				6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */,
+				673925FB304B35C000DD4D36 /* icon_connect4.png in Resources */,
 				67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */,
 				6761C92230497A3B0050EC58 /* empty-hand.html in Resources */,
 				67E1D1F730261BB3002AEE31 /* england-football-coach.html in Resources */,
@@ -457,6 +488,7 @@
 				67D8239D2FFFA7ED00892511 /* solitaire.html in Resources */,
 				6761C966304A0D7D0050EC58 /* icon_freecell.png in Resources */,
 				6761C91E30497A1A0050EC58 /* icon_empty-hand.png in Resources */,
+				67392607304C1B7D00DD4D36 /* backgammon.html in Resources */,
 				6761C9543049E7470050EC58 /* sudoku.html in Resources */,
 				67D8238B2FFF955C00892511 /* octo.html in Resources */,
 				AA000000000000000000000F /* welcome.png in Resources */,

@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Reversi</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 8% -8%, #ffd0a8 0%, transparent 55%),
+      radial-gradient(120% 80% at 94% 105%, #ffe3c8 0%, transparent 55%),
+      linear-gradient(160deg, #ffab6b 0%, #ffcb9e 48%, #fff0e2 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#b45f1c;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(150,70,15,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.6px;line-height:1;
+    font-size:clamp(15px,4.8vw,21px);text-shadow:0 2px 0 #e8862f,0 4px 12px rgba(140,65,10,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#b45f1c;
+    box-shadow:0 4px 0 rgba(190,95,25,.35),0 6px 14px rgba(150,70,15,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(190,95,25,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(170,80,20,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#fff6ee);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#9a7259;box-shadow:0 20px 50px rgba(140,65,10,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#e8862f;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#c9a488;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-p{background:linear-gradient(180deg,#ffc08a,#e8862f)}
+  .z-a{background:linear-gradient(180deg,#7fdcbb,#1f9e78)}
+  .z-b{background:linear-gradient(180deg,#7fc4ff,#2a72d4)}
+  .z-c{background:linear-gradient(180deg,#c79bf5,#8b4ee0)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ffc08a,#e8862f);color:#fff;
+    box-shadow:0 5px 0 #b45f1c,0 8px 18px rgba(210,120,40,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #b45f1c}
+  .btn-alt{background:#fff2e6;color:#b45f1c;border:1.5px solid #f7ddc6}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#c9a488;margin:10px 2px}
+  .rules b{color:#e8862f}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#fff2e6;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#eac6a6}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#e8862f}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">REVERSI</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">DARK</div><div class="v" id="vDark">2</div></div>
+    <div class="chip"><div class="k">TO PLAY</div><div class="v" id="vTurn">DARK</div></div>
+    <div class="chip"><div class="k">LIGHT</div><div class="v" id="vLight">2</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tHint"><div class="ti">&#9758;</div><div class="tl">HINT</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Reversi - the rules and the computer opponent, with no drawing and no input
+   in them.  Every move goes through play(), so the same code that runs on
+   screen can be run headless for thousands of games in Node - and the computer
+   searches ahead through this very same code.
+
+   The board is eight by eight, index = row*8+col with row 0 at the TOP.
+   Dark (0) goes first, as it always does. */
+function makeReversi(){
+  "use strict";
+
+  var N=8, CELLS=64;
+  /* the eight ways a line can run out of a square */
+  var DIRS=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  var CORNERS=[0,7,56,63];
+
+  /* how much each square is worth to hold, before anything else is considered.
+     Corners are safe for ever; the squares beside them hand corners away. */
+  var WEIGHT=[
+    120,-20, 20,  5,  5, 20,-20,120,
+    -20,-40, -5, -5, -5, -5,-40,-20,
+     20, -5, 15,  3,  3, 15, -5, 20,
+      5, -5,  3,  3,  3,  3, -5,  5,
+      5, -5,  3,  3,  3,  3, -5,  5,
+     20, -5, 15,  3,  3, 15, -5, 20,
+    -20,-40, -5, -5, -5, -5,-40,-20,
+    120,-20, 20,  5,  5, 20,-20,120
+  ];
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+  function idx(r,c){ return r*N+c; }
+  function rowOf(i){ return (i/N)|0; }
+  function colOf(i){ return i%N; }
+
+  function create(cfg){
+    cfg=cfg||{};
+    var st={
+      N:N,
+      cell:new Array(CELLS),
+      turn:cfg.first===1?1:0,
+      first:cfg.first===1?1:0,
+      moves:0, passes:0,
+      last:-1, lastFlips:[],
+      count:[2,2],
+      over:false, winner:-1,
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    for(var i=0;i<CELLS;i++) st.cell[i]=-1;
+    /* the usual four in the middle, light on one diagonal and dark on the other */
+    st.cell[idx(3,3)]=1; st.cell[idx(4,4)]=1;
+    st.cell[idx(3,4)]=0; st.cell[idx(4,3)]=0;
+    return st;
+  }
+
+  /* every disc a move at `i` would turn over for `p`, or an empty list */
+  function flipsFor(st, i, p){
+    var out=[];
+    if(i<0||i>=CELLS||st.cell[i]>=0) return out;
+    var r=rowOf(i), c=colOf(i), them=1-p, d;
+    for(d=0;d<DIRS.length;d++){
+      var dr=DIRS[d][0], dc=DIRS[d][1];
+      var rr=r+dr, cc=c+dc, run=[];
+      while(rr>=0&&rr<N&&cc>=0&&cc<N&&st.cell[idx(rr,cc)]===them){
+        run.push(idx(rr,cc));
+        rr+=dr; cc+=dc;
+      }
+      /* the run only counts if one of YOUR discs closes it off */
+      if(run.length && rr>=0&&rr<N&&cc>=0&&cc<N && st.cell[idx(rr,cc)]===p){
+        for(var k=0;k<run.length;k++) out.push(run[k]);
+      }
+    }
+    return out;
+  }
+  /* The same question as flipsFor, but only "is there at least one?" - it stops
+     at the first direction that works and never builds a list.  The search asks
+     this tens of thousands of times a move, and building throwaway arrays for
+     every square of every leaf was most of the cost. */
+  function anyFlip(st, i, p){
+    if(st.cell[i]>=0) return false;
+    var r=(i/N)|0, c=i%N, them=1-p, d;
+    for(d=0;d<DIRS.length;d++){
+      var dr=DIRS[d][0], dc=DIRS[d][1];
+      var rr=r+dr, cc=c+dc, n=0;
+      while(rr>=0&&rr<N&&cc>=0&&cc<N&&st.cell[rr*N+cc]===them){ n++; rr+=dr; cc+=dc; }
+      if(n && rr>=0&&rr<N&&cc>=0&&cc<N && st.cell[rr*N+cc]===p) return true;
+    }
+    return false;
+  }
+  function legalAt(st, i, p){
+    return st.cell[i]<0 && anyFlip(st, i, p);
+  }
+  function movesFor(st, p){
+    var out=[];
+    for(var i=0;i<CELLS;i++) if(anyFlip(st,i,p)) out.push(i);
+    return out;
+  }
+  function countMoves(st, p){
+    var n=0;
+    for(var i=0;i<CELLS;i++) if(anyFlip(st,i,p)) n++;
+    return n;
+  }
+  function hasMove(st, p){
+    for(var i=0;i<CELLS;i++) if(anyFlip(st,i,p)) return true;
+    return false;
+  }
+  function legal(st, i){ return !st.over && legalAt(st, i, st.turn); }
+  function legalMoves(st){ return st.over ? [] : movesFor(st, st.turn); }
+
+  function recount(st){
+    var a=0,b=0;
+    for(var i=0;i<CELLS;i++){ if(st.cell[i]===0) a++; else if(st.cell[i]===1) b++; }
+    st.count=[a,b];
+  }
+
+  function play(st, i){
+    if(!legal(st,i)) return { ok:false };
+    var me=st.turn;
+    var flips=flipsFor(st, i, me), k;
+    st.cell[i]=me;
+    for(k=0;k<flips.length;k++) st.cell[flips[k]]=me;
+    st.moves++;
+    st.last=i; st.lastFlips=flips.slice();
+    recount(st);
+    var ev={ ok:true, by:me, at:i, flips:flips, passed:false, over:false, wipe:false };
+    var them=1-me;
+    if(hasMove(st, them)){
+      st.turn=them;
+    }else if(hasMove(st, me)){
+      /* they cannot move at all, so they miss a turn and you go again */
+      st.turn=me;
+      st.passes++;
+      ev.passed=true;
+    }else{
+      st.over=true;
+      st.winner = st.count[0]===st.count[1] ? -1 : (st.count[0]>st.count[1] ? 0 : 1);
+      ev.over=true;
+      ev.wipe = (st.count[0]===0 || st.count[1]===0);
+    }
+    return ev;
+  }
+
+  /* ---- the computer ----
+     The search puts discs down and lifts them straight back off the same board
+     rather than copying it at every node.  Copying a sixty-four square board
+     hundreds of thousands of times a move is what made a deep search too slow
+     to use on a phone. */
+  function doMove(st, i){
+    var me=st.turn, k;
+    var flips=flipsFor(st, i, me);
+    st.cell[i]=me;
+    for(k=0;k<flips.length;k++) st.cell[flips[k]]=me;
+    st.count[me]+=1+flips.length;
+    st.count[1-me]-=flips.length;
+    st.moves++;
+    var rec={ i:i, flips:flips, turn:me, over:st.over, winner:st.winner };
+    var them=1-me;
+    if(hasMove(st, them)) st.turn=them;
+    else if(hasMove(st, me)) st.turn=me;
+    else {
+      st.over=true;
+      st.winner = st.count[0]===st.count[1] ? -1 : (st.count[0]>st.count[1] ? 0 : 1);
+    }
+    return rec;
+  }
+  function undoMove(st, rec){
+    var me=rec.turn, them=1-me, k;
+    st.cell[rec.i]=-1;
+    for(k=0;k<rec.flips.length;k++) st.cell[rec.flips[k]]=them;
+    st.count[me]-=1+rec.flips.length;
+    st.count[them]+=rec.flips.length;
+    st.moves--;
+    st.turn=rec.turn;
+    st.over=rec.over;
+    st.winner=rec.winner;
+  }
+
+  function evaluate(st, me){
+    var them=1-me, i;
+    if(st.over){
+      /* a finished game is worth exactly what it is: won, lost or level */
+      if(st.winner===me) return 100000+(st.count[me]-st.count[them]);
+      if(st.winner===them) return -100000-(st.count[them]-st.count[me]);
+      return 0;
+    }
+    var empties=CELLS-st.count[0]-st.count[1];
+    var pos=0;
+    for(i=0;i<CELLS;i++){
+      if(st.cell[i]===me) pos+=WEIGHT[i];
+      else if(st.cell[i]===them) pos-=WEIGHT[i];
+    }
+    /* corners are worth having outright, over and above the square's weight */
+    var corn=0;
+    for(i=0;i<CORNERS.length;i++){
+      if(st.cell[CORNERS[i]]===me) corn+=25;
+      else if(st.cell[CORNERS[i]]===them) corn-=25;
+    }
+    /* Mobility: having moves and leaving them none is most of Reversi.  Holding
+       more discs in the middle game is close to worthless - they are only there
+       to be flipped back - so it barely counts until the board is nearly full. */
+    var myM=countMoves(st, me), theirM=countMoves(st, them);
+    var mob=0;
+    if(myM+theirM>0) mob=(myM-theirM)*100/(myM+theirM);
+    var discs=st.count[me]-st.count[them];
+    var discW = empties<=12 ? 12 : 1;
+    return pos + corn*10 + mob*8 + discs*discW;
+  }
+
+  function search(st, depth, alpha, beta, me){
+    if(st.over||depth<=0) return evaluate(st, me);
+    var moves=legalMoves(st);
+    if(!moves.length) return evaluate(st, me);
+    var mover=st.turn, i;
+    var best = mover===me ? -1e9 : 1e9;
+    for(i=0;i<moves.length;i++){
+      var rec=doMove(st, moves[i]);
+      /* a pass does NOT hand over, so the same side may keep maximising */
+      var v=search(st, depth-1, alpha, beta, me);
+      undoMove(st, rec);
+      if(mover===me){
+        if(v>best) best=v;
+        if(best>alpha) alpha=best;
+      }else{
+        if(v<best) best=v;
+        if(best<beta) beta=best;
+      }
+      if(beta<=alpha) break;
+    }
+    return best;
+  }
+
+  /* A search deep enough to play well beats a casual player every single time,
+     so depth alone is not a difficulty knob.  `slip` is the chance the computer
+     settles for something other than its best move; the numbers were measured
+     against a stand-in player rather than guessed. */
+  var LEVELS=[{depth:1, slip:0.60},{depth:4, slip:0.30},{depth:4, slip:0.14}];
+
+  function rankMoves(st, depth){
+    var moves=legalMoves(st), me=st.turn, out=[], i;
+    for(i=0;i<moves.length;i++){
+      var rec=doMove(st, moves[i]);
+      out.push({ move:moves[i], score:search(st, depth-1, -1e9, 1e9, me) });
+      undoMove(st, rec);
+    }
+    /* on a tie, prefer the square that is worth more to hold */
+    out.sort(function(a,b){ return (b.score-a.score) || (WEIGHT[b.move]-WEIGHT[a.move]); });
+    return out;
+  }
+
+  function think(st, level, opts){
+    if(st.over) return -1;
+    var moves=legalMoves(st);
+    if(!moves.length) return -1;
+    var cfg = opts || LEVELS[Math.min(LEVELS.length-1, Math.max(0, level|0))];
+    var ranked=rankMoves(st, cfg.depth);
+    if(!ranked.length) return -1;
+    if(ranked.length>1 && st.rand()<cfg.slip){
+      var k=1+Math.floor(st.rand()*(ranked.length-1));
+      if(k>=ranked.length) k=ranked.length-1;
+      return ranked[k].move;
+    }
+    return ranked[0].move;
+  }
+  function hint(st){ return think(st, 1, {depth:LEVELS[1].depth, slip:0}); }
+
+  /* every promise the game makes, checked from the outside */
+  function audit(st){
+    var i, a=0, b=0, empty=0;
+    for(i=0;i<CELLS;i++){
+      var v=st.cell[i];
+      if(v!==-1&&v!==0&&v!==1) return "a square holds something that is not a disc ("+v+")";
+      if(v===0) a++; else if(v===1) b++; else empty++;
+    }
+    if(a!==st.count[0]||b!==st.count[1])
+      return "the counts do not match the board ("+st.count+" vs "+[a,b]+")";
+    /* every move puts down exactly one new disc and never removes one, so the
+       total is always the four it started with plus the moves played */
+    if(a+b!==4+st.moves) return "there are "+(a+b)+" discs after "+st.moves+" moves, not "+(4+st.moves);
+    if(a+b+empty!==CELLS) return "the squares do not add up";
+    if(st.turn!==0&&st.turn!==1) return "nobody's turn";
+    if(!st.over){
+      if(!hasMove(st, st.turn)) return "the side to play has no move but the game is not over";
+    }else{
+      if(hasMove(st,0)||hasMove(st,1)) return "the game is over but somebody can still move";
+      var w = st.count[0]===st.count[1] ? -1 : (st.count[0]>st.count[1] ? 0 : 1);
+      if(st.winner!==w) return "the wrong winner ("+st.winner+" should be "+w+")";
+    }
+    return null;
+  }
+
+  return { N:N, CELLS:CELLS, DIRS:DIRS, CORNERS:CORNERS, WEIGHT:WEIGHT, LEVELS:LEVELS,
+           rng:rng, idx:idx, rowOf:rowOf, colOf:colOf,
+           create:create, play:play, legal:legal, legalAt:legalAt,
+           legalMoves:legalMoves, movesFor:movesFor, countMoves:countMoves,
+           hasMove:hasMove, anyFlip:anyFlip,
+           flipsFor:flipsFor, evaluate:evaluate, think:think, hint:hint, audit:audit };
+}
+if(typeof module!=='undefined') module.exports = makeReversi;
+</script>
+<script>
+(function(){
+"use strict";
+var RV=makeReversi();
+var LS="gg_reversi_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"two",  name:"Two Players", cls:"z-p", tag:"Share the phone &middot; take turns", ai:null},
+  {id:"easy", name:"Gentle",      cls:"z-a", tag:"Against the computer &middot; grabs what it sees", ai:0},
+  {id:"med",  name:"Tricky",      cls:"z-b", tag:"Against the computer &middot; an even contest", ai:1},
+  {id:"hard", name:"Fiendish",    cls:"z-c", tag:"Against the computer &middot; plays for the corners", ai:2}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+var STARTS=[{id:"dark",lab:"DARK"},{id:"light",lab:"LIGHT"},{id:"swap",lab:"SWAP"}];
+function startsOf(id){ for(var i=0;i<STARTS.length;i++) if(STARTS[i].id===id) return STARTS[i]; return STARTS[0]; }
+
+var FELT="#1f9e78", FELT_D="#157a5c", FELT_L="#25b489", LINE="rgba(6,50,36,.34)";
+var DARK="#2f3540", DARK_E="#171c25", LIGHT="#fdfaf3", LIGHT_E="#c4baa6";
+function colOf(p){ return p===0?DARK:LIGHT; }
+function edgeOf(p){ return p===0?DARK_E:LIGHT_E; }
+
+/* ---------------- state ---------------- */
+var mId, S, started, startId, lastStarter, thinking, aiTimer=null;
+var anim=null, pending=null, hover=-1, hintCell=-1, hintAt=0;
+var msg="", msgUntil=0, lastT=0, hadAllCorners=false;
+var wins=[0,0];
+/* Only the test hook ever sets this. It stops the clock and the computer's
+   timer, so a test can step the game itself instead of racing an animation.
+   With the hook stripped out it stays false for good. */
+var frozen=false;
+
+function firstFor(){
+  if(startId==="dark") return 0;
+  if(startId==="light") return 1;
+  return lastStarter===0 ? 1 : 0;
+}
+function newGame(id){
+  mId=id; save("mode",id);
+  var f=firstFor();
+  lastStarter=f; save("lastStarter",f);
+  S=RV.create({first:f});
+  started=started||false;
+  thinking=false; anim=null; pending=null; hover=-1; hintCell=-1;
+  msg=""; msgUntil=0; hadAllCorners=false;
+  if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,SC=0,OX=0,OY=0;
+var PAD=0.26;                    /* the felt border round the squares, in cells */
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40||!S) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  var units=RV.N+PAD*2;
+  SC=Math.min((aw-6)/units, (ah-6)/units);
+  OX=Math.round((aw-SC*units)/2 + SC*PAD);
+  OY=Math.round((ah-SC*units)/2 + SC*PAD);
+}
+window.addEventListener("resize", function(){ layout(); });
+function px(c){ return OX+c*SC; }
+function py(r){ return OY+r*SC; }
+function rr(x,y,w,h,rad){
+  if(rad>w/2) rad=w/2; if(rad>h/2) rad=h/2;
+  ctx.beginPath(); ctx.moveTo(x+rad,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad);
+  ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath();
+}
+/* a disc, squashed horizontally by `sx` so it can be shown mid-turn */
+function disc(cxp, cyp, rad, p, sx){
+  sx=sx==null?1:Math.max(0.04,Math.abs(sx));
+  ctx.save();
+  ctx.translate(cxp,cyp);
+  ctx.fillStyle="rgba(6,50,36,.32)";
+  ctx.beginPath(); ctx.ellipse(0, rad*0.16, rad*sx, rad, 0, 0, 6.284); ctx.fill();
+  ctx.fillStyle=colOf(p);
+  ctx.beginPath(); ctx.ellipse(0, 0, rad*sx, rad, 0, 0, 6.284); ctx.fill();
+  ctx.strokeStyle=edgeOf(p); ctx.lineWidth=Math.max(1,rad*0.13);
+  ctx.beginPath(); ctx.ellipse(0, 0, rad*0.84*sx, rad*0.84, 0, 0, 6.284); ctx.stroke();
+  ctx.fillStyle= p===0 ? "rgba(255,255,255,.16)" : "rgba(255,255,255,.75)";
+  ctx.beginPath(); ctx.ellipse(-rad*0.28*sx, -rad*0.30, rad*0.22*sx, rad*0.22, 0, 0, 6.284); ctx.fill();
+  ctx.restore();
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!SC){ layout(); if(!SC) return; }
+  if(!S) return;
+  var now=ts||0;
+  var dt=lastT?Math.min(120,now-lastT):0;
+  lastT=now;
+  if(!frozen) step(dt);
+
+  ctx.clearRect(0,0,VW,VH);
+  var W=SC*RV.N, i, r, c;
+
+  /* the board */
+  ctx.fillStyle="rgba(140,65,10,.28)";
+  rr(px(0)-SC*PAD, py(0)-SC*PAD+5, W+SC*PAD*2, W+SC*PAD*2, Math.max(8,SC*0.28)); ctx.fill();
+  ctx.fillStyle=FELT_D;
+  rr(px(0)-SC*PAD, py(0)-SC*PAD, W+SC*PAD*2, W+SC*PAD*2, Math.max(8,SC*0.28)); ctx.fill();
+  ctx.fillStyle=FELT;
+  rr(px(0), py(0), W, W, Math.max(2,SC*0.06)); ctx.fill();
+
+  /* the grid */
+  ctx.strokeStyle=LINE; ctx.lineWidth=Math.max(1,SC*0.035);
+  for(i=0;i<=RV.N;i++){
+    ctx.beginPath(); ctx.moveTo(px(i), py(0)); ctx.lineTo(px(i), py(RV.N)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px(0), py(i)); ctx.lineTo(px(RV.N), py(i)); ctx.stroke();
+  }
+  /* the four dots a real board has */
+  ctx.fillStyle="rgba(6,50,36,.4)";
+  var spots=[[2,2],[2,6],[6,2],[6,6]];
+  for(i=0;i<spots.length;i++){
+    ctx.beginPath(); ctx.arc(px(spots[i][1]), py(spots[i][0]), Math.max(1.5,SC*0.07), 0, 6.284); ctx.fill();
+  }
+
+  var myMove = started && !S.over && !anim && !thinking && myTurn();
+  var legal = myMove ? RV.legalMoves(S) : [];
+  var prev = (myMove && hover>=0 && legal.indexOf(hover)>=0) ? RV.flipsFor(S, hover, S.turn) : null;
+
+  /* where you may play */
+  if(myMove){
+    for(i=0;i<legal.length;i++){
+      r=RV.rowOf(legal[i]); c=RV.colOf(legal[i]);
+      ctx.fillStyle = legal[i]===hover ? "rgba(255,255,255,.34)" : "rgba(255,255,255,.16)";
+      ctx.beginPath(); ctx.arc(px(c+0.5), py(r+0.5), SC*(legal[i]===hover?0.30:0.15), 0, 6.284); ctx.fill();
+    }
+  }
+
+  /* the discs */
+  var rad=SC*0.40;
+  for(i=0;i<RV.CELLS;i++){
+    var v=S.cell[i];
+    if(v<0) continue;
+    r=RV.rowOf(i); c=RV.colOf(i);
+    var cxp=px(c+0.5), cyp=py(r+0.5);
+    var sx=1, show=v;
+    if(anim){
+      if(i===anim.placed){
+        var tp=Math.min(1, anim.t/170);
+        sx=1; rad=SC*0.40;
+        disc(cxp, cyp, SC*0.40*(0.25+0.75*tp), v, 1);
+        continue;
+      }
+      var f=anim.map[i];
+      if(f!==undefined){
+        var lt=(anim.t-f)/anim.dur;
+        if(lt<0){ show=1-anim.by; sx=1; }
+        else if(lt<1){ show = lt<0.5 ? 1-anim.by : anim.by; sx=Math.cos(lt*Math.PI); }
+      }
+    }
+    disc(cxp, cyp, SC*0.40, show, sx);
+  }
+
+  /* what a tap here would turn over */
+  if(prev){
+    ctx.strokeStyle="rgba(255,240,190,.95)"; ctx.lineWidth=Math.max(2,SC*0.09);
+    for(i=0;i<prev.length;i++){
+      r=RV.rowOf(prev[i]); c=RV.colOf(prev[i]);
+      ctx.beginPath(); ctx.arc(px(c+0.5), py(r+0.5), SC*0.42, 0, 6.284); ctx.stroke();
+    }
+    r=RV.rowOf(hover); c=RV.colOf(hover);
+    ctx.strokeStyle=colOf(S.turn); ctx.lineWidth=Math.max(2,SC*0.09);
+    rr(px(c)+SC*0.04, py(r)+SC*0.04, SC*0.92, SC*0.92, SC*0.14); ctx.stroke();
+  }
+
+  /* the last move played, so you can see what the other side did */
+  if(!anim && S.last>=0 && S.cell[S.last]>=0){
+    r=RV.rowOf(S.last); c=RV.colOf(S.last);
+    ctx.strokeStyle="rgba(255,196,60,.9)"; ctx.lineWidth=Math.max(1.5,SC*0.06);
+    rr(px(c)+SC*0.06, py(r)+SC*0.06, SC*0.88, SC*0.88, SC*0.12); ctx.stroke();
+  }
+
+  /* the hint, while it lasts */
+  if(hintCell>=0 && now-hintAt<2600 && !anim){
+    r=RV.rowOf(hintCell); c=RV.colOf(hintCell);
+    var pulse=0.5+0.4*Math.sin(now/150);
+    ctx.strokeStyle="rgba(255,255,255,"+pulse.toFixed(3)+")";
+    ctx.lineWidth=Math.max(3,SC*0.11);
+    rr(px(c)+SC*0.06, py(r)+SC*0.06, SC*0.88, SC*0.88, SC*0.12); ctx.stroke();
+  }
+
+  /* a word about what just happened */
+  var say=null;
+  if(thinking) say="THINKING";
+  else if(now<msgUntil) say=msg;
+  if(started && say){
+    ctx.save();
+    ctx.translate(px(RV.N/2), py(RV.N/2));
+    if(S.turn===1 && modeOf(mId).ai===null) ctx.rotate(Math.PI);
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 "+Math.round(Math.min(24,SC*0.56))+"px -apple-system,Helvetica,Arial";
+    var tw=ctx.measureText(say).width, ph=Math.min(36,SC*0.85);
+    ctx.fillStyle="rgba(10,60,44,.92)";
+    rr(-tw/2-SC*0.32, -ph/2, tw+SC*0.64, ph, ph/2); ctx.fill();
+    ctx.fillStyle="#ffffff";
+    ctx.fillText(say, 0, 1);
+    ctx.restore();
+  }
+}
+
+/* ---------------- the one place discs turn ---------------- */
+function step(dt){
+  if(!anim) return;
+  anim.t+=dt;
+  if(anim.t>=anim.until){ anim=null; landed(); }
+}
+function landed(){
+  var ev=pending; pending=null;
+  if(!ev) return;
+  if(window.GGA && ev.by===0){
+    if(ev.flips.length>=6) GGA.award("rv_big");
+  }
+  /* holding all four corners is worth knowing about the moment it happens */
+  if(!hadAllCorners){
+    var all=true;
+    for(var k=0;k<RV.CORNERS.length;k++) if(S.cell[RV.CORNERS[k]]!==0) all=false;
+    if(all){ hadAllCorners=true; if(window.GGA) GGA.award("rv_corner"); }
+  }
+  if(ev.passed){
+    msg=(S.turn===0?"LIGHT":"DARK")+" CANNOT MOVE";
+    msgUntil=lastT+1400;
+    beep(240,.14,"sine",.05);
+  }
+  paintHUD();
+  persist();
+  if(ev.over) finish(ev);
+  else scheduleAI();
+}
+
+function myTurn(){
+  var m=modeOf(mId);
+  return m.ai===null || S.turn===0;
+}
+function busy(){ return !!anim || thinking; }
+
+function doPlay(i){
+  if(!RV.legal(S,i) || busy()) return false;
+  var by=S.turn;
+  var ev=RV.play(S,i);
+  if(!ev.ok) return false;
+  /* the discs turn one after another, spreading out from the one just played */
+  var map={}, longest=0, r0=RV.rowOf(i), c0=RV.colOf(i);
+  for(var k=0;k<ev.flips.length;k++){
+    var f=ev.flips[k];
+    var d=Math.max(Math.abs(RV.rowOf(f)-r0), Math.abs(RV.colOf(f)-c0));
+    var delay=90+d*55;
+    map[f]=delay;
+    if(delay>longest) longest=delay;
+  }
+  anim={ placed:i, by:by, map:map, t:0, dur:230, until:longest+230+40 };
+  pending=ev;
+  hover=-1; hintCell=-1;
+  beep(360,.06,"square",.05);
+  if(ev.flips.length) setTimeout(function(){ beep(520,.07,"triangle",.05); },140);
+  if(window.GGA) GGA.haptic("light");
+  paintHUD();
+  return true;
+}
+function scheduleAI(){
+  var m=modeOf(mId);
+  if(m.ai===null || S.turn!==1 || S.over || frozen) return;
+  if(aiTimer) clearTimeout(aiTimer);
+  thinking=true;
+  paintHUD();
+  aiTimer=setTimeout(function(){
+    aiTimer=null;
+    if(!S || S.over || S.turn!==1){ thinking=false; paintHUD(); return; }
+    var i=RV.think(S, m.ai);
+    thinking=false;
+    if(i<0){ paintHUD(); return; }
+    doPlay(i);
+  }, 440);
+}
+
+function finish(ev){
+  save("cur",null);
+  var m=modeOf(mId);
+  var played=load("played",0)+1; save("played",played);
+  if(S.winner>=0){ wins[S.winner]++; save("wins",wins); }
+  msg = S.winner<0 ? "DEAD HEAT" : (S.winner===0 ? "DARK WINS" : "LIGHT WINS");
+  msgUntil=lastT+2200;
+  if(window.GGA){
+    if(m.ai===null) GGA.award("rv_2p");
+    if(played>=10) GGA.award("rv_10");
+    if(S.winner===0){
+      GGA.award("rv_first");
+      if(mId==="hard") GGA.award("rv_hard");
+      if(S.count[1]===0) GGA.award("rv_wipe");
+    }
+    GGA.haptic(S.winner===0?"success":(S.winner<0?"light":"error"));
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  setTimeout(function(){ winScreen(); },1150);
+  void ev;
+}
+
+function paintHUD(){
+  document.getElementById("vDark").textContent=S.count[0];
+  document.getElementById("vLight").textContent=S.count[1];
+  var t=document.getElementById("vTurn");
+  if(S.over) t.textContent = S.winner<0 ? "LEVEL" : (S.winner===0?"DARK":"LIGHT");
+  else if(thinking) t.textContent="...";
+  else t.textContent = S.turn===0 ? "DARK" : "LIGHT";
+  var h=document.getElementById("tHint");
+  if(started && !S.over && !busy() && myTurn()) h.classList.remove("off");
+  else h.classList.add("off");
+}
+
+/* ---------------- save ---------------- */
+function encode(a){
+  var s="";
+  for(var i=0;i<a.length;i++) s += a[i]<0 ? "." : (a[i]===0 ? "d" : "l");
+  return s;
+}
+function decode(s,n){
+  var a=new Array(n);
+  for(var i=0;i<n;i++){
+    var ch=s.charAt(i);
+    a[i] = ch==="d" ? 0 : (ch==="l" ? 1 : -1);
+  }
+  return a;
+}
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started) return;
+  if(S.over || S.moves===0){ save("cur",null); return; }
+  save("cur",{ m:mId, f:S.first, t:S.turn, mv:S.moves, b:encode(S.cell) });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||!c.b||c.b.length!==RV.CELLS) return false;
+  newGame(c.m);
+  S=RV.create({first:c.f===1?1:0});
+  S.cell=decode(c.b, RV.CELLS);
+  S.turn=(c.t===1)?1:0;
+  S.moves=c.mv|0;
+  S.last=-1; S.lastFlips=[];
+  var a=0,b=0;
+  for(var i=0;i<RV.CELLS;i++){ if(S.cell[i]===0) a++; else if(S.cell[i]===1) b++; }
+  S.count=[a,b];
+  if(RV.audit(S)){ newGame(c.m); return false; }
+  anim=null; pending=null; hover=-1;
+  paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function cellAt(clientX, clientY){
+  var b=cv.getBoundingClientRect();
+  var c=Math.floor((clientX-b.left-OX)/SC);
+  var r=Math.floor((clientY-b.top-OY)/SC);
+  if(r<0||r>=RV.N||c<0||c>=RV.N) return -1;
+  return RV.idx(r,c);
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+var down=false;
+function aim(e){
+  var i=cellAt(pt(e).clientX, pt(e).clientY);
+  hover = (i>=0 && RV.legal(S,i)) ? i : -1;
+}
+function onDown(e){
+  if(!started||S.over||busy()||!myTurn()) return;
+  e.preventDefault();
+  down=true; aim(e);
+}
+function onMove(e){
+  if(!down) return;
+  if(e.cancelable) e.preventDefault();
+  aim(e);
+}
+function onUp(e){
+  if(!down) return;
+  down=false;
+  if(e) aim(e);
+  var i=hover;
+  hover=-1;
+  if(i>=0 && myTurn() && !busy()) doPlay(i);
+}
+cv.addEventListener("touchstart",onDown,{passive:false});
+cv.addEventListener("touchmove",onMove,{passive:false});
+cv.addEventListener("touchend",onUp);
+cv.addEventListener("touchcancel",function(){ down=false; hover=-1; });
+cv.addEventListener("mousedown",onDown);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",function(e){ onUp(e); });
+cv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+document.getElementById("tHint").onclick=function(){
+  if(!started||S.over||busy()||!myTurn()) return;
+  hintCell=RV.hint(S); hintAt=lastT;
+  beep(880,.07,"sine",.04);
+};
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ newGame(mId); persist(); closeOvl(); scheduleAI(); return; }
+  openOvl('<h2>START AGAIN?</h2><p>This game will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW GAME</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){ newGame(mId); persist(); closeOvl(); scheduleAI(); };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>REVERSI</h2><p>Trap a line of your opponent\'s discs between two of yours and they all turn over.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bStart">FIRST GO &middot; '+startsOf(startId).lab+'</button>';
+  if(cur&&cur.b) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+(cur.mv|0)+' moves</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newGame(el.getAttribute("data-m"));
+      persist(); closeOvl(); layout(); scheduleAI();
+    };
+  });
+  card.querySelector("#bStart").onclick=function(){
+    var k=0;
+    for(var j=0;j<STARTS.length;j++) if(STARTS[j].id===startId) k=j;
+    startId=STARTS[(k+1)%STARTS.length].id;
+    save("starts",startId);
+    /* textContent, not innerHTML, so the entity would show up literally - and
+       the source stays ASCII, which is the rule for every file here */
+    this.textContent="FIRST GO \u00B7 "+startsOf(startId).lab;
+  };
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newGame(load("mode","two"));
+    persist(); closeOvl(); layout(); scheduleAI();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; Every move must <b>trap a line</b> of your opponent\'s discs between the disc you play and one you already have. Every disc in that line turns over.<br><br>'+
+    '&#9642; The <b>pale dots</b> show where you may play. Hold a finger on one and the discs it would turn are ringed.<br><br>'+
+    '&#9642; Lines run in any of the <b>eight directions</b>, and one move can trap several at once.<br><br>'+
+    '&#9642; If you have no legal move you <b>miss your turn</b>. When neither side can move, the game is over.<br><br>'+
+    '&#9642; The <b>corners</b> can never be turned back, so they are worth far more than they look. Try not to hand one over.<br><br>'+
+    '&#9642; Whoever has the most discs at the end wins.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function winScreen(){
+  var m=modeOf(mId);
+  var head;
+  if(S.winner<0) head="DEAD HEAT";
+  else if(m.ai===null) head = S.winner===0 ? "DARK WINS!" : "LIGHT WINS!";
+  else head = S.winner===0 ? "YOU WIN!" : "COMPUTER WINS";
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+(m.ai===null?"Two players":m.name)+' &middot; '+S.moves+' moves.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">DARK</div><div class="sv">'+S.count[0]+'</div></div>'+
+      '<div class="st"><div class="sk">LIGHT</div><div class="sv">'+S.count[1]+'</div></div>'+
+      '<div class="st"><div class="sk">PLAYED</div><div class="sv">'+load("played",0)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER GAME</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE OPPONENT</button>');
+  card.querySelector("#bAgain").onclick=function(){ newGame(mId); persist(); closeOvl(); layout(); scheduleAI(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.over){ titleScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">DARK</div><div class="sv">'+S.count[0]+'</div></div>'+
+      '<div class="st"><div class="sk">LIGHT</div><div class="sv">'+S.count[1]+'</div></div>'+
+      '<div class="st"><div class="sk">MOVES</div><div class="sv">'+S.moves+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE OPPONENT</button>');
+  card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+startId=load("starts","dark");
+if(startsOf(startId).id!==startId) startId="dark";
+lastStarter=load("lastStarter",1);
+wins=load("wins",[0,0]);
+if(!wins||wins.length!==2) wins=[0,0];
+newGame(load("mode","two"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+
+})();
+</script>
+</body>
+</html>

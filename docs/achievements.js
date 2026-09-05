@@ -193,7 +193,36 @@
     { id: 'db_big',      game: 'Dots and Boxes', icon: '🗺️', name: 'The Long Game',   desc: 'Win on the big board' },
     { id: 'db_hard',     game: 'Dots and Boxes', icon: '🧠', name: 'Beat Fiendish',    desc: 'Beat the computer on Fiendish' },
     { id: 'db_2p',       game: 'Dots and Boxes', icon: '👥', name: 'Pass the Phone',   desc: 'Play a two-player game' },
-    { id: 'db_10',       game: 'Dots and Boxes', icon: '🔟', name: 'Ten Games',        desc: 'Play ten games' }
+    { id: 'db_10',       game: 'Dots and Boxes', icon: '🔟', name: 'Ten Games',        desc: 'Play ten games' },
+    { id: 'c4_first',    game: 'Connect 4',     icon: '🔴', name: 'Four in a Row',     desc: 'Win a game' },
+    { id: 'c4_diag',     game: 'Connect 4',     icon: '📐', name: 'On the Diagonal',   desc: 'Win with a diagonal four' },
+    { id: 'c4_fork',     game: 'Connect 4',     icon: '🍴', name: 'Two Ways to Win',   desc: 'Set up two winning drops at once' },
+    { id: 'c4_fast',     game: 'Connect 4',     icon: '⚡', name: 'Four Discs Flat',   desc: 'Win with only four of your discs down' },
+    { id: 'c4_hard',     game: 'Connect 4',     icon: '🧠', name: 'Beat Fiendish',     desc: 'Beat the computer on Fiendish' },
+    { id: 'c4_2p',       game: 'Connect 4',     icon: '👥', name: 'Pass the Phone',    desc: 'Play a two-player game' },
+    { id: 'c4_10',       game: 'Connect 4',     icon: '🔟', name: 'Ten Games',         desc: 'Play ten games' },
+    { id: 'mn_first',    game: 'Mancala',       icon: '🏆', name: 'Most Seeds',        desc: 'Win a game' },
+    { id: 'mn_capture',  game: 'Mancala',       icon: '🤲', name: 'First Capture',     desc: 'Take a pit facing an empty one' },
+    { id: 'mn_big',      game: 'Mancala',       icon: '💰', name: 'Big Handful',       desc: 'Capture eight seeds at once' },
+    { id: 'mn_chain',    game: 'Mancala',       icon: '🔁', name: 'Three in a Row',    desc: 'Earn three free turns one after another' },
+    { id: 'mn_hard',     game: 'Mancala',       icon: '🧠', name: 'Beat Fiendish',     desc: 'Beat the computer on Fiendish' },
+    { id: 'mn_2p',       game: 'Mancala',       icon: '👥', name: 'Pass the Phone',    desc: 'Play a two-player game' },
+    { id: 'mn_10',       game: 'Mancala',       icon: '🔟', name: 'Ten Games',         desc: 'Play ten games' },
+    { id: 'rv_first',    game: 'Reversi',       icon: '🏆', name: 'Most Discs',        desc: 'Win a game' },
+    { id: 'rv_big',      game: 'Reversi',       icon: '🌀', name: 'Big Turnover',      desc: 'Turn six discs with one move' },
+    { id: 'rv_corner',   game: 'Reversi',       icon: '📍', name: 'All Four Corners',  desc: 'Hold every corner at once' },
+    { id: 'rv_wipe',     game: 'Reversi',       icon: '🧹', name: 'Clean Sweep',       desc: 'Win with your opponent off the board' },
+    { id: 'rv_hard',     game: 'Reversi',       icon: '🧠', name: 'Beat Fiendish',     desc: 'Beat the computer on Fiendish' },
+    { id: 'rv_2p',       game: 'Reversi',       icon: '👥', name: 'Pass the Phone',    desc: 'Play a two-player game' },
+    { id: 'rv_10',       game: 'Reversi',       icon: '🔟', name: 'Ten Games',         desc: 'Play ten games' },
+    { id: 'bg_first',    game: 'Backgammon',    icon: '🏆', name: 'Race Won',          desc: 'Win a game' },
+    { id: 'bg_off',      game: 'Backgammon',    icon: '🏁', name: 'First Off',         desc: 'Bear off your first checker' },
+    { id: 'bg_gammon',   game: 'Backgammon',    icon: '💥', name: 'Gammon',            desc: 'Win before your opponent bears off any' },
+    { id: 'bg_prime',    game: 'Backgammon',    icon: '🧱', name: 'Six Prime',         desc: 'Hold six points in a row' },
+    { id: 'bg_double',   game: 'Backgammon',    icon: '🎲', name: 'Four in One',       desc: 'Roll doubles and play all four' },
+    { id: 'bg_hard',     game: 'Backgammon',    icon: '🧠', name: 'Beat Fiendish',     desc: 'Beat the computer on Fiendish' },
+    { id: 'bg_2p',       game: 'Backgammon',    icon: '👥', name: 'Pass the Phone',    desc: 'Play a two-player game' },
+    { id: 'bg_10',       game: 'Backgammon',    icon: '🔟', name: 'Ten Games',         desc: 'Play ten games' }
   ];
 
   var GAME_PAGES = [
@@ -205,7 +234,7 @@
     'nullpoints', 'snug-fit', 'maze-escape', 'sudoku', 'water-sort', 'mahjong',
     'picture-logic', 'spider', 'freecell', 'mine-hunt', 'word-search',
     'loose-ends', 'snake', 'knock-through', 'air-hockey', 'carrom', 'finger-soccer',
-    'dots-boxes'
+    'dots-boxes', 'connect4', 'mancala', 'reversi', 'backgammon'
   ];
 
   var A_KEY = 'gg_ach', S_KEY = 'gg_streak', P_KEY = 'gg_played';

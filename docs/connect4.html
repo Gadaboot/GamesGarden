@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Connect 4</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 8% -8%, #ff9ecb 0%, transparent 55%),
+      radial-gradient(120% 80% at 94% 105%, #ffc2a8 0%, transparent 55%),
+      linear-gradient(160deg, #ff5ba4 0%, #ff85c0 48%, #ffd9ec 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#c2246e;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(160,20,90,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.6px;line-height:1;
+    font-size:clamp(15px,4.8vw,21px);text-shadow:0 2px 0 #e33d87,0 4px 12px rgba(150,20,80,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#c2246e;
+    box-shadow:0 4px 0 rgba(190,40,110,.35),0 6px 14px rgba(160,20,90,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(190,40,110,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(170,25,95,.42);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#fff2f8);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#9a5f7c;box-shadow:0 20px 50px rgba(150,20,80,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#e33d87;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#c690ab;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-p{background:linear-gradient(180deg,#ff9ecb,#e33d87)}
+  .z-a{background:linear-gradient(180deg,#8fe0a8,#2fae6b)}
+  .z-b{background:linear-gradient(180deg,#7fc4ff,#2a72d4)}
+  .z-c{background:linear-gradient(180deg,#c79bf5,#8b4ee0)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#ff9ecb,#e33d87);color:#fff;
+    box-shadow:0 5px 0 #bd2a6d,0 8px 18px rgba(200,40,120,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #bd2a6d}
+  .btn-alt{background:#fff0f7;color:#c2246e;border:1.5px solid #f7d6e6}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#c690ab;margin:10px 2px}
+  .rules b{color:#e33d87}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#fff0f7;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#eab8d0}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#e33d87}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">CONNECT 4</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k">RED</div><div class="v" id="vRed">0</div></div>
+    <div class="chip"><div class="k">TO PLAY</div><div class="v" id="vTurn">RED</div></div>
+    <div class="chip"><div class="k">YELLOW</div><div class="v" id="vYellow">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tUndo"><div class="ti">&#8630;</div><div class="tl">TAKE BACK</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Connect 4 - the rules and the computer opponent, with no drawing and no input
+   in them.  Every move goes through drop(), so the same code that runs on
+   screen can be run headless for thousands of games in Node - and the computer
+   searches ahead through this very same code.
+
+   The grid is COLS x ROWS with row 0 at the BOTTOM, which is the way the discs
+   actually stack.  The shell turns that the right way up for the screen. */
+function makeConnect4(){
+  "use strict";
+
+  var COLS=7, ROWS=6, NEED=4;
+  var N=COLS*ROWS;
+  /* the four directions a line can run: along, up, and the two diagonals */
+  var DIRS=[[1,0],[0,1],[1,1],[1,-1]];
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+  function idx(c,r){ return r*COLS+c; }
+
+  function create(cfg){
+    cfg=cfg||{};
+    var st={
+      COLS:COLS, ROWS:ROWS,
+      cell:new Array(N),          /* -1 empty, else who dropped it */
+      height:new Array(COLS),     /* how many discs are in each column */
+      turn:cfg.first===1?1:0,
+      first:cfg.first===1?1:0,
+      moves:0, history:[],
+      last:-1, lastCol:-1, lastRow:-1,
+      over:false, winner:-1,      /* -1 with over === true means a full board */
+      line:null,                  /* the four cells that won it */
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    for(var i=0;i<N;i++) st.cell[i]=-1;
+    for(i=0;i<COLS;i++) st.height[i]=0;
+    return st;
+  }
+
+  function legal(st,c){
+    return !st.over && c>=0 && c<COLS && st.height[c]<ROWS;
+  }
+  function legalMoves(st){
+    var out=[];
+    for(var c=0;c<COLS;c++) if(legal(st,c)) out.push(c);
+    return out;
+  }
+
+  /* the run of same-coloured discs through (c,r) in one direction, both ways */
+  function runAt(st,c,r,dc,dr,p){
+    var cells=[[c,r]], i, cc, rr;
+    for(i=1;i<NEED;i++){
+      cc=c+dc*i; rr=r+dr*i;
+      if(cc<0||cc>=COLS||rr<0||rr>=ROWS||st.cell[idx(cc,rr)]!==p) break;
+      cells.push([cc,rr]);
+    }
+    for(i=1;i<NEED;i++){
+      cc=c-dc*i; rr=r-dr*i;
+      if(cc<0||cc>=COLS||rr<0||rr>=ROWS||st.cell[idx(cc,rr)]!==p) break;
+      cells.unshift([cc,rr]);
+    }
+    return cells;
+  }
+  /* did the disc just played at (c,r) finish a line? */
+  function lineAt(st,c,r,p){
+    for(var d=0;d<DIRS.length;d++){
+      var run=runAt(st,c,r,DIRS[d][0],DIRS[d][1],p);
+      if(run.length>=NEED) return { cells:run.slice(0,NEED), dir:d };
+    }
+    return null;
+  }
+
+  function drop(st,c){
+    if(!legal(st,c)) return { ok:false };
+    var me=st.turn, r=st.height[c];
+    st.cell[idx(c,r)]=me;
+    st.height[c]=r+1;
+    st.moves++;
+    st.history.push(c);
+    st.last=idx(c,r); st.lastCol=c; st.lastRow=r;
+    var ev={ ok:true, by:me, col:c, row:r, over:false, win:null, draw:false };
+    var L=lineAt(st,c,r,me);
+    if(L){
+      st.over=true; st.winner=me; st.line=L.cells;
+      ev.over=true; ev.win=L;
+    }else if(st.moves>=N){
+      st.over=true; st.winner=-1;
+      ev.over=true; ev.draw=true;
+    }else{
+      st.turn = me===0 ? 1 : 0;
+    }
+    return ev;
+  }
+
+  /* take the last disc back off the board */
+  function undo(st){
+    if(!st.history.length) return false;
+    var c=st.history.pop();
+    var r=st.height[c]-1;
+    st.cell[idx(c,r)]=-1;
+    st.height[c]=r;
+    st.moves--;
+    st.over=false; st.winner=-1; st.line=null;
+    /* whose turn it is falls straight out of how many discs are down, so there
+       is nothing to remember and nothing to get out of step */
+    st.turn = turnAfter(st);
+    if(st.history.length){
+      var pc=st.history[st.history.length-1];
+      st.lastCol=pc; st.lastRow=st.height[pc]-1; st.last=idx(st.lastCol,st.lastRow);
+    }else{ st.last=-1; st.lastCol=-1; st.lastRow=-1; }
+    return true;
+  }
+  /* whose turn it is, worked out from how many discs are down */
+  function turnAfter(st){
+    return (st.first + st.moves) % 2;
+  }
+
+  /* the columns that win on the spot for `p` */
+  function winningMoves(st,p){
+    var out=[], c;
+    for(c=0;c<COLS;c++){
+      if(st.height[c]>=ROWS) continue;
+      var r=st.height[c];
+      st.cell[idx(c,r)]=p;
+      var w=lineAt(st,c,r,p);
+      st.cell[idx(c,r)]=-1;
+      if(w) out.push(c);
+    }
+    return out;
+  }
+
+  /* ---- how good a position looks, from p's side ---- */
+  function windowScore(counts, p){
+    var mine=counts[p], theirs=counts[1-p], empty=counts[2];
+    if(mine&&theirs) return 0;
+    if(mine===4) return 100000;
+    if(theirs===4) return -100000;
+    if(mine===3&&empty===1) return 60;
+    if(mine===2&&empty===2) return 12;
+    if(theirs===3&&empty===1) return -68;   /* blocking is worth a shade more */
+    if(theirs===2&&empty===2) return -12;
+    return 0;
+  }
+  function evaluate(st,p){
+    var s=0, c, r, d, i;
+    /* the middle column is worth more than the edges, always */
+    for(r=0;r<ROWS;r++){
+      var m=st.cell[idx(3,r)];
+      if(m===p) s+=7; else if(m>=0) s-=7;
+    }
+    for(c=0;c<COLS;c++) for(r=0;r<ROWS;r++) for(d=0;d<DIRS.length;d++){
+      var dc=DIRS[d][0], dr=DIRS[d][1];
+      var ec=c+dc*(NEED-1), er=r+dr*(NEED-1);
+      if(ec<0||ec>=COLS||er<0||er>=ROWS) continue;
+      var counts=[0,0,0];
+      for(i=0;i<NEED;i++){
+        var v=st.cell[idx(c+dc*i, r+dr*i)];
+        counts[v<0?2:v]++;
+      }
+      s+=windowScore(counts,p);
+    }
+    return s;
+  }
+
+  var ORDER=[3,2,4,1,5,0,6];      /* centre out: the best moves looked at first */
+
+  /* plain alpha-beta.  Discs are put on and taken off the same board rather
+     than copying it, which is what makes depth 7 cheap enough for a phone. */
+  function search(st, depth, alpha, beta, me){
+    var moves=[], i, c;
+    for(i=0;i<ORDER.length;i++){ c=ORDER[i]; if(st.height[c]<ROWS) moves.push(c); }
+    if(!moves.length) return 0;                 /* full board, a draw */
+    var mover=st.turn;
+    /* a win available right now is worth taking without looking further */
+    for(i=0;i<moves.length;i++){
+      c=moves[i];
+      var r=st.height[c];
+      st.cell[idx(c,r)]=mover;
+      var w=lineAt(st,c,r,mover);
+      st.cell[idx(c,r)]=-1;
+      if(w) return mover===me ? (100000+depth) : -(100000+depth);
+    }
+    if(depth<=0) return evaluate(st,me);
+
+    var best = mover===me ? -1e9 : 1e9;
+    for(i=0;i<moves.length;i++){
+      c=moves[i];
+      var rr=st.height[c];
+      st.cell[idx(c,rr)]=mover; st.height[c]=rr+1; st.turn=1-mover; st.moves++;
+      var v=search(st, depth-1, alpha, beta, me);
+      st.cell[idx(c,rr)]=-1; st.height[c]=rr; st.turn=mover; st.moves--;
+      if(mover===me){
+        if(v>best) best=v;
+        if(best>alpha) alpha=best;
+      }else{
+        if(v<best) best=v;
+        if(best<beta) beta=best;
+      }
+      if(beta<=alpha) break;
+    }
+    return best;
+  }
+
+  var DEPTHS=[1,4,7];             /* gentle, tricky, fiendish */
+
+  function think(st, level){
+    if(st.over) return -1;
+    var moves=legalMoves(st);
+    if(!moves.length) return -1;
+    var me=st.turn, i, c;
+
+    /* every level takes a win it can see - a computer that walks past one is
+       not "gentle", it is broken */
+    var wins=winningMoves(st,me);
+    if(wins.length) return wins[0];
+
+    if(level<=0){
+      /* blocks only about half the time, and is otherwise near enough random */
+      var block=winningMoves(st,1-me);
+      if(block.length && st.rand()<0.5) return block[0];
+      return moves[Math.floor(st.rand()*moves.length)%moves.length];
+    }
+
+    /* one loss to block is not a search question either */
+    var theirs=winningMoves(st,1-me);
+    if(theirs.length===1) return theirs[0];
+
+    var depth=DEPTHS[Math.min(2,level)];
+    var best=moves[0], bestV=-1e9;
+    var ordered=[];
+    for(i=0;i<ORDER.length;i++){ c=ORDER[i]; if(st.height[c]<ROWS) ordered.push(c); }
+    for(i=0;i<ordered.length;i++){
+      c=ordered[i];
+      var r=st.height[c];
+      st.cell[idx(c,r)]=me; st.height[c]=r+1; st.turn=1-me; st.moves++;
+      var v=search(st, depth-1, -1e9, 1e9, me);
+      st.cell[idx(c,r)]=-1; st.height[c]=r; st.turn=me; st.moves--;
+      if(v>bestV){ bestV=v; best=c; }
+    }
+    return best;
+  }
+  /* a suggestion for the player, at the middling level */
+  function hint(st){ return think(st, 1); }
+
+  /* every promise the game makes, checked from the outside */
+  function audit(st){
+    var c, r, counts=[0,0], drawn=0;
+    for(c=0;c<COLS;c++){
+      if(st.height[c]<0||st.height[c]>ROWS) return "a column has a nonsense height ("+st.height[c]+")";
+      for(r=0;r<ROWS;r++){
+        var v=st.cell[idx(c,r)];
+        if(v!==-1&&v!==0&&v!==1) return "a cell has a nonsense owner ("+v+")";
+        /* discs stack from the bottom: nothing may float */
+        if(r<st.height[c]){
+          if(v<0) return "there is a gap under a disc at column "+c+" row "+r;
+          counts[v]++; drawn++;
+        }else if(v>=0) return "a disc is floating above the pile at column "+c;
+      }
+    }
+    if(drawn!==st.moves) return "the move count does not match the discs ("+st.moves+" vs "+drawn+")";
+    if(st.history.length!==st.moves) return "the history does not match the move count";
+    var expect0 = Math.ceil(st.moves/2), expect1 = Math.floor(st.moves/2);
+    if(st.first===1){ var t=expect0; expect0=expect1; expect1=t; }
+    if(counts[0]!==expect0||counts[1]!==expect1)
+      return "the two sides have played a different number of discs ("+counts+")";
+    if(st.turn!==0&&st.turn!==1) return "nobody's turn";
+    if(!st.over && st.turn!==turnAfter(st)) return "it is the wrong side's turn";
+    /* nobody may be sitting on four in a row while the game is still going */
+    if(!st.over){
+      for(c=0;c<COLS;c++) for(r=0;r<st.height[c];r++){
+        var p=st.cell[idx(c,r)];
+        if(lineAt(st,c,r,p)) return "there is a line on the board but the game is not over";
+      }
+      if(st.moves>=N) return "the board is full but the game is not over";
+    }else{
+      if(st.winner>=0){
+        if(!st.line||st.line.length!==NEED) return "the game was won without a line";
+        for(var i=0;i<st.line.length;i++){
+          var cc=st.line[i][0], rrw=st.line[i][1];
+          if(cc<0||cc>=COLS||rrw<0||rrw>=ROWS) return "the winning line is off the board";
+          if(st.cell[idx(cc,rrw)]!==st.winner) return "the winning line is not all one colour";
+        }
+      }else if(st.moves<N) return "the game is a draw without a full board";
+    }
+    return null;
+  }
+
+  return { COLS:COLS, ROWS:ROWS, NEED:NEED, N:N, DIRS:DIRS, DEPTHS:DEPTHS,
+           rng:rng, idx:idx, create:create, legal:legal, legalMoves:legalMoves,
+           drop:drop, undo:undo, turnAfter:turnAfter, lineAt:lineAt,
+           winningMoves:winningMoves, evaluate:evaluate,
+           think:think, hint:hint, audit:audit };
+}
+if(typeof module!=='undefined') module.exports = makeConnect4;
+</script>
+<script>
+(function(){
+"use strict";
+var C4=makeConnect4();
+var LS="gg_connect4_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"two",  name:"Two Players", cls:"z-p", tag:"Share the phone &middot; take turns", ai:null},
+  {id:"easy", name:"Gentle",      cls:"z-a", tag:"Against the computer &middot; misses a block", ai:0},
+  {id:"med",  name:"Tricky",      cls:"z-b", tag:"Against the computer &middot; looks a few ahead", ai:1},
+  {id:"hard", name:"Fiendish",    cls:"z-c", tag:"Against the computer &middot; sees it coming", ai:2}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+/* who drops the first disc: red, yellow, or whoever did not last time */
+var STARTS=[{id:"red",lab:"RED"},{id:"yellow",lab:"YELLOW"},{id:"swap",lab:"SWAP"}];
+function startsOf(id){ for(var i=0;i<STARTS.length;i++) if(STARTS[i].id===id) return STARTS[i]; return STARTS[0]; }
+
+var RED="#e8483f", RED_D="#a92b24", YELL="#ffc93c", YELL_D="#c08800";
+var BOARD="#2f6fe0", BOARD_D="#1d4fae", HOLE="rgba(16,44,102,.55)";
+function colOf(p){ return p===0?RED:YELL; }
+function darkOf(p){ return p===0?RED_D:YELL_D; }
+
+/* ---------------- state ---------------- */
+var mId, S, started, startId, lastStarter, thinking, aiTimer=null;
+var anim=null, pending=null, hover=-1, win=0, lastT=0;
+var wins=[0,0];
+/* Only the test hook ever sets this. It stops the clock and the computer's
+   timer, so a test can step the game itself instead of racing an animation.
+   With the hook stripped out it stays false for good. */
+var frozen=false;
+
+function firstFor(){
+  if(startId==="red") return 0;
+  if(startId==="yellow") return 1;
+  return lastStarter===0 ? 1 : 0;      /* swap */
+}
+function newGame(id){
+  mId=id; save("mode",id);
+  var f=firstFor();
+  lastStarter=f; save("lastStarter",f);
+  S=C4.create({first:f});
+  started=started||false;
+  thinking=false; anim=null; pending=null; hover=-1; win=0;
+  if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ---------------- */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0,VH=0,SC=0,OX=0,OY=0;
+var HOVER=1.25;                  /* the strip above the board the next disc sits in */
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40||!S) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  var wUnits=S.COLS+0.5, hUnits=S.ROWS+0.5+HOVER;
+  SC=Math.min((aw-6)/wUnits, (ah-6)/hUnits);
+  OX=Math.round((aw-SC*S.COLS)/2);
+  OY=Math.round((ah-SC*(S.ROWS+HOVER))/2 + SC*HOVER);
+}
+window.addEventListener("resize", function(){ layout(); });
+/* column c, row r counted from the BOTTOM, to pixels */
+function px(c){ return OX+(c+0.5)*SC; }
+function py(r){ return OY+(S.ROWS-1-r+0.5)*SC; }
+function rr(x,y,w,h,rad){
+  if(rad>w/2) rad=w/2; if(rad>h/2) rad=h/2;
+  ctx.beginPath(); ctx.moveTo(x+rad,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad);
+  ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath();
+}
+function discAt(cx,cy,rad,p,glow){
+  ctx.fillStyle="rgba(10,30,70,.3)";
+  ctx.beginPath(); ctx.arc(cx, cy+rad*0.14, rad, 0, 6.284); ctx.fill();
+  ctx.fillStyle=colOf(p);
+  ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 6.284); ctx.fill();
+  ctx.strokeStyle=darkOf(p); ctx.lineWidth=Math.max(1,rad*0.16);
+  ctx.beginPath(); ctx.arc(cx, cy, rad*0.83, 0, 6.284); ctx.stroke();
+  ctx.fillStyle="rgba(255,255,255,.38)";
+  ctx.beginPath(); ctx.arc(cx-rad*0.28, cy-rad*0.30, rad*0.24, 0, 6.284); ctx.fill();
+  if(glow){
+    ctx.strokeStyle="rgba(255,255,255,"+glow.toFixed(3)+")";
+    ctx.lineWidth=Math.max(2,rad*0.22);
+    ctx.beginPath(); ctx.arc(cx, cy, rad*1.06, 0, 6.284); ctx.stroke();
+  }
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!SC){ layout(); if(!SC) return; }
+  if(!S) return;
+  var now=ts||0;
+  var dt=lastT?Math.min(50,now-lastT)/1000:0;
+  lastT=now;
+  if(!frozen) step(dt);
+  if(win>0) win-=dt*1000;
+
+  ctx.clearRect(0,0,VW,VH);
+  var BW=SC*S.COLS, BH=SC*S.ROWS, c, r;
+  var rad=SC*0.40;
+
+  /* the disc waiting to go in */
+  if(started && !S.over && !anim && !thinking && myTurn()){
+    var hc = hover>=0 ? hover : -1;
+    if(hc>=0 && C4.legal(S,hc)) discAt(px(hc), OY-SC*HOVER*0.55, rad, S.turn, 0);
+  }
+
+  /* the board */
+  ctx.fillStyle=BOARD_D;
+  rr(OX-SC*0.06, OY-SC*0.06+4, BW+SC*0.12, BH+SC*0.12, Math.max(6,SC*0.26)); ctx.fill();
+  ctx.fillStyle=BOARD;
+  rr(OX-SC*0.06, OY-SC*0.06, BW+SC*0.12, BH+SC*0.12, Math.max(6,SC*0.26)); ctx.fill();
+
+  /* the holes, and whatever is sitting in them */
+  for(c=0;c<S.COLS;c++) for(r=0;r<S.ROWS;r++){
+    var v=S.cell[C4.idx(c,r)];
+    var isFalling = anim && anim.col===c && anim.row===r;
+    if(v<0 || isFalling){
+      ctx.fillStyle=HOLE;
+      ctx.beginPath(); ctx.arc(px(c), py(r), rad, 0, 6.284); ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.10)"; ctx.lineWidth=Math.max(1,SC*0.05);
+      ctx.beginPath(); ctx.arc(px(c), py(r), rad*0.97, 0, 6.284); ctx.stroke();
+    }else{
+      var glow=0;
+      if(S.over && S.line){
+        for(var k=0;k<S.line.length;k++)
+          if(S.line[k][0]===c && S.line[k][1]===r) glow=0.55+0.4*Math.sin(now/150);
+      }
+      discAt(px(c), py(r), rad, v, glow);
+    }
+  }
+
+  /* the disc on its way down, drawn over the board */
+  if(anim) discAt(px(anim.col), anim.y, rad, anim.p, 0);
+
+  /* the column the finger is over */
+  if(started && !S.over && !anim && !thinking && myTurn() && hover>=0 && C4.legal(S,hover)){
+    ctx.fillStyle="rgba(255,255,255,.14)";
+    rr(OX+hover*SC+SC*0.06, OY, SC-SC*0.12, BH, SC*0.12); ctx.fill();
+  }
+
+  /* prompts */
+  if(started){
+    var msg=null;
+    if(thinking) msg="THINKING";
+    else if(win>0) msg=winMsg;
+    if(msg){
+      ctx.save();
+      /* above the grid, not across the middle of it: the winning four are lit
+         up down there, and a banner sitting on top of them hides the very thing
+         it is announcing */
+      ctx.translate(OX+BW/2, OY-SC*HOVER*0.55);
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.font="900 "+Math.round(Math.min(26,SC*0.62))+"px -apple-system,Helvetica,Arial";
+      var tw=ctx.measureText(msg).width, ph=Math.min(38,SC*0.95);
+      ctx.fillStyle="rgba(20,50,110,.88)";
+      rr(-tw/2-SC*0.35, -ph/2, tw+SC*0.7, ph, ph/2); ctx.fill();
+      ctx.fillStyle="#ffffff";
+      ctx.fillText(msg, 0, 1);
+      ctx.restore();
+    }
+  }
+}
+var winMsg="";
+
+/* ---------------- the one place a disc moves ---------------- */
+var GRAV=58, BOUNCE=0.28;
+function step(dt){
+  if(!anim) return;
+  anim.vy+=GRAV*SC*dt*0.02;
+  anim.y+=anim.vy*SC*dt;
+  var rest=py(anim.row);
+  if(anim.y>=rest){
+    anim.y=rest;
+    if(anim.bounces<1 && Math.abs(anim.vy)>3){
+      anim.vy=-Math.abs(anim.vy)*BOUNCE;
+      anim.bounces++;
+      beep(180,.05,"sine",.04);
+    }else{
+      anim=null;
+      beep(300,.06,"square",.05);
+      if(window.GGA) GGA.haptic("light");
+      landed();
+    }
+  }
+}
+/* everything that happens once the disc has actually come to rest */
+function landed(){
+  var ev=pending; pending=null;
+  if(!ev) return;
+  if(ev.by===0 && !S.over && C4.winningMoves(S,0).length>=2 && window.GGA) GGA.award("c4_fork");
+  paintHUD();
+  persist();
+  if(ev.over) finish(ev);
+  else scheduleAI();
+}
+
+function myTurn(){
+  var m=modeOf(mId);
+  return m.ai===null || S.turn===0;
+}
+function busy(){ return !!anim || thinking; }
+
+function doDrop(col){
+  if(!C4.legal(S,col) || busy()) return false;
+  var p=S.turn;
+  var ev=C4.drop(S,col);
+  if(!ev.ok) return false;
+  anim={ col:col, row:ev.row, p:p, y:OY-SC*HOVER*0.55, vy:6, bounces:0 };
+  pending=ev;
+  hover=-1;
+  paintHUD();
+  return true;
+}
+function scheduleAI(){
+  var m=modeOf(mId);
+  if(m.ai===null || S.turn!==1 || S.over || frozen) return;
+  if(aiTimer) clearTimeout(aiTimer);
+  thinking=true;
+  paintHUD();
+  aiTimer=setTimeout(function(){
+    aiTimer=null;
+    if(!S || S.over || S.turn!==1){ thinking=false; paintHUD(); return; }
+    var col=C4.think(S, m.ai);
+    thinking=false;
+    if(col<0){ paintHUD(); return; }
+    doDrop(col);
+  }, 420);
+}
+
+function redDiscs(){
+  var n=0;
+  for(var i=0;i<S.cell.length;i++) if(S.cell[i]===0) n++;
+  return n;
+}
+function finish(ev){
+  save("cur",null);
+  var m=modeOf(mId);
+  var played=load("played",0)+1; save("played",played);
+  if(S.winner>=0){ wins[S.winner]++; save("wins",wins); }
+  win=1500; winMsg = S.winner<0 ? "FULL BOARD" : (S.winner===0 ? "RED WINS" : "YELLOW WINS");
+  if(window.GGA){
+    if(m.ai===null) GGA.award("c4_2p");
+    if(played>=10) GGA.award("c4_10");
+    if(S.winner===0){
+      GGA.award("c4_first");
+      if(mId==="hard") GGA.award("c4_hard");
+      if(redDiscs()===4) GGA.award("c4_fast");
+      if(ev.win && ev.win.dir>=2) GGA.award("c4_diag");
+    }
+    GGA.haptic(S.winner===0?"success":(S.winner<0?"light":"error"));
+  }
+  beep(660,.12,"triangle",.08);
+  setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+  setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  setTimeout(function(){ winScreen(); },1250);
+}
+
+function paintHUD(){
+  document.getElementById("vRed").textContent=wins[0];
+  document.getElementById("vYellow").textContent=wins[1];
+  var t=document.getElementById("vTurn");
+  if(S.over) t.textContent = S.winner<0 ? "DRAWN" : (S.winner===0?"RED":"YELLOW");
+  else if(thinking) t.textContent="...";
+  else t.textContent = S.turn===0 ? "RED" : "YELLOW";
+  var u=document.getElementById("tUndo");
+  if(canUndo()) u.classList.remove("off"); else u.classList.add("off");
+}
+function canUndo(){
+  if(!started||busy()) return false;
+  if(!S.history.length) return false;
+  var m=modeOf(mId);
+  /* against the computer a take-back has to lift its reply as well, or you
+     would just be handing it a free move */
+  if(m.ai!==null) return S.history.length>=1;
+  return true;
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started) return;
+  if(S.over || S.moves===0){ save("cur",null); return; }
+  save("cur",{ m:mId, f:S.first, h:S.history.slice() });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||!c.h||!c.h.length) return false;
+  newGame(c.m);
+  S=C4.create({first:c.f===1?1:0});
+  for(var i=0;i<c.h.length;i++){
+    if(!C4.legal(S,c.h[i])){ newGame(c.m); return false; }
+    C4.drop(S,c.h[i]);
+  }
+  if(S.over||C4.audit(S)){ newGame(c.m); return false; }
+  anim=null; pending=null; hover=-1;
+  paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function colOfX(clientX){
+  var b=cv.getBoundingClientRect();
+  var c=Math.floor((clientX-b.left-OX)/SC);
+  if(c<0||c>=S.COLS) return -1;
+  return c;
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+var down=false;
+function onDown(e){
+  if(!started||S.over||busy()||!myTurn()) return;
+  e.preventDefault();
+  down=true; hover=colOfX(pt(e).clientX);
+}
+function onMove(e){
+  if(!down) return;
+  if(e.cancelable) e.preventDefault();
+  hover=colOfX(pt(e).clientX);
+}
+function onUp(e){
+  if(!down) return;
+  down=false;
+  if(e) hover=colOfX(pt(e).clientX);
+  var c=hover;
+  hover=-1;
+  if(c>=0 && myTurn() && !busy()) doDrop(c);
+}
+cv.addEventListener("touchstart",onDown,{passive:false});
+cv.addEventListener("touchmove",onMove,{passive:false});
+cv.addEventListener("touchend",onUp);
+cv.addEventListener("touchcancel",function(){ down=false; hover=-1; });
+cv.addEventListener("mousedown",onDown);
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",function(e){ onUp(e); });
+cv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+document.getElementById("tUndo").onclick=function(){
+  if(!canUndo()) return;
+  var m=modeOf(mId);
+  C4.undo(S);
+  /* against the computer, lift its reply too so the take-back gives the turn
+     back to you rather than to it */
+  if(m.ai!==null && S.turn!==0 && S.history.length) C4.undo(S);
+  anim=null; pending=null; hover=-1; win=0;
+  beep(260,.07,"sine",.04);
+  paintHUD(); persist();
+  if(m.ai!==null && S.turn===1) scheduleAI();
+};
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ newGame(mId); persist(); closeOvl(); scheduleAI(); return; }
+  openOvl('<h2>START AGAIN?</h2><p>This game will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW GAME</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){ newGame(mId); persist(); closeOvl(); scheduleAI(); };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  var cur=load("cur",null);
+  var h='<h2>CONNECT 4</h2><p>Drop your discs and get four in a row. Any direction counts.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bStart">FIRST GO &middot; '+startsOf(startId).lab+'</button>';
+  if(cur&&cur.h) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+cur.h.length+' discs</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newGame(el.getAttribute("data-m"));
+      persist(); closeOvl(); layout(); scheduleAI();
+    };
+  });
+  card.querySelector("#bStart").onclick=function(){
+    var k=0;
+    for(var j=0;j<STARTS.length;j++) if(STARTS[j].id===startId) k=j;
+    startId=STARTS[(k+1)%STARTS.length].id;
+    save("starts",startId);
+    /* textContent, not innerHTML, so the entity would show up literally - and
+       the source stays ASCII, which is the rule for every file here */
+    this.textContent="FIRST GO \u00B7 "+startsOf(startId).lab;
+  };
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newGame(load("mode","two"));
+    persist(); closeOvl(); layout(); scheduleAI();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; <b>Slide your finger along the top</b> to pick a column, then let go to drop your disc. It falls to the lowest free space.<br><br>'+
+    '&#9642; Get <b>four of your colour in a row</b> and you win &ndash; across, up, or either diagonal.<br><br>'+
+    '&#9642; The best move is usually near the <b>middle</b>: more lines run through it than through the edges.<br><br>'+
+    '&#9642; Watch for a move that gives you <b>two ways to win at once</b>. Your opponent can only block one of them.<br><br>'+
+    '&#9642; TAKE BACK lifts your last disc. Against the computer it lifts its answer too.<br><br>'+
+    '&#9642; If the board fills up with nobody on four, it is a draw.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function winScreen(){
+  var m=modeOf(mId);
+  var head;
+  if(S.winner<0) head="A DRAW";
+  else if(m.ai===null) head = S.winner===0 ? "RED WINS!" : "YELLOW WINS!";
+  else head = S.winner===0 ? "YOU WIN!" : "COMPUTER WINS";
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+(m.ai===null?"Two players":m.name)+' &middot; '+S.moves+' discs.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">RED</div><div class="sv">'+wins[0]+'</div></div>'+
+      '<div class="st"><div class="sk">YELLOW</div><div class="sv">'+wins[1]+'</div></div>'+
+      '<div class="st"><div class="sk">PLAYED</div><div class="sv">'+load("played",0)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER GAME</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE OPPONENT</button>');
+  card.querySelector("#bAgain").onclick=function(){ newGame(mId); persist(); closeOvl(); layout(); scheduleAI(); };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.over){ titleScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">RED</div><div class="sv">'+wins[0]+'</div></div>'+
+      '<div class="st"><div class="sk">YELLOW</div><div class="sv">'+wins[1]+'</div></div>'+
+      '<div class="st"><div class="sk">DISCS</div><div class="sv">'+S.moves+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE OPPONENT</button>');
+  card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+startId=load("starts","red");
+if(startsOf(startId).id!==startId) startId="red";
+lastStarter=load("lastStarter",1);
+wins=load("wins",[0,0]);
+if(!wins||wins.length!==2) wins=[0,0];
+newGame(load("mode","two"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+
+})();
+</script>
+</body>
+</html>
