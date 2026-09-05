@@ -3,86 +3,178 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Support — Offline Games Arcade</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Support &#8212; Offline Games Arcade</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(180deg, #1c3a2a 0%, #0f2419 100%);
-    color: #f5efdd;
-    min-height: 100vh;
-    padding: max(20px, env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
+  /* ---- Support, re-skinned to match the arcade menu ------------------------
+     Same shell as privacy.html: the sunset hero band, cards and a white sheet
+     on the light arcade wash.  The form still posts to Web3Forms with the same
+     access key and the same payload - that script is lifted from the previous
+     build untouched, and every id it names is still here.
+
+     One thing here is NOT just a re-skin: the Game dropdown was badly out of
+     date - it listed 18 games when the arcade has 53, four of which no longer
+     exist.  It is now generated from index.html by the assembler, so a bug
+     report can name the game it is about.  */
+  :root{
+    --ink:#43306b;
+    --body:#4c3f66;
+    --muted:#8b7aa9;
+    --pink:#ff4d8d;
+    --pink-d:#d62d6c;
+    --violet-d:#7a45d6;
+    --line:#ece4f7;
   }
-  .wrap { max-width: 560px; margin: 0 auto; }
-  a.back {
-    display: inline-block;
-    color: #ffd24a; text-decoration: none; font-weight: 700;
-    margin-bottom: 20px; font-size: 15px;
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{height:100%;background:#fdfbf6}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(105% 45% at 6% 0%, #ffe3b8 0%, transparent 58%),
+      radial-gradient(100% 45% at 100% 10%, #ffd6ea 0%, transparent 55%),
+      radial-gradient(120% 55% at 50% 100%, #dff0ff 0%, transparent 60%),
+      linear-gradient(180deg, #fff4e2 0%, #fdf3fa 42%, #f2f9ff 100%);
+    background-attachment:fixed;
+    color:var(--body);
+    min-height:100%;
+    padding:max(16px,env(safe-area-inset-top)) 16px calc(34px + env(safe-area-inset-bottom));
   }
-  h1 { color: #ffd24a; font-size: 24px; margin-bottom: 18px; }
-  h2 { font-size: 16px; color: #ffd24a; margin: 26px 0 8px; }
-  p, li { font-size: 14.5px; line-height: 1.6; opacity: .92; }
-  ul { padding-left: 20px; margin: 8px 0; }
-  .card {
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 14px;
-    padding: 18px;
-    margin: 16px 0;
+  .wrap{max-width:560px;margin:0 auto}
+
+  a.back{
+    display:inline-block;
+    background:linear-gradient(180deg,#fff,#fff2f7);
+    border:2px solid #fff;
+    border-radius:999px;
+    padding:8px 18px;
+    color:var(--pink-d);
+    text-decoration:none;
+    font-weight:900;
+    font-size:13.5px;
+    letter-spacing:.3px;
+    margin-bottom:16px;
+    box-shadow:0 4px 0 rgba(180,60,120,.3),0 8px 18px rgba(70,20,90,.18);
   }
-  label {
-    display: block;
-    font-size: 12px; font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: #ffd24a;
-    margin: 14px 0 6px;
+  a.back:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(180,60,120,.3)}
+
+  .hero{
+    border-radius:24px;
+    padding:22px;
+    margin-bottom:16px;
+    color:#fff;
+    background:
+      radial-gradient(90% 120% at 4% 0%, #ffb03d 0%, transparent 58%),
+      radial-gradient(80% 120% at 100% 100%, #2fb8ff 0%, transparent 56%),
+      linear-gradient(120deg, #ff7a45 0%, #ff4d8d 36%, #9b5cff 72%, #2fb8ff 100%);
+    box-shadow:0 8px 0 rgba(150,60,150,.18),0 14px 30px rgba(90,40,130,.26);
   }
-  input, select, textarea {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,.25);
-    background: rgba(0,0,0,.25);
-    color: #f5efdd;
-    font-size: 16px;
-    font-family: inherit;
-    outline: none;
+  h1{
+    font-size:26px;font-weight:900;letter-spacing:.5px;line-height:1.15;color:#fff;
+    text-shadow:0 3px 0 rgba(150,45,110,.4),0 6px 16px rgba(70,20,90,.35);
   }
-  input:focus, select:focus, textarea:focus { border-color: #ffd24a; }
-  select { -webkit-appearance: none; appearance: none; }
-  textarea { min-height: 120px; resize: vertical; }
-  .send-btn {
-    display: block;
-    width: 100%;
-    margin-top: 20px;
-    padding: 15px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #ffd24a, #d9a821);
-    color: #22302a;
-    font-size: 17px; font-weight: 800; letter-spacing: 1px;
-    cursor: pointer;
-    box-shadow: 0 4px 0 #a67f14;
-    font-family: inherit;
+  .hero .sub{font-size:12.5px;font-weight:700;margin-top:6px;opacity:.95;
+    text-shadow:0 1px 5px rgba(70,20,90,.3)}
+
+  .card{
+    background:#fff;
+    border:2px solid #fff;
+    border-radius:22px;
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:0 5px 0 rgba(120,70,190,.16),0 10px 24px rgba(80,40,130,.14);
   }
-  .send-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #a67f14; }
-  .send-btn:disabled { opacity: .5; box-shadow: 0 4px 0 #a67f14; }
-  #formMsg { margin-top: 14px; font-size: 14px; font-weight: 700; text-align: center; min-height: 20px; }
-  #formMsg.ok { color: #7de07d; }
-  #formMsg.err { color: #ff8f8f; }
-  #sentCard { text-align: center; }
-  #sentCard .big { font-size: 44px; margin-bottom: 8px; }
+  .lead{
+    background:linear-gradient(180deg,#fff6fa,#fff);
+    border-radius:16px;
+    padding:14px 16px;
+    margin-bottom:6px;
+  }
+  .lead b{color:var(--pink-d)}
+  .note{font-size:12.5px;color:var(--muted);margin-top:8px;font-weight:600}
+
+  h2{font-size:16px;font-weight:900;color:var(--violet-d);margin:22px 0 8px;letter-spacing:.2px}
+  p,li{font-size:14.5px;line-height:1.6;color:var(--body)}
+  ul{padding-left:20px;margin:8px 0}
+
+  label{
+    display:block;
+    font-size:11.5px;font-weight:900;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--violet-d);
+    margin:16px 0 6px;
+  }
+  input,select,textarea{
+    width:100%;
+    padding:12px 13px;
+    border-radius:13px;
+    border:2px solid var(--line);
+    background:#fdfaff;
+    color:var(--ink);
+    font-size:16px;              /* 16px or iOS zooms the page on focus */
+    font-family:inherit;
+    font-weight:600;
+    outline:none;
+  }
+  input::placeholder,textarea::placeholder{color:#b3a6c9;font-weight:500}
+  input:focus,select:focus,textarea:focus{
+    border-color:var(--pink);
+    background:#fff;
+    box-shadow:0 0 0 4px rgba(255,77,141,.14);
+  }
+  .selwrap{position:relative}
+  .selwrap::after{
+    content:"";position:absolute;right:16px;top:50%;margin-top:-3px;
+    border-left:6px solid transparent;border-right:6px solid transparent;
+    border-top:7px solid var(--pink);pointer-events:none;
+  }
+  select{-webkit-appearance:none;appearance:none;padding-right:38px}
+  textarea{min-height:120px;resize:vertical;line-height:1.5}
+
+  .send-btn{
+    display:block;
+    width:100%;
+    margin-top:22px;
+    padding:15px;
+    border:2px solid #fff;
+    border-radius:16px;
+    background:linear-gradient(180deg,#ff6ba0,#ff4d8d);
+    color:#fff;
+    font-size:17px;font-weight:900;letter-spacing:1px;
+    cursor:pointer;
+    box-shadow:0 5px 0 var(--pink-d),0 10px 20px rgba(214,45,108,.3);
+    font-family:inherit;
+  }
+  .send-btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--pink-d)}
+  .send-btn:disabled{opacity:.55;transform:none;box-shadow:0 5px 0 var(--pink-d)}
+
+  #formMsg{margin-top:14px;font-size:14px;font-weight:800;text-align:center;min-height:20px}
+  #formMsg.ok{color:#1f9e63}
+  #formMsg.err{color:#d63a3a}
+
+  #sentCard{text-align:center}
+  #sentCard .big{font-size:44px;margin-bottom:8px}
+  #sentCard h2{margin-top:0;color:var(--pink-d)}
+
+  .faq b{color:var(--ink)}
+  .faq p{margin:14px 0}
+  .faq a{color:var(--pink-d);font-weight:800;text-decoration:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="index.html">‹ Back to games</a>
-  <h1>Support</h1>
+  <a class="back" href="index.html">&#8249; Back to games</a>
+
+  <div class="hero">
+    <h1>Support</h1>
+    <div class="sub">Bugs, questions and ideas &#8212; they all come straight to me</div>
+  </div>
 
   <div class="card" id="formCard">
-    <p><b>Found a bug, need help, or have an idea for a new game?</b> Fill this in and it comes straight to me — this app is built by one person and every message gets read.</p>
-    <p style="font-size:12.5px;opacity:.7;margin-top:6px;">Sending requires an internet connection. The games themselves always work offline.</p>
+    <div class="lead">
+      <p><b>Found a bug, need help, or have an idea for a new game?</b> Fill this in and it comes straight to me &#8212; this app is built by one person and every message gets read.</p>
+      <div class="note">Sending requires an internet connection. The games themselves always work offline.</div>
+    </div>
 
     <form id="supportForm">
       <label for="fName">Name</label>
@@ -92,29 +184,66 @@
       <input id="fEmail" name="email" type="email" maxlength="120" autocomplete="email" required>
 
       <label for="fGame">Game</label>
-      <select id="fGame" name="game" required>
-        <option value="" disabled selected>Choose a game…</option>
-        <option>General / whole app</option>
-        <option>Octo Trivia</option>
-        <option>Five Dice</option>
-        <option>Chess</option>
-        <option>Checkers</option>
-        <option>Solitaire</option>
-        <option>Solitaire Tower</option>
-        <option>Bubble Shooter</option>
-        <option>Word Guess</option>
-        <option>Frog Jump</option>
-        <option>Anagram-Crossword</option>
-        <option>Cat Invaders</option>
-        <option>Cartoon Cat Invaders</option>
-        <option>2048</option>
-        <option>Sea Battle</option>
-        <option>Ludo</option>
-        <option>Scopa</option>
-        <option>Flag Painter</option>
-        <option>Una Due</option>
-        <option>Suggestion for a new game</option>
-      </select>
+      <div class="selwrap">
+        <select id="fGame" name="game" required>
+          <option value="" disabled selected>Choose a game&#8230;</option>
+          <option>General / whole app</option>
+          <option>Octo Trivia</option>
+          <option>Five Dice</option>
+          <option>Chess</option>
+          <option>Checkers</option>
+          <option>Solitaire</option>
+          <option>Bubble Shooter</option>
+          <option>Word Guess</option>
+          <option>Frog Jump</option>
+          <option>Anagram-Crossword</option>
+          <option>2048</option>
+          <option>Cat Poopers</option>
+          <option>Sea Battle</option>
+          <option>Ludo</option>
+          <option>Scopa</option>
+          <option>Solitaire Tower</option>
+          <option>Empty Hand</option>
+          <option>Football Coach</option>
+          <option>Arrow Exit</option>
+          <option>Pool</option>
+          <option>Arrow Exit Shapes</option>
+          <option>Word Points</option>
+          <option>Spinny Letters</option>
+          <option>One False Step</option>
+          <option>Null Points</option>
+          <option>Maze Escape</option>
+          <option>Sudoku</option>
+          <option>Water Sort</option>
+          <option>Mahjong</option>
+          <option>Picture Logic</option>
+          <option>Spider</option>
+          <option>FreeCell</option>
+          <option>Mine Hunt</option>
+          <option>Petal Words</option>
+          <option>Last Letters</option>
+          <option>Circle Smash</option>
+          <option>Gin Rummy</option>
+          <option>Hearts</option>
+          <option>Shut the Box</option>
+          <option>Mini Golf</option>
+          <option>Dominoes</option>
+          <option>Backgammon</option>
+          <option>Reversi</option>
+          <option>Mancala</option>
+          <option>Connect 4</option>
+          <option>Dots and Boxes</option>
+          <option>Finger Soccer</option>
+          <option>Carrom</option>
+          <option>Air Hockey</option>
+          <option>Knock Through</option>
+          <option>Snake</option>
+          <option>Loose Ends</option>
+          <option>Word Search</option>
+          <option>Snug Fit</option>
+          <option>Suggestion for a new game</option>
+        </select>
+      </div>
 
       <label for="fDesc">What happened / your message</label>
       <textarea id="fDesc" name="message" maxlength="2000" required
@@ -126,31 +255,33 @@
   </div>
 
   <div class="card" id="sentCard" style="display:none;">
-    <div class="big">✅</div>
-    <h2 style="margin-top:0;">Message sent — thank you!</h2>
+    <div class="big">&#9989;</div>
+    <h2 style="margin-top:0;">Message sent &#8212; thank you!</h2>
     <p>I'll get back to you at the email address you gave, usually within a few days.</p>
-    <a class="back" href="index.html" style="margin-top:14px;">‹ Back to games</a>
+    <a class="back" href="index.html" style="margin-top:14px;">&#8249; Back to games</a>
   </div>
 
-  <h2>Frequently asked questions</h2>
+  <div class="card faq">
+    <h2 style="margin-top:4px;">Frequently asked questions</h2>
 
-  <p><b>Do I need an internet connection to play?</b><br>
-  No — every game works fully offline, anywhere.</p>
+    <p><b>Do I need an internet connection to play?</b><br>
+    No &#8212; every game works fully offline, anywhere.</p>
 
-  <p><b>Where did my saved game go?</b><br>
-  Each game automatically saves your progress. When you reopen a game with a save, you'll be offered "Continue" or "Start New". Choosing Start New, finishing the game, or deleting the app clears the save.</p>
+    <p><b>Where did my saved game go?</b><br>
+    Each game automatically saves your progress. When you reopen a game with a save, you'll be offered "Continue" or "Start New". Choosing Start New, finishing the game, or deleting the app clears the save.</p>
 
-  <p><b>How do I turn sound off?</b><br>
-  Tap the ☰ menu in the top-right of the main screen and toggle Sound. Some games also have their own mute button.</p>
+    <p><b>How do I turn sound off?</b><br>
+    Tap the &#9776; menu in the top-right of the main screen and toggle Sound. Some games also have their own mute button.</p>
 
-  <p><b>Will more games be added?</b><br>
-  Yes — new games and improvements ship regularly. Use the form above to suggest one!</p>
+    <p><b>Will more games be added?</b><br>
+    Yes &#8212; new games and improvements ship regularly. Use the form above to suggest one!</p>
+  </div>
 </div>
 
 <script>
 "use strict";
 /* ============================================================
-   SUPPORT FORM SETUP — one thing to do:
+   SUPPORT FORM SETUP \u2014 one thing to do:
    1. Go to https://web3forms.com and enter your email address.
    2. They email you a free Access Key (no account needed).
    3. Paste it below, replacing YOUR_ACCESS_KEY_HERE.
@@ -172,11 +303,11 @@ document.getElementById("supportForm").addEventListener("submit", function (e) {
   }
 
   btn.disabled = true;
-  btn.textContent = "SENDING…";
+  btn.textContent = "SENDING\u2026";
 
   var payload = {
     access_key: WEB3FORMS_ACCESS_KEY,
-    subject: "Offline Games Arcade — " + document.getElementById("fGame").value,
+    subject: "Offline Games Arcade \u2014 " + document.getElementById("fGame").value,
     from_name: "Offline Games Arcade support form",
     name: document.getElementById("fName").value.trim(),
     email: document.getElementById("fEmail").value.trim(),
@@ -201,7 +332,7 @@ document.getElementById("supportForm").addEventListener("submit", function (e) {
   })
   .catch(function () {
     msg.className = "err";
-    msg.textContent = "Couldn't send — please check your internet connection and try again.";
+    msg.textContent = "Couldn't send \u2014 please check your internet connection and try again.";
     btn.disabled = false;
     btn.textContent = "SEND MESSAGE";
   });
