@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Dominoes</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:
+      radial-gradient(120% 85% at 6% -8%, #a8f7db 0%, transparent 55%),
+      radial-gradient(120% 80% at 96% 104%, #ffc0b0 0%, transparent 55%),
+      linear-gradient(160deg, #14a780 0%, #4ed4a9 46%, #ddfff4 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  #shell{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#0d7a5c;
+    background:rgba(255,255,255,.94);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(10,90,70,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 0 #12946f,0 4px 12px rgba(8,70,55,.4)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.36)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+  #stage{flex:1;position:relative;min-height:0}
+  #cv{display:block;position:absolute;inset:0;touch-action:none}
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.95);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#0d7a5c;
+    box-shadow:0 4px 0 rgba(15,110,85,.35),0 6px 14px rgba(10,90,70,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(15,110,85,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(8,96,74,.44);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#f0fffa);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#7a9c93;box-shadow:0 20px 50px rgba(8,70,55,.45);max-height:100%;overflow:auto}
+  .card h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#12a37b;margin-bottom:3px}
+  .card p{font-size:13.5px;line-height:1.5;color:#96b8ae;margin:7px 0}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px;text-align:left}
+  .z-p{background:linear-gradient(180deg,#7fe8c4,#0e9e79)}
+  .z-a{background:linear-gradient(180deg,#8fe0a8,#2fae6b)}
+  .z-b{background:linear-gradient(180deg,#ffd166,#f0a020)}
+  .z-c{background:linear-gradient(180deg,#ff9a86,#e0452f)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#5fe0b4,#17a37a);color:#fff;
+    box-shadow:0 5px 0 #0d7a5c,0 8px 18px rgba(20,150,115,.32)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #0d7a5c}
+  .btn-alt{background:#e7fff7;color:#0d7a5c;border:1.5px solid #c7f2e4}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#96b8ae;margin:10px 2px}
+  .rules b{color:#12a37b}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#e7fff7;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#a6ddc9}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:#12a37b}
+  @media (max-height:700px){
+    .card{padding:13px 13px 10px}.card h2{font-size:19px}
+    .card p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}.btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">DOMINOES</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
+  </div>
+  <div class="strip">
+    <div class="chip"><div class="k" id="kOne">YOU</div><div class="v" id="vOne">0</div></div>
+    <div class="chip"><div class="k">TO PLAY</div><div class="v" id="vTurn">YOU</div></div>
+    <div class="chip"><div class="k" id="kTwo">THEM</div><div class="v" id="vTwo">0</div></div>
+  </div>
+  <div id="stage"><canvas id="cv"></canvas>
+    <div class="ovl" id="ovl"><div class="card" id="card"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tUndo"><div class="ti">&#8630;</div><div class="tl">TAKE BACK</div></div>
+    <div class="tool" id="tNew"><div class="ti">&#8635;</div><div class="tl">NEW GAME</div></div>
+    <div class="tool" id="tRules"><div class="ti">&#63;</div><div class="tl">HOW TO PLAY</div></div>
+  </div>
+</div>
+
+<script src="achievements.js"></script>
+<script>
+/* Dominoes - the rules and the computer opponent, with no drawing and no input
+   in them.  Every move goes through place()/draw()/pass(), so the same code
+   that runs on screen can be run headless for thousands of rounds in Node -
+   and the computer picks its play through this very same code.
+
+   The double-six set is twenty-eight tiles, numbered 0..27.  TILES[t] is the
+   pair [a,b] with a <= b.
+
+   The table is `chain`, a left-to-right list of laid tiles.  Each entry says
+   which way round the tile is lying: {t, a, b} where `a` faces left and `b`
+   faces right, so chain[i].b always equals chain[i+1].a.  The two open ends
+   are therefore chain[0].a and chain[last].b.
+
+   Draw dominoes: seven tiles each, the rest face down in the boneyard.  If you
+   cannot go you draw until you can, or until the boneyard is bare, and only
+   then do you pass.  A round ends when somebody plays their last tile - they
+   score the pips left in the other hand - or when neither side can go, in
+   which case the lower hand wins the difference.  First to the target, which
+   is a hundred, wins the match. */
+function makeDominoes(){
+  "use strict";
+
+  var MAX=6, HAND=7, TARGET=100;
+  var TILES=(function(){
+    var out=[], a, b;
+    for(a=0;a<=MAX;a++) for(b=a;b<=MAX;b++) out.push([a,b]);
+    return out;
+  })();
+  var NT=TILES.length;                       /* 28 */
+
+  function rng(seed){
+    var s=seed>>>0||1;
+    return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  }
+
+  function pipsOf(t){ return TILES[t][0]+TILES[t][1]; }
+  function isDouble(t){ return TILES[t][0]===TILES[t][1]; }
+  function handPips(st,p){
+    var n=0, i, h=st.hands[p];
+    for(i=0;i<h.length;i++) n+=pipsOf(h[i]);
+    return n;
+  }
+  function ends(st){
+    if(!st.chain.length) return [-1,-1];
+    return [st.chain[0].a, st.chain[st.chain.length-1].b];
+  }
+
+  /* ---- setting up ---- */
+  function deal(st){
+    var bag=[], i, j, t;
+    for(i=0;i<NT;i++) bag.push(i);
+    for(i=bag.length-1;i>0;i--){
+      j=Math.floor(st.rand()*(i+1));
+      t=bag[i]; bag[i]=bag[j]; bag[j]=t;
+    }
+    st.hands=[bag.slice(0,HAND), bag.slice(HAND,HAND*2)];
+    st.bone=bag.slice(HAND*2);
+    st.chain=[];
+    st.passes=0; st.drew=[0,0]; st.moves=0;
+    st.roundOver=false; st.roundWinner=-1; st.result=""; st.points=0;
+  }
+  function create(cfg){
+    cfg=cfg||{};
+    var st={
+      hands:[[],[]], bone:[], chain:[],
+      turn:cfg.first===1?1:0, first:cfg.first===1?1:0,
+      passes:0, drew:[0,0], moves:0,
+      round:1, scores:[0,0], target:cfg.target||TARGET,
+      roundOver:false, roundWinner:-1, result:"", points:0,
+      over:false, winner:-1,
+      rand:rng(cfg.seed||((Math.random()*1e9)|0))
+    };
+    deal(st);
+    return st;
+  }
+  /* the next round of the same match; the lead passes to `first` */
+  function nextRound(st, first){
+    if(st.over) return false;
+    st.round++;
+    st.turn = first===1?1:0;
+    st.first = st.turn;
+    deal(st);
+    return true;
+  }
+
+  function clone(st){
+    var i, c={
+      hands:[st.hands[0].slice(), st.hands[1].slice()],
+      bone:st.bone.slice(), chain:new Array(st.chain.length),
+      turn:st.turn, first:st.first,
+      passes:st.passes, drew:[st.drew[0],st.drew[1]], moves:st.moves,
+      round:st.round, scores:[st.scores[0],st.scores[1]], target:st.target,
+      roundOver:st.roundOver, roundWinner:st.roundWinner,
+      result:st.result, points:st.points,
+      over:st.over, winner:st.winner, rand:st.rand
+    };
+    for(i=0;i<st.chain.length;i++){
+      var n=st.chain[i];
+      c.chain[i]={ t:n.t, a:n.a, b:n.b, dbl:n.dbl, by:n.by };
+    }
+    return c;
+  }
+
+  /* ---- what may be played ---- */
+  function movesFor(st, p){
+    var h=st.hands[p], out=[], i, t, a, b;
+    if(!st.chain.length){
+      for(i=0;i<h.length;i++) out.push({ t:h[i], side:1 });
+      return out;
+    }
+    var e=ends(st);
+    for(i=0;i<h.length;i++){
+      t=h[i]; a=TILES[t][0]; b=TILES[t][1];
+      if(a===e[0]||b===e[0]) out.push({ t:t, side:0 });
+      if(a===e[1]||b===e[1]) out.push({ t:t, side:1 });
+    }
+    return out;
+  }
+  function legalMoves(st){ return movesFor(st, st.turn); }
+  function canPlay(st, p){ return movesFor(st, p==null?st.turn:p).length>0; }
+  /* the sides a given tile could go on, right now */
+  function sidesFor(st, t){
+    var out=[], ms=movesFor(st, st.turn), i;
+    for(i=0;i<ms.length;i++) if(ms[i].t===t) out.push(ms[i].side);
+    return out;
+  }
+  function mustDraw(st){ return !st.roundOver && !canPlay(st) && st.bone.length>0; }
+  function mustPass(st){ return !st.roundOver && !canPlay(st) && st.bone.length===0; }
+
+  /* ---- ending a round ---- */
+  function endRound(st, w, kind){
+    st.roundOver=true; st.roundWinner=w; st.result=kind;
+    if(w<0){ st.points=0; return; }
+    st.points = (kind==="out") ? handPips(st, 1-w)
+                               : Math.abs(handPips(st,0)-handPips(st,1));
+    st.scores[w]+=st.points;
+    if(st.scores[w]>=st.target){ st.over=true; st.winner=w; }
+  }
+
+  /* ---- the three things a turn can be ---- */
+  function place(st, mv){
+    if(st.roundOver||st.over) return { ok:false };
+    var p=st.turn, t=mv.t, T=TILES[t];
+    if(!T) return { ok:false };
+    var a=T[0], b=T[1];
+    var k=st.hands[p].indexOf(t);
+    if(k<0) return { ok:false };
+    var e=ends(st), node;
+    if(!st.chain.length){
+      node={ t:t, a:a, b:b, dbl:a===b, by:p };
+      st.chain.push(node);
+    }else if(mv.side===0){
+      if(a!==e[0] && b!==e[0]) return { ok:false };
+      node = (b===e[0]) ? { t:t, a:a, b:b } : { t:t, a:b, b:a };
+      node.dbl=(a===b); node.by=p;
+      st.chain.unshift(node);
+    }else{
+      if(a!==e[1] && b!==e[1]) return { ok:false };
+      node = (a===e[1]) ? { t:t, a:a, b:b } : { t:t, a:b, b:a };
+      node.dbl=(a===b); node.by=p;
+      st.chain.push(node);
+    }
+    st.hands[p].splice(k,1);
+    st.moves++; st.passes=0;
+    var ev={ ok:true, by:p, t:t, side:st.chain.length===1?1:mv.side,
+             out:false, blocked:false, roundOver:false, over:false };
+    if(st.hands[p].length===0){
+      endRound(st, p, "out");
+      ev.out=true; ev.roundOver=true; ev.over=st.over;
+    }
+    return ev;
+  }
+  /* you may only dig if you genuinely cannot go */
+  function draw(st){
+    if(st.roundOver||st.over) return -1;
+    if(!st.bone.length) return -1;
+    if(canPlay(st)) return -1;
+    var p=st.turn, t=st.bone.shift();
+    st.hands[p].push(t);
+    st.drew[p]++;
+    return t;
+  }
+  function pass(st){
+    if(st.roundOver||st.over) return { ok:false };
+    if(canPlay(st) || st.bone.length) return { ok:false };
+    st.passes++;
+    var ev={ ok:true, by:st.turn, blocked:false, roundOver:false, over:false };
+    if(st.passes>=2){
+      var a=handPips(st,0), b=handPips(st,1);
+      if(a<b) endRound(st,0,"block");
+      else if(b<a) endRound(st,1,"block");
+      else endRound(st,-1,"draw");
+      ev.blocked=true; ev.roundOver=true; ev.over=st.over;
+    }else{
+      st.turn=1-st.turn;
+    }
+    return ev;
+  }
+  function endTurn(st){
+    if(st.roundOver||st.over) return false;
+    st.turn=1-st.turn;
+    return true;
+  }
+
+  /* ---- the computer ----
+     Dominoes is a hidden-hand game, so searching deep is pointless: you would
+     only be searching your own guesses.  What does pay is counting.  Every
+     tile that is neither in my hand nor on the table is either in the other
+     hand or in the boneyard, and from that pool I can work out the chance
+     that the ends I am about to leave behind are ones they cannot answer. */
+  function unseenFor(st, p){
+    var mark={}, i, out=[];
+    for(i=0;i<st.hands[p].length;i++) mark[st.hands[p][i]]=1;
+    for(i=0;i<st.chain.length;i++) mark[st.chain[i].t]=1;
+    for(i=0;i<NT;i++) if(!mark[i]) out.push(i);
+    return out;
+  }
+  /* the chance that a hand of oppN tiles drawn from `pool` holds at least one
+     tile showing e0 or e1 */
+  function respondProb(pool, oppN, e0, e1){
+    var n=pool.length, m=0, i, T;
+    if(oppN<=0) return 0;
+    for(i=0;i<n;i++){
+      T=TILES[pool[i]];
+      if(T[0]===e0||T[1]===e0||T[0]===e1||T[1]===e1) m++;
+    }
+    if(n-m < oppN) return 1;
+    var pNone=1, k;
+    for(k=0;k<oppN;k++) pNone *= (n-m-k)/(n-k);
+    return 1-pNone;
+  }
+  function matchCount(hand, e0, e1){
+    var n=0, i, T;
+    for(i=0;i<hand.length;i++){
+      T=TILES[hand[i]];
+      if(T[0]===e0||T[1]===e0||T[0]===e1||T[1]===e1) n++;
+    }
+    return n;
+  }
+
+  /* the distinct positions this turn could leave behind */
+  function candidates(st){
+    var ms=legalMoves(st), out=[], seen={}, i;
+    for(i=0;i<ms.length;i++){
+      var c=clone(st);
+      var ev=place(c, ms[i]);
+      if(!ev.ok) continue;
+      var e=ends(c);
+      var key=ms[i].t+"/"+e[0]+"/"+e[1];
+      if(seen[key]) continue;
+      seen[key]=1;
+      out.push({ mv:ms[i], state:c, e:e });
+    }
+    return out;
+  }
+
+  /* Levels are a `block` - how much notice it takes of what the other hand can
+     answer - and a `slip`, the chance of settling for something other than its
+     best play.  The numbers here were measured against a fixed stand-in
+     player over thousands of rounds, not guessed. */
+  var LEVELS=[
+    { rnd:0.30, slip:0.55, block:0.15 },
+    { rnd:0.00, slip:0.26, block:0.70 },
+    { rnd:0.00, slip:0.06, block:1.00 }
+  ];
+
+  function think(st, level, opts){
+    if(st.roundOver||st.over) return null;
+    var cfg = opts || LEVELS[Math.min(LEVELS.length-1, Math.max(0, level|0))];
+    var p=st.turn;
+    var cs=candidates(st);
+    if(!cs.length) return null;
+    var pool=unseenFor(st, p), oppN=st.hands[1-p].length;
+    /* while there are tiles left to dig, being unanswerable only costs them a
+       draw or two, so it is worth far less */
+    var blockW = (st.bone.length===0 ? 1 : 0.22) * (cfg.block==null?1:cfg.block);
+    var i, c;
+    for(i=0;i<cs.length;i++){
+      c=cs[i];
+      var s=0;
+      if(c.state.hands[p].length===0){ c.score=1e6; continue; }
+      s += pipsOf(c.mv.t)*1.15;                      /* shed the heavy ones */
+      if(isDouble(c.mv.t)) s += 3.5;                 /* doubles are hard to place later */
+      s -= respondProb(pool, oppN, c.e[0], c.e[1]) * 26 * blockW;
+      s += matchCount(c.state.hands[p], c.e[0], c.e[1]) * 2.2;
+      if(c.e[0]===c.e[1]) s += 2.0;                  /* both ends the same narrows their reply */
+      /* if this is the last tile of a number I hold nothing else of, I lose a
+         way back into the game */
+      if(matchCount(c.state.hands[p], c.e[0], c.e[1])===0 && c.state.hands[p].length>0) s -= 6;
+      c.score=s;
+    }
+    cs.sort(function(a,b){ return b.score-a.score; });
+    if(cs.length>1 && cfg.rnd && st.rand()<cfg.rnd)
+      return cs[Math.floor(st.rand()*cs.length)%cs.length].mv;
+    if(cs.length>1 && st.rand()<cfg.slip){
+      var k=1+Math.floor(st.rand()*(cs.length-1));
+      if(k>=cs.length) k=cs.length-1;
+      return cs[k].mv;
+    }
+    return cs[0].mv;
+  }
+  function hint(st){ return think(st, 2, { rnd:0, slip:0, block:1 }); }
+
+  /* ---- every promise the game makes, checked from the outside ---- */
+  function audit(st){
+    var seen={}, i, k, n=0;
+    for(k=0;k<2;k++){
+      if(!st.hands[k]) return "a missing hand";
+      for(i=0;i<st.hands[k].length;i++){
+        var t=st.hands[k][i];
+        if(!(t>=0&&t<NT)) return "a tile out of range in hand "+k;
+        if(seen[t]) return "tile "+t+" is in two places at once";
+        seen[t]=1;
+      }
+    }
+    for(i=0;i<st.bone.length;i++){
+      if(!(st.bone[i]>=0&&st.bone[i]<NT)) return "a tile out of range in the boneyard";
+      if(seen[st.bone[i]]) return "tile "+st.bone[i]+" is in two places at once";
+      seen[st.bone[i]]=1;
+    }
+    for(i=0;i<st.chain.length;i++){
+      var nd=st.chain[i];
+      if(!(nd.t>=0&&nd.t<NT)) return "a tile out of range on the table";
+      if(seen[nd.t]) return "tile "+nd.t+" is in two places at once";
+      seen[nd.t]=1;
+      var T=TILES[nd.t];
+      if(!((nd.a===T[0]&&nd.b===T[1])||(nd.a===T[1]&&nd.b===T[0])))
+        return "the tile at "+i+" shows numbers it has not got";
+      if(nd.dbl!==(T[0]===T[1])) return "a double is not marked as one";
+      if(i>0 && st.chain[i-1].b!==nd.a) return "the chain does not match at joint "+i;
+    }
+    for(k in seen) if(seen.hasOwnProperty(k)) n++;
+    if(n!==NT) return "there are "+n+" tiles in play, not "+NT;
+    if(st.turn!==0&&st.turn!==1) return "nobody's turn";
+    if(st.passes<0||st.passes>2) return "an odd number of passes ("+st.passes+")";
+    if(st.drew[0]<0||st.drew[1]<0) return "a negative dig count";
+    if(st.scores[0]<0||st.scores[1]<0) return "a negative score";
+    /* nobody may dig while they have a legal tile in hand */
+    if(!st.roundOver && st.bone.length && canPlay(st) && mustDraw(st))
+      return "a dig was offered to somebody who can go";
+    if(st.roundOver){
+      if(st.roundWinner>=0 && st.result!=="out" && st.result!=="block")
+        return "an odd round result ("+st.result+")";
+      if(st.result==="out" && st.hands[st.roundWinner].length!==0)
+        return "the round was played out by somebody still holding tiles";
+      if(st.points<0) return "a negative score for the round";
+    }else{
+      if(!st.hands[0].length||!st.hands[1].length)
+        return "a hand is empty but the round goes on";
+      if(st.chain.length && ends(st)[0]<0) return "the table has no open ends";
+    }
+    if(st.over){
+      if(st.winner!==0&&st.winner!==1) return "the match is over with no winner";
+      if(st.scores[st.winner]<st.target) return "the match is over below the target";
+    }else if(st.scores[0]>=st.target||st.scores[1]>=st.target){
+      return "somebody is past the target but the match goes on";
+    }
+    return null;
+  }
+
+  return { MAX:MAX, HAND:HAND, TARGET:TARGET, TILES:TILES, NT:NT, LEVELS:LEVELS,
+           rng:rng, create:create, clone:clone, deal:deal, nextRound:nextRound,
+           pipsOf:pipsOf, isDouble:isDouble, handPips:handPips, ends:ends,
+           movesFor:movesFor, legalMoves:legalMoves, canPlay:canPlay,
+           sidesFor:sidesFor, mustDraw:mustDraw, mustPass:mustPass,
+           place:place, draw:draw, pass:pass, endTurn:endTurn, endRound:endRound,
+           unseenFor:unseenFor, respondProb:respondProb, matchCount:matchCount,
+           candidates:candidates, think:think, hint:hint, audit:audit };
+}
+</script>
+<script>
+(function(){
+"use strict";
+var D=makeDominoes();
+var LS="gg_dominoes_";
+function load(k,fb){ try{ var v=localStorage.getItem(LS+k); return v==null?fb:JSON.parse(v);}catch(e){return fb;} }
+function save(k,v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch(e){} }
+
+var MODES=[
+  {id:"two",  name:"Two Players", cls:"z-p", tag:"Share the phone &middot; take turns", ai:null},
+  {id:"easy", name:"Gentle",      cls:"z-a", tag:"Against the computer &middot; plays what it fancies", ai:0},
+  {id:"med",  name:"Tricky",      cls:"z-b", tag:"Against the computer &middot; an even contest", ai:1},
+  {id:"hard", name:"Fiendish",    cls:"z-c", tag:"Against the computer &middot; counts what is left", ai:2}
+];
+function modeOf(id){ for(var i=0;i<MODES.length;i++) if(MODES[i].id===id) return MODES[i]; return MODES[0]; }
+var STARTS=[{id:"one",lab:"ONE"},{id:"two",lab:"TWO"},{id:"swap",lab:"SWAP"}];
+function startsOf(id){ for(var i=0;i<STARTS.length;i++) if(STARTS[i].id===id) return STARTS[i]; return STARTS[0]; }
+
+/* ---------------- colours ---------------- */
+var FELT="#1d9c78", FELT_D="#17886a", RIM="#0e6f55";
+var IVORY="#fffaf0", IVORY_D="#ece0cc", TEDGE="#d9cbb0", TSPLIT="#cbbb9e";
+var BACK="#ff7a63", BACK_D="#d6482f", BACK_L="#ffa392";
+var GOLD="rgba(255,225,120,.92)";
+var PIPCOL=["#2f3a36","#e0452f","#17a37a","#f0a020","#2f6fd0","#8e44ad","#2f3a36"];
+var PIPG=[
+  [],
+  [[1,1]],
+  [[0,0],[2,2]],
+  [[0,0],[1,1],[2,2]],
+  [[0,0],[2,0],[0,2],[2,2]],
+  [[0,0],[2,0],[1,1],[0,2],[2,2]],
+  [[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]]
+];
+
+/* ---------------- state ---------------- */
+var mId, S, started, startId, lastStarter, thinking, aiTimer=null, turnTimer=null;
+var sel=-1, history=[], msg="", msgUntil=0, lastT=0, pulse=0;
+var wins=[0,0], handover=false;
+/* Only the test hook ever sets this. It stops the clock and the computer's
+   timers, so a test can step the game itself instead of racing them.  With the
+   hook stripped out it stays false for good. */
+var frozen=false;
+
+function firstFor(){
+  if(startId==="one") return 0;
+  if(startId==="two") return 1;
+  return lastStarter===0 ? 1 : 0;
+}
+function clearTimers(){
+  if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+  if(turnTimer){ clearTimeout(turnTimer); turnTimer=null; }
+}
+function newGame(id, seed){
+  mId=id; save("mode",id);
+  var f=firstFor();
+  lastStarter=f; save("lastStarter",f);
+  S=D.create({first:f, seed:seed});
+  thinking=false; sel=-1; history=[]; msg=""; msgUntil=0; handover=false;
+  clearTimers();
+  layout(); paintHUD();
+  /* does not persist - boot calls this before the title screen reads the save */
+}
+
+/* ---------------- audio ---------------- */
+var AC=null;
+function muted(){ try{ return localStorage.getItem("gg_muted")==="1"; }catch(e){ return false; } }
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; } } return AC; }
+function beep(f,dur,type,vol,slide){
+  if(muted()) return; var a=ac(); if(!a) return;
+  try{
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,a.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol||.05,a.currentTime+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur+.02);
+  }catch(e){}
+}
+
+/* ---------------- layout ----------------
+   Three bands down the canvas: the other hand and the boneyard along the top,
+   the table in the middle, and whoever is to play holding their tiles along
+   the bottom.  The chain snakes: it fills a row, drops down and comes back the
+   other way, with doubles lying across as they do on a real table. */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var DPR=Math.min(window.devicePixelRatio||1,3);
+var VW=0, VH=0;
+var G={ ready:false, sig:"", top:0, bot:0, table:{x:0,y:0,w:0,h:0}, bone:{x:0,y:0,w:0,h:0},
+        hand:[], opp:[], chain:[], s:12, head:null, tail:null };
+
+function layout(){
+  var st=document.getElementById("stage");
+  var aw=st.clientWidth, ah=st.clientHeight;
+  if(aw<40||ah<40) return;
+  VW=aw; VH=ah;
+  cv.style.width=aw+"px"; cv.style.height=ah+"px";
+  cv.width=Math.round(aw*DPR); cv.height=Math.round(ah*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  geom(true);
+}
+window.addEventListener("resize", function(){ layout(); });
+
+function rr(x,y,w,h,rad){
+  if(rad>w/2) rad=w/2; if(rad>h/2) rad=h/2; if(rad<0) rad=0;
+  ctx.beginPath(); ctx.moveTo(x+rad,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad);
+  ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath();
+}
+
+/* which hand is shown along the bottom: yours in a one-player game, whoever is
+   to play in a two-player one */
+function bottomPlayer(){ return modeOf(mId).ai===null ? S.turn : 0; }
+
+/* Walk the chain: once to see how many halves land in each row, then again to
+   place them.  Each row is centred on its own, so a half-finished last row
+   does not leave the table looking lopsided. */
+function walkChain(cap, s, ox, oy, out){
+  var u=0, i, rows=[], nd, cost;
+  for(i=0;i<S.chain.length;i++){
+    cost=S.chain[i].dbl?1:2;
+    if(u+cost>cap){ rows.push(u); u=0; }
+    u+=cost;
+  }
+  rows.push(u);
+  if(!out) return rows.length;
+  u=0;
+  var row=0;
+  for(i=0;i<S.chain.length;i++){
+    nd=S.chain[i]; cost=nd.dbl?1:2;
+    if(u+cost>cap){ row++; u=0; }
+    var dir=(row%2===0)?1:-1;
+    var off=(cap-rows[row])/2;
+    var slot=dir>0 ? (off+u) : (cap-off-u-cost);
+    var wpx=cost*s, hpx=nd.dbl?2*s:s;
+    out.push({ x:ox+slot*s, y:oy+row*(2*s+3)+(2*s-hpx)/2, w:wpx, h:hpx,
+               va:dir>0?nd.a:nd.b, vb:dir>0?nd.b:nd.a,
+               dbl:nd.dbl, dir:dir, i:i });
+    u+=cost;
+  }
+  return rows.length;
+}
+
+function geom(force){
+  if(!S||VW<40) return;
+  var sig=VW+"/"+VH+"/"+S.chain.length+"/"+S.hands[0].length+"/"+S.hands[1].length+
+          "/"+S.turn+"/"+S.bone.length+"/"+mId;
+  if(!force && G.ready && G.sig===sig) return;
+  G.sig=sig;
+  var i;
+  /* --- bands --- */
+  var top=Math.max(38, Math.min(56, Math.round(VH*0.115)));
+  var bp=bottomPlayer(), hn=S.hands[bp].length;
+  var rows = hn>8 ? 2 : 1;
+  var perRow = Math.ceil(hn/Math.max(1,rows)) || 1;
+  var maxBand = Math.round(VH*0.34);
+  var hw = Math.min((VW-10)/perRow-4, (maxBand/rows-7)/2, 46);
+  if(hw<11) hw=11;
+  var hh = hw*2;
+  var bot = Math.round(rows*(hh+7)+2);
+  G.top=top; G.bot=bot;
+  G.table={ x:2, y:top+4, w:VW-4, h:Math.max(40, VH-bot-top-10) };
+
+  /* --- boneyard, top left --- */
+  var bw=Math.round(top*0.40), bh=Math.round(top*0.80);
+  G.bone={ x:4, y:Math.round((top-bh)/2), w:bw+30, h:bh, tw:bw, th:bh };
+
+  /* --- the other hand, face down along the top --- */
+  var opp=[], on=S.hands[1-bp].length;
+  var ox0=G.bone.x+G.bone.w+8, availW=VW-ox0-4;
+  var ow=Math.min(Math.round(top*0.36), Math.max(6, Math.floor(availW/Math.max(1,on))-2));
+  var oh=Math.min(bh, ow*2);
+  var totW=on*(ow+2)-2;
+  var sx=ox0+Math.max(0,(availW-totW)/2);
+  for(i=0;i<on;i++) opp.push({ x:sx+i*(ow+2), y:Math.round((top-oh)/2), w:ow, h:oh });
+  G.opp=opp;
+
+  /* --- your tiles along the bottom --- */
+  var hand=[], y0=VH-bot+3;
+  for(var r=0;r<rows;r++){
+    var from=r*perRow, to=Math.min(hn,(r+1)*perRow), cnt=to-from;
+    if(cnt<=0) continue;
+    var w2=cnt*(hw+4)-4, x0=(VW-w2)/2;
+    for(i=from;i<to;i++)
+      hand.push({ x:x0+(i-from)*(hw+4), y:y0+r*(hh+7), w:hw, h:hh, t:S.hands[bp][i], k:i });
+  }
+  G.hand=hand;
+
+  /* --- the chain on the table --- */
+  G.chain=[]; G.head=null; G.tail=null; G.s=12;
+  var pad=7, aw2=G.table.w-pad*2, ah2=G.table.h-pad*2;
+  if(S.chain.length){
+    var s=Math.min(54, Math.floor(aw2/4)), cap=0, need=0;
+    for(; s>=6; s--){
+      cap=Math.floor(aw2/s);
+      if(cap<3) continue;
+      need=walkChain(cap, s, 0, 0, null);
+      if(need*(2*s+3)-3 <= ah2) break;
+    }
+    if(s<6){ s=6; cap=Math.max(3,Math.floor(aw2/s)); need=walkChain(cap,s,0,0,null); }
+    var usedW=cap*s, usedH=need*(2*s+3)-3;
+    var ox=G.table.x+pad+Math.max(0,(aw2-usedW)/2);
+    var oy=G.table.y+pad+Math.max(0,(ah2-usedH)/2);
+    walkChain(cap, s, ox, oy, G.chain);
+    G.s=s;
+    var a=G.chain[0], b=G.chain[G.chain.length-1];
+    G.head={ x: a.dir>0 ? a.x-s*0.62 : a.x+a.w+s*0.62, y: a.y+a.h/2, v:S.chain[0].a };
+    G.tail={ x: b.dir>0 ? b.x+b.w+s*0.62 : b.x-s*0.62, y: b.y+b.h/2,
+             v:S.chain[S.chain.length-1].b };
+    var lim=Math.max(14, s*0.62);
+    G.head.x=Math.max(G.table.x+lim, Math.min(G.table.x+G.table.w-lim, G.head.x));
+    G.tail.x=Math.max(G.table.x+lim, Math.min(G.table.x+G.table.w-lim, G.tail.x));
+  }else{
+    G.head={ x:G.table.x+G.table.w/2, y:G.table.y+G.table.h/2, v:-1 };
+    G.tail=G.head;
+  }
+  G.ready=true;
+}
+
+/* ---------------- drawing ---------------- */
+function pipsIn(cx,cy,side,v){
+  var g=PIPG[v]||[], i, r=side*0.088, sp=side*0.255;
+  ctx.fillStyle=PIPCOL[v]||"#2f3a36";
+  for(i=0;i<g.length;i++){
+    ctx.beginPath();
+    ctx.arc(cx+(g[i][0]-1)*sp, cy+(g[i][1]-1)*sp, r, 0, 6.284);
+    ctx.fill();
+  }
+}
+function domino(x,y,w,h,va,vb,o){
+  o=o||{};
+  var horiz=w>h, half=Math.min(w,h), rad=half*0.19;
+  ctx.fillStyle="rgba(6,58,44,.26)";
+  rr(x, y+Math.max(1,half*0.07), w, h, rad); ctx.fill();
+  if(o.back){
+    ctx.fillStyle=BACK;
+    rr(x,y,w,h,rad); ctx.fill();
+    ctx.strokeStyle=BACK_D; ctx.lineWidth=Math.max(1,half*0.06);
+    rr(x+half*0.09,y+half*0.09,w-half*0.18,h-half*0.18,rad*0.7); ctx.stroke();
+    ctx.fillStyle=BACK_L;
+    ctx.beginPath(); ctx.arc(x+w/2, y+h/2, half*0.15, 0, 6.284); ctx.fill();
+    return;
+  }
+  ctx.fillStyle=o.dim?IVORY_D:IVORY;
+  rr(x,y,w,h,rad); ctx.fill();
+  ctx.strokeStyle=TEDGE; ctx.lineWidth=Math.max(1,half*0.05);
+  rr(x,y,w,h,rad); ctx.stroke();
+  ctx.strokeStyle=TSPLIT; ctx.lineWidth=Math.max(1,half*0.055);
+  ctx.beginPath();
+  if(horiz){ ctx.moveTo(x+w/2, y+half*0.15); ctx.lineTo(x+w/2, y+h-half*0.15); }
+  else{ ctx.moveTo(x+half*0.15, y+h/2); ctx.lineTo(x+w-half*0.15, y+h/2); }
+  ctx.stroke();
+  if(horiz){
+    pipsIn(x+half/2, y+h/2, half, va);
+    pipsIn(x+w-half/2, y+h/2, half, vb);
+  }else{
+    pipsIn(x+w/2, y+half/2, half, va);
+    pipsIn(x+w/2, y+h-half/2, half, vb);
+  }
+  if(o.dim){
+    ctx.fillStyle="rgba(24,112,88,.20)";
+    rr(x,y,w,h,rad); ctx.fill();
+  }
+  if(o.ring){
+    ctx.strokeStyle=GOLD; ctx.lineWidth=Math.max(2,half*0.16);
+    rr(x-2,y-2,w+4,h+4,rad+2); ctx.stroke();
+  }
+}
+function label(txt, cx, cy, size, bg, fg){
+  ctx.save();
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font="900 "+Math.round(size)+"px -apple-system,Helvetica,Arial";
+  var w=ctx.measureText(txt).width, h=size*1.55;
+  ctx.fillStyle=bg;
+  rr(cx-w/2-size*0.55, cy-h/2, w+size*1.1, h, h/2); ctx.fill();
+  ctx.fillStyle=fg;
+  ctx.fillText(txt, cx, cy+1);
+  ctx.restore();
+}
+
+function statusText(){
+  if(!started) return null;
+  if(S.roundOver||S.over) return null;
+  if(thinking) return "THINKING";
+  if(!isHuman()) return null;
+  if(D.mustDraw(S)) return "TAP THE BONEYARD";
+  if(D.mustPass(S)) return "NO GO - TAP TO PASS";
+  return null;
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!S) return;
+  if(!G.ready||!VW){ layout(); if(!G.ready) return; }
+  geom();
+  var now=ts||0;
+  var dt=lastT?Math.min(120,now-lastT):0;
+  lastT=now;
+  if(!frozen) pulse=(pulse+dt/560)%1;
+  var glow=0.55+0.45*Math.sin(pulse*6.283);
+  var i, k;
+
+  ctx.clearRect(0,0,VW,VH);
+
+  /* the table */
+  ctx.fillStyle=RIM;
+  rr(G.table.x, G.table.y, G.table.w, G.table.h, 16); ctx.fill();
+  ctx.fillStyle=FELT;
+  rr(G.table.x+3, G.table.y+3, G.table.w-6, G.table.h-6, 13); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.05)";
+  rr(G.table.x+3, G.table.y+3, G.table.w-6, (G.table.h-6)*0.45, 13); ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.10)"; ctx.lineWidth=1.5;
+  rr(G.table.x+11, G.table.y+11, G.table.w-22, G.table.h-22, 9); ctx.stroke();
+
+  /* the boneyard */
+  var bn=S.bone.length;
+  var needDig = started && isHuman() && !S.roundOver && D.mustDraw(S);
+  ctx.save();
+  if(needDig){
+    ctx.fillStyle="rgba(255,225,120,"+(0.22+0.34*glow)+")";
+    rr(G.bone.x-4, G.bone.y-4, G.bone.tw+12, G.bone.th+8, 9); ctx.fill();
+  }
+  for(k=Math.min(3,bn)-1;k>=0;k--)
+    domino(G.bone.x+k*2, G.bone.y-k*2, G.bone.tw, G.bone.th, 0,0, {back:true});
+  if(bn===0){
+    ctx.strokeStyle="rgba(255,255,255,.45)"; ctx.lineWidth=1.5;
+    rr(G.bone.x, G.bone.y, G.bone.tw, G.bone.th, G.bone.tw*0.2); ctx.stroke();
+  }
+  ctx.textAlign="left"; ctx.textBaseline="middle";
+  ctx.font="900 "+Math.round(G.top*0.30)+"px -apple-system,Helvetica,Arial";
+  ctx.fillStyle="rgba(255,255,255,.95)";
+  ctx.fillText(String(bn), G.bone.x+G.bone.tw+8, G.bone.y+G.bone.th*0.36);
+  ctx.font="900 "+Math.round(G.top*0.19)+"px -apple-system,Helvetica,Arial";
+  ctx.fillStyle="rgba(255,255,255,.72)";
+  ctx.fillText("LEFT", G.bone.x+G.bone.tw+8, G.bone.y+G.bone.th*0.76);
+  ctx.restore();
+
+  /* the other hand, face down */
+  for(i=0;i<G.opp.length;i++){
+    var o=G.opp[i];
+    domino(o.x, o.y, o.w, o.h, 0, 0, {back:true});
+  }
+
+  /* the chain */
+  for(i=0;i<G.chain.length;i++){
+    var c=G.chain[i];
+    domino(c.x, c.y, c.w, c.h, c.va, c.vb, {});
+  }
+
+  /* where a picked-up tile could go */
+  var myGo = started && isHuman() && !S.roundOver && !busy() && !handover;
+  var sides = (myGo && sel>=0) ? D.sidesFor(S, sel) : [];
+  for(k=0;k<sides.length;k++){
+    var pt2 = sides[k]===0 ? G.head : G.tail;
+    var rad = Math.max(15, G.s*0.72);
+    ctx.fillStyle="rgba(255,225,120,"+(0.30+0.35*glow)+")";
+    ctx.beginPath(); ctx.arc(pt2.x, pt2.y, rad, 0, 6.284); ctx.fill();
+    ctx.strokeStyle=GOLD; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.arc(pt2.x, pt2.y, rad, 0, 6.284); ctx.stroke();
+    if(pt2.v>=0){
+      ctx.save();
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.font="900 "+Math.round(rad*0.95)+"px -apple-system,Helvetica,Arial";
+      ctx.fillStyle="rgba(45,35,10,.85)";
+      ctx.fillText(String(pt2.v), pt2.x, pt2.y+1);
+      ctx.restore();
+    }
+  }
+
+  /* your tiles */
+  ctx.fillStyle="rgba(12,116,90,.20)";
+  rr(1, VH-G.bot, VW-2, G.bot-1, 12); ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.30)"; ctx.lineWidth=1;
+  rr(1.5, VH-G.bot+0.5, VW-3, G.bot-2, 12); ctx.stroke();
+  var hide = handover || (modeOf(mId).ai===null && (S.roundOver||!started));
+  for(i=0;i<G.hand.length;i++){
+    var t=G.hand[i];
+    if(hide){ domino(t.x,t.y,t.w,t.h,0,0,{back:true}); continue; }
+    var pl = myGo && D.sidesFor(S, t.t).length>0;
+    var lift = (sel===t.t) ? Math.round(t.h*0.10) : 0;
+    domino(t.x, t.y-lift, t.w, t.h, D.TILES[t.t][0], D.TILES[t.t][1],
+           { ring: sel===t.t, dim: myGo && !pl });
+  }
+
+  /* a word about what is going on */
+  var say=statusText();
+  if(!say && now<msgUntil) say=msg;
+  if(started && say){
+    var fs=Math.min(20, Math.max(12, VW*0.045));
+    label(say, VW/2, G.table.y+G.table.h-fs*1.5, fs, "rgba(8,70,55,.90)", "#ffffff");
+  }
+}
+
+/* ---------------- turns ---------------- */
+function isHuman(){
+  var m=modeOf(mId);
+  return m.ai===null || S.turn===0;
+}
+function busy(){ return thinking || turnTimer!==null; }
+
+function beginTurn(){
+  if(!S||S.roundOver||S.over) return;
+  sel=-1;
+  if(modeOf(mId).ai===null && started) handover=true;
+  paintHUD();
+  if(handover){ handoverScreen(); return; }
+  runTurn();
+}
+/* hand the turn over.  The turn changes at once - never on a timer - so that a
+   reload in the gap cannot give the same player a second go; the timer only
+   paces what is drawn. */
+function advance(byAI){
+  if(!S||S.roundOver||S.over) return;
+  D.endTurn(S);
+  sel=-1;
+  if(modeOf(mId).ai===null) handover=true;
+  persist(); paintHUD();
+  if(frozen){ beginTurn(); return; }
+  if(turnTimer) clearTimeout(turnTimer);
+  turnTimer=setTimeout(function(){ turnTimer=null; beginTurn(); }, byAI?340:200);
+}
+function handedOver(byAI){
+  sel=-1;
+  if(modeOf(mId).ai===null) handover=true;
+  persist(); paintHUD();
+  if(frozen){ beginTurn(); return; }
+  if(turnTimer) clearTimeout(turnTimer);
+  turnTimer=setTimeout(function(){ turnTimer=null; beginTurn(); }, byAI?340:240);
+}
+function runTurn(){
+  if(!S||S.roundOver||S.over) return;
+  paintHUD();
+  if(!isHuman()){ scheduleAI(frozen?0:520); return; }
+  if(D.mustDraw(S)||D.mustPass(S)) beep(300,.06,"sine",.04);
+}
+function scheduleAI(delay){
+  if(isHuman()||S.roundOver||S.over||frozen) return;
+  if(aiTimer) clearTimeout(aiTimer);
+  thinking=true; paintHUD();
+  aiTimer=setTimeout(aiStep, delay==null?460:delay);
+}
+function aiStep(){
+  aiTimer=null;
+  if(!S||S.roundOver||S.over||isHuman()){ thinking=false; paintHUD(); return; }
+  if(D.mustDraw(S)){
+    D.draw(S);
+    beep(240,.06,"sine",.04);
+    paintHUD();
+    if(frozen){ aiStep(); return; }
+    aiTimer=setTimeout(aiStep, 320);
+    return;
+  }
+  thinking=false;
+  if(D.mustPass(S)){ doPass(true); return; }
+  var mv=D.think(S, modeOf(mId).ai);
+  if(!mv){ paintHUD(); return; }
+  doPlace(mv, true);
+}
+
+function snapshot(){
+  var i, ch=[];
+  for(i=0;i<S.chain.length;i++)
+    ch.push({ t:S.chain[i].t, a:S.chain[i].a, b:S.chain[i].b, dbl:S.chain[i].dbl, by:S.chain[i].by });
+  return { h0:S.hands[0].slice(), h1:S.hands[1].slice(), bn:S.bone.slice(),
+           ch:ch, turn:S.turn, passes:S.passes, drew:[S.drew[0],S.drew[1]], moves:S.moves };
+}
+function restoreSnap(sn){
+  var i, ch=[];
+  for(i=0;i<sn.ch.length;i++)
+    ch.push({ t:sn.ch[i].t, a:sn.ch[i].a, b:sn.ch[i].b, dbl:sn.ch[i].dbl, by:sn.ch[i].by });
+  S.hands=[sn.h0.slice(), sn.h1.slice()];
+  S.bone=sn.bn.slice(); S.chain=ch;
+  S.turn=sn.turn; S.passes=sn.passes;
+  S.drew=[sn.drew[0], sn.drew[1]];
+  S.moves=sn.moves;
+}
+
+function doPlace(mv, byAI){
+  if(!S||S.roundOver||S.over) return false;
+  var sn=byAI?null:snapshot();
+  var was=S.turn;
+  var ev=D.place(S, mv);
+  if(!ev.ok) return false;
+  if(sn) history.push(sn);
+  sel=-1;
+  beep(D.isDouble(mv.t)?520:400, .07, "triangle", .05);
+  if(window.GGA) GGA.haptic("light");
+  paintHUD(); geom(true);
+  if(ev.roundOver){ roundEnd(); return true; }
+  advance(byAI);
+  return true;
+}
+function doDraw(){
+  if(!S||S.roundOver||!D.mustDraw(S)) return false;
+  var t=D.draw(S);
+  if(t<0) return false;
+  history=[];                     /* no peeking at the boneyard by undoing */
+  beep(260,.07,"sine",.045);
+  if(window.GGA) GGA.haptic("light");
+  msg="YOU DREW "+D.TILES[t][0]+"-"+D.TILES[t][1];
+  msgUntil=lastT+1100;
+  paintHUD(); geom(true); persist();
+  return true;
+}
+function doPass(byAI){
+  if(!S||S.roundOver||!D.mustPass(S)) return false;
+  var who=S.turn;
+  var ev=D.pass(S);
+  if(!ev.ok) return false;
+  beep(200,.10,"sine",.05);
+  msg = (who===0&&modeOf(mId).ai!==null) ? "YOU PASS" : "PASS";
+  msgUntil=lastT+1100;
+  paintHUD();
+  if(ev.roundOver){ roundEnd(); return true; }
+  handedOver(byAI);
+  return true;
+}
+
+/* ---------------- the end of a round ---------------- */
+function roundEnd(){
+  clearTimers();
+  thinking=false; sel=-1; history=[];
+  var m=modeOf(mId);
+  var played=load("played",0)+1; save("played",played);
+  if(window.GGA){
+    if(m.ai===null) GGA.award("dm_2p");
+    if(played>=10) GGA.award("dm_10");
+    if(S.roundWinner===0){
+      if(S.result==="out") GGA.award("dm_out");
+      if(S.result==="block") GGA.award("dm_block");
+      if(S.drew[0]===0) GGA.award("dm_clean");
+      if(S.points>=40) GGA.award("dm_big");
+    }
+    GGA.haptic(S.roundWinner===0?"success":"warning");
+  }
+  if(S.over){
+    if(S.winner>=0){ wins[S.winner]++; save("wins",wins); }
+    save("cur",null);
+    if(window.GGA){
+      if(S.winner===0){
+        GGA.award("dm_first");
+        if(mId==="hard") GGA.award("dm_hard");
+      }
+      GGA.haptic(S.winner===0?"success":"error");
+    }
+    beep(660,.12,"triangle",.08);
+    setTimeout(function(){ beep(880,.12,"triangle",.08); },120);
+    setTimeout(function(){ beep(1170,.28,"triangle",.09); },250);
+  }else{
+    beep(560,.10,"triangle",.06);
+    persist();
+  }
+  paintHUD();
+  if(frozen) return;
+  setTimeout(function(){ if(S.over) winScreen(); else roundScreen(); }, 900);
+}
+function nextRoundNow(){
+  var lead = S.roundWinner>=0 ? S.roundWinner : (S.first===0?1:0);
+  D.nextRound(S, lead);
+  sel=-1; history=[]; thinking=false; msg=""; msgUntil=0;
+  clearTimers(); geom(true); paintHUD(); persist();
+  closeOvl();
+  beginTurn();
+}
+
+function paintHUD(){
+  var m=modeOf(mId), solo=m.ai!==null;
+  document.getElementById("kOne").textContent = solo?"YOU":"ONE";
+  document.getElementById("kTwo").textContent = solo?"THEM":"TWO";
+  document.getElementById("vOne").textContent = S.scores[0];
+  document.getElementById("vTwo").textContent = S.scores[1];
+  var t=document.getElementById("vTurn");
+  if(S.over) t.textContent = S.winner===0 ? (solo?"YOU":"ONE") : (solo?"THEM":"TWO");
+  else if(thinking) t.textContent="...";
+  else t.textContent = S.turn===0 ? (solo?"YOU":"ONE") : (solo?"THEM":"TWO");
+  var u=document.getElementById("tUndo");
+  if(started && !S.roundOver && !S.over && history.length && isHuman() && !busy() && !handover)
+    u.classList.remove("off");
+  else u.classList.add("off");
+}
+
+/* ---------------- save ---------------- */
+function persist(){
+  /* Before the player has started, this page owns nothing: pagehide and
+     visibilitychange both fire while the title screen is up, and clearing here
+     would eat the save that CARRY ON is about to offer. */
+  if(!started||!S) return;
+  if(S.over){ save("cur",null); return; }
+  if(S.round===1 && S.moves===0 && !S.drew[0] && !S.drew[1] &&
+     !S.scores[0] && !S.scores[1] && !S.roundOver){ save("cur",null); return; }
+  if(S.roundOver){
+    save("cur",{ v:2, m:mId, sc:[S.scores[0],S.scores[1]], rd:S.round, bt:1,
+                 ld:(S.roundWinner>=0?S.roundWinner:(S.first===0?1:0)) });
+    return;
+  }
+  var ch=[], i;
+  for(i=0;i<S.chain.length;i++) ch.push([S.chain[i].t, S.chain[i].a, S.chain[i].b]);
+  save("cur",{ v:2, m:mId, sc:[S.scores[0],S.scores[1]], rd:S.round, bt:0,
+               t:S.turn, f:S.first, h0:S.hands[0].slice(), h1:S.hands[1].slice(),
+               bn:S.bone.slice(), ch:ch, dr:[S.drew[0],S.drew[1]], ps:S.passes,
+               mv:S.moves });
+}
+function restore(){
+  var c=load("cur",null);
+  if(!c||c.v!==2||!c.sc) return false;
+  newGame(c.m);
+  S.scores=[c.sc[0]|0, c.sc[1]|0];
+  S.round=c.rd|0||1;
+  if(c.bt){
+    /* saved between rounds: deal the next one and get on with it */
+    S.turn=(c.ld===1)?1:0; S.first=S.turn;
+    D.deal(S);
+    if(D.audit(S)){ newGame(c.m); return false; }
+    paintHUD();
+    return true;
+  }
+  if(!c.h0||!c.h1||!c.bn||!c.ch) return false;
+  S.hands=[c.h0.slice(), c.h1.slice()];
+  S.bone=c.bn.slice();
+  S.chain=[];
+  for(var i=0;i<c.ch.length;i++){
+    var e=c.ch[i];
+    S.chain.push({ t:e[0]|0, a:e[1]|0, b:e[2]|0,
+                   dbl:D.TILES[e[0]|0][0]===D.TILES[e[0]|0][1], by:0 });
+  }
+  S.turn=(c.t===1)?1:0; S.first=(c.f===1)?1:0;
+  S.drew=c.dr?[c.dr[0]|0,c.dr[1]|0]:[0,0];
+  S.passes=c.ps|0; S.moves=c.mv|0;
+  S.roundOver=false; S.roundWinner=-1; S.result=""; S.points=0;
+  S.over=false; S.winner=-1;
+  if(D.audit(S)){ newGame(c.m); return false; }
+  sel=-1; history=[];
+  geom(true); paintHUD();
+  return true;
+}
+
+/* ---------------- input ---------------- */
+function inRect(x,y,r,pad){
+  pad=pad||0;
+  return x>=r.x-pad && x<=r.x+r.w+pad && y>=r.y-pad && y<=r.y+r.h+pad;
+}
+function onTapAt(lx, ly){
+  if(!started||!S||S.roundOver||S.over||handover) return;
+  if(busy()||!isHuman()) return;
+  geom(true);
+  var i;
+  if(D.mustDraw(S)){ doDraw(); return; }
+  if(D.mustPass(S)){ doPass(false); return; }
+
+  /* a tile in your hand */
+  for(i=0;i<G.hand.length;i++){
+    var t=G.hand[i];
+    if(!inRect(lx,ly,t,3)) continue;
+    var sides=D.sidesFor(S, t.t);
+    if(!sides.length){
+      sel=-1;
+      msg="THAT ONE WILL NOT GO"; msgUntil=lastT+1200;
+      beep(180,.10,"square",.04);
+      if(window.GGA) GGA.haptic("error");
+      return;
+    }
+    if(sel===t.t){ doPlace({ t:t.t, side:sides[0] }); return; }
+    sel=t.t;
+    beep(560,.05,"sine",.04);
+    return;
+  }
+
+  /* somewhere on the table */
+  if(sel>=0){
+    var sides2=D.sidesFor(S, sel);
+    var best=-1, bd=1e9, rad=Math.max(15, G.s*0.72)*2.1;
+    for(i=0;i<sides2.length;i++){
+      var p2 = sides2[i]===0 ? G.head : G.tail;
+      var d=Math.sqrt((lx-p2.x)*(lx-p2.x)+(ly-p2.y)*(ly-p2.y));
+      if(d<bd){ bd=d; best=sides2[i]; }
+    }
+    if(best>=0 && bd<=rad){ doPlace({ t:sel, side:best }); return; }
+    if(sides2.length===1 && inRect(lx,ly,G.table)){ doPlace({ t:sel, side:sides2[0] }); return; }
+    sel=-1;
+  }
+}
+function pt(e){
+  return (e.touches&&e.touches.length)?e.touches[0]
+       :((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
+}
+function onTap(e){
+  if(e.cancelable) e.preventDefault();
+  var q=pt(e), b=cv.getBoundingClientRect();
+  onTapAt(q.clientX-b.left, q.clientY-b.top);
+}
+cv.addEventListener("touchend", onTap, {passive:false});
+cv.addEventListener("touchstart", function(e){ if(e.cancelable) e.preventDefault(); }, {passive:false});
+cv.addEventListener("mouseup", onTap);
+cv.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+document.getElementById("tUndo").onclick=function(){
+  if(!started||S.roundOver||S.over||busy()||!isHuman()||handover||!history.length) return;
+  restoreSnap(history.pop());
+  sel=-1;
+  beep(260,.07,"sine",.04);
+  clearTimers();
+  geom(true); paintHUD(); persist();
+};
+document.getElementById("tRules").onclick=function(){ rulesScreen(true); };
+document.getElementById("tNew").onclick=function(){
+  if(!started) return;
+  if(S.over){ newGame(mId); persist(); closeOvl(); started=true; beginTurn(); return; }
+  openOvl('<h2>START AGAIN?</h2><p>This match will be lost.</p>'+
+    '<button class="btn btn-go" id="y">YES, NEW MATCH</button>'+
+    '<button class="btn btn-alt" id="n">KEEP PLAYING</button>');
+  card.querySelector("#y").onclick=function(){
+    newGame(mId); persist(); closeOvl(); started=true; handover=false; beginTurn();
+  };
+  card.querySelector("#n").onclick=closeOvl;
+};
+
+/* ---------------- screens ---------------- */
+var ovl=document.getElementById("ovl"), card=document.getElementById("card");
+function openOvl(h){ card.innerHTML=h; ovl.classList.add("on"); }
+function closeOvl(){ ovl.classList.remove("on"); }
+
+function titleScreen(){
+  handover=false;
+  var cur=load("cur",null);
+  var h='<h2>DOMINOES</h2><p>Match the numbers, shed your tiles, and be first to a hundred.</p><div class="sizes">';
+  for(var i=0;i<MODES.length;i++){
+    var m=MODES[i];
+    h+='<div class="sz '+m.cls+'" data-m="'+m.id+'"><div style="text-align:left">'+
+       '<div class="sn">'+m.name+'</div><div class="stg">'+m.tag+'</div></div></div>';
+  }
+  h+='</div>';
+  h+='<button class="btn btn-alt" id="bStart">FIRST GO &middot; '+startsOf(startId).lab+'</button>';
+  if(cur&&cur.v===2&&cur.sc) h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+
+    (cur.sc[0]|0)+' &ndash; '+(cur.sc[1]|0)+'</button>';
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call(card.querySelectorAll(".sz"), function(el){
+    el.onclick=function(){
+      started=true; newGame(el.getAttribute("data-m"));
+      closeOvl(); layout(); beginTurn();
+    };
+  });
+  card.querySelector("#bStart").onclick=function(){
+    var k=0;
+    for(var j=0;j<STARTS.length;j++) if(STARTS[j].id===startId) k=j;
+    startId=STARTS[(k+1)%STARTS.length].id;
+    save("starts",startId);
+    /* textContent, not innerHTML, so the entity would show up literally - and
+       the source stays ASCII, which is the rule for every file here */
+    this.textContent="FIRST GO \u00B7 "+startsOf(startId).lab;
+  };
+  var br=card.querySelector("#bResume");
+  if(br) br.onclick=function(){
+    started=true;
+    if(!restore()) newGame(load("mode","two"));
+    closeOvl(); layout(); beginTurn();
+  };
+  card.querySelector("#bRules").onclick=function(){ rulesScreen(false); };
+}
+function rulesScreen(fromGame){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; You each start with <b>seven tiles</b>. The rest go face down in the boneyard, top left.<br><br>'+
+    '&#9642; <b>Tap one of your tiles, then tap the end it goes on.</b> The ends that light up show the number you need; tiles that will not go are greyed out.<br><br>'+
+    '&#9642; A tile goes down next to a matching number. Doubles lie across the chain.<br><br>'+
+    '&#9642; If nothing in your hand will go, <b>tap the boneyard</b> and keep drawing until something does. Once it is empty you pass instead.<br><br>'+
+    '&#9642; Play your last tile and you win the round, scoring <b>every pip left in the other hand</b>.<br><br>'+
+    '&#9642; If neither of you can go, the <b>smaller hand</b> wins the difference.<br><br>'+
+    '&#9642; First to <b>100 points</b> takes the match.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  card.querySelector("#bBack").onclick=function(){
+    if(fromGame){ closeOvl(); } else { titleScreen(); }
+  };
+}
+function handoverScreen(){
+  var who = S.turn===0 ? "PLAYER ONE" : "PLAYER TWO";
+  openOvl('<h2>'+who+'</h2><p>Pass the phone over, then tap to see your tiles.</p>'+
+    '<button class="btn btn-go" id="bGo2">READY</button>');
+  card.querySelector("#bGo2").onclick=function(){
+    handover=false; closeOvl(); lastT=0; runTurn();
+  };
+}
+function roundScreen(){
+  var m=modeOf(mId), solo=m.ai!==null;
+  var head, sub;
+  if(S.roundWinner<0){ head="LEVEL PEGGING"; sub="Both hands the same. Nobody scores."; }
+  else{
+    var youWon = S.roundWinner===0;
+    head = solo ? (youWon?"ROUND TO YOU":"ROUND TO THE COMPUTER")
+                : (youWon?"ROUND TO ONE":"ROUND TO TWO");
+    sub = (S.result==="out" ? "Played out" : "Nobody could go") + " &middot; " +
+          S.points + " point" + (S.points===1?"":"s") + ".";
+  }
+  openOvl('<h2>'+head+'</h2><p>'+sub+'</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">'+(solo?"YOU":"ONE")+'</div><div class="sv">'+S.scores[0]+'</div></div>'+
+      '<div class="st"><div class="sk">TARGET</div><div class="sv">'+S.target+'</div></div>'+
+      '<div class="st"><div class="sk">'+(solo?"THEM":"TWO")+'</div><div class="sv">'+S.scores[1]+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bNext">NEXT ROUND</button>'+
+    '<button class="btn btn-alt" id="bMenu3">CHANGE OPPONENT</button>');
+  card.querySelector("#bNext").onclick=nextRoundNow;
+  card.querySelector("#bMenu3").onclick=titleScreen;
+}
+function winScreen(){
+  var m=modeOf(mId), solo=m.ai!==null;
+  var head;
+  if(solo) head = S.winner===0 ? "YOU WIN!" : "COMPUTER WINS";
+  else head = S.winner===0 ? "PLAYER ONE WINS!" : "PLAYER TWO WINS!";
+  openOvl('<h2>'+head+'</h2>'+
+    '<p>'+S.scores[0]+' &ndash; '+S.scores[1]+' after '+S.round+
+    ' round'+(S.round===1?"":"s")+' &middot; '+(solo?m.name.toLowerCase():"two players")+'.</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">'+(solo?"YOU":"ONE")+'</div><div class="sv">'+wins[0]+'</div></div>'+
+      '<div class="st"><div class="sk">'+(solo?"THEM":"TWO")+'</div><div class="sv">'+wins[1]+'</div></div>'+
+      '<div class="st"><div class="sk">ROUNDS</div><div class="sv">'+load("played",0)+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">ANOTHER MATCH</button>'+
+    '<button class="btn btn-alt" id="bMenu">CHANGE OPPONENT</button>');
+  card.querySelector("#bAgain").onclick=function(){
+    newGame(mId); closeOvl(); layout(); started=true; handover=false; beginTurn();
+  };
+  card.querySelector("#bMenu").onclick=titleScreen;
+}
+document.getElementById("bPause").onclick=function(){
+  if(!started||S.over){ titleScreen(); return; }
+  if(S.roundOver){ roundScreen(); return; }
+  persist();
+  openOvl('<h2>PAUSED</h2>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">ROUND</div><div class="sv">'+S.round+'</div></div>'+
+      '<div class="st"><div class="sk">SCORE</div><div class="sv">'+S.scores[0]+'-'+S.scores[1]+'</div></div>'+
+      '<div class="st"><div class="sk">BONEYARD</div><div class="sv">'+S.bone.length+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bGo">BACK TO IT</button>'+
+    '<button class="btn btn-alt" id="bMenu2">CHANGE OPPONENT</button>');
+  card.querySelector("#bGo").onclick=function(){ lastT=0; closeOvl(); };
+  card.querySelector("#bMenu2").onclick=titleScreen;
+};
+
+/* ---------------- boot ---------------- */
+startId=load("starts","one");
+if(startsOf(startId).id!==startId) startId="one";
+lastStarter=load("lastStarter",1);
+wins=load("wins",[0,0]);
+if(!wins||wins.length!==2) wins=[0,0];
+newGame(load("mode","two"));
+started=false;
+titleScreen();
+requestAnimationFrame(frame);
+setTimeout(function(){ layout(); },50);
+window.addEventListener("orientationchange", function(){ setTimeout(layout,220); });
+document.addEventListener("visibilitychange", function(){ if(document.hidden) persist(); });
+window.addEventListener("pagehide", persist);
+
+/* ---------------- the test hook ----------------
+   Stripped out of the shipping build by the assembler; nothing in the game
+   reads it, and `frozen` stays false without it. */
+
+})();
+</script>
+</body>
+</html>

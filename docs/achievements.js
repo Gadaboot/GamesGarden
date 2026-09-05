@@ -222,7 +222,15 @@
     { id: 'bg_double',   game: 'Backgammon',    icon: '🎲', name: 'Four in One',       desc: 'Roll doubles and play all four' },
     { id: 'bg_hard',     game: 'Backgammon',    icon: '🧠', name: 'Beat Fiendish',     desc: 'Beat the computer on Fiendish' },
     { id: 'bg_2p',       game: 'Backgammon',    icon: '👥', name: 'Pass the Phone',    desc: 'Play a two-player game' },
-    { id: 'bg_10',       game: 'Backgammon',    icon: '🔟', name: 'Ten Games',         desc: 'Play ten games' }
+    { id: 'bg_10',       game: 'Backgammon',    icon: '🔟', name: 'Ten Games',         desc: 'Play ten games' },
+    { id: 'dm_first',    game: 'Dominoes',      icon: '🏆', name: 'Match Won',         desc: 'Win a match of Dominoes' },
+    { id: 'dm_out',      game: 'Dominoes',      icon: '🏁', name: 'Domino!',           desc: 'Win a round by playing your last tile' },
+    { id: 'dm_block',    game: 'Dominoes',      icon: '🧱', name: 'Blocked Out',       desc: 'Win a round when nobody can go' },
+    { id: 'dm_clean',    game: 'Dominoes',      icon: '✨',      name: 'Never Dug',         desc: 'Win a round without drawing a tile' },
+    { id: 'dm_big',      game: 'Dominoes',      icon: '💰', name: 'Big Round',         desc: 'Score 40 or more in one round' },
+    { id: 'dm_hard',     game: 'Dominoes',      icon: '🧠', name: 'Beat Fiendish',     desc: 'Beat the computer on Fiendish' },
+    { id: 'dm_2p',       game: 'Dominoes',      icon: '👥', name: 'Pass the Phone',    desc: 'Play a two-player game' },
+    { id: 'dm_10',       game: 'Dominoes',      icon: '🔟', name: 'Ten Rounds',        desc: 'Play ten rounds of Dominoes' }
   ];
 
   var GAME_PAGES = [
@@ -234,7 +242,7 @@
     'nullpoints', 'snug-fit', 'maze-escape', 'sudoku', 'water-sort', 'mahjong',
     'picture-logic', 'spider', 'freecell', 'mine-hunt', 'word-search',
     'loose-ends', 'snake', 'knock-through', 'air-hockey', 'carrom', 'finger-soccer',
-    'dots-boxes', 'connect4', 'mancala', 'reversi', 'backgammon'
+    'dots-boxes', 'connect4', 'mancala', 'reversi', 'backgammon', 'dominoes'
   ];
 
   var A_KEY = 'gg_ach', S_KEY = 'gg_streak', P_KEY = 'gg_played';

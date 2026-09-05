@@ -39,6 +39,8 @@
 		67392603304C0FA800DD4D36 /* icon_reversi.png in Resources */ = {isa = PBXBuildFile; fileRef = 67392602304C0FA800DD4D36 /* icon_reversi.png */; };
 		67392605304C1B7400DD4D36 /* icon_backgammon.png in Resources */ = {isa = PBXBuildFile; fileRef = 67392604304C1B7400DD4D36 /* icon_backgammon.png */; };
 		67392607304C1B7D00DD4D36 /* backgammon.html in Resources */ = {isa = PBXBuildFile; fileRef = 67392606304C1B7D00DD4D36 /* backgammon.html */; };
+		67392609304C22FF00DD4D36 /* icon_dominoes.png in Resources */ = {isa = PBXBuildFile; fileRef = 67392608304C22FF00DD4D36 /* icon_dominoes.png */; };
+		6739260B304C230C00DD4D36 /* dominoes.html in Resources */ = {isa = PBXBuildFile; fileRef = 6739260A304C230C00DD4D36 /* dominoes.html */; };
 		6761C90E30495EB70050EC58 /* nullpoints.html in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90D30495EB70050EC58 /* nullpoints.html */; };
 		6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C90F30495EC50050EC58 /* icon_nullpoints.png */; };
 		6761C912304969D20050EC58 /* icon_wordguess.png in Resources */ = {isa = PBXBuildFile; fileRef = 6761C911304969D20050EC58 /* icon_wordguess.png */; };
@@ -142,6 +144,8 @@
 		67392602304C0FA800DD4D36 /* icon_reversi.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_reversi.png; sourceTree = "<group>"; };
 		67392604304C1B7400DD4D36 /* icon_backgammon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_backgammon.png; sourceTree = "<group>"; };
 		67392606304C1B7D00DD4D36 /* backgammon.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = backgammon.html; sourceTree = "<group>"; };
+		67392608304C22FF00DD4D36 /* icon_dominoes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_dominoes.png; sourceTree = "<group>"; };
+		6739260A304C230C00DD4D36 /* dominoes.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = dominoes.html; sourceTree = "<group>"; };
 		6761C90D30495EB70050EC58 /* nullpoints.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = nullpoints.html; sourceTree = "<group>"; };
 		6761C90F30495EC50050EC58 /* icon_nullpoints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_nullpoints.png; sourceTree = "<group>"; };
 		6761C911304969D20050EC58 /* icon_wordguess.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_wordguess.png; sourceTree = "<group>"; };
@@ -261,6 +265,7 @@
 				67D8238C2FFFA18C00892511 /* checkers.html */,
 				67D8238D2FFFA18C00892511 /* chess.html */,
 				673925F8304B35B300DD4D36 /* connect4.html */,
+				6739260A304C230C00DD4D36 /* dominoes.html */,
 				673925F6304B2DDF00DD4D36 /* dots-boxes.html */,
 				67E1D1F630261BB3002AEE31 /* england-football-coach.html */,
 				6761C92130497A3B0050EC58 /* empty-hand.html */,
@@ -311,6 +316,7 @@
 				67D823912FFFA1EB00892511 /* icon_chess.png */,
 				673925FA304B35C000DD4D36 /* icon_connect4.png */,
 				6761C9353049962A0050EC58 /* icon_cup-run.png */,
+				67392608304C22FF00DD4D36 /* icon_dominoes.png */,
 				673925F4304B2DCF00DD4D36 /* icon_dots-boxes.png */,
 				6761C91D30497A1A0050EC58 /* icon_empty-hand.png */,
 				673925F2304B255B00DD4D36 /* icon_finger-soccer.png */,
@@ -478,7 +484,9 @@
 				6761C968304A0D8A0050EC58 /* freecell.html in Resources */,
 				67D8238F2FFFA18C00892511 /* checkers.html in Resources */,
 				6761C95A304A03A10050EC58 /* icon_mahjong.png in Resources */,
+				6739260B304C230C00DD4D36 /* dominoes.html in Resources */,
 				6761C91030495EC50050EC58 /* icon_nullpoints.png in Resources */,
+				67392609304C22FF00DD4D36 /* icon_dominoes.png in Resources */,
 				673925FB304B35C000DD4D36 /* icon_connect4.png in Resources */,
 				67C56404300CD0A600D2D146 /* icon_Ludo.png in Resources */,
 				6761C92230497A3B0050EC58 /* empty-hand.html in Resources */,
