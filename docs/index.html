@@ -3,174 +3,256 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Offline Games Arcade</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html { height: 100%; background: #0f2419;}
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(180deg, #1c3a2a 0%, #0f2419 100%);
-    color: #f5efdd;
-    min-height: 100%;
-    user-select: none;
-    -webkit-user-select: none;
+  /* ---- Offline Games Arcade menu, re-skinned to the house style ----------
+     The front door of the arcade, brought in line with the games behind it.
+
+     Every one of the 53 cards is lifted from the previous build character for
+     character - the same order, the same slugs, the same icon files, the same
+     names and sub-lines - and so is the script.  Nothing here changes what the
+     page DOES: the welcome still shows once per launch off sessionStorage
+     "gg_welcomed", the sound toggle still writes localStorage "gg_muted" that
+     every game reads, and #trophyPill, #menuBtn, #dropdown, #soundToggle,
+     #welcome and #enterBtn all keep their ids.
+
+     The scheme is the page's own - sunset ribbon over a light ground - and it
+     is deliberately not any one game's palette.  The shelf holds 53 differently
+     coloured games, so the colour is concentrated in a hero band at the top and
+     the grid itself sits on near-white, which is what lets the icons read.  */
+  :root{
+    --ink:#43306b;          /* card names */
+    --muted:#8b7aa9;        /* sub-lines, footer */
+    --pink:#ff4d8d;
+    --pink-d:#d62d6c;
+    --violet:#9b5cff;
+    --lift:rgba(120,70,190,.20);
+    --lift-s:rgba(80,40,130,.16);
   }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{height:100%;background:#fdfbf6}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(105% 55% at 6% 0%, #ffe3b8 0%, transparent 58%),
+      radial-gradient(100% 50% at 100% 12%, #ffd6ea 0%, transparent 55%),
+      radial-gradient(120% 60% at 50% 100%, #dff0ff 0%, transparent 60%),
+      linear-gradient(180deg, #fff4e2 0%, #fdf3fa 42%, #f2f9ff 100%);
+    background-attachment:fixed;
+    color:var(--ink);
+    min-height:100%;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+
   /* ---------- WELCOME ---------- */
-  #welcome {
-    position: fixed; inset: 0;
-    background: linear-gradient(180deg, #1c3a2a 0%, #0f2419 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    z-index: 50;
-    text-align: center;
+  #welcome{
+    position:fixed;inset:0;
+    background:
+      radial-gradient(90% 55% at 8% 0%, #ffb03d 0%, transparent 60%),
+      radial-gradient(90% 60% at 100% 100%, #2fb8ff 0%, transparent 58%),
+      linear-gradient(150deg, #ff7a45 0%, #ff4d8d 36%, #9b5cff 70%, #2fb8ff 100%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    /* above the burger button, which used to float over the splash */
+    z-index:70;
+    text-align:center;
+    color:#fff;
   }
-  #welcome.hidden { display: none; }
-  .wimg {
-    width: min(78vw, 340px);
-    height: min(50vw, 220px);
-    object-fit: cover;
-    border-radius: 20px;
-    box-shadow: 0 12px 40px rgba(0,0,0,.5);
-    margin-bottom: 26px;
-    background: #234730;
+  #welcome.hidden{display:none}
+  .wimg{
+    width:min(78vw,340px);
+    height:min(50vw,220px);
+    object-fit:cover;
+    border-radius:22px;
+    border:3px solid rgba(255,255,255,.9);
+    box-shadow:0 14px 34px rgba(70,20,90,.35);
+    margin-bottom:26px;
+    background:rgba(255,255,255,.22);
   }
-  .wtitle { font-size: 15px; letter-spacing: 3px; opacity: .8; font-weight: 700; }
-  .wname {
-    font-size: 38px;
-    font-weight: 900;
-    letter-spacing: 2px;
-    color: #ffd24a;
-    text-shadow: 0 2px 8px rgba(0,0,0,.5);
-    margin: 6px 0 14px;
+  .wtitle{font-size:15px;letter-spacing:3px;font-weight:800;opacity:.92}
+  .wname{
+    font-size:38px;
+    font-weight:900;
+    letter-spacing:2px;
+    color:#fff;
+    text-shadow:0 3px 0 rgba(150,45,110,.45),0 8px 22px rgba(70,20,90,.4);
+    margin:6px 0 14px;
+    line-height:1.05;
   }
-  .wsub { font-size: 14px; opacity: .85; margin-bottom: 34px; }
-  .wsub .leaf { margin: 0 4px; }
-  .enter-btn {
-    border: none;
-    border-radius: 14px;
-    background: linear-gradient(180deg, #ffd24a, #d9a821);
-    color: #22302a;
-    font-size: 17px; font-weight: 800; letter-spacing: 2px;
-    padding: 15px 60px;
-    box-shadow: 0 5px 0 #a67f14, 0 8px 18px rgba(0,0,0,.4);
-    cursor: pointer;
+  .wsub{font-size:14px;opacity:.95;margin-bottom:34px;text-shadow:0 1px 6px rgba(70,20,90,.35)}
+  .wsub .leaf{margin:0 4px}
+  .enter-btn{
+    border:2px solid #fff;
+    border-radius:16px;
+    background:linear-gradient(180deg,#ffffff,#fff0f6);
+    color:var(--pink-d);
+    font-size:17px;font-weight:900;letter-spacing:2px;
+    font-family:inherit;
+    padding:15px 60px;
+    box-shadow:0 6px 0 rgba(190,60,120,.55),0 12px 24px rgba(70,20,90,.3);
+    cursor:pointer;
   }
-  .enter-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #a67f14; }
+  .enter-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(190,60,120,.55)}
+
   /* ---------- MENU ---------- */
-  #menu {
-    max-width: 520px;
-    margin: 0 auto;
-    padding: max(20px, env(safe-area-inset-top)) 14px 40px;
+  #menu{
+    max-width:520px;
+    margin:0 auto;
+    padding:max(14px,env(safe-area-inset-top)) 14px 34px;
   }
-  .mhead { text-align: center; margin-bottom: 22px; padding: 0 48px; }
-  .mhead .t {
-    font-size: clamp(19px, 5.5vw, 26px);
-    font-weight: 900;
-    letter-spacing: 3px;
-    line-height: 1.25;
-    color: #ffd24a;
-    text-shadow: 0 2px 6px rgba(0,0,0,.5);
+  /* the hero band - all the colour lives here so the grid can stay light */
+  .mhead{
+    text-align:center;
+    margin-bottom:18px;
+    padding:20px 56px 18px;
+    border-radius:24px;
+    background:
+      radial-gradient(90% 120% at 4% 0%, #ffb03d 0%, transparent 58%),
+      radial-gradient(80% 120% at 100% 100%, #2fb8ff 0%, transparent 56%),
+      linear-gradient(120deg, #ff7a45 0%, #ff4d8d 36%, #9b5cff 72%, #2fb8ff 100%);
+    box-shadow:0 8px 0 rgba(150,60,150,.18),0 14px 30px rgba(90,40,130,.26);
+    color:#fff;
   }
-  .mhead .s { font-size: 12px; opacity: .7; margin-top: 4px; }
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
+  .mhead .t{
+    font-size:clamp(19px,5.5vw,26px);
+    font-weight:900;
+    letter-spacing:3px;
+    line-height:1.2;
+    color:#fff;
+    text-shadow:0 3px 0 rgba(150,45,110,.4),0 6px 16px rgba(70,20,90,.35);
   }
-  .gcard {
-    background: rgba(255,255,255,.07);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 16px;
-    padding: 12px 6px 10px;
-    text-align: center;
-    cursor: pointer;
-    transition: transform .12s, background .12s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .mhead .s{font-size:12px;margin-top:6px;opacity:.95;text-shadow:0 1px 5px rgba(70,20,90,.3)}
+  #trophyPill{
+    display:inline-block;margin-top:12px;
+    background:linear-gradient(180deg,#fff,#fff2f7);
+    border:2px solid #fff;
+    border-radius:999px;
+    padding:7px 18px;
+    color:var(--pink-d);
+    font-size:12px;font-weight:900;
+    text-decoration:none;letter-spacing:.5px;
+    box-shadow:0 4px 0 rgba(180,60,120,.35),0 7px 16px rgba(70,20,90,.22);
   }
-  .gcard:active { transform: scale(.96); background: rgba(255,255,255,.12); }
-  .gcard img {
-    width: clamp(48px, 16vw, 64px);
-    height: clamp(48px, 16vw, 64px);
-    border-radius: 14px;
-    object-fit: cover;
-    box-shadow: 0 5px 12px rgba(0,0,0,.4);
-    background: #234730;
+  #trophyPill:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(180,60,120,.35)}
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
   }
-  .gcard .gname {
-    font-size: 11.5px; font-weight: 800;
-    margin-top: 8px;
-    letter-spacing: .3px;
-    line-height: 1.2;
-    min-height: 2.4em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .gcard{
+    background:linear-gradient(180deg,#ffffff 0%,#fdf7ff 100%);
+    border:2px solid #ffffff;
+    border-radius:18px;
+    padding:12px 6px 10px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform .1s,box-shadow .1s;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    box-shadow:0 4px 0 var(--lift),0 8px 18px var(--lift-s);
   }
-  .gcard .gsub { font-size: 9px; opacity: .65; margin-top: 2px; }
+  .gcard:active{transform:translateY(3px);box-shadow:0 1px 0 var(--lift),0 3px 8px var(--lift-s)}
+  .gcard img{
+    width:clamp(48px,16vw,64px);
+    height:clamp(48px,16vw,64px);
+    border-radius:15px;
+    object-fit:cover;
+    box-shadow:0 4px 10px rgba(80,40,130,.28);
+    background:linear-gradient(160deg,#f4ecff,#ffe9f3);
+  }
+  .gcard .gname{
+    font-size:11.5px;font-weight:900;
+    color:var(--ink);
+    margin-top:8px;
+    letter-spacing:.2px;
+    line-height:1.2;
+    min-height:2.4em;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .gcard .gsub{font-size:9px;color:var(--muted);font-weight:700;margin-top:2px}
+
   /* ---------- TOP-RIGHT MENU ---------- */
-  #menuBtn {
-    position: fixed;
-    top: max(14px, env(safe-area-inset-top));
-    right: 14px;
-    width: 40px; height: 40px;
-    border: 1px solid rgba(255,255,255,.18);
-    border-radius: 12px;
-    background: rgba(255,255,255,.08);
-    color: #ffd24a;
-    font-size: 19px;
-    cursor: pointer;
-    z-index: 60;
+  #menuBtn{
+    position:fixed;
+    top:max(14px,env(safe-area-inset-top));
+    right:14px;
+    width:40px;height:40px;
+    border:2px solid #fff;
+    border-radius:13px;
+    background:linear-gradient(180deg,#fff,#fff2f7);
+    color:var(--pink-d);
+    font-size:19px;font-weight:900;
+    font-family:inherit;
+    box-shadow:0 4px 0 rgba(180,60,120,.3),0 8px 18px rgba(70,20,90,.22);
+    cursor:pointer;
+    z-index:60;
   }
-  #dropdown {
-    position: fixed;
-    top: calc(max(14px, env(safe-area-inset-top)) + 46px);
-    right: 14px;
-    background: #16301f;
-    border: 1px solid rgba(255,255,255,.16);
-    border-radius: 14px;
-    box-shadow: 0 12px 30px rgba(0,0,0,.5);
-    overflow: hidden;
-    z-index: 60;
-    display: none;
-    min-width: 190px;
+  #menuBtn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(180,60,120,.3)}
+  #dropdown{
+    position:fixed;
+    top:calc(max(14px,env(safe-area-inset-top)) + 48px);
+    right:14px;
+    background:#ffffff;
+    border:2px solid #fff;
+    border-radius:16px;
+    box-shadow:0 12px 30px rgba(70,20,90,.28);
+    overflow:hidden;
+    z-index:60;
+    display:none;
+    min-width:196px;
   }
-  #dropdown.open { display: block; }
-  #dropdown button, #dropdown a {
-    display: block;
-    width: 100%;
-    padding: 13px 18px;
-    background: none; border: none;
-    color: #f5efdd;
-    font-size: 14px; font-weight: 700;
-    text-align: left;
-    text-decoration: none;
-    cursor: pointer;
-    font-family: inherit;
+  #dropdown.open{display:block}
+  #dropdown button,#dropdown a{
+    display:block;
+    width:100%;
+    padding:13px 18px;
+    background:none;border:none;
+    color:var(--ink);
+    font-size:14px;font-weight:800;
+    text-align:left;
+    text-decoration:none;
+    cursor:pointer;
+    font-family:inherit;
   }
-  #dropdown button:active, #dropdown a:active { background: rgba(255,255,255,.1); }
-  #dropdown .sep { height: 1px; background: rgba(255,255,255,.12); }
-  footer {
-    max-width: 520px;
-    margin: 0 auto;
-    padding: 6px 14px calc(24px + env(safe-area-inset-bottom));
-    text-align: center;
-    font-size: 12px;
-    opacity: .6;
+  #dropdown button:active,#dropdown a:active{background:#fdf0f7}
+  #dropdown .sep{height:2px;background:#f4edfb}
+
+  footer{
+    max-width:520px;
+    margin:0 auto;
+    padding:6px 14px calc(24px + env(safe-area-inset-bottom));
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
   }
-  footer a { color: #ffd24a; text-decoration: none; margin: 0 8px; }
+  footer a{color:var(--pink-d);text-decoration:none;margin:0 8px;font-weight:800}
+
+  @media (max-height:700px){
+    .mhead{padding:15px 50px 14px;margin-bottom:14px;border-radius:20px}
+    .mhead .s{margin-top:4px}
+    #trophyPill{margin-top:9px;padding:6px 15px}
+    .wimg{margin-bottom:18px}
+    .wname{font-size:32px}
+    .wsub{margin-bottom:24px}
+  }
 </style>
 </head>
 <body>
-  <button id="menuBtn" aria-label="Menu">☰</button>
+  <button id="menuBtn" aria-label="Menu">&#9776;</button>
   <div id="dropdown">
-    <a href="trophies.html">🏆 Trophies</a>
+    <a href="trophies.html">&#127942; Trophies</a>
     <div class="sep"></div>
-    <button id="soundToggle">🔊 Sound: On</button>
+    <button id="soundToggle">&#128266; Sound: On</button>
     <div class="sep"></div>
     <a href="privacy.html">Privacy Policy</a>
     <a href="support.html">Support</a>
@@ -179,19 +261,19 @@
   <div id="menu">
     <div class="mhead">
       <div class="t">OFFLINE GAMES<br>ARCADE</div>
-      <div class="s">Pick a game — all playable offline</div>
-      <a href="trophies.html" id="trophyPill" style="display:inline-block;margin-top:10px;background:rgba(255,210,74,.14);border:1px solid rgba(255,210,74,.4);border-radius:999px;padding:6px 16px;color:#ffd24a;font-size:12px;font-weight:800;text-decoration:none;letter-spacing:.5px;">🏆 Trophies</a>
+      <div class="s">Pick a game &#8212; all playable offline</div>
+      <a href="trophies.html" id="trophyPill">&#127942; Trophies</a>
     </div>
     <div class="grid">
         <div class="gcard" onclick="location.href='octo.html'">
         <img src="icon_octo.png" alt="Octo Trivia">
         <div class="gname">Octo Trivia</div>
-        <div class="gsub">1–6 players · 800 questions</div>
+        <div class="gsub">1&#8211;6 players &#183; 800 questions</div>
       </div>
         <div class="gcard" onclick="location.href='five-dice.html'">
         <img src="icon_five-dice.png" alt="Five Dice">
         <div class="gname">Five Dice</div>
-        <div class="gsub">Solo · 2P · vs Computer</div>
+        <div class="gsub">Solo &#183; 2P &#183; vs Computer</div>
       </div>
         <div class="gcard" onclick="location.href='chess.html'">
         <img src="icon_chess.png" alt="Chess">
@@ -453,15 +535,15 @@
   </div>
 
   <footer>
-    <a href="privacy.html">Privacy Policy</a>·<a href="support.html">Support</a>
-    <div style="margin-top:6px;">No ads · No tracking · Fully offline</div>
+    <a href="privacy.html">Privacy Policy</a>&#183;<a href="support.html">Support</a>
+    <div style="margin-top:6px;">No ads &#183; No tracking &#183; Fully offline</div>
   </footer>
 
   <div id="welcome">
     <img class="wimg" src="welcome.png" alt="Offline Games Arcade">
     <div class="wtitle">WELCOME TO</div>
     <div class="wname">OFFLINE GAMES ARCADE</div>
-    <div class="wsub"><span class="leaf">🌿</span>All games are available to play offline<span class="leaf">🌿</span></div>
+    <div class="wsub"><span class="leaf">&#9733;</span>All games are available to play offline<span class="leaf">&#9733;</span></div>
     <button class="enter-btn" id="enterBtn">ENTER</button>
   </div>
 
@@ -491,7 +573,7 @@ const sndBtn = document.getElementById("soundToggle");
 function sndLabel() {
   let m = false;
   try { m = localStorage.getItem("gg_muted") === "1"; } catch (e) {}
-  sndBtn.textContent = m ? "🔇 Sound: Off" : "🔊 Sound: On";
+  sndBtn.textContent = m ? "\ud83d\udd07 Sound: Off" : "\ud83d\udd0a Sound: On";
 }
 sndBtn.addEventListener("click", () => {
   let m = false;
