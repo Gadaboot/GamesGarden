@@ -6,179 +6,206 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Bubble Shooter</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
-  html,body { height:100%; overflow:hidden; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(ellipse at 50% 25%, #237a44 0%, #14582f 55%, #0b3d1f 100%);
-    color:#fff; display:flex; flex-direction:column; align-items:center;
-    touch-action:manipulation;
-    transition: background 1s;
-  }
-  header {
-    width:100%; max-width:520px; display:flex; align-items:center; gap:10px;
-    padding: calc(env(safe-area-inset-top,0px) + 8px) 12px 4px 12px;
-  }
-  header a.home {
-    text-decoration:none; color:#fff; font-size:20px; line-height:1;
-    background:rgba(255,255,255,.14); border-radius:9px; padding:6px 11px;
-  }
-  header h1 { font-size:18px; font-weight:700; letter-spacing:.4px; }
-  .stats {
-    margin-left:auto; display:flex; gap:13px; font-size:11.5px; font-weight:600;
-    color:#e8f0ea; font-variant-numeric:tabular-nums; text-align:center;
-  }
-  .stats b { display:block; color:#fff; font-size:14.5px; }
-  .toolbar {
-    width:100%; max-width:520px; display:flex; gap:7px; padding:4px 12px 6px 12px;
-  }
-  .toolbar button {
-    font:600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color:#fff; background:rgba(255,255,255,.16);
-    border:1px solid rgba(255,255,255,.22); border-radius:9px;
-    padding:7px 13px; cursor:pointer;
-  }
-  .toolbar button:active { background:rgba(255,255,255,.32); }
-  #stage { position:relative; flex:1; display:flex; align-items:flex-start; justify-content:center; width:100%; }
-  canvas { display:block; touch-action:none; cursor:crosshair; border-radius:12px; }
+  /* ---- Bubble Shooter, re-skinned to the arcade house style ----
+     The game underneath is the original, untouched: the same hundred levels
+     across ten worlds, Hard Mode, gems, bombs, rainbows, cages, chests, the
+     shop, the stars and the same two badges.  Everything here is chrome.
 
-  .overlay {
-    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-    z-index:50;
+     There is no single palette for this one, and there should not be: the ten
+     worlds each have their own identity and the game changes colour as you
+     travel.  What the re-skin does is LIFT them - every world's page went from
+     near-black to a bright wash, and its playfield from a murky near-black to a
+     lit, saturated field.  The playfield stops short of white on purpose: the
+     shots counter, the goal and the marks are all drawn in white on the canvas,
+     and a pale field would erase them.
+
+     Every class name from the original build is kept, because the level select,
+     the shop and the star rows are built in JavaScript that names them. */
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:linear-gradient(162deg,#7fd98f 0%,#bff0c4 46%,#f2fdf1 100%);
+    color:#fff;
+    display:flex;flex-direction:column;align-items:center;
+    touch-action:manipulation;
+    transition:background 1s;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
   }
-  .overlay.show { display:flex; }
-  .panel {
-    background:linear-gradient(165deg,#2a3550,#141b33);
-    border:2px solid rgba(255,255,255,.25); border-radius:20px;
-    padding:22px 22px; text-align:center; width:min(92%,420px);
-    box-shadow:0 18px 50px rgba(0,0,0,.55);
+  #shell{width:100%;max-width:520px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#1f5a33;
+    background:rgba(255,255,255,.95);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(20,60,35,.25);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.2px;line-height:1;
+    font-size:clamp(13px,4.2vw,19px);text-shadow:0 2px 6px rgba(20,50,30,.45);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;min-width:0;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.5)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.85;color:#14361f}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums;
+    color:#123019;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  #stage{position:relative;flex:1;min-height:0;display:flex;align-items:flex-start;
+    justify-content:center;width:100%}
+  canvas{display:block;touch-action:none;cursor:crosshair;border-radius:16px;
+    border:3px solid #fff;box-shadow:0 8px 22px rgba(20,50,30,.32)}
+
+  /* ---------- tools ---------- */
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.96);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:#1f5a33;
+    box-shadow:0 4px 0 rgba(30,80,50,.32),0 6px 14px rgba(20,50,30,.22)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(30,80,50,.32)}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+
+  /* ---------- overlay cards ---------- */
+  .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    z-index:50;background:rgba(30,60,45,.4);backdrop-filter:blur(6px);padding:10px}
+  .overlay.show{display:flex}
+  .panel{
+    background:linear-gradient(180deg,#fff,#f4fbf4);
+    border:2px solid #fff;border-radius:22px;
+    padding:18px 16px 14px;text-align:center;width:min(96%,400px);
+    color:#7fa78d;box-shadow:0 20px 50px rgba(20,50,30,.42);
+    max-height:100%;overflow:auto;
     animation:pin .35s cubic-bezier(.2,1.5,.4,1);
   }
-  @keyframes pin { from { transform:scale(.6); opacity:0; } to { transform:scale(1); opacity:1; } }
-  .panel h2 { font-size:24px; margin-bottom:4px; color:#ffd75e; }
-  .panel p { font-size:13.5px; color:#dfe7f1; margin:4px 0; line-height:1.45; }
-  .panel .big {
-    margin-top:14px; font:700 15px -apple-system,sans-serif; color:#3a2c05;
-    background:#e8b33b; border:none; border-radius:12px; padding:12px 24px; cursor:pointer;
-  }
-  .panel .quiet {
-    margin-top:10px; margin-left:8px; font:600 13px -apple-system,sans-serif; color:#fff;
-    background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3);
-    border-radius:12px; padding:11px 16px; cursor:pointer;
-  }
-  #starRow { font-size:38px; letter-spacing:6px; margin:8px 0 2px 0; }
-  #starRow .on { color:#ffd75e; text-shadow:0 0 14px rgba(255,215,94,.7); }
-  #starRow .off { color:rgba(255,255,255,.25); }
+  @keyframes pin{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+  .panel h2{font-size:22px;font-weight:900;letter-spacing:.8px;color:#1f8f4d;margin-bottom:3px}
+  .panel p{font-size:13px;color:#7fa78d;margin:5px 0;line-height:1.45}
+  .panel .big{
+    display:block;width:100%;margin-top:10px;padding:12px;border:none;border-radius:15px;
+    font:900 14.5px -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.4px;
+    background:linear-gradient(180deg,#5fd97f,#1f8f4d);color:#fff;cursor:pointer;
+    box-shadow:0 5px 0 #146633,0 8px 18px rgba(25,110,60,.32)}
+  .panel .big:active{transform:translateY(3px);box-shadow:0 2px 0 #146633}
+  .panel .quiet{
+    display:block;width:100%;margin-top:8px;padding:11px;border-radius:15px;
+    font:900 13.5px -apple-system,BlinkMacSystemFont,sans-serif;
+    background:#eaf7ec;color:#1f5a33;border:1.5px solid #cfeed6;cursor:pointer}
+  .rules{text-align:left;font-size:12.4px;line-height:1.6;color:#7fa78d;margin:10px 2px}
+  .rules b{color:#1f8f4d}
 
-  #shopRow { display:flex; gap:8px; justify-content:center; margin-top:10px; flex-wrap:wrap; }
-  .shopBtn {
-    font:700 12px -apple-system,sans-serif; color:#ffd75e;
-    background:rgba(255,215,94,.12); border:1.5px solid rgba(255,215,94,.5);
-    border-radius:11px; padding:9px 12px; cursor:pointer;
-  }
-  .shopBtn:active { background:rgba(255,215,94,.3); }
-  .shopBtn.owned { color:#8ef0a0; border-color:rgba(140,240,160,.6); background:rgba(140,240,160,.1); }
-  .shopBtn.poor { opacity:.4; cursor:default; }
+  #starRow{font-size:34px;letter-spacing:6px;margin:8px 0 2px 0}
+  #starRow .on{color:#f5b921;text-shadow:0 0 12px rgba(245,185,33,.55)}
+  #starRow .off{color:#d8e6da}
 
-  #lvlScroll { max-height:50vh; overflow-y:auto; margin-top:10px; -webkit-overflow-scrolling:touch; }
-  .worldHead {
-    display:flex; align-items:center; gap:8px; margin:12px 2px 6px 2px;
-    font:800 14px -apple-system,sans-serif; letter-spacing:.5px;
+  #shopRow{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+  .shopBtn{font:900 12px -apple-system,sans-serif;color:#a06a00;
+    background:#fff6e0;border:1.5px solid #f0d79a;border-radius:12px;padding:9px 12px;cursor:pointer}
+  .shopBtn:active{background:#ffeec4}
+  .shopBtn.owned{color:#1f8f4d;border-color:#bfe6c9;background:#eaf7ec}
+  .shopBtn.poor{opacity:.42;cursor:default}
+
+  #lvlScroll{max-height:48vh;overflow-y:auto;margin-top:10px;-webkit-overflow-scrolling:touch}
+  .worldHead{display:flex;align-items:center;gap:8px;margin:12px 2px 6px 2px;
+    font:900 13.5px -apple-system,sans-serif;letter-spacing:.4px;color:#1f5a33}
+  .worldHead .bar{flex:1;height:2px;background:#d8ecdd;border-radius:2px;margin-bottom:0}
+  .worldHead .mech{font-size:10px;font-weight:800;color:#9dc3a8}
+  .hardHead{margin:18px 2px 4px 2px;text-align:center;
+    font:900 15px -apple-system,sans-serif;letter-spacing:1px;color:#e0642c}
+  .lvlGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:2px}
+  .lvlBtn{background:#f0f9f2;border:1.5px solid #d3ebd9;border-radius:13px;
+    padding:8px 2px 6px 2px;color:#1f5a33;cursor:pointer;
+    font:900 16px -apple-system,sans-serif;position:relative}
+  .lvlBtn:active{background:#dcf1e1}
+  .lvlBtn.hard{border-color:#f6c9a8;background:#fff4ec}
+  .lvlBtn .st{display:block;font-size:10px;letter-spacing:1px;margin-top:2px;font-weight:800}
+  .lvlBtn .st .on{color:#f5b921}
+  .lvlBtn .st .off{color:#cfe2d4}
+  .lvlBtn .tbadge{position:absolute;top:-7px;right:-5px;font-size:11px;
+    background:#f5b921;color:#4a3208;border-radius:8px;padding:1px 4px;font-weight:900}
+  .lvlBtn.locked{opacity:.4;cursor:default;font-size:13px}
+
+  #toast{position:absolute;top:32%;left:50%;transform:translate(-50%,-50%) scale(.8);
+    background:linear-gradient(180deg,#fff,#f4fbf4);border:2px solid #fff;color:#1f8f4d;
+    font-size:17px;font-weight:900;padding:12px 20px;border-radius:16px;
+    box-shadow:0 10px 30px rgba(20,50,30,.4);
+    opacity:0;pointer-events:none;transition:all .25s;z-index:60;white-space:nowrap}
+  #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+  @media (max-height:700px){
+    .panel{padding:13px 13px 10px}.panel h2{font-size:19px}
+    .panel p{font-size:12px;margin:4px 0}
+    .rules{font-size:11.4px;line-height:1.45}
+    .panel .big{padding:10px;font-size:13.5px;margin-top:8px}
+    .panel .quiet{padding:9px;font-size:12.5px}
+    #lvlScroll{max-height:42vh}
+    #starRow{font-size:28px}
   }
-  .worldHead .bar { flex:1; height:2px; background:rgba(255,255,255,.2); border-radius:2px; }
-  .worldHead .mech { font-size:10.5px; font-weight:600; color:rgba(255,255,255,.6); }
-  .hardHead {
-    margin:18px 2px 4px 2px; text-align:center;
-    font:900 16px -apple-system,sans-serif; letter-spacing:1px; color:#ff9d5e;
-  }
-  .lvlGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; padding:2px; }
-  .lvlBtn {
-    background:rgba(255,255,255,.13); border:1.5px solid rgba(255,255,255,.28);
-    border-radius:12px; padding:8px 2px 6px 2px; color:#fff; cursor:pointer;
-    font:700 16px -apple-system,sans-serif; position:relative;
-  }
-  .lvlBtn:active { background:rgba(255,255,255,.3); }
-  .lvlBtn.hard { border-color:rgba(255,150,90,.55); }
-  .lvlBtn .st { display:block; font-size:10.5px; letter-spacing:1px; margin-top:2px; font-weight:600; }
-  .lvlBtn .st .on { color:#ffd75e; }
-  .lvlBtn .st .off { color:rgba(255,255,255,.28); }
-  .lvlBtn .tbadge {
-    position:absolute; top:-7px; right:-5px; font-size:11px;
-    background:#e8b33b; color:#3a2c05; border-radius:8px; padding:1px 4px;
-  }
-  .lvlBtn.locked { opacity:.38; cursor:default; font-size:13px; }
-  #toast {
-    position:absolute; top:34%; left:50%; transform:translate(-50%,-50%) scale(.8);
-    background:rgba(10,15,35,.88); border:2px solid #ffd75e; color:#ffd75e;
-    font-size:19px; font-weight:800; padding:12px 22px; border-radius:16px;
-    opacity:0; pointer-events:none; transition:all .25s; z-index:60; white-space:nowrap;
-  }
-  #toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
 </style>
 </head>
 <body>
-
-<header>
-  <a class="home" href="index.html" aria-label="Home">⌂</a>
-  <h1 id="hTitle">Bubble Shooter</h1>
-  <div class="stats">
-    <div><b id="stScore">0</b>Score</div>
-    <div><b id="stLevel">-</b>Level</div>
-    <div><b id="stBest">0</b>Best</div>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title" id="hTitle">BUBBLE SHOOTER</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
   </div>
-</header>
-
-<div class="toolbar">
-  <button id="btnLevels">Levels</button>
-  <button id="btnRetry">Retry</button>
-  <button id="btnSwap">Swap ⇄</button>
-</div>
-
-<div id="stage">
-  <canvas id="cv" width="480" height="680"></canvas>
-
-  <div class="overlay show" id="selOv">
-    <div class="panel">
-      <h2>Bubble Shooter</h2>
-      <p id="selStats"></p>
-      <div id="shopRow"></div>
-      <div id="lvlScroll"></div>
-    </div>
+  <div class="strip">
+    <div class="chip"><div class="k">SCORE</div><div class="v" id="stScore">0</div></div>
+    <div class="chip"><div class="k">LEVEL</div><div class="v" id="stLevel">-</div></div>
+    <div class="chip"><div class="k">BEST</div><div class="v" id="stBest">0</div></div>
   </div>
 
-  <div class="overlay" id="winOv">
-    <div class="panel">
-      <h2 id="winTitle">Level Cleared!</h2>
-      <div id="starRow"></div>
-      <p id="winStats"></p>
-      <p id="winBest"></p>
-      <div>
-        <button class="big" id="btnNext">Next Level ▶</button>
-        <button class="quiet" id="btnReplay">Replay</button>
-        <button class="quiet" id="btnWinLevels">Levels</button>
+  <div id="stage">
+    <canvas id="cv" width="480" height="680"></canvas>
+
+    <div class="overlay show" id="selOv">
+      <div class="panel">
+        <h2>BUBBLE SHOOTER</h2>
+        <p id="selStats"></p>
+        <div id="shopRow"></div>
+        <div id="lvlScroll"></div>
       </div>
     </div>
-  </div>
 
-  <div class="overlay" id="loseOv">
-    <div class="panel">
-      <h2 style="color:#ff9d94;">Level Failed</h2>
-      <p id="loseStats"></p>
-      <div>
-        <button class="big" id="btnLoseRetry">Try Again</button>
-        <button class="quiet" id="btnLoseLevels">Levels</button>
+    <div class="overlay" id="winOv">
+      <div class="panel">
+        <h2 id="winTitle">LEVEL CLEARED</h2>
+        <div id="starRow"></div>
+        <p id="winStats"></p>
+        <p id="winBest"></p>
+        <div>
+          <button class="big" id="btnNext">NEXT LEVEL</button>
+          <button class="quiet" id="btnReplay">PLAY IT AGAIN</button>
+          <button class="quiet" id="btnWinLevels">ALL LEVELS</button>
+        </div>
       </div>
     </div>
+
+    <div class="overlay" id="loseOv">
+      <div class="panel">
+        <h2 style="color:#e0642c;">OUT OF SHOTS</h2>
+        <p id="loseStats"></p>
+        <div>
+          <button class="big" id="btnLoseRetry">TRY AGAIN</button>
+          <button class="quiet" id="btnLoseLevels">ALL LEVELS</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ovl"><div class="panel" id="ovlCard"></div></div>
+
+    <div id="toast"></div>
   </div>
 
-  <div id="toast"></div>
+  <div id="tools">
+    <div class="tool" id="btnSwap"><div class="ti">&#8646;</div><div class="tl">SWAP</div></div>
+    <div class="tool" id="btnRetry"><div class="ti">&#8635;</div><div class="tl">RETRY</div></div>
+    <div class="tool" id="btnLevels"><div class="ti">&#9776;</div><div class="tl">ALL LEVELS</div></div>
+  </div>
 </div>
 
 <script src="achievements.js"></script>
 <script>
 (function(){
 'use strict';
-
 /* ---------- constants ---------- */
 var W=480, H=680, R=20, COLS=12;
 var ROWH = R*1.732;
@@ -209,16 +236,16 @@ var PAL = [
 /* ---------- worlds (10 x 10 levels) ---------- */
 var WORLDS = [
   null,
-  { name:'Meadow',        icon:'🌿', body:['#237a44','#14582f','#0b3d1f'], cv:['#0d3d22','#0a2e1a'], mech:'Learn the ropes' },
-  { name:'Ocean',         icon:'🌊', body:['#1d6a8f','#124e6e','#0a3348'], cv:['#0b3247','#072235'], mech:'New: 💎 trapped gems' },
-  { name:'Volcano',       icon:'🌋', body:['#8f4a1d','#6e3312','#48200a'], cv:['#47230c','#331608'], mech:'New: 💣 bombs · 🌈 rainbows · ✖2 multiplier' },
-  { name:'Crystal Caves', icon:'💜', body:['#5d3f96','#452d75','#2c1b4e'], cv:['#2e1d50','#1f1338'], mech:'New: 🔗 cages · 💀 cursed balls' },
-  { name:'Galaxy',        icon:'🌌', body:['#2b3a6e','#1c2750','#101736'], cv:['#131c3d','#0b1128'], mech:'New: 🗝 keys & chests' },
-  { name:'Desert',        icon:'🏜', body:['#a8763a','#7c5426','#4e3315'], cv:['#4a3212','#33230c'], mech:'New: ❓ mystery shots' },
-  { name:'Arctic',        icon:'❄️', body:['#4f86a8','#39647f','#22404f'], cv:['#1e3d4d','#132b37'], mech:'More colours' },
-  { name:'Jungle',        icon:'🌴', body:['#3f7d34','#2c5c24','#183a13'], cv:['#173a12','#0f280c'], mech:'New: 🌫 fog levels' },
-  { name:'Neon City',     icon:'🌆', body:['#7d2f8f','#5a1e6e','#37104a'], cv:['#33104a','#210a30'], mech:'Chaos combos' },
-  { name:'Deep Space',    icon:'🚀', body:['#232a4d','#171d38','#0b0f22'], cv:['#0e1330','#070a1c'], mech:'The final stretch' }
+  { name:'Meadow',        icon:'\ud83c\udf3f', body:['#8fe0a0','#c6f2cd','#f2fdf1'], cv:['#2f9c5a','#1f7a45'], mech:'Learn the ropes' },
+  { name:'Ocean',         icon:'\ud83c\udf0a', body:['#7fd4ef','#bfe9f8','#eef9fd'], cv:['#2b8fc4','#1c6c9b'], mech:'New: \ud83d\udc8e trapped gems' },
+  { name:'Volcano',       icon:'\ud83c\udf0b', body:['#ffb98f','#ffd9c2','#fff2e9'], cv:['#d4622a','#a9431a'], mech:'New: \ud83d\udca3 bombs \u00b7 \ud83c\udf08 rainbows \u00b7 \u27162 multiplier' },
+  { name:'Crystal Caves', icon:'\ud83d\udc9c', body:['#c9a9f0','#e0cef7','#f5eefd'], cv:['#7b4fbe','#5a3595'], mech:'New: \ud83d\udd17 cages \u00b7 \ud83d\udc80 cursed balls' },
+  { name:'Galaxy',        icon:'\ud83c\udf0c', body:['#9fb0ef','#c7d1f6','#eef1fd'], cv:['#6274d6','#4a58ad'], mech:'New: \ud83d\udddd keys & chests' },
+  { name:'Desert',        icon:'\ud83c\udfdc', body:['#f5cf8c','#ffe6bb','#fff7ea'], cv:['#c08a3e','#96682a'], mech:'New: \u2753 mystery shots' },
+  { name:'Arctic',        icon:'\u2744\ufe0f', body:['#9fdcef','#c9ecf7','#eefaff'], cv:['#3f9ec4','#2b7899'], mech:'More colours' },
+  { name:'Jungle',        icon:'\ud83c\udf34', body:['#94dc8f','#c4eebd','#eefbe9'], cv:['#3f9a44','#2b7330'], mech:'New: \ud83c\udf2b fog levels' },
+  { name:'Neon City',     icon:'\ud83c\udf06', body:['#f0a3dd','#f7c8ec','#fdeef8'], cv:['#a8419b','#7d2c76'], mech:'Chaos combos' },
+  { name:'Deep Space',    icon:'\ud83d\ude80', body:['#a3abe0','#c9cfef','#eff1fb'], cv:['#5a63c4','#454c9c'], mech:'The final stretch' }
 ];
 function worldOf(L){ return Math.ceil(baseOf(L)/10); }
 
@@ -233,33 +260,33 @@ function D(pat,rows,colors,shots,goal,extra){
   return d;
 }
 var LV = [ null,
-  /* World 1 — Meadow: learn the game */
+  /* World 1 \u2014 Meadow: learn the game */
   D('full',    4,3,30), D('checker', 5,3,28), D('pillars', 5,3,26),
   D('zigzag',  5,3,26), D('triangle',6,4,28), D('sides',   6,4,24),
   D('diamond', 6,4,26), D('holes',   6,4,24), D('arch',    7,4,26),
   D('full',    7,4,30,'clear',{boss:true}),
-  /* World 2 — Ocean: gems */
+  /* World 2 \u2014 Ocean: gems */
   D('checker', 5,4,24,'gems',{gems:2}), D('pillars',6,4,24,'gems',{gems:2}),
   D('full',    5,4,22),                 D('diamond',6,4,24,'gems',{gems:3}),
   D('zigzag',  6,5,26),                 D('sides',  6,5,24,'gems',{gems:3}),
   D('holes',   7,5,24,'clear',{stones:2}), D('arch', 7,5,26,'gems',{gems:3,stones:2}),
   D('triangle',7,5,26,'clear',{stones:3}),
   D('full',    8,5,30,'gems',{gems:4,stones:3,boss:true}),
-  /* World 3 — Volcano: bombs + rainbow shots */
+  /* World 3 \u2014 Volcano: bombs + rainbow shots */
   D('checker', 6,4,22,'clear',{bombs:2}), D('pillars',6,5,22,'clear',{bombs:2}),
   D('full',    6,5,24,'clear',{bombs:3}), D('diamond',6,5,26,'score',{target:1500}),
   D('holes',   7,5,24,'gems',{gems:3,bombs:2}), D('zigzag',7,5,24,'clear',{bombs:3,stones:2}),
   D('sides',   7,5,26,'score',{target:1800}),   D('arch',  7,5,26,'gems',{gems:3,bombs:3}),
   D('triangle',8,5,26,'clear',{bombs:2,stones:3}),
   D('full',    8,6,30,'clear',{bombs:4,boss:true}),
-  /* World 4 — Crystal Caves: cages */
+  /* World 4 \u2014 Crystal Caves: cages */
   D('checker', 6,5,24,'clear',{cages:4}), D('pillars',7,5,24,'clear',{cages:5}),
   D('diamond', 7,5,26,'gems',{gems:3,cages:4}), D('full',7,5,26,'clear',{cages:6,stones:2}),
   D('holes',   7,6,24,'clear',{cages:5}), D('arch',7,6,26,'gems',{gems:3,cages:6,stones:2}),
   D('zigzag',  8,6,26,'clear',{cages:6}), D('sides',8,6,26,'clear',{cages:5,bombs:2}),
   D('triangle',8,6,28,'clear',{cages:8,stones:3}),
   D('full',    8,6,32,'gems',{gems:4,cages:8,boss:true}),
-  /* World 5 — Galaxy: everything combined */
+  /* World 5 \u2014 Galaxy: everything combined */
   D('checker', 6,5,26,'clear',{bombs:2,cages:3}), D('holes',7,5,24,'gems',{gems:3,bombs:2}),
   D('full',    7,6,26,'clear',{bombs:3,cages:4}), D('diamond',7,6,26,'gems',{gems:4,stones:2}),
   D('zigzag',  7,6,26,'score',{target:2000}),     D('holes',8,6,26,'clear',{bombs:3,stones:3}),
@@ -296,10 +323,10 @@ function levelDef(L){
   var base=LV[b], d={}, k;
   for(k in base) d[k]=base[k];
   /* deterministic extras by world */
-  d.mult  = w>=3 && b%3===1;                       /* ✖2 multiplier ball  */
-  d.bad   = w>=4 && b%4===2;                       /* 💀 cursed ball      */
-  d.chest = w>=5 && b%4===0;                       /* 🗝 key + 📦 chest   */
-  d.fog   = w>=8 && (b%10===3 || b%10===7);        /* 🌫 fog level        */
+  d.mult  = w>=3 && b%3===1;                       /* \u27162 multiplier ball  */
+  d.bad   = w>=4 && b%4===2;                       /* \ud83d\udc80 cursed ball      */
+  d.chest = w>=5 && b%4===0;                       /* \ud83d\udddd key + \ud83d\udce6 chest   */
+  d.fog   = w>=8 && (b%10===3 || b%10===7);        /* \ud83c\udf2b fog level        */
   if(isHard(L)){
     d.rows   = Math.min(9, d.rows+1);
     d.colors = Math.min(6, d.colors+1);
@@ -368,7 +395,7 @@ var markPend = [];               /* special balls waiting to fire their effect *
 var keyCollected=false, multUntil=0, coinsEarned=0;
 var curC, nextC, ball;
 var curMyst=false, nextMyst=false;
-var fireArmed=false;             /* 🔥 booster: next shot explodes */
+var fireArmed=false;             /* \ud83d\udd25 booster: next shot explodes */
 var particles = [], fallers = [];
 var aimAngle = -Math.PI/2, aiming = false;
 var dropLeft;
@@ -419,7 +446,7 @@ function pickColor(){
   return a[Math.floor(Math.random()*a.length)];
 }
 function mystRoll(){
-  /* ❓ mystery shots from World 6 onward (always in Hard Mode) */
+  /* \u2753 mystery shots from World 6 onward (always in Hard Mode) */
   return (worldOf(level)>=6 || isHard(level)) && Math.random()<0.12;
 }
 function lowestY(){
@@ -486,11 +513,11 @@ function startLevel(L){
   place(BOMB, def.bombs, 1);
   place(STONE, def.stones, 1);
   place('cage', def.cages, 0);
-  mark('star');                                   /* ⭐ one per level */
-  if(def.mult) mark('mult');                      /* ✖2 */
-  if(def.bad)  mark('bad');                       /* 💀 */
+  mark('star');                                   /* \u2b50 one per level */
+  if(def.mult) mark('mult');                      /* \u27162 */
+  if(def.bad)  mark('bad');                       /* \ud83d\udc80 */
   keyCollected=false;
-  if(def.chest && mark('key'))                    /* 🗝 + 📦 */
+  if(def.chest && mark('key'))                    /* \ud83d\udddd + \ud83d\udce6 */
     place(CHEST, 1, Math.max(1,def.rows-3));
 
   score=0; shotsUsed=0; markPend=[]; multUntil=0; coinsEarned=0;
@@ -499,11 +526,11 @@ function startLevel(L){
   dropLeft = def.drop || 0;
   curC = pickColor(); nextC = pickColor();
   curMyst = mystRoll(); nextMyst = mystRoll();
-  /* 🪙 boosters bought in the shop */
+  /* \ud83e\ude99 boosters bought in the shop */
   fireArmed=false;
   var boosterMsg=null;
-  if(prog.boostShots){ shotsLeft+=10; prog.boostShots=false; boosterMsg='🪙 +10 booster shots!'; }
-  if(prog.boostFire){ fireArmed=true; prog.boostFire=false; boosterMsg='🔥 Fireball loaded — next shot explodes!'; }
+  if(prog.boostShots){ shotsLeft+=10; prog.boostShots=false; boosterMsg='\ud83e\ude99 +10 booster shots!'; }
+  if(prog.boostFire){ fireArmed=true; prog.boostFire=false; boosterMsg='\ud83d\udd25 Fireball loaded \u2014 next shot explodes!'; }
   saveProg();
   state='play';
   saveCurLevel(L);
@@ -518,28 +545,29 @@ function startLevel(L){
   lastT = performance.now();
 }
 function mechIntro(L){
-  if(L===1)   return '⭐ Pop or drop the star ball for a bonus!';
-  if(L===11)  return '💎 Drop the gems to free them!';
-  if(L===21)  return '💣 Land next to a bomb to blow it!';
-  if(L===22)  return '✖2 ball doubles points for 30s!';
-  if(L===31)  return '🔗 Caged bubbles need 2 matches!';
-  if(L===34)  return '💀 Beware the cursed ball…';
-  if(L===44)  return '🗝 Grab the key BEFORE the chest!';
-  if(L===51)  return '🏜 Halfway — watch for ❓ mystery shots!';
-  if(L===73)  return '🌫 Fog! Clear bubbles to reveal the top!';
-  if(L===101) return '🔥 Hard Mode: rows push on a timer!';
+  if(L===1)   return '\u2b50 Pop or drop the star ball for a bonus!';
+  if(L===11)  return '\ud83d\udc8e Drop the gems to free them!';
+  if(L===21)  return '\ud83d\udca3 Land next to a bomb to blow it!';
+  if(L===22)  return '\u27162 ball doubles points for 30s!';
+  if(L===31)  return '\ud83d\udd17 Caged bubbles need 2 matches!';
+  if(L===34)  return '\ud83d\udc80 Beware the cursed ball\u2026';
+  if(L===44)  return '\ud83d\udddd Grab the key BEFORE the chest!';
+  if(L===51)  return '\ud83c\udfdc Halfway \u2014 watch for \u2753 mystery shots!';
+  if(L===73)  return '\ud83c\udf2b Fog! Clear bubbles to reveal the top!';
+  if(L===101) return '\ud83d\udd25 Hard Mode: rows push on a timer!';
   return null;
 }
 function goalToast(){
-  var pre = def.boss ? '👑 Boss level — ' : (isHard(level) ? '🔥 ' : '');
-  if(def.goal==='gems')  return pre+'💎 Free '+def.gems+' gems!';
-  if(def.goal==='score') return pre+'🎯 Score '+def.target+' points!';
+  var pre = def.boss ? '\ud83d\udc51 Boss level \u2014 ' : (isHard(level) ? '\ud83d\udd25 ' : '');
+  if(def.goal==='gems')  return pre+'\ud83d\udc8e Free '+def.gems+' gems!';
+  if(def.goal==='score') return pre+'\ud83c\udfaf Score '+def.target+' points!';
   return pre+'Clear the board!';
 }
 function applyTheme(w){
   var t = WORLDS[w];
+  /* a bright wash rather than the old radial into near-black */
   document.body.style.background =
-    'radial-gradient(ellipse at 50% 25%, '+t.body[0]+' 0%, '+t.body[1]+' 55%, '+t.body[2]+' 100%)';
+    'linear-gradient(162deg, '+t.body[0]+' 0%, '+t.body[1]+' 46%, '+t.body[2]+' 100%)';
   document.getElementById('hTitle').textContent = t.icon+' '+t.name;
 }
 
@@ -639,26 +667,26 @@ function processMarks(){
       var roll=Math.random();
       if(roll<0.75){                       /* 75%: +5 shots */
         if(def.shots) shotsLeft+=5;
-        toast('⭐ +5 shots!');
+        toast('\u2b50 +5 shots!');
       } else if(roll<0.80){                /* 5%: wipe every ball of that colour */
-        toast('⭐ Colour wipe!');
+        toast('\u2b50 Colour wipe!');
         for(var r=0;r<ROWS_MAX;r++)
           for(var c=0;c<colsAt(r);c++)
             if(grid[r][c]===m.col) gained+=removeCell(r,c,true);
       } else {                             /* 20%: blast the 8 surrounding balls */
-        toast('⭐ Star blast!');
+        toast('\u2b50 Star blast!');
         var ring=starRing(m.r,m.c,8);
         for(i=0;i<ring.length;i++) gained+=removeCell(ring[i][0],ring[i][1],true);
       }
-    } else if(m.type==='mult'){            /* ✖2 double points for 30s */
+    } else if(m.type==='mult'){            /* \u27162 double points for 30s */
       multUntil = Date.now()+30000;
-      toast('✖2 Double points for 30s!');
-    } else if(m.type==='bad'){             /* 💀 cursed */
+      toast('\u27162 Double points for 30s!');
+    } else if(m.type==='bad'){             /* \ud83d\udc80 cursed */
       if(Math.random()<0.5 && def.shots){
         shotsLeft = Math.max(1, shotsLeft-3);
-        toast('💀 Cursed! Lost 3 shots!');
+        toast('\ud83d\udc80 Cursed! Lost 3 shots!');
       } else {
-        toast('💀 Cursed! 3 bubbles turn to stone!');
+        toast('\ud83d\udc80 Cursed! 3 bubbles turn to stone!');
         var cand=[];
         for(var r2=0;r2<ROWS_MAX;r2++)
           for(var c2=0;c2<colsAt(r2);c2++)
@@ -670,16 +698,16 @@ function processMarks(){
           popFx(cx(pick[0],pick[1]), cy(pick[0]), STONE);
         }
       }
-    } else if(m.type==='key'){             /* 🗝 */
+    } else if(m.type==='key'){             /* \ud83d\udddd */
       keyCollected=true;
-      toast('🗝 Key collected!');
-    } else if(m.type==='chest'){           /* 📦 */
+      toast('\ud83d\udddd Key collected!');
+    } else if(m.type==='chest'){           /* \ud83d\udce6 */
       if(keyCollected){
         gained+=500;
         prog.coins+=25; coinsEarned+=25; saveProg();
-        toast('📦 Chest opened! +500 · +25🪙');
+        toast('\ud83d\udce6 Chest opened! +500 \u00b7 +25\ud83e\ude99');
       } else {
-        toast('📦 The chest was locked…');
+        toast('\ud83d\udce6 The chest was locked\u2026');
       }
     }
   }
@@ -709,10 +737,10 @@ function explode(startBombs){
       else gained += removeCell(p[0],p[1],true);
     }
   }
-  if(gained) toast('💥 +'+gained);
+  if(gained) toast('\ud83d\udca5 +'+gained);
   return gained;
 }
-/* 🔥 fireball booster blast, centred on the landed shot */
+/* \ud83d\udd25 fireball booster blast, centred on the landed shot */
 function fireBlast(r,c){
   var gained=removeCell(r,c,true);
   var zone={}, nb1=nbrs(r,c), i, j, bombs=[];
@@ -787,7 +815,7 @@ function settle(r,c){
   var gained=0, i;
 
   if(wasFire){
-    toast('🔥 Fireball!');
+    toast('\ud83d\udd25 Fireball!');
     gained += fireBlast(r,c);
   } else {
     /* bombs: landing beside one detonates it */
@@ -891,18 +919,18 @@ function winLevel(){
   if(level<MAX_LEVEL) prog.unlocked = Math.max(prog.unlocked, level+1);
   saveProg();
   document.getElementById('winTitle').textContent =
-    level===MAX_BASE ? '🏆 Campaign Complete!' :
-    (def.boss?'👑 Boss beaten! ':'')+lvlName(level)+' Cleared!';
+    level===MAX_BASE ? '\ud83c\udfc6 Campaign Complete!' :
+    (def.boss?'\ud83d\udc51 Boss beaten! ':'')+lvlName(level)+' Cleared!';
   var sr='';
-  for(var i=1;i<=3;i++) sr += '<span class="'+(i<=stars?'on':'off')+'">★</span>';
+  for(var i=1;i<=3;i++) sr += '<span class="'+(i<=stars?'on':'off')+'">\u2605</span>';
   document.getElementById('starRow').innerHTML = sr;
   document.getElementById('winStats').textContent =
-    'Score '+score+'  ·  '+shotsUsed+' shots' +
-    (def.shots ? '  ·  '+shotsLeft+' spare' : '') +
-    '  ·  +'+coinsEarned+'🪙';
+    'Score '+score+'  \u00b7  '+shotsUsed+' shots' +
+    (def.shots ? '  \u00b7  '+shotsLeft+' spare' : '') +
+    '  \u00b7  +'+coinsEarned+'\ud83e\ude99';
   document.getElementById('winBest').textContent =
-    level===MAX_BASE ? '🔥 Hard Mode unlocked — all 100 levels, tougher, with timed rows!' :
-    (isBest ? '🎉 New level best!' : 'Level best: '+prevBest);
+    level===MAX_BASE ? '\ud83d\udd25 Hard Mode unlocked \u2014 all 100 levels, tougher, with timed rows!' :
+    (isBest ? '\ud83c\udf89 New level best!' : 'Level best: '+prevBest);
   document.getElementById('btnNext').style.display = level<MAX_LEVEL ? 'inline-block' : 'none';
   document.getElementById('winOv').classList.add('show');
 }
@@ -910,7 +938,7 @@ function loseLevel(why){
   if(state!=='play') return;
   state='lost';
   document.getElementById('loseStats').textContent =
-    lvlName(level)+'  ·  Score '+score+'  ·  '+(why||'');
+    lvlName(level)+'  \u00b7  Score '+score+'  \u00b7  '+(why||'');
   document.getElementById('loseOv').classList.add('show');
 }
 
@@ -927,13 +955,13 @@ function totalBest(){
 }
 function lvlBadge(L){
   var d=levelDef(L);
-  if(d.boss) return '👑';
-  if(d.goal==='gems') return '💎';
-  if(d.goal==='score') return '🎯';
-  if(d.fog) return '🌫';
-  if(d.chest) return '🗝';
-  if(d.bombs) return '💣';
-  if(d.cages) return '🔗';
+  if(d.boss) return '\ud83d\udc51';
+  if(d.goal==='gems') return '\ud83d\udc8e';
+  if(d.goal==='score') return '\ud83c\udfaf';
+  if(d.fog) return '\ud83c\udf2b';
+  if(d.chest) return '\ud83d\udddd';
+  if(d.bombs) return '\ud83d\udca3';
+  if(d.cages) return '\ud83d\udd17';
   return null;
 }
 function buildShop(){
@@ -942,14 +970,14 @@ function buildShop(){
   function item(label, cost, owned, buy){
     var b=document.createElement('button');
     b.className='shopBtn'+(owned?' owned':(prog.coins<cost?' poor':''));
-    b.textContent = owned ? '✓ '+label+' queued' : label+' — '+cost+'🪙';
+    b.textContent = owned ? '\u2713 '+label+' queued' : label+' \u2014 '+cost+'\ud83e\ude99';
     if(!owned && prog.coins>=cost) b.addEventListener('click', buy);
     row.appendChild(b);
   }
   item('+10 shots next level', 30, prog.boostShots, function(){
     prog.coins-=30; prog.boostShots=true; saveProg(); showSelect();
   });
-  item('🔥 Fireball next level', 50, prog.boostFire, function(){
+  item('\ud83d\udd25 Fireball next level', 50, prog.boostFire, function(){
     prog.coins-=50; prog.boostFire=true; saveProg(); showSelect();
   });
 }
@@ -957,7 +985,7 @@ function buildWorldRows(scroll, offset){
   for(var w=1;w<=10;w++){
     var head=document.createElement('div');
     head.className='worldHead';
-    head.innerHTML = '<span>'+WORLDS[w].icon+' World '+w+' · '+WORLDS[w].name+'</span>'+
+    head.innerHTML = '<span>'+WORLDS[w].icon+' World '+w+' \u00b7 '+WORLDS[w].name+'</span>'+
       '<span class="bar"></span><span class="mech">'+WORLDS[w].mech+'</span>';
     scroll.appendChild(head);
     var gridEl=document.createElement('div');
@@ -967,9 +995,9 @@ function buildWorldRows(scroll, offset){
       var locked = L>prog.unlocked;
       b.className='lvlBtn'+(locked?' locked':'')+(isHard(L)?' hard':'');
       var st = prog.stars[L]||0, sr='';
-      for(var i=1;i<=3;i++) sr += '<span class="'+(i<=st?'on':'off')+'">★</span>';
+      for(var i=1;i<=3;i++) sr += '<span class="'+(i<=st?'on':'off')+'">\u2605</span>';
       var badge = lvlBadge(L);
-      b.innerHTML = (locked?'🔒':baseOf(L)) + '<span class="st">'+sr+'</span>' +
+      b.innerHTML = (locked?'\ud83d\udd12':baseOf(L)) + '<span class="st">'+sr+'</span>' +
         (badge && !locked ? '<span class="tbadge">'+badge+'</span>' : '');
       if(!locked){
         (function(lv){ b.addEventListener('click', function(){ startLevel(lv); }); })(L);
@@ -985,7 +1013,7 @@ function showSelect(){
   document.getElementById('loseOv').classList.remove('show');
   var maxStars = (prog.unlocked>MAX_BASE ? MAX_LEVEL : MAX_BASE)*3;
   document.getElementById('selStats').textContent =
-    '★ '+totalStars()+' / '+maxStars+'   ·   🪙 '+prog.coins+'   ·   Total score: '+totalBest();
+    '\u2605 '+totalStars()+' / '+maxStars+'   \u00b7   \ud83e\ude99 '+prog.coins+'   \u00b7   Total score: '+totalBest();
   buildShop();
   var scroll = document.getElementById('lvlScroll');
   scroll.innerHTML='';
@@ -993,19 +1021,20 @@ function showSelect(){
   if(prog.unlocked>MAX_BASE){
     var hh=document.createElement('div');
     hh.className='hardHead';
-    hh.textContent='🔥 HARD MODE — timed rows, tougher boards 🔥';
+    hh.textContent='\ud83d\udd25 HARD MODE \u2014 timed rows, tougher boards \ud83d\udd25';
     scroll.appendChild(hh);
     buildWorldRows(scroll, MAX_BASE);
   }
   document.getElementById('selOv').classList.add('show');
   applyTheme(worldOf(Math.min(prog.unlocked,MAX_LEVEL)));
+  document.getElementById('hTitle').textContent='BUBBLE SHOOTER';
   hud();
 }
 
 function hud(){
   document.getElementById('stScore').textContent = score||0;
   document.getElementById('stLevel').textContent =
-    state==='select' ? '-' : baseOf(level)+(isHard(level)?'🔥':'');
+    state==='select' ? '-' : baseOf(level)+(isHard(level)?'\ud83d\udd25':'');
   document.getElementById('stBest').textContent =
     state==='select' ? totalBest() : (prog.best[level]||0);
 }
@@ -1141,7 +1170,7 @@ function drawRainbow(x,y,r){
   ctx.font='700 '+Math.round(r)+'px -apple-system,sans-serif';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
-  ctx.fillText('★',x,y+1);
+  ctx.fillText('\u2605',x,y+1);
   ctx.textBaseline='alphabetic';
 }
 function drawMystery(x,y,r){
@@ -1175,8 +1204,8 @@ function drawStarMark(x,y,r){
   ctx.font='700 '+Math.round(r*1.05)+'px -apple-system,sans-serif';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
-  ctx.strokeText('★',x,y+1);
-  ctx.fillText('★',x,y+1);
+  ctx.strokeText('\u2605',x,y+1);
+  ctx.fillText('\u2605',x,y+1);
   ctx.textBaseline='alphabetic';
 }
 function drawMark(x,y,r,type){
@@ -1197,11 +1226,11 @@ function drawMark(x,y,r,type){
     ctx.strokeStyle='rgba(0,0,0,0.55)';
     ctx.lineWidth=3;
     ctx.font='800 '+Math.round(r*0.9)+'px -apple-system,sans-serif';
-    ctx.strokeText('×2',x,y+1);
-    ctx.fillText('×2',x,y+1);
+    ctx.strokeText('\u00d72',x,y+1);
+    ctx.fillText('\u00d72',x,y+1);
   } else {
     ctx.font=Math.round(r*1.1)+'px -apple-system,sans-serif';
-    ctx.fillText(type==='bad' ? '💀' : '🗝', x, y+1);
+    ctx.fillText(type==='bad' ? '\ud83d\udc80' : '\ud83d\udddd', x, y+1);
   }
   ctx.textBaseline='alphabetic';
 }
@@ -1238,8 +1267,8 @@ function drawAim(){
   ctx.setLineDash([]);
 }
 function goalHudText(){
-  if(def.goal==='gems')  return '💎 '+Math.max(0,gemsLeft)+' gem'+(gemsLeft===1?'':'s')+' left';
-  if(def.goal==='score') return '🎯 '+score+' / '+def.target;
+  if(def.goal==='gems')  return '\ud83d\udc8e '+Math.max(0,gemsLeft)+' gem'+(gemsLeft===1?'':'s')+' left';
+  if(def.goal==='score') return '\ud83c\udfaf '+score+' / '+def.target;
   return 'Clear all bubbles';
 }
 function draw(){
@@ -1251,13 +1280,13 @@ function draw(){
   ctx.fillRect(0,0,W,H);
 
   ctx.setLineDash([5,7]);
-  ctx.strokeStyle='rgba(255,120,110,0.5)';
+  ctx.strokeStyle='rgba(255,255,255,0.75)';
   ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.moveTo(0,DEAD_Y); ctx.lineTo(W,DEAD_Y); ctx.stroke();
   ctx.setLineDash([]);
 
   var r,c,i;
-  /* 🌫 fog: rows well above the lowest bubble are hidden */
+  /* \ud83c\udf2b fog: rows well above the lowest bubble are hidden */
   var fogAbove = -1;
   if(def && def.fog && state==='play'){
     var lr=lowestRow();
@@ -1291,7 +1320,7 @@ function draw(){
     ctx.fillStyle='rgba(255,255,255,0.5)';
     ctx.font='600 11px -apple-system,sans-serif';
     ctx.textAlign='center';
-    ctx.fillText('🌫 fog', W/2, 16);
+    ctx.fillText('\ud83c\udf2b fog', W/2, 16);
   }
 
   for(i=fallers.length-1;i>=0;i--){
@@ -1326,7 +1355,7 @@ function draw(){
       ctx.globalAlpha=1;
       ctx.font='14px -apple-system,sans-serif';
       ctx.textAlign='center';
-      ctx.fillText('🔥', SHOOT_X, SHOOT_Y-R-9);
+      ctx.fillText('\ud83d\udd25', SHOOT_X, SHOOT_Y-R-9);
     }
     ctx.font='600 12px -apple-system,sans-serif';
     ctx.fillStyle='rgba(255,255,255,0.65)';
@@ -1340,7 +1369,7 @@ function draw(){
       ctx.textAlign='center';
       ctx.font='800 20px -apple-system,sans-serif';
       ctx.fillStyle = shotsLeft<=5 ? '#ff9d94' : 'rgba(255,255,255,0.9)';
-      ctx.fillText('×'+shotsLeft, SHOOT_X-72, SHOOT_Y+7);
+      ctx.fillText('\u00d7'+shotsLeft, SHOOT_X-72, SHOOT_Y+7);
       ctx.font='600 10.5px -apple-system,sans-serif';
       ctx.fillStyle='rgba(255,255,255,0.55)';
       ctx.fillText('SHOTS', SHOOT_X-72, SHOOT_Y+22);
@@ -1352,11 +1381,11 @@ function draw(){
     ctx.font='700 14px -apple-system,sans-serif';
     ctx.fillText(goalHudText(), 20, H-40);
 
-    /* ✖2 multiplier countdown */
+    /* \u27162 multiplier countdown */
     if(Date.now()<multUntil){
       ctx.fillStyle='#ff9d5e';
       ctx.font='800 14px -apple-system,sans-serif';
-      ctx.fillText('✖2  '+Math.ceil((multUntil-Date.now())/1000)+'s', 20, H-58);
+      ctx.fillText('\u27162  '+Math.ceil((multUntil-Date.now())/1000)+'s', 20, H-58);
     }
 
     if(def.timed){
@@ -1368,7 +1397,7 @@ function draw(){
       ctx.fillStyle='rgba(255,255,255,0.75)';
       ctx.font='600 11px -apple-system,sans-serif';
       ctx.textAlign='right';
-      ctx.fillText('⏱ next row '+Math.ceil(dropLeft)+'s', W-20, H-32);
+      ctx.fillText('\u23f1 next row '+Math.ceil(dropLeft)+'s', W-20, H-32);
     }
   }
   if(ball) drawBubble(ball.x,ball.y,ball.c,R-1);
@@ -1462,11 +1491,56 @@ document.getElementById('btnWinLevels').addEventListener('click', showSelect);
 document.getElementById('btnLoseRetry').addEventListener('click', function(){ startLevel(level); });
 document.getElementById('btnLoseLevels').addEventListener('click', showSelect);
 
+
+/* =========================================================
+   UI added by the re-skin: the pause card, the rules card,
+   and the boot that offers a game in progress.
+   ========================================================= */
+function $id(id){ return document.getElementById(id); }
+function openOvl(html){ $id('ovlCard').innerHTML=html; $id('ovl').classList.add('show'); }
+function closeOvl(){ $id('ovl').classList.remove('show'); }
+function ovlOpen(){ return $id('ovl').classList.contains('show'); }
+function anyPanelOpen(){
+  return ovlOpen() || $id('selOv').classList.contains('show') ||
+         $id('winOv').classList.contains('show') || $id('loseOv').classList.contains('show');
+}
+
+function rulesScreen(){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; <b>Drag to aim, let go to fire.</b> The dotted line shows where the bubble is going, walls included.<br><br>'+
+    '&#9642; Land <b>three or more of a colour together</b> and they pop. Anything left hanging with nothing above it falls too, and falling bubbles are worth more than popped ones.<br><br>'+
+    '&#9642; <b>SWAP</b> trades the bubble you are holding for the next one. It is free and it does not use a shot.<br><br>'+
+    '&#9642; You have a <b>set number of shots</b>, counted beside the shooter, and every level has a <b>goal</b> shown bottom left. Run out before the goal is done and the level is lost.<br><br>'+
+    '&#9642; <b>Stars</b> are for finishing with shots to spare - three stars needs a tidy round.<br><br>'+
+    '&#9642; Each world brings something new - gems, bombs, rainbows, cages, keys - and the game tells you when one turns up. Your progress <b>saves itself</b>.'+
+    '</div><button class="big" id="bBack">GOT IT</button>');
+  $id('bBack').onclick=closeOvl;
+}
+
+function pauseScreen(){
+  openOvl('<h2>PAUSED</h2>'+
+    '<p>Your progress is saved as you go.</p>'+
+    '<button class="big" id="bResume2">CARRY ON</button>'+
+    '<button class="quiet" id="bRules2">HOW TO PLAY</button>'+
+    '<button class="quiet" id="bLevels2">ALL LEVELS</button>'+
+    '<a class="quiet" href="index.html" style="text-decoration:none;display:block">BACK TO THE ARCADE</a>');
+  $id('bResume2').onclick=closeOvl;
+  $id('bRules2').onclick=rulesScreen;
+  $id('bLevels2').onclick=function(){ closeOvl(); showSelect(); };
+}
+
+/* The pause pill works from the level select too - that is the only way in to
+   HOW TO PLAY from the front page.  It is blocked only by its own card. */
+$id('bPause').addEventListener('click', function(){
+  if(ovlOpen()) return;
+  pauseScreen();
+});
+
 /* ---------- sizing ---------- */
 function fit(){
   var stage=document.getElementById('stage');
-  var aw=stage.clientWidth-8;
-  var ah=window.innerHeight - stage.getBoundingClientRect().top - 8;
+  var aw=stage.clientWidth-6;
+  var ah=stage.clientHeight-6;
   var s=Math.min(aw/W, ah/H, 1.1);
   cv.style.width=(W*s)+'px';
   cv.style.height=(H*s)+'px';
@@ -1478,30 +1552,29 @@ emptyGrid();
 score=0;
 def = levelDef(1);
 showSelect();
+
 (function bootResume(){
   var sv = loadCurLevel();
   if(!(sv && sv.level && sv.level<=prog.unlocked && sv.level<=MAX_LEVEL)) return;
-  var ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;font-family:-apple-system,sans-serif;';
-  ov.innerHTML =
-    '<div style="background:#141b33;border:2px solid #ffd54a;border-radius:16px;padding:24px 28px;text-align:center;color:#fff;max-width:280px;">'+
-    '<div style="font-size:38px;">🫧</div>'+
-    '<h2 style="margin:6px 0;">Welcome back!</h2>'+
-    '<p style="opacity:.85;font-size:14px;margin-bottom:14px;">You were on '+lvlName(sv.level)+'.</p>'+
-    '<button id="bsResume" style="display:block;width:100%;margin:6px 0;padding:12px;border:none;border-radius:10px;background:#ffd54a;color:#141b33;font-weight:800;font-size:15px;cursor:pointer;">Continue '+lvlName(sv.level)+'</button>'+
-    '<button id="bsFresh" style="display:block;width:100%;margin:6px 0;padding:12px;border:none;border-radius:10px;background:rgba(255,255,255,.15);color:#fff;font-weight:800;font-size:15px;cursor:pointer;">Level Select</button></div>';
-  document.body.appendChild(ov);
-  document.getElementById('bsResume').addEventListener('click', function(){
-    ov.remove();
+  openOvl('<h2>WELCOME BACK</h2>'+
+    '<p>You were part way through <b>'+lvlName(sv.level)+'</b>.</p>'+
+    '<button class="big" id="bsResume">CARRY ON</button>'+
+    '<button class="quiet" id="bsFresh">ALL LEVELS</button>');
+  $id('bsResume').onclick=function(){
+    closeOvl();
+    document.getElementById('selOv').classList.remove('show');
     startLevel(sv.level);
-  });
-  document.getElementById('bsFresh').addEventListener('click', function(){
-    ov.remove();
-    clearCurLevel();
-  });
+  };
+  $id('bsFresh').onclick=function(){ closeOvl(); clearCurLevel(); showSelect(); };
 })();
+
 fit();
+/* The original's very last line, and it is load-bearing: without it nothing
+   ever paints and the canvas sits there transparent, showing the page through
+   it.  Dropped once already when this boot section was rewritten - the tests
+   all passed and the screenshots showed an empty table. */
 requestAnimationFrame(function(t){ lastT=t; requestAnimationFrame(loop); });
+
 })();
 </script>
 </body>

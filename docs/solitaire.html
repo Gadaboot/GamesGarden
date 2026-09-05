@@ -6,191 +6,205 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Solitaire</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
-  html,body { height:100%; overflow:hidden; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(ellipse at 50% 30%, #237a44 0%, #14582f 55%, #0b3d1f 100%);
-    color:#fff;
-    display:flex; flex-direction:column;
-    touch-action: manipulation;
-  }
-  header {
-    display:flex; align-items:center; gap:10px;
-    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 6px 12px;
-  }
-  header a.home {
-    text-decoration:none; color:#fff; font-size:20px; line-height:1;
-    background:rgba(255,255,255,.14); border-radius:9px; padding:6px 11px;
-  }
-  header h1 { font-size:19px; font-weight:700; letter-spacing:.5px; }
-  .stats {
-    margin-left:auto; display:flex; gap:14px; font-size:12.5px; font-weight:600;
-    color:#d8f0dd; font-variant-numeric: tabular-nums;
-  }
-  .stats b { color:#fff; font-size:14px; display:block; text-align:center; }
-  .stats div { text-align:center; }
-  .toolbar {
-    display:flex; gap:7px; padding:4px 12px 8px 12px; flex-wrap:wrap;
-  }
-  .toolbar button {
-    font: 600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color:#fff; background:rgba(255,255,255,.16);
-    border:1px solid rgba(255,255,255,.22); border-radius:9px;
-    padding:7px 12px; cursor:pointer; transition: background .15s;
-  }
-  .toolbar button:active { background:rgba(255,255,255,.32); }
-  .toolbar button:disabled { opacity:.38; cursor:default; }
-  .toolbar button.accent { background:#e8b33b; border-color:#f3c95e; color:#3a2c05; display:none; }
-  .toolbar button.accent.show { display:inline-block; animation: pop .3s; }
-  @keyframes pop { from { transform:scale(.7); } to { transform:scale(1); } }
+  /* ---- Solitaire, re-skinned to the arcade house style, amethyst / mint ----
+     The engine underneath is the original, untouched: same Klondike rules, same
+     drag and drop, same undo, hint and auto-finish, same save keys and the same
+     two badges.  Everything here is chrome.
 
-  #boardWrap { flex:1; overflow:hidden; position:relative; }
-  #board { position:relative; width:100%; max-width:760px; margin:0 auto; touch-action:none; }
-
-  .slot {
-    position:absolute; border-radius: calc(var(--cw) * 0.09);
-    border: 2px dashed rgba(255,255,255,.28);
-    width: var(--cw); height: var(--ch);
-    display:flex; align-items:center; justify-content:center;
-    color: rgba(255,255,255,.4); font-size: calc(var(--cw) * .5);
+     Table colours live at the top so they are easy to change.  A purple table
+     is not a whim: green was taken by the Chess re-skin, and white cards read
+     just as well on amethyst as they do on felt. */
+  :root{
+    --table:#6b3fa0;
+    --card-face:#fffdf7;
+    --card-red:#d81f45;
+    --card-black:#2a2340;
+    --back-a:#7c4fb4;
+    --back-b:#5c3492;
+    --mint:#66e0b8;
+    --ink:#4a2a75;
   }
-  .slot.stock { cursor:pointer; }
-  .slot .sym { pointer-events:none; }
-
-  .card {
-    position:absolute; width:var(--cw); height:var(--ch);
-    border-radius: calc(var(--cw) * 0.09);
-    background:#fdfdf6;
-    box-shadow: 0 1px 3px rgba(0,0,0,.4);
-    cursor:pointer;
-    transition: left .18s ease, top .18s ease;
-    overflow:hidden;
-  }
-  .card.noanim { transition:none; }
-  .card.dragging { transition:none; box-shadow: 0 8px 20px rgba(0,0,0,.5); }
-  .card.down {
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none}
+  html,body{height:100%;overflow:hidden}
+  body{
     background:
-      repeating-linear-gradient(45deg, #2565a0 0 5px, #1d5288 5px 10px);
-    border: calc(var(--cw) * 0.045) solid #f2f2ea;
-    box-shadow: 0 1px 3px rgba(0,0,0,.45);
+      radial-gradient(115% 80% at 4% -8%, #d6c2f5 0%, transparent 55%),
+      radial-gradient(120% 80% at 98% 106%, #bdf5e1 0%, transparent 58%),
+      linear-gradient(162deg, #4a2a75 0%, #7d51b8 46%, #f1e9fb 100%);
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    touch-action:manipulation;
+    padding:calc(env(safe-area-inset-top) + 6px) 8px calc(env(safe-area-inset-bottom) + 6px);
   }
-  .card.down > div { display:none; }
-  .card.red { color:#c8102e; }
-  .card.black { color:#1e1e24; }
-  .card .corner {
-    position:absolute; line-height:.95; text-align:center;
-    font-weight:700; font-size: calc(var(--cw) * 0.22);
-    pointer-events:none;
+  #shell{width:100%;max-width:520px;height:100%;display:flex;flex-direction:column}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .pill{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--ink);
+    background:rgba(255,255,255,.95);border:1.5px solid #fff;padding:6px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:800;box-shadow:0 3px 9px rgba(45,20,80,.28);cursor:pointer;white-space:nowrap}
+  .pill:active{transform:scale(.95)}
+  .title{flex:1;text-align:center;font-weight:900;letter-spacing:1.4px;line-height:1;
+    font-size:clamp(14px,4.4vw,20px);text-shadow:0 2px 0 #5b3390,0 4px 12px rgba(40,15,70,.45)}
+  .strip{display:flex;gap:6px;margin-bottom:7px}
+  .chip{flex:1;min-width:0;text-align:center;padding:6px 2px;border-radius:13px;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4)}
+  .chip .k{font-size:8px;letter-spacing:1.1px;font-weight:900;opacity:.9}
+  .chip .v{font-size:clamp(13px,4.2vw,17px);font-weight:900;font-variant-numeric:tabular-nums}
+
+  #stage{flex:1;position:relative;min-height:0;display:flex;flex-direction:column}
+  #boardWrap{flex:1;overflow:hidden;position:relative;width:100%}
+  #board{position:relative;width:100%;margin:0 auto;touch-action:none}
+
+  /* ---------- table furniture ---------- */
+  .slot{position:absolute;border-radius:calc(var(--cw) * 0.10);
+    border:2px dashed rgba(255,255,255,.42);
+    width:var(--cw);height:var(--ch);
+    display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,.55);font-size:calc(var(--cw) * .45)}
+  .slot.stock{cursor:pointer}
+  .slot .sym{pointer-events:none;font-weight:900}
+
+  /* ---------- cards ---------- */
+  .card{
+    position:absolute;width:var(--cw);height:var(--ch);
+    border-radius:calc(var(--cw) * 0.10);
+    background:var(--card-face);
+    box-shadow:0 2px 5px rgba(40,15,70,.42);
+    cursor:pointer;overflow:hidden;
+    transition:left .18s ease, top .18s ease;
+    /* Every one of the four suits is ALSO an emoji, so an emoji font will
+       happily paint its own coloured version and ignore `color` - which is what
+       turned the white pawns black in Chess.  Pin the faces to a text font,
+       ask for the text variation in the glyph itself (see SUITS in the script),
+       and turn emoji presentation off. */
+    font-family:"Apple Symbols","Segoe UI Symbol","DejaVu Sans",serif;
+    font-variant-emoji:text;
   }
-  .card .corner.tl { top: calc(var(--cw) * 0.06); left: calc(var(--cw) * 0.07); }
-  .card .corner.br { bottom: calc(var(--cw) * 0.06); right: calc(var(--cw) * 0.07); transform:rotate(180deg); }
-  .card .corner span { display:block; }
-  .card .big {
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-size: calc(var(--cw) * 0.52); pointer-events:none;
+  .card.noanim{transition:none}
+  .card.dragging{transition:none;box-shadow:0 10px 24px rgba(40,15,70,.55)}
+  .card.down{
+    background:
+      repeating-linear-gradient(45deg,var(--back-a) 0 5px,var(--back-b) 5px 10px);
+    border:calc(var(--cw) * 0.05) solid #fffdf7;
   }
-  .card .big .courtR {
-    font-size: calc(var(--cw) * 0.46); font-weight:800; margin-right: calc(var(--cw) * 0.03);
-  }
-  .card.hint { animation: hintPulse .55s ease-in-out 2; }
-  @keyframes hintPulse {
-    0%,100% { box-shadow: 0 1px 3px rgba(0,0,0,.4); }
-    50% { box-shadow: 0 0 0 4px #ffd75e, 0 0 18px 6px rgba(255,215,94,.8); }
+  .card.down > div{display:none}
+  .card.red{color:var(--card-red)}
+  .card.black{color:var(--card-black)}
+  .card .corner{position:absolute;line-height:.95;text-align:center;
+    font-weight:800;font-size:calc(var(--cw) * 0.24);pointer-events:none}
+  .card .corner.tl{top:calc(var(--cw) * 0.06);left:calc(var(--cw) * 0.08)}
+  .card .corner.br{bottom:calc(var(--cw) * 0.06);right:calc(var(--cw) * 0.08);transform:rotate(180deg)}
+  .card .corner span{display:block}
+  .card .big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--cw) * 0.50);pointer-events:none;opacity:.92}
+  .card .big .courtR{font-size:calc(var(--cw) * 0.44);font-weight:900;margin-right:calc(var(--cw) * 0.03)}
+  .card.hint{animation:hintPulse .55s ease-in-out 2}
+  @keyframes hintPulse{
+    0%,100%{box-shadow:0 2px 5px rgba(40,15,70,.42)}
+    50%{box-shadow:0 0 0 4px var(--mint),0 0 18px 6px rgba(102,224,184,.75)}
   }
 
-  #winOverlay {
-    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.55); z-index:5000; flex-direction:column;
-  }
-  #winOverlay.show { display:flex; }
-  #winBox {
-    background: linear-gradient(160deg, #1f7a45, #115330);
-    border: 2px solid #e8b33b; border-radius:20px;
-    padding:30px 40px; text-align:center;
-    box-shadow: 0 20px 60px rgba(0,0,0,.6);
-    animation: winIn .5s cubic-bezier(.2,1.6,.4,1);
-  }
-  @keyframes winIn { from { transform:scale(.5); opacity:0; } to { transform:scale(1); opacity:1; } }
-  #winBox h2 { font-size:34px; margin-bottom:10px; color:#ffd75e; }
-  #winBox p { font-size:16px; margin:4px 0; color:#e6f5ea; }
-  #winBox button {
-    margin-top:18px; font:700 16px -apple-system,sans-serif; color:#3a2c05;
-    background:#e8b33b; border:none; border-radius:12px; padding:12px 28px; cursor:pointer;
-  }
-  #confettiCanvas { position:fixed; inset:0; pointer-events:none; z-index:5001; display:none; }
+  /* ---------- auto-finish, which only appears when it can be used ---------- */
+  #autoWrap{position:absolute;left:0;right:0;bottom:6px;display:flex;justify-content:center;
+    pointer-events:none;z-index:30}
+  #btnAuto{pointer-events:auto;display:none;border:2px solid #fff;border-radius:999px;
+    background:linear-gradient(180deg,#7cf0c8,#2bb98c);color:#08402e;font-family:inherit;
+    font-size:13px;font-weight:900;letter-spacing:.6px;padding:10px 22px;cursor:pointer;
+    box-shadow:0 5px 0 #1c8a68,0 8px 18px rgba(20,110,80,.4)}
+  #btnAuto.show{display:block;animation:pop .3s}
+  #btnAuto:active{transform:translateY(3px);box-shadow:0 2px 0 #1c8a68}
+  @keyframes pop{from{transform:scale(.7)}to{transform:scale(1)}}
 
-  #resumeOverlay {
-    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.6); z-index:6000;
+  /* ---------- tools ---------- */
+  #tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}
+  .tool{background:rgba(255,255,255,.96);border:1.5px solid #fff;border-radius:15px;
+    padding:9px 2px 8px;text-align:center;cursor:pointer;color:var(--ink);
+    box-shadow:0 4px 0 rgba(70,35,115,.35),0 6px 14px rgba(40,15,70,.24)}
+  .tool:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(70,35,115,.35)}
+  .tool.off{opacity:.42}
+  .tool .ti{font-size:19px;line-height:1}
+  .tool .tl{font-size:9px;font-weight:900;letter-spacing:.5px;margin-top:2px;opacity:.75}
+
+  /* ---------- overlay cards ---------- */
+  .ovl{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(60,30,105,.45);backdrop-filter:blur(6px);padding:12px}
+  .ovl.on{display:flex}
+  .card2{width:100%;max-width:352px;background:linear-gradient(180deg,#fff,#f3ecfd);
+    border:2px solid #fff;border-radius:22px;padding:18px 16px 14px;text-align:center;
+    color:#9a86b8;box-shadow:0 20px 50px rgba(40,15,70,.45);max-height:100%;overflow:auto}
+  .card2 h2{font-size:23px;font-weight:900;letter-spacing:1px;color:#6b3fa0;margin-bottom:3px}
+  .card2 p{font-size:13.5px;line-height:1.5;color:#9a86b8;margin:7px 0}
+  .card2 .big{font-size:34px;font-weight:900;color:#6b3fa0;margin:6px 0 2px}
+  .sizes{display:grid;grid-template-columns:1fr;gap:8px;margin-top:11px}
+  .sz{border-radius:16px;padding:11px;cursor:pointer;color:#fff;font-weight:900;
+    box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;align-items:center;justify-content:space-between;
+    text-align:left}
+  .sz:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14)}
+  .sz .sn{font-size:14.5px}
+  .sz .stg{font-size:10px;opacity:.93;font-weight:800;margin-top:2px}
+  .z-a{background:linear-gradient(180deg,#7cf0c8,#2bb98c)}
+  .z-b{background:linear-gradient(180deg,#c08cf0,#7a3fc0)}
+  .btn{display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:15px;
+    font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.4px;font-family:inherit}
+  .btn-go{background:linear-gradient(180deg,#a86ee0,#6b3fa0);color:#fff;
+    box-shadow:0 5px 0 #4a2a75,0 8px 18px rgba(75,40,120,.34)}
+  .btn-go:active{transform:translateY(3px);box-shadow:0 2px 0 #4a2a75}
+  .btn-alt{background:#f3ecfd;color:var(--ink);border:1.5px solid #e0d0f5}
+  .rules{text-align:left;font-size:12.6px;line-height:1.65;color:#9a86b8;margin:10px 2px}
+  .rules b{color:#6b3fa0}
+  .stats{display:flex;gap:8px;margin-top:11px}
+  .st{flex:1;background:#f3ecfd;border-radius:13px;padding:8px 4px}
+  .st .sk{font-size:8.5px;letter-spacing:1.1px;font-weight:900;color:#bda9d8}
+  .st .sv{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--ink)}
+  #confettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:60;display:none}
+
+  @media (max-height:700px){
+    .card2{padding:13px 13px 10px}.card2 h2{font-size:19px}
+    .card2 p{font-size:12px;margin:5px 0}
+    .rules{font-size:11.4px;line-height:1.45}
+    .btn{padding:10px;font-size:13.5px;margin-top:6px}
+    .sz{padding:9px}.sz .sn{font-size:13.5px}.sizes{gap:7px;margin-top:9px}
   }
-  #resumeOverlay.show { display:flex; }
-  #resumeBox {
-    background: linear-gradient(160deg, #1f7a45, #115330);
-    border: 2px solid #e8b33b; border-radius:20px;
-    padding:26px 34px; text-align:center; min-width:230px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.6);
-  }
-  #resumeBox h2 { font-size:24px; margin-bottom:8px; color:#ffd75e; }
-  #resumeBox p { font-size:14px; color:#e6f5ea; margin-bottom:14px; }
-  #resumeBox button {
-    display:block; width:100%; margin-top:10px; cursor:pointer;
-    font:700 15px -apple-system,BlinkMacSystemFont,sans-serif;
-    border:none; border-radius:12px; padding:12px 24px;
-  }
-  #resumeBox .primary { background:#e8b33b; color:#3a2c05; }
-  #resumeBox .ghost { background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.3); }
 </style>
 </head>
 <body>
-
-<header>
-  <a class="home" href="index.html" aria-label="Home">⌂</a>
-  <h1>Solitaire</h1>
-  <div class="stats">
-    <div><b id="stScore">0</b>Score</div>
-    <div><b id="stTime">0:00</b>Time</div>
-    <div><b id="stMoves">0</b>Moves</div>
+<div id="shell">
+  <div class="bar">
+    <a class="pill" href="index.html">&#9776; Menu</a>
+    <div class="title">SOLITAIRE</div>
+    <button class="pill" id="bPause">&#10074;&#10074;</button>
   </div>
-</header>
-
-<div class="toolbar">
-  <button id="btnNew">New Game</button>
-  <button id="btnRestart">Restart</button>
-  <button id="btnUndo" disabled>Undo</button>
-  <button id="btnHint">Hint</button>
-  <button id="btnDraw">Draw 1</button>
-  <button id="btnAuto" class="accent">Auto-Finish ✨</button>
-</div>
-
-<div id="boardWrap"><div id="board"></div></div>
-
-<div id="winOverlay">
-  <div id="winBox">
-    <h2>🏆 You Win!</h2>
-    <p id="winStats"></p>
-    <p id="winBest"></p>
-    <button id="btnWinNew">Play Again</button>
+  <div class="strip">
+    <div class="chip"><div class="k">SCORE</div><div class="v" id="stScore">0</div></div>
+    <div class="chip"><div class="k">TIME</div><div class="v" id="stTime">0:00</div></div>
+    <div class="chip"><div class="k">MOVES</div><div class="v" id="stMoves">0</div></div>
+  </div>
+  <div id="stage">
+    <div id="boardWrap"><div id="board"></div></div>
+    <div id="autoWrap"><button id="btnAuto">FINISH IT FOR ME</button></div>
+    <div class="ovl" id="ovl"><div class="card2" id="ovlCard"></div></div>
+  </div>
+  <div id="tools">
+    <div class="tool" id="tUndo"><div class="ti">&#8630;</div><div class="tl">UNDO</div></div>
+    <div class="tool" id="tHint"><div class="ti">&#9788;</div><div class="tl">HINT</div></div>
+    <div class="tool" id="tRules"><div class="ti">?</div><div class="tl">HOW TO PLAY</div></div>
   </div>
 </div>
 <canvas id="confettiCanvas"></canvas>
-
-<div id="resumeOverlay">
-  <div id="resumeBox">
-    <h2>Welcome back</h2>
-    <p id="resumeInfo">You have a game in progress.</p>
-    <button id="btnResume" class="primary">Continue Game</button>
-    <button id="btnFresh" class="ghost">Start New</button>
-  </div>
-</div>
 
 <script src="achievements.js"></script>
 <script>
 (function(){
 'use strict';
-
 /* ---------- constants ---------- */
-var SUITS = ['♠','♥','♦','♣'];
+/* Each suit carries U+FE0E, the text variation selector.  All four of
+   these characters are ALSO emoji, and an emoji font paints its own
+   colours and ignores `color` - which is exactly what turned the white
+   pawns black in Chess.  The CSS backs this up with a text-only font
+   stack and font-variant-emoji.  Do not strip the \uFE0E. */
+var VS = '\uFE0E';
+var SUITS = ['\u2660'+VS,'\u2665'+VS,'\u2666'+VS,'\u2663'+VS];
 var SUIT_COLOR = ['black','red','red','black'];
 var RANK_TXT = ['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
@@ -521,20 +535,10 @@ function doWin(){
   stopTimer();
   clearSave();
   if(window.GGA){ GGA.award('sol_win'); if(seconds<300) GGA.award('sol_fast'); GGA.haptic('success'); }
-  document.getElementById('winStats').textContent =
-    'Score ' + S.score + '  ·  ' + fmtTime(seconds) + '  ·  ' + S.moves + ' moves';
-  var bestTxt='';
-  try {
-    var best = JSON.parse(localStorage.getItem('solitaireBest')||'null');
-    if(!best || S.score>best.score){ best={score:S.score, time:seconds}; localStorage.setItem('solitaireBest', JSON.stringify(best)); bestTxt='🎉 New best score!'; }
-    else bestTxt='Best: '+best.score+' pts in '+fmtTime(best.time);
-  } catch(e){}
-  document.getElementById('winBest').textContent = bestTxt;
-  document.getElementById('winOverlay').classList.add('show');
-  confetti();
+  updateButtons();
+  setTimeout(function(){ winScreen(); confetti(); }, 450);
 }
 function hideWin(){
-  document.getElementById('winOverlay').classList.remove('show');
   document.getElementById('confettiCanvas').style.display='none';
 }
 function confetti(){
@@ -552,7 +556,7 @@ function confetti(){
   });
   var t0=Date.now();
   (function frame(){
-    if(Date.now()-t0>5200 || !document.getElementById('winOverlay').classList.contains('show')){
+    if(Date.now()-t0>5200){
       cv.style.display='none'; return;
     }
     ctx.clearRect(0,0,cv.width,cv.height);
@@ -577,7 +581,7 @@ function makeSlot(cls, sym){
   return d;
 }
 function initSlots(){
-  slots.stock = makeSlot('stock','↺');
+  slots.stock = makeSlot('stock','\u21BA');
   slots.waste = makeSlot('waste','');
   for(var f=0;f<4;f++) slots.found.push(makeSlot('found','A'));
   for(var t=0;t<7;t++) slots.tab.push(makeSlot('tab',''));
@@ -652,22 +656,26 @@ function render(noanim){
     for(i=0;i<S.found[f].length;i++)
       place(S.found[f][i], x(3+f), yTop, i+1, noanim);
 
-  // tableau with per-column compression
+  // tableau: one fan spacing for the whole table, from the deepest column
   var wrapH = document.getElementById('boardWrap').clientHeight;
   var avail = Math.max(ch*1.2, wrapH - yTab - ch - gap);
+  var hDown0=ch*0.16, hUp0=ch*0.30, deepest=0, need0, a0;
+  for(t=0;t<7;t++){
+    need0=0; a0=S.tab[t];
+    for(i=0;i<a0.length-1;i++) need0 += a0[i].up ? hUp0 : hDown0;
+    if(need0>deepest) deepest=need0;
+  }
+  /* The original scaled each column on its own, which fanned them at different
+     rates, and it only ever scaled DOWN - so on a 430 phone half the table sat
+     empty while the cards stayed small and hard to grab.  One scale for every
+     column, allowed to spread out as well as squeeze, capped so the fan never
+     gets silly. */
+  var k = deepest>0 ? avail/deepest : 1;
+  if(k>1.45) k=1.45;
+  var hDown=hDown0*k, hUp=hUp0*k;
   var maxBottom = yTab + ch;
   for(t=0;t<7;t++){
     var arr=S.tab[t];
-    var downs=0, ups=0;
-    for(i=0;i<arr.length;i++){ if(arr[i].up) ups++; else downs++; }
-    var hDown=ch*0.16, hUp=ch*0.30;
-    var need = downs*hDown + Math.max(0,ups-1)*hUp + (ups>0&&downs>0?0:0);
-    // offsets count: every card except the last adds its own offset
-    need = 0;
-    for(i=0;i<arr.length-1;i++) need += arr[i].up ? hUp : hDown;
-    if(need>avail && need>0){
-      var k=avail/need; hDown*=k; hUp*=k;
-    }
     var y=yTab;
     for(i=0;i<arr.length;i++){
       place(arr[i], x(t), y, i+1, noanim);
@@ -686,9 +694,10 @@ function updateStats(){
   document.getElementById('stTime').textContent = fmtTime(seconds);
 }
 function updateButtons(){
-  document.getElementById('btnUndo').disabled = undoStack.length===0 || busy;
-  document.getElementById('btnAuto').classList.toggle('show', canAutoFinish() && !busy);
-  document.getElementById('btnDraw').textContent = 'Draw '+drawMode;
+  var u=document.getElementById('tUndo');
+  if(undoStack.length===0 || busy) u.classList.add('off'); else u.classList.remove('off');
+  var ov=document.getElementById('ovl').classList.contains('on');
+  document.getElementById('btnAuto').classList.toggle('show', canAutoFinish() && !busy && !ov);
 }
 
 /* ---------- drag & tap ---------- */
@@ -806,18 +815,111 @@ document.addEventListener('pointercancel', function(){
   }
 });
 
-/* ---------- buttons ---------- */
-document.getElementById('btnNew').addEventListener('click', function(){ if(!busy||checkWin()) newGame(); });
-document.getElementById('btnRestart').addEventListener('click', function(){ if(!busy||checkWin()) restart(); });
-document.getElementById('btnUndo').addEventListener('click', undo);
-document.getElementById('btnHint').addEventListener('click', hint);
-document.getElementById('btnAuto').addEventListener('click', autoFinish);
-document.getElementById('btnDraw').addEventListener('click', function(){
-  if(busy) return;
-  drawMode = drawMode===1 ? 3 : 1;
-  updateButtons(); render();
+
+/* =========================================================
+   UI - this part is the re-skin
+   ========================================================= */
+function $id(id){ return document.getElementById(id); }
+function openOvl(html){ $id('ovlCard').innerHTML=html; $id('ovl').classList.add('on'); updateButtons(); }
+function closeOvl(){ $id('ovl').classList.remove('on'); updateButtons(); }
+function ovlOpen(){ return $id('ovl').classList.contains('on'); }
+
+function modeLine(){ return drawMode===3 ? 'Draw three' : 'Draw one'; }
+
+function titleScreen(sv){
+  var h='<h2>SOLITAIRE</h2>'+
+    '<p>Build the four foundations up from the ace. Down the table, stack in alternating colours and take the columns apart.</p>'+
+    '<div class="sizes">'+
+      '<div class="sz z-a" data-d="1"><div>'+
+        '<div class="sn">Draw One</div><div class="stg">One card off the pile at a time - the kind you can win</div>'+
+      '</div></div>'+
+      '<div class="sz z-b" data-d="3"><div>'+
+        '<div class="sn">Draw Three</div><div class="stg">Three at a time - the proper hard one</div>'+
+      '</div></div>'+
+    '</div>';
+  if(sv && sv.S){
+    h+='<button class="btn btn-go" id="bResume">CARRY ON &middot; '+sv.S.score+' POINTS</button>';
+  }
+  h+='<button class="btn btn-alt" id="bRules">HOW TO PLAY</button>';
+  openOvl(h);
+  Array.prototype.forEach.call($id('ovlCard').querySelectorAll('.sz'), function(el){
+    el.onclick=function(){
+      drawMode=parseInt(el.getAttribute('data-d'),10);
+      closeOvl();
+      newGame();
+    };
+  });
+  if(sv && sv.S) $id('bResume').onclick=function(){ closeOvl(); resumeGame(sv); };
+  $id('bRules').onclick=function(){ rulesScreen(false, sv); };
+}
+
+function rulesScreen(fromGame, sv){
+  openOvl('<h2>HOW TO PLAY</h2><div class="rules">'+
+    '&#9642; <b>Tap a card and it goes where it should</b> - up to a foundation if it can, otherwise across to a column that will take it. Or drag it yourself if you would rather.<br><br>'+
+    '&#9642; The four spaces on the right are the <b>foundations</b>. Each one starts with an ace and is built up in its own suit to the king.<br><br>'+
+    '&#9642; Down the table, build <b>down in alternating colours</b> - a red six goes on a black seven. Move a whole run in one go by dragging its top card.<br><br>'+
+    '&#9642; Only a <b>king</b> can go into an empty column.<br><br>'+
+    '&#9642; Tap the pile top left to turn cards over. When it runs out, tap it again to <b>turn the pile back over</b>.<br><br>'+
+    '&#9642; <b>UNDO</b> goes back as far as you like and <b>HINT</b> points at a move worth making; neither costs you anything. Once every card is face up and the pile is gone, <b>FINISH IT FOR ME</b> appears and plays out the rest.<br><br>'+
+    '&#9642; The game <b>saves itself as you go</b>, so you can leave and pick it up from the front page.'+
+    '</div><button class="btn btn-go" id="bBack">GOT IT</button>');
+  $id('bBack').onclick=function(){ if(fromGame) closeOvl(); else titleScreen(sv); };
+}
+
+function pauseScreen(){
+  openOvl('<h2>PAUSED</h2>'+
+    '<p>Your game is saved as you go. Currently on <b>'+modeLine().toLowerCase()+'</b>.</p>'+
+    '<button class="btn btn-go" id="bResume2">CARRY ON</button>'+
+    '<button class="btn btn-alt" id="bDraw">SWITCH TO '+(drawMode===3?'DRAW ONE':'DRAW THREE')+'</button>'+
+    '<button class="btn btn-alt" id="bRestart">DEAL THIS HAND AGAIN</button>'+
+    '<button class="btn btn-alt" id="bNew">NEW GAME</button>'+
+    '<a class="btn btn-alt" href="index.html" style="text-decoration:none">BACK TO THE ARCADE</a>');
+  $id('bResume2').onclick=closeOvl;
+  $id('bDraw').onclick=function(){
+    /* only changes how many come off the pile next time - it does not restart */
+    drawMode = drawMode===3 ? 1 : 3;
+    updateButtons(); render(); saveGame();
+    pauseScreen();
+  };
+  $id('bRestart').onclick=function(){ closeOvl(); restart(); };
+  $id('bNew').onclick=function(){ closeOvl(); newGame(); };
+}
+
+function winScreen(){
+  var bestTxt='';
+  try{
+    var best=JSON.parse(localStorage.getItem('solitaireBest')||'null');
+    if(!best || S.score>best.score){
+      best={score:S.score, time:seconds};
+      localStorage.setItem('solitaireBest', JSON.stringify(best));
+      bestTxt='A new best score.';
+    } else {
+      bestTxt='Your best is '+best.score+' in '+fmtTime(best.time)+'.';
+    }
+  }catch(e){}
+  openOvl('<h2>ALL FOUR HOME</h2>'+
+    '<div class="big">'+S.score+'</div>'+
+    '<p>'+bestTxt+'</p>'+
+    '<div class="stats">'+
+      '<div class="st"><div class="sk">TIME</div><div class="sv">'+fmtTime(seconds)+'</div></div>'+
+      '<div class="st"><div class="sk">MOVES</div><div class="sv">'+S.moves+'</div></div>'+
+      '<div class="st"><div class="sk">DEAL</div><div class="sv">'+(drawMode===3?'3':'1')+'</div></div>'+
+    '</div>'+
+    '<button class="btn btn-go" id="bAgain">PLAY AGAIN</button>'+
+    '<button class="btn btn-alt" id="bSame">DEAL THIS HAND AGAIN</button>');
+  $id('bAgain').onclick=function(){ closeOvl(); newGame(); };
+  $id('bSame').onclick=function(){ closeOvl(); restart(); };
+}
+
+/* ---------- wiring ---------- */
+$id('bPause').addEventListener('click', function(){
+  if(ovlOpen()) return;
+  if(S && !checkWin()) pauseScreen(); else titleScreen(loadSave());
 });
-document.getElementById('btnWinNew').addEventListener('click', function(){ newGame(); });
+$id('tUndo').addEventListener('click', function(){ if(!ovlOpen()) undo(); });
+$id('tHint').addEventListener('click', function(){ if(!ovlOpen()) hint(); });
+$id('tRules').addEventListener('click', function(){ if(!ovlOpen()) rulesScreen(true,null); });
+$id('btnAuto').addEventListener('click', function(){ if(!ovlOpen()) autoFinish(); });
 
 window.addEventListener('resize', function(){ if(S) render(true); });
 
@@ -827,28 +929,20 @@ function resumeGame(sv){
   seconds = sv.seconds||0;
   undoStack = []; busy = false;
   stopTimer(); timerRunning = false;
-  hideWin();
   updateStats(); render(true); updateButtons();
 }
-document.getElementById('btnResume').addEventListener('click', function(){
-  document.getElementById('resumeOverlay').classList.remove('show');
-});
-document.getElementById('btnFresh').addEventListener('click', function(){
-  document.getElementById('resumeOverlay').classList.remove('show');
-  newGame();
-});
 
 initSlots();
 var __sv = loadSave();
-if(__sv && __sv.S){
-  resumeGame(__sv);
-  document.getElementById('resumeInfo').textContent =
-    'Score ' + __sv.S.score + '  ·  ' + fmtTime(__sv.seconds||0) + '  ·  ' + __sv.S.moves + ' moves';
-  document.getElementById('resumeOverlay').classList.add('show');
-} else {
-  newGame();
-}
-render(true);
+/* Deal a board to sit behind the title card, but do NOT save it - saving here
+   would overwrite the game in progress before CARRY ON could offer it.  This
+   exact bug has been made three times in this project; do not make it a fourth. */
+initialDeck = shuffle(mkDeck());
+deal(initialDeck);
+if(__sv && __sv.drawMode) drawMode = __sv.drawMode;
+updateStats(); render(true); updateButtons();
+titleScreen(__sv && __sv.S ? __sv : null);
+
 })();
 </script>
 </body>
