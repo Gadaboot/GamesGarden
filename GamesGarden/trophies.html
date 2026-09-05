@@ -3,84 +3,215 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Trophies — Offline Games Arcade</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Trophies &#8212; Offline Games Arcade</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(180deg, #1c3a2a 0%, #0f2419 100%);
-    color: #f5efdd;
-    min-height: 100vh;
-    user-select: none; -webkit-user-select: none;
-    padding: max(20px, env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom));
+  /* ---- Trophy cabinet, re-skinned to match the arcade menu -----------------
+     Same shell as index.html, privacy.html and support.html: the sunset hero
+     band, white sheets on the light wash.
+
+     The render script is lifted from the previous build and patched by name -
+     it builds every row itself, so the re-skin has to reach into it.  What it
+     reads (GGA.earned / defs / streak / playedCount / totalGames) and what it
+     shows are unchanged; the two additions are a per-game count on each group
+     heading and a wrapper element so the filter can hide a whole group.
+
+     The filter is here because the cabinet holds 272 badges across 53 games.
+     On a new phone that is 272 grey rows in a row, and on a well-played one the
+     handful you have left is buried.  ALL / EARNED / LOCKED is pure CSS off one
+     class on #list - no re-render, nothing stored.  */
+  :root{
+    --ink:#43306b;
+    --body:#4c3f66;
+    --muted:#8b7aa9;
+    --pink:#ff4d8d;
+    --pink-d:#d62d6c;
+    --violet:#9b5cff;
+    --violet-d:#7a45d6;
+    --gold:#f0a318;
   }
-  .wrap { max-width: 520px; margin: 0 auto; }
-  a.back {
-    display: inline-block;
-    color: #ffd24a; text-decoration: none; font-weight: 700;
-    margin-bottom: 14px; font-size: 15px;
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{height:100%;background:#fdfbf6}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(105% 45% at 6% 0%, #ffe3b8 0%, transparent 58%),
+      radial-gradient(100% 45% at 100% 10%, #ffd6ea 0%, transparent 55%),
+      radial-gradient(120% 55% at 50% 100%, #dff0ff 0%, transparent 60%),
+      linear-gradient(180deg, #fff4e2 0%, #fdf3fa 42%, #f2f9ff 100%);
+    background-attachment:fixed;
+    color:var(--body);
+    min-height:100%;
+    user-select:none;-webkit-user-select:none;
+    padding:max(16px,env(safe-area-inset-top)) 14px calc(34px + env(safe-area-inset-bottom));
   }
-  h1 {
-    color: #ffd24a; font-size: 26px; font-weight: 900; letter-spacing: 2px;
-    text-align: center; text-shadow: 0 2px 6px rgba(0,0,0,.5);
+  .wrap{max-width:520px;margin:0 auto}
+
+  a.back{
+    display:inline-block;
+    background:linear-gradient(180deg,#fff,#fff2f7);
+    border:2px solid #fff;border-radius:999px;
+    padding:8px 18px;
+    color:var(--pink-d);text-decoration:none;
+    font-weight:900;font-size:13.5px;letter-spacing:.3px;
+    margin-bottom:14px;
+    box-shadow:0 4px 0 rgba(180,60,120,.3),0 8px 18px rgba(70,20,90,.18);
   }
-  .statsrow {
-    display: flex; justify-content: center; gap: 10px;
-    margin: 16px 0 22px;
+  a.back:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(180,60,120,.3)}
+
+  /* ---------- the hero band, with the progress bar inside it ---------- */
+  .hero{
+    border-radius:24px;
+    padding:20px 18px 18px;
+    margin-bottom:14px;
+    color:#fff;
+    background:
+      radial-gradient(90% 120% at 4% 0%, #ffb03d 0%, transparent 58%),
+      radial-gradient(80% 120% at 100% 100%, #2fb8ff 0%, transparent 56%),
+      linear-gradient(120deg, #ff7a45 0%, #ff4d8d 36%, #9b5cff 72%, #2fb8ff 100%);
+    box-shadow:0 8px 0 rgba(150,60,150,.18),0 14px 30px rgba(90,40,130,.26);
   }
-  .statbox {
-    background: rgba(255,255,255,.07);
-    border: 1px solid rgba(255,255,255,.14);
-    border-radius: 14px;
-    padding: 10px 18px;
-    text-align: center;
-    min-width: 92px;
+  h1{
+    font-size:23px;font-weight:900;letter-spacing:2px;text-align:center;color:#fff;
+    text-shadow:0 3px 0 rgba(150,45,110,.4),0 6px 16px rgba(70,20,90,.35);
   }
-  .statbox b { display: block; font-size: 22px; color: #ffd24a; }
-  .statbox span { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; opacity: .7; }
-  .pbar {
-    height: 10px; border-radius: 5px; overflow: hidden;
-    background: rgba(0,0,0,.4); margin: 0 4px 24px;
+  .statsrow{display:flex;justify-content:center;gap:8px;margin:14px 0 12px}
+  .statbox{
+    flex:1;min-width:0;
+    background:linear-gradient(180deg,#fff,#fff4fa);
+    border:2px solid #fff;border-radius:16px;
+    padding:9px 6px;text-align:center;
+    box-shadow:0 4px 0 rgba(150,50,120,.25);
   }
-  .pbar div { height: 100%; background: linear-gradient(90deg, #ffd24a, #e8a614); border-radius: 5px; transition: width .6s; }
-  h2 {
-    font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
-    color: #ffd24a; margin: 20px 4px 8px; opacity: .9;
+  .statbox b{display:block;font-size:21px;font-weight:900;color:var(--pink-d);line-height:1.1}
+  .statbox span{
+    display:block;font-size:9px;font-weight:800;letter-spacing:.8px;
+    text-transform:uppercase;color:var(--muted);margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  .badge {
-    display: flex; align-items: center; gap: 12px;
-    background: rgba(255,255,255,.07);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 14px;
-    padding: 10px 14px;
-    margin-bottom: 8px;
+  .pbar{
+    height:14px;border-radius:8px;overflow:hidden;
+    background:rgba(255,255,255,.35);
+    border:2px solid rgba(255,255,255,.75);
+    position:relative;
   }
-  .badge .ic {
-    font-size: 30px; width: 44px; height: 44px; flex: none;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(255,210,74,.15);
-    border-radius: 12px;
+  .pbar div{
+    height:100%;
+    background:linear-gradient(90deg,#fff3c4,#ffd24a 55%,#f0a318);
+    border-radius:6px;transition:width .6s;
   }
-  .badge .nm { font-size: 14.5px; font-weight: 800; }
-  .badge .ds { font-size: 12px; opacity: .7; margin-top: 1px; }
-  .badge .dt { margin-left: auto; font-size: 10px; opacity: .5; white-space: nowrap; padding-left: 8px; }
-  .badge.locked { opacity: .45; }
-  .badge.locked .ic { filter: grayscale(1); background: rgba(255,255,255,.06); }
+  .ppct{
+    text-align:center;font-size:11px;font-weight:800;margin-top:7px;
+    text-shadow:0 1px 5px rgba(70,20,90,.35);
+  }
+
+  /* ---------- the filter ---------- */
+  .filters{display:flex;gap:7px;margin:0 0 14px}
+  .fchip{
+    flex:1;padding:9px 4px;border-radius:999px;
+    border:2px solid #fff;
+    background:rgba(255,255,255,.62);
+    color:var(--violet-d);
+    font-family:inherit;font-size:12px;font-weight:900;letter-spacing:.6px;
+    cursor:pointer;
+    box-shadow:0 3px 0 rgba(120,70,190,.18);
+  }
+  .fchip:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(120,70,190,.18)}
+  .fchip.on{
+    background:linear-gradient(180deg,#ff6ba0,#ff4d8d);
+    color:#fff;box-shadow:0 3px 0 var(--pink-d);
+  }
+
+  /* ---------- one sheet per game ---------- */
+  .grp{
+    background:#fff;
+    border:2px solid #fff;border-radius:20px;
+    padding:12px 12px 6px;
+    margin-bottom:12px;
+    box-shadow:0 5px 0 rgba(120,70,190,.14),0 10px 22px rgba(80,40,130,.12);
+  }
+  h2{
+    display:flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;
+    color:var(--violet-d);margin:2px 2px 10px;
+  }
+  h2 .gt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  h2 .gc{
+    flex:none;font-size:11px;letter-spacing:.5px;font-weight:900;
+    color:var(--muted);background:#f6f1fd;
+    border-radius:999px;padding:3px 10px;
+  }
+  .grp.full h2 .gc{color:#fff;background:linear-gradient(180deg,#ffd24a,#f0a318)}
+
+  .badge{
+    display:flex;align-items:center;gap:11px;
+    background:linear-gradient(180deg,#fffdf8,#fff6ec);
+    border:2px solid #ffe6c2;
+    border-radius:15px;
+    padding:9px 12px;
+    margin-bottom:8px;
+  }
+  .badge .ic{
+    font-size:26px;width:44px;height:44px;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#fff2cc,#ffe1a0);
+    border:2px solid #fff;
+    border-radius:13px;
+    box-shadow:0 3px 0 rgba(200,140,20,.25);
+  }
+  .badge .tx{min-width:0}
+  .badge .nm{font-size:14.5px;font-weight:900;color:var(--ink)}
+  .badge .ds{font-size:12px;color:var(--muted);margin-top:1px;line-height:1.35}
+  .badge .dt{
+    margin-left:auto;flex:none;font-size:10px;font-weight:800;
+    color:var(--gold);white-space:nowrap;padding-left:8px;
+  }
+  .badge.locked{
+    background:#fbf9fd;border-color:#efe9f6;
+  }
+  .badge.locked .ic{
+    filter:grayscale(1);opacity:.45;
+    background:#f2edf8;border-color:#fff;box-shadow:0 3px 0 rgba(120,70,190,.12);
+  }
+  .badge.locked .nm{color:#9c8fb5}
+  .badge.locked .ds{color:#b3a8c6}
+  .badge.locked .dt{color:#c3b8d4;font-size:13px}
+
+  /* ---------- what the filter chips do ---------- */
+  #list.f-earned .badge.locked{display:none}
+  #list.f-earned .grp[data-earned="0"]{display:none}
+  #list.f-locked .badge:not(.locked){display:none}
+  #list.f-locked .grp[data-locked="0"]{display:none}
+  #empty{
+    display:none;text-align:center;font-size:14px;font-weight:800;
+    color:var(--muted);padding:22px 10px;
+  }
+  #empty.show{display:block}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="index.html">‹ Back to games</a>
-  <h1>🏆 TROPHY CABINET</h1>
+  <a class="back" href="index.html">&#8249; Back to games</a>
 
-  <div class="statsrow">
-    <div class="statbox"><b id="stEarned">0</b><span>Earned</span></div>
-    <div class="statbox"><b id="stStreak">0</b><span>Day streak</span></div>
-    <div class="statbox"><b id="stPlayed">0</b><span>Games tried</span></div>
+  <div class="hero">
+    <h1>&#127942; TROPHY CABINET</h1>
+    <div class="statsrow">
+      <div class="statbox"><b id="stEarned">0</b><span>Earned</span></div>
+      <div class="statbox"><b id="stStreak">0</b><span>Day streak</span></div>
+      <div class="statbox"><b id="stPlayed">0</b><span>Games tried</span></div>
+    </div>
+    <div class="pbar"><div id="pfill" style="width:0%"></div></div>
+    <div class="ppct" id="ppct">0% of the cabinet filled</div>
   </div>
-  <div class="pbar"><div id="pfill" style="width:0%"></div></div>
 
-  <div id="list"></div>
+  <div class="filters">
+    <button class="fchip on" data-f="all" type="button">ALL</button>
+    <button class="fchip" data-f="earned" type="button">EARNED</button>
+    <button class="fchip" data-f="locked" type="button">LOCKED</button>
+  </div>
+
+  <div id="list" class="f-all"></div>
+  <div id="empty">Nothing here yet - go and win something!</div>
 </div>
 
 <script src="achievements.js"></script>
@@ -96,7 +227,9 @@
   document.getElementById("stEarned").textContent = nEarned + "/" + defs.length;
   document.getElementById("stStreak").textContent = GGA.streak();
   document.getElementById("stPlayed").textContent = GGA.playedCount() + "/" + GGA.totalGames;
-  document.getElementById("pfill").style.width = Math.round(nEarned / defs.length * 100) + "%";
+  var pct = Math.round(nEarned / defs.length * 100);
+  document.getElementById("pfill").style.width = pct + "%";
+  document.getElementById("ppct").textContent = pct + "% of the cabinet filled";
 
   /* group by game, earned first within each group */
   var groups = [], byName = {};
@@ -112,23 +245,65 @@
 
   var list = document.getElementById("list");
   groups.forEach(function (g) {
-    var h = document.createElement("h2");
-    h.textContent = g;
-    list.appendChild(h);
     var arr = byName[g].slice().sort(function (a, b) {
       return (earned[b.id] ? 1 : 0) - (earned[a.id] ? 1 : 0);
     });
+    var nGot = 0;
+    arr.forEach(function (d) { if (earned[d.id]) nGot++; });
+
+    /* one sheet per game; the counts are attributes so the ALL / EARNED /
+       LOCKED filter can hide a whole group without re-rendering anything */
+    var sec = document.createElement("div");
+    sec.className = "grp" + (nGot === arr.length ? " full" : "");
+    sec.setAttribute("data-earned", nGot);
+    sec.setAttribute("data-locked", arr.length - nGot);
+
+    var h = document.createElement("h2");
+    h.innerHTML = '<span class="gt"></span><span class="gc">' + nGot + '/' + arr.length + '</span>';
+    h.querySelector(".gt").textContent = g;
+    sec.appendChild(h);
+
     arr.forEach(function (d) {
       var got = earned[d.id];
       var el = document.createElement("div");
       el.className = "badge" + (got ? "" : " locked");
       el.innerHTML =
         '<div class="ic">' + d.icon + '</div>' +
-        '<div><div class="nm">' + d.name + '</div><div class="ds">' + d.desc + '</div></div>' +
-        (got ? '<div class="dt">' + fmtDate(got) + '</div>' : '<div class="dt">🔒</div>');
-      list.appendChild(el);
+        '<div class="tx"><div class="nm">' + d.name + '</div><div class="ds">' + d.desc + '</div></div>' +
+        (got ? '<div class="dt">' + fmtDate(got) + '</div>' : '<div class="dt">\ud83d\udd12</div>');
+      sec.appendChild(el);
     });
+    list.appendChild(sec);
   });
+})();
+</script>
+<script>
+"use strict";
+/* Added by the re-skin: the ALL / EARNED / LOCKED filter.  The rows are already
+   on the page and already carry .locked, so this only swaps a class on #list
+   and lets CSS do the hiding - nothing is re-rendered and nothing is stored. */
+(function () {
+  var list = document.getElementById("list");
+  var empty = document.getElementById("empty");
+  var chips = document.querySelectorAll(".fchip");
+
+  function counts() {
+    var all = document.querySelectorAll(".badge").length;
+    var got = document.querySelectorAll(".badge:not(.locked)").length;
+    return { all: all, earned: got, locked: all - got };
+  }
+
+  function pick(chip) {
+    for (var j = 0; j < chips.length; j++) chips[j].classList.remove("on");
+    chip.classList.add("on");
+    var f = chip.getAttribute("data-f");
+    list.className = "f-" + f;
+    empty.classList.toggle("show", counts()[f] === 0);
+  }
+
+  for (var i = 0; i < chips.length; i++) {
+    chips[i].addEventListener("click", function () { pick(this); });
+  }
 })();
 </script>
 </body>
